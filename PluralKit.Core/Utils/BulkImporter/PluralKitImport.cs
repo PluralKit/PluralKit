@@ -32,7 +32,7 @@ public partial class BulkImporter
 
         if (importFile.ContainsKey("config"))
         {
-            var configPatch = SystemConfigPatch.FromJson(importFile.Value<JObject>("config"));
+            var configPatch = SystemConfigPatch.FromJson(importFile.Value<JObject>("config"), true);
 
             if (importFile.ContainsKey("timezone"))
                 configPatch.UiTz = importFile.Value<string>("timezone");

@@ -116,6 +116,31 @@ public static class ContextArgumentsExt
         else return null;
     }
 
+    public static PrivacyLevel MatchPrivacyLevel(this Context ctx, PrivacyLevel? defaultValue = null)
+    {
+        var value = ctx.MatchPrivacyLevelOrNull(defaultValue);
+        if (value == null) throw new PKError("You must pass either `private`, `public`, or `trusted` to this command.");
+        return value.Value;
+    }
+
+    public static PrivacyLevel? MatchPrivacyLevelOrNull(this Context ctx, PrivacyLevel? defaultValue = null)
+    {
+        if (defaultValue != null && ctx.MatchClear())
+            return defaultValue.Value;
+
+        var privateMatches = new[] { "private", "priv", "hidden", "hide" };
+        var publicMatches = new[] { "public", "pub", "shown", "show" };
+        var trustedMatches = new[] { "trusted", "trust", "tru", "trusted-only" };
+
+        if (ctx.Match(privateMatches))
+            return PrivacyLevel.Private;
+        else if (ctx.Match(publicMatches))
+            return PrivacyLevel.Public;
+        else if (ctx.Match(trustedMatches))
+            return PrivacyLevel.Trusted;
+        else return null;
+    }
+
     public static (ulong? messageId, ulong? channelId) MatchMessage(this Context ctx, bool parseRawMessageId)
     {
         if (ctx.Message.Type == Message.MessageType.Reply && ctx.Message.MessageReference?.MessageId != null)

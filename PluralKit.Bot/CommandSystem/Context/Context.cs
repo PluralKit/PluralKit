@@ -187,26 +187,24 @@ public class Context
 
         if (System?.Id == targetSystemId)
         {
-            return Config.ShowPrivateInfo ? LookupContext.ByOwner : LookupContext.ByNonOwner;
-            /*return Config.DefaultPrivacyShown switch
+            return Config.DefaultPrivacyShown switch
             {
                 PrivacyLevel.Private => LookupContext.ByOwner,
                 PrivacyLevel.Public => LookupContext.ByNonOwner,
                 PrivacyLevel.Trusted => LookupContext.ByTrusted,
                 _ => LookupContext.ByNonOwner,
-            };*/
+            };
         }
 
         if (trusted)
         {
-            return Config.ShowPrivateInfo ? LookupContext.ByTrusted : LookupContext.ByNonOwner;
-            /*return Config.DefaultPrivacyShown switch
+            return Config.DefaultPrivacyShown switch
             {
                 PrivacyLevel.Private => LookupContext.ByTrusted,
                 PrivacyLevel.Trusted => LookupContext.ByTrusted,
                 PrivacyLevel.Public => LookupContext.ByNonOwner,
                 _ => LookupContext.ByNonOwner
-            };*/
+            };
         }
         return LookupContext.ByNonOwner;
     }

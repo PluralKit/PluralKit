@@ -57,9 +57,9 @@ public class Member
         JObject dispatchData = new JObject();
         dispatchData.Add("name", memberName);
 
-        if (ctx.Config.MemberDefaultPrivate)
+        if (ctx.Config.MemberDefaultPrivacy != PrivacyLevel.Public)
         {
-            var patch = new MemberPatch().WithAllPrivacy(PrivacyLevel.Private);
+            var patch = new MemberPatch().WithAllPrivacy(ctx.Config.MemberDefaultPrivacy);
             await ctx.Repository.UpdateMember(member.Id, patch, conn);
             dispatchData.Merge(patch.ToJson());
         }
@@ -91,7 +91,7 @@ public class Member
             $"{Emojis.Success} Member \"{memberName}\" (`{member.Hid}`) registered! Check out the getting started page for how to get a member up and running: https://pluralkit.me/start#create-a-member");
         // todo: move this to ModelRepository
         if (await ctx.Database.Execute(conn => conn.QuerySingleAsync<bool>("select has_private_members(@System)",
-                new { System = ctx.System.Id })) && !ctx.Config.MemberDefaultPrivate) //if has private members
+                new { System = ctx.System.Id })) && ctx.Config.MemberDefaultPrivacy == PrivacyLevel.Public) //if has private members
             await ctx.Reply(
                 $"{Emojis.Warn} This member is currently **public**. To change this, use `pk;member {member.Hid} private`.");
         if (avatarArg != null)

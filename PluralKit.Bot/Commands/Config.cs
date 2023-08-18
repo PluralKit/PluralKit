@@ -63,24 +63,24 @@ public class Config
         ));
 
         items.Add(new(
-            "private member",
-            "Whether member privacy is automatically set to private for new members",
-            EnabledDisabled(ctx.Config.MemberDefaultPrivate),
-            "disabled"
+            "privacy member",
+            "Which privacy level member privacy is automatically set to for new members",
+            ctx.Config.MemberDefaultPrivacy.LevelName(),
+            "public"
         ));
 
         items.Add(new(
-            "private group",
-            "Whether group privacy is automatically set to private for new groups",
-            EnabledDisabled(ctx.Config.GroupDefaultPrivate),
-            "disabled"
+            "privacy group",
+            "Which privacy level group privacy is automatically set to for new groups",
+            ctx.Config.GroupDefaultPrivacy.LevelName(),
+            "public"
         ));
 
         items.Add(new(
-            "show private",
-            "Whether private information is shown to linked accounts by default",
-            ctx.Config.ShowPrivateInfo.ToString().ToLower(),
-            "true"
+            "privacy shown",
+            "Which level of private information is shown to linked accounts by default",
+            ctx.Config.DefaultPrivacyShown.LevelName(),
+            "private"
         ));
 
         items.Add(new(
@@ -354,22 +354,69 @@ public class Config
     {
         if (!ctx.HasNext())
         {
-            if (ctx.Config.MemberDefaultPrivate) { await ctx.Reply("Newly created members will currently have their privacy settings set to private. To change this, type `pk;config private member off`"); }
-            else { await ctx.Reply("Newly created members will currently have their privacy settings set to public. To automatically set new members' privacy settings to private, type `pk;config private member on`"); }
+            switch (ctx.Config.MemberDefaultPrivacy)
+            {
+                case PrivacyLevel.Private:
+                    await ctx.Reply("Newly created members will currently have their privacy settings set to private. To change this back to public, type `pk;config privacy member public`");
+                    break;
+                case PrivacyLevel.Trusted:
+                    await ctx.Reply("Newly created members will currently have their privacy settings set to trusted. To change this, type `pk;config privacy member [private|public]`");
+                    break;
+                default:
+                    await ctx.Reply("Newly created members will currently have their privacy settings set to public. To automatically set new groups' privacy settings to private, type `pk;config privacy member private`");
+                    break;
+            }
         }
         else
         {
-            if (ctx.MatchToggle(false))
+            bool? toggle = null;
+            try
             {
-                await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { MemberDefaultPrivate = true });
+                toggle = ctx.MatchToggle(false);
+            }
+            catch (PKError) { }
 
-                await ctx.Reply("Newly created members will now have their privacy settings set to private.");
+            if (toggle != null)
+            {
+                if ((bool)toggle)
+                {
+                    await ctx.Repository.UpdateSystemConfig(ctx.System.Id,
+                        new() { MemberDefaultPrivacy = PrivacyLevel.Private });
+
+                    await ctx.Reply("Newly created members will now have their privacy settings set to private.");
+                }
+                else
+                {
+                    await ctx.Repository.UpdateSystemConfig(ctx.System.Id,
+                        new() { MemberDefaultPrivacy = PrivacyLevel.Public });
+
+                    await ctx.Reply("Newly created members will now have their privacy settings set to public.");
+                }
             }
             else
             {
-                await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { MemberDefaultPrivate = false });
+                var level = ctx.MatchPrivacyLevel(PrivacyLevel.Public);
+                if (level == PrivacyLevel.Private)
+                {
+                    await ctx.Repository.UpdateSystemConfig(ctx.System.Id,
+                        new() { MemberDefaultPrivacy = PrivacyLevel.Private });
 
-                await ctx.Reply("Newly created members will now have their privacy settings set to public.");
+                    await ctx.Reply("Newly created members will now have their privacy settings set to private.");
+                }
+                else if (level == PrivacyLevel.Public)
+                {
+                    await ctx.Repository.UpdateSystemConfig(ctx.System.Id,
+                        new() { MemberDefaultPrivacy = PrivacyLevel.Public });
+
+                    await ctx.Reply("Newly created members will now have their privacy settings set to public.");
+                }
+                else if (level == PrivacyLevel.Trusted)
+                {
+                    await ctx.Repository.UpdateSystemConfig(ctx.System.Id,
+                        new() { MemberDefaultPrivacy = PrivacyLevel.Trusted });
+
+                    await ctx.Reply("Newly created members will now have their privacy settings set to trusted.");
+                }
             }
         }
     }
@@ -378,47 +425,138 @@ public class Config
     {
         if (!ctx.HasNext())
         {
-            if (ctx.Config.GroupDefaultPrivate) { await ctx.Reply("Newly created groups will currently have their privacy settings set to private. To change this, type `pk;config private group off`"); }
-            else { await ctx.Reply("Newly created groups will currently have their privacy settings set to public. To automatically set new groups' privacy settings to private, type `pk;config private group on`"); }
+            switch (ctx.Config.GroupDefaultPrivacy)
+            {
+                case PrivacyLevel.Private:
+                    await ctx.Reply("Newly created groups will currently have their privacy settings set to private. To change this back to public, type `pk;config privacy group public`");
+                    break;
+                case PrivacyLevel.Trusted:
+                    await ctx.Reply("Newly created groups will currently have their privacy settings set to trusted. To change this, type `pk;config privacy group [private|public]`");
+                    break;
+                default:
+                    await ctx.Reply("Newly created groups will currently have their privacy settings set to public. To automatically set new groups' privacy settings to private, type `pk;config privacy group private`");
+                    break;
+            }
         }
         else
         {
-            if (ctx.MatchToggle(false))
+            bool? toggle = null;
+            try
             {
-                await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { GroupDefaultPrivate = true });
+                toggle = ctx.MatchToggle(false);
+            }
+            catch (PKError) { }
 
-                await ctx.Reply("Newly created groups will now have their privacy settings set to private.");
+            if (toggle != null)
+            {
+                if (ctx.MatchToggle(false))
+                {
+                    await ctx.Repository.UpdateSystemConfig(ctx.System.Id,
+                        new() { GroupDefaultPrivacy = PrivacyLevel.Private });
+
+                    await ctx.Reply("Newly created groups will now have their privacy settings set to private.");
+                }
+                else if (ctx.MatchToggle(true))
+                {
+                    await ctx.Repository.UpdateSystemConfig(ctx.System.Id,
+                        new() { GroupDefaultPrivacy = PrivacyLevel.Public });
+
+                    await ctx.Reply("Newly created groups will now have their privacy settings set to public.");
+                }
             }
             else
             {
-                await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { GroupDefaultPrivate = false });
+                var level = ctx.MatchPrivacyLevel(PrivacyLevel.Public);
+                if (level == PrivacyLevel.Private)
+                {
+                    await ctx.Repository.UpdateSystemConfig(ctx.System.Id,
+                        new() { GroupDefaultPrivacy = PrivacyLevel.Private });
 
-                await ctx.Reply("Newly created groups will now have their privacy settings set to public.");
+                    await ctx.Reply("Newly created groups will now have their privacy settings set to private.");
+                }
+                else if (level == PrivacyLevel.Public)
+                {
+                    await ctx.Repository.UpdateSystemConfig(ctx.System.Id,
+                        new() { GroupDefaultPrivacy = PrivacyLevel.Public });
+
+                    await ctx.Reply("Newly created groups will now have their privacy settings set to public.");
+                }
+                else if (level == PrivacyLevel.Trusted)
+                {
+                    await ctx.Repository.UpdateSystemConfig(ctx.System.Id,
+                        new() { GroupDefaultPrivacy = PrivacyLevel.Trusted });
+
+                    await ctx.Reply("Newly created groups will now have their privacy settings set to trusted.");
+                }
             }
         }
     }
 
-    public async Task ShowPrivateInfo(Context ctx)
+    public async Task DefaultPrivacyShown(Context ctx)
     {
         if (!ctx.HasNext())
         {
-            if (ctx.Config.ShowPrivateInfo) await ctx.Reply("Private information is currently **shown** when looking up your own info. Use the `-public` flag to hide it.");
-            else await ctx.Reply("Private information is currently **hidden** when looking up your own info. Use the `-private` flag to show it.");
+            switch (ctx.Config.DefaultPrivacyShown)
+            {
+                case PrivacyLevel.Private:
+                    await ctx.Reply("Private information is currently **shown** when looking up your own info. Use the `-public` flag to hide it.");
+                    break;
+                case PrivacyLevel.Public:
+                    await ctx.Reply("Private information is currently **hidden** when looking up your own info. Use the `-private` flag to show it.");
+                    break;
+                case PrivacyLevel.Trusted:
+                    await ctx.Reply(
+                        "Private information is currently **hidden** and trusted information is currently **shown** when looking up private and trusted info you can access. Use the `-public` flag to hide trusted info as well or the `-private` flag to show trusted info as well.");
+                    break;
+            }
             return;
         }
 
-        if (ctx.MatchToggle(true))
+        bool? toggle = null;
+        try
         {
-            await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { ShowPrivateInfo = true });
+            toggle = ctx.MatchToggle();
+        }
+        catch (PKError) { }
 
-            await ctx.Reply("Private information will now be **shown** when looking up your own info. Use the `-public` flag to hide it.");
+        if (toggle != null)
+        {
+            if (ctx.MatchToggle(true))
+            {
+                await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { DefaultPrivacyShown = PrivacyLevel.Private });
+
+                await ctx.Reply("Private information will now be **shown** when looking up your own info. Use the `-public` flag to hide it.");
+            }
+            else
+            {
+                await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { DefaultPrivacyShown = PrivacyLevel.Public });
+
+                await ctx.Reply("Private information will now be **hidden** when looking up your own info. Use the `-private` flag to show it.");
+            }
         }
         else
         {
-            await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { ShowPrivateInfo = false });
+            var level = ctx.MatchPrivacyLevel(PrivacyLevel.Private);
+            if (level == PrivacyLevel.Private)
+            {
+                await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { DefaultPrivacyShown = PrivacyLevel.Private });
 
-            await ctx.Reply("Private information will now be **hidden** when looking up your own info. Use the `-private` flag to show it.");
+                await ctx.Reply("Private information will now be **shown** when looking up your own info. Use the `-public` flag to hide it.");
+            }
+            else if (level == PrivacyLevel.Public)
+            {
+                await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { DefaultPrivacyShown = PrivacyLevel.Public });
+
+                await ctx.Reply("Private information will now be **hidden** when looking up your own info. Use the `-private` flag to show it.");
+            }
+            else if (level == PrivacyLevel.Trusted)
+            {
+                await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { DefaultPrivacyShown = PrivacyLevel.Trusted });
+
+                await ctx.Reply("Private information will now be **hidden** when looking up your own info, but **trusted** information will still be shown. Use the `-private` flag to show private information or the `-public` flag to show only public information.");
+            }
         }
+
     }
 
     public async Task CaseSensitiveProxyTags(Context ctx)

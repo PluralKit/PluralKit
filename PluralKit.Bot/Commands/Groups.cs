@@ -64,9 +64,9 @@ public class Groups
         var dispatchData = new JObject();
         dispatchData.Add("name", groupName);
 
-        if (ctx.Config.GroupDefaultPrivate)
+        if (ctx.Config.GroupDefaultPrivacy != PrivacyLevel.Public)
         {
-            var patch = new GroupPatch().WithAllPrivacy(PrivacyLevel.Private);
+            var patch = new GroupPatch().WithAllPrivacy(ctx.Config.GroupDefaultPrivacy);
             await ctx.Repository.UpdateGroup(newGroup.Id, patch, conn);
             dispatchData.Merge(patch.ToJson());
         }

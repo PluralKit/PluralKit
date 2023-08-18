@@ -27,9 +27,9 @@ public partial class CommandTree
     public static Command ConfigPing = new Command("config ping", "config ping [on|off]", "Changes your system's ping preferences");
     public static Command ConfigAutoproxyAccount = new Command("config autoproxy account", "config autoproxy account [on|off]", "Toggles autoproxy globally for the current account");
     public static Command ConfigAutoproxyTimeout = new Command("config autoproxy timeout", "config autoproxy timeout [<duration>|off|reset]", "Sets the latch timeout duration for your system");
-    public static Command ConfigShowPrivate = new Command("config show private", "config show private [on|off]", "Sets whether private information is shown to linked accounts by default");
-    public static Command ConfigMemberDefaultPrivacy = new("config private member", "config private member [on|off]", "Sets whether member privacy is automatically set to private when creating a new member");
-    public static Command ConfigGroupDefaultPrivacy = new("config private group", "config private group [on|off]", "Sets whether group privacy is automatically set to private when creating a new group");
+    public static Command ConfigDefaultPrivacyShown = new Command("config privacy shown", "config privacy shown [on|off]", "Sets what level of private information is shown to linked accounts by default");
+    public static Command ConfigMemberDefaultPrivacy = new("config privacy member", "config privacy member [on|off]", "Sets what privacy level member privacy is automatically set to when creating a new member");
+    public static Command ConfigGroupDefaultPrivacy = new("config privacy group", "config privacy group [on|off]", "Sets what privacy level group privacy is automatically set to when creating a new group");
     public static Command AutoproxySet = new Command("autoproxy", "autoproxy [off|front|latch|member]", "Sets your system's autoproxy mode for the current server");
     public static Command AutoproxyOff = new Command("autoproxy off", "autoproxy off", "Disables autoproxying for your system in the current server");
     public static Command AutoproxyFront = new Command("autoproxy front", "autoproxy front", "Sets your system's autoproxy in this server to proxy the first member currently registered as front");
@@ -143,7 +143,7 @@ public partial class CommandTree
     public static Command[] ConfigCommands =
     {
         ConfigAutoproxyAccount, ConfigAutoproxyTimeout, ConfigTimezone, ConfigPing,
-        ConfigMemberDefaultPrivacy, ConfigGroupDefaultPrivacy, ConfigShowPrivate
+        ConfigMemberDefaultPrivacy, ConfigGroupDefaultPrivacy, ConfigDefaultPrivacyShown
     };
 
     public static Command[] AutoproxyCommands =
