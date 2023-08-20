@@ -25,6 +25,11 @@ let itemsPerPageSelection = {
 $: { if (pageOptions.view === "card") itemsPerPageSelection = {
         small: 12,
         default: 24,
+        large: 48
+    }
+    else if (pageOptions.view === "tiny") itemsPerPageSelection = {
+        small: 18,
+        default: 36,
         large: 60
     }
     else {
@@ -173,6 +178,7 @@ function resetPage() {
                 <Input bind:value={pageOptions.view} type="select" aria-label="view mode" on:change={(e) => onViewChange(e)} >
                     <option value="list">List</option>
                     <option value="card">Cards</option>
+                    <option value="tiny">Tiny</option>
                 </Input>
             </InputGroup>
         </Col>

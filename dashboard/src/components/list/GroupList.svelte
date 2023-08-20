@@ -13,6 +13,7 @@
     import api from '../../api';
     import type { ListOptions, PageOptions } from './types';
     import { createShortList, filterList, getPageAmount, paginateList } from './functions';
+    import TinyView from './TinyView.svelte';
 
     $: memberList = getContext<Writable<Member[]>>("members")
     $: groupList = getContext<Writable<Group[]>>("groups")
@@ -36,6 +37,7 @@
     // set the default items per page based on settings and view
     // this probably should be moved to it's own function
     if (pageOptions.view === "card") pageOptions.itemsPerPage = 24;
+    else if (pageOptions.view === "tiny") pageOptions.itemsPerPage = 36;
     else if (settings && settings.accessibility && settings.accessibility.expandedcards) pageOptions.itemsPerPage = 10;
     else pageOptions.itemsPerPage = 25;
 
@@ -86,7 +88,7 @@
 {#if pageOptions.view === "card"}
     <CardView {pageOptions} currentList={currentGroups} />
 {:else if pageOptions.view === "tiny"}
-    tiny!
+    <TinyView {pageOptions} currentList={currentGroups} />
 {:else}
 <ListView currentList={currentGroups} {pageOptions} {options} fullListLength={groups.length} />
 {/if}
