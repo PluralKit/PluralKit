@@ -133,24 +133,77 @@ function sort<T extends Member|Group>(list: T[], options: ListOptions): T[] {
             });
         } else if (options.sort === 'color') {
             newList = [...list].sort((a, b) => {
-                let aa = Number("0x" + a.color);
-                let bb = Number("0x" + b.color);
-
-                if (a.color === b.color) return a.name.localeCompare(b.name);
-
                 if (a.color === null) return 1;
                 if (b.color === null) return -1;
 
-                if (aa === bb) return a.name.localeCompare(b.name);
+                let aa = getColor(a.color);
+                let bb = getColor(b.color)
 
-                if (Number.isNaN(aa)) return 1;
-                if (Number.isNaN(bb)) return -1;
+                if (a.color === b.color) return a.name.localeCompare(b.name);
 
-                if (aa > bb) return 1;
-                if (aa < bb) return -1;
+                if (aa.hex === "ffffff") return -1;
+                if (bb.hex === "ffffff") return 1;
+
+                if (aa.hue === bb.hue) {
+                    if (aa.luma > bb.luma) return 1;
+                    if (aa.luma < bb.luma) return -1;
+                    return a.name.localeCompare(b.name);
+                }
+
+                if (aa.hue > bb.hue) return 1;
+                if (aa.hue < bb.hue) return -1;
             })
         }
     return newList;
+}
+
+function getColor(hex: string) {
+    hex = hex.replace("#", "")
+
+    // get the RGB values
+    let r = parseInt(hex.substring(0, 2), 16) / 255
+    let g = parseInt(hex.substring(2, 4), 16) / 255
+    let b = parseInt(hex.substring(4, 6), 16) / 255
+
+    // Getting the Max and Min values for Chroma 
+    let max = Math.max.apply(Math, [r, g, b]);
+    let min = Math.min.apply(Math, [r, g, b]);
+    
+    
+    // Variables for HSV value of hex color
+    let chr = max - min;
+    let hue = 0;
+    let val = max;
+    let sat = 0;
+    
+    if (val > 0) {
+        // Calculate Saturation only if Value isn't 0.
+        sat = chr / val;
+        if (sat > 0) {
+            if (r == max) {
+                hue = 60 * (((g - min) - (b - min)) / chr);
+                if (hue < 0) {
+                    hue += 360;
+                }
+            } else if (g == max) {
+                hue = 120 + 60 * (((b - min) - (r - min)) / chr);
+            } else if (b == max) {
+                hue = 240 + 60 * (((r - min) - (g - min)) / chr);
+            }
+        }
+    }
+
+    let color: Record<string, number|string> = {}
+    color.hex = hex;
+    color.chroma = chr;
+    color.hue = hue;
+    color.sat = sat;
+    color.val = val;
+    color.luma = 0.3 * r + 0.59 * g + 0.11 * b;
+    color.red = parseInt(hex.substring(0, 2), 16);
+    color.green = parseInt(hex.substring(2, 4), 16);
+    color.blue = parseInt(hex.substring(4, 6), 16);
+    return color;
 }
 
 function group(list: Member[]|Group[], groups: Group[], options: ListOptions, type?: string): Group[]|Member[] {
