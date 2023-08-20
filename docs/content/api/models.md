@@ -154,3 +154,4 @@ Every PluralKit entity has two IDs: a short (5-character) ID and a longer UUID. 
 |guild_id|snowflake|only sent if the guild ID isn't already known (in dispatch payloads)|
 |display_name|?string|100-character limit|
 |avatar_url|?string|256-character limit, must be a publicly-accessible URL|
+|keep_proxy|?boolean||
