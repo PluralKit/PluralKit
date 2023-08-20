@@ -14,6 +14,7 @@
     import type { ListOptions, List, PageOptions } from './types';
     import { createShortList, filterList, getPageAmount, paginateList } from './functions';
     import TinyView from './TinyView.svelte';
+    import TextView from './TextView.svelte';
 
     $: memberList = getContext<Writable<Member[]>>("members")
     $: groupList = getContext<Writable<Group[]>>("groups")
@@ -89,6 +90,8 @@
     <CardView {pageOptions} currentList={currentMembers} />
 {:else if pageOptions.view === "tiny"}
     <TinyView {pageOptions} currentList={currentMembers} />
+{:else if pageOptions.view === "text"}
+    <TextView {pageOptions} listOptions={options} currentList={currentMembers} />
 {:else}
 <ListView currentList={currentMembers} {pageOptions} {options} fullListLength={members.length} />
 {/if}

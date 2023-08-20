@@ -46,26 +46,11 @@ const dispatch = createEventDispatcher();
 function onViewChange(e: any) {
     resetPage();
     if (e.target?.value === 'card') {
-        switch (pageOptions.itemsPerPage) {
-            case 10: pageOptions.itemsPerPage = 12;
-            break;
-            case 25: pageOptions.itemsPerPage = 24;
-            break;
-            case 50: pageOptions.itemsPerPage = 60;
-            break;
-            default: pageOptions.itemsPerPage = 24;
-            break;
-        }
-    } else if (e.target?.value === 'list') {
-        switch (pageOptions.itemsPerPage) {
-            case 12: pageOptions.itemsPerPage = 10;
-            break;
-            case 24: pageOptions.itemsPerPage = 25;
-            break;
-            case 60: pageOptions.itemsPerPage = 50;
-            break;
-            default: pageOptions.itemsPerPage = 25
-        }
+        pageOptions.itemsPerPage = 24
+    } else if (e.target?.value === 'tiny') {
+        pageOptions.itemsPerPage = 36
+    } else {
+        pageOptions.itemsPerPage = 25
     }
     dispatch("viewChange", e.target.value);
 }
@@ -179,11 +164,31 @@ function resetPage() {
                     <option value="list">List</option>
                     <option value="card">Cards</option>
                     <option value="tiny">Tiny</option>
+                    <option value="text">Text</option>
                 </Input>
             </InputGroup>
         </Col>
         <Col xs={12} md={6} lg={4} class="mb-2">
-            <Link to={getRandomizerUrl()}><Button class="w-100" color="secondary" tabindex={-1} aria-label={`randomize ${pageOptions.type}s`}>Random {capitalizeFirstLetter(pageOptions.type)}</Button></Link>
+            {#if pageOptions.view === "text"}
+                <InputGroup>
+                    <InputGroupText>Extra Info</InputGroupText>
+                    <Input bind:value={options.extra} type="select" aria-label="view mode" on:change={(e) => onViewChange(e)} >
+                        <option value={null}>None</option>
+                        <option value="display_name">Display Name</option>
+                        {#if pageOptions.type === "member"}
+                        <option value="avatar_url">Avatar Url</option>
+                        <option value="webhook_avatar_url">Proxy Avatar Url</option>
+                        <option value="pronouns">Pronouns</option>
+                        <option value="birthday">Birthday</option>
+                        {:else if pageOptions.type === "group"}
+                        <option value="icon">Icon Url</option>
+                        {/if}
+                        <option value="banner">Banner Url</option>
+                        <option value="color">Color</option>
+                        <option value="created">Created</option>
+                    </Input>
+                </InputGroup>
+            {/if}
         </Col>
     </Row>
     <hr/>
@@ -452,5 +457,12 @@ function resetPage() {
                 {/if}
             </Row>
         {/if}
+        <hr/>
+        <Row>
+            <Col></Col>
+            <Col xs={12} md={4} lg={3} class="mb-2">
+                <Link to={getRandomizerUrl()}><Button class="w-100" color="secondary" tabindex={-1} aria-label={`randomize ${pageOptions.type}s`}>Random {capitalizeFirstLetter(pageOptions.type)}</Button></Link>
+            </Col>
+        </Row>
     </CardBody>
 </Card>

@@ -57,7 +57,9 @@ export interface ListOptions {
     sort: 'name'|'description'|'birthday'|'pronouns'|'display_name'|'id'|'none'|'created' | 'color',
     order: "ascending"|"descending",
     show: "all"|"private"|"public",
-    // so we can change the key for duplicate members on the randomize page
+    
+    // text only view options
+    extra: keyof Member | keyof Group | null
 }
 
 export interface PageOptions {
@@ -125,7 +127,8 @@ export const defaultListOptions: ListOptions = {
     },
     sort: 'name',
     order: 'ascending',
-    show: 'all'
+    show: 'all',
+    extra: 'display_name'
 }
 
 export const defaultPageOptions: PageOptions = {
