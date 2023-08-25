@@ -1,4 +1,5 @@
 #nullable enable
+using System;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -101,6 +102,11 @@ public class ProxiedMessage
         if (originalMsg == null)
             throw new PKError("Could not edit message.");
 
+        // Regex flag
+        var useRegex = ctx.MatchFlag("regex", "x");
+        // Replace all Regex matches instead of just the first one
+        var globalMatch = ctx.MatchFlag("global", "g");
+        
         // Check if we should append or prepend
         var mutateSpace = ctx.MatchFlag("nospace", "ns") ? "" : " ";
         var append = ctx.MatchFlag("append", "a");
@@ -118,12 +124,51 @@ public class ProxiedMessage
         if (newContent == null)
             throw new PKSyntaxError("You need to include the message to edit in.");
 
+        // Can't append or prepend a Regex
+        if (useRegex && (append || prepend))
+            throw new PKError("You can't use the append or prepend options with a Regex.");
+
+        // Global match doesn't mean anything outside of Regexes
+        if (globalMatch && !useRegex)
+            throw new PKError("Global match option requires Regex.");
+
+        // Use the Regex to substitute the message content
+        if (useRegex)
+        {
+            const string regexErrorStr = "Could not parse Regex. The expected format is s/X/Y, where X is a valid Regex to search for matches of and Y is a substitution string.";
+            
+            var splitString = newContent.Split('/');
+            if (splitString.Length != 3)
+                throw new PKError(regexErrorStr);
+            if (splitString[0] != "s")
+                throw new PKError(regexErrorStr);
+            
+            try
+            {
+                // I would use RegexOptions.NonBacktracking but that's only .NET 7 :(
+                var regex = new Regex(splitString[1], RegexOptions.None, TimeSpan.FromSeconds(0.5));
+                var numMatches = globalMatch ? -1 : 1; // Negative means all matches
+                newContent = regex.Replace(originalContent!, splitString[2], numMatches);
+            }
+            catch (ArgumentException)
+            {
+                throw new PKError(regexErrorStr);
+            }
+            catch (RegexMatchTimeoutException)
+            {
+                throw new PKError("Regex took too long to run.");
+            }
+        }
+
         // Append or prepend the new content to the original message content if needed.
         // If no flag is supplied, the new contents will completly overwrite the old contents
         // If both flags are specified. the message will be prepended AND appended
-        if (append && prepend) newContent = $"{newContent}{mutateSpace}{originalContent}{mutateSpace}{newContent}";
-        else if (append) newContent = $"{originalContent}{mutateSpace}{newContent}";
-        else if (prepend) newContent = $"{newContent}{mutateSpace}{originalContent}";
+        if (append && prepend)
+            newContent = $"{newContent}{mutateSpace}{originalContent}{mutateSpace}{newContent}";
+        else if (append)
+            newContent = $"{originalContent}{mutateSpace}{newContent}";
+        else if (prepend)
+            newContent = $"{newContent}{mutateSpace}{originalContent}";
 
         if (newContent.Length > 2000)
             throw new PKError("PluralKit cannot proxy messages over 2000 characters in length.");
