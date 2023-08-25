@@ -106,7 +106,7 @@ public class ProxiedMessage
         var useRegex = ctx.MatchFlag("regex", "x");
         // Replace all Regex matches instead of just the first one
         var globalMatch = ctx.MatchFlag("global", "g");
-        
+
         // Check if we should append or prepend
         var mutateSpace = ctx.MatchFlag("nospace", "ns") ? "" : " ";
         var append = ctx.MatchFlag("append", "a");
@@ -136,13 +136,13 @@ public class ProxiedMessage
         if (useRegex)
         {
             const string regexErrorStr = "Could not parse Regex. The expected format is s/X/Y, where X is a valid Regex to search for matches of and Y is a substitution string.";
-            
+
             var splitString = newContent.Split('/');
             if (splitString.Length != 3)
                 throw new PKError(regexErrorStr);
             if (splitString[0] != "s")
                 throw new PKError(regexErrorStr);
-            
+
             try
             {
                 // I would use RegexOptions.NonBacktracking but that's only .NET 7 :(
