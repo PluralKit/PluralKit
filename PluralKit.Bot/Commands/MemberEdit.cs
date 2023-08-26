@@ -494,7 +494,11 @@ public class MemberEdit
     public async Task KeepProxy(Context ctx, PKMember target)
     {
         ctx.CheckSystem().CheckOwnMember(target);
-        var memberGuildConfig = await ctx.Repository.GetMemberGuild(ctx.Guild.Id, target.Id);
+        MemberGuildSettings? memberGuildConfig = null;
+        if (ctx.Guild != null)
+        {
+            memberGuildConfig = await ctx.Repository.GetMemberGuild(ctx.Guild.Id, target.Id);
+        }
 
         bool newValue;
         if (ctx.Match("on", "enabled", "true", "yes"))
@@ -518,9 +522,9 @@ public class MemberEdit
             else
                 keepProxyStatusMessage += "This member has keepproxy **disabled**. Proxy tags will **not** be included in the resulting message when proxying.";
 
-            if (memberGuildConfig.KeepProxy.HasValue && memberGuildConfig.KeepProxy.Value)
+            if (memberGuildConfig != null && memberGuildConfig.KeepProxy.HasValue && memberGuildConfig.KeepProxy.Value)
                 keepProxyStatusMessage += $"\n{Emojis.Warn} This member has keepproxy **enabled in this server**, which means proxy tags will **always** be included when proxying in this server, regardless of the global keepproxy. To clear this setting in this server, type `pk;m <member> serverkeepproxy clear`.";
-            else if (memberGuildConfig.KeepProxy.HasValue && !memberGuildConfig.KeepProxy.Value)
+            else if (memberGuildConfig != null && memberGuildConfig.KeepProxy.HasValue && !memberGuildConfig.KeepProxy.Value)
                 keepProxyStatusMessage += $"\n{Emojis.Warn} This member has keepproxy **disabled in this server**, which means proxy tags will **never** be included when proxying in this server, regardless of the global keepproxy. To clear this setting in this server, type `pk;m <member> serverkeepproxy clear`.";
 
             await ctx.Reply(keepProxyStatusMessage);
@@ -539,9 +543,9 @@ public class MemberEdit
         else
             keepProxyUpdateMessage += $"{Emojis.Success} this member now has keepproxy **disabled**. Member proxy tags will be **included** in the resulting message when proxying.";
 
-        if (memberGuildConfig.KeepProxy.HasValue && memberGuildConfig.KeepProxy.Value)
+        if (memberGuildConfig != null && memberGuildConfig.KeepProxy.HasValue && memberGuildConfig.KeepProxy.Value)
             keepProxyUpdateMessage += $"\n{Emojis.Warn} This member has keepproxy **enabled in this server**, which means proxy tags will **always** be included when proxying in this server, regardless of the global keepproxy. To clear this setting in this server, type `pk;m <member> serverkeepproxy clear`.";
-        else if (memberGuildConfig.KeepProxy.HasValue && !memberGuildConfig.KeepProxy.Value)
+        else if (memberGuildConfig != null && memberGuildConfig.KeepProxy.HasValue && !memberGuildConfig.KeepProxy.Value)
             keepProxyUpdateMessage += $"\n{Emojis.Warn} This member has keepproxy **disabled in this server**, which means proxy tags will **never** be included when proxying in this server, regardless of the global keepproxy. To clear this setting in this server, type `pk;m <member> serverkeepproxy clear`.";
 
         await ctx.Reply(keepProxyUpdateMessage);
