@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Row, Col, Button, Alert, ListGroup, ListGroupItem, Spinner } from 'sveltestrap';
+    import { Row, Col, Button, Alert, ListGroup, ListGroupItem, Spinner, TabContent, TabPane, Card, CardBody } from 'sveltestrap';
     import ListPagination from "../common/ListPagination.svelte";
     import twemoji from "twemoji";
     import Svelecte, { addFormatter } from 'svelecte';
@@ -100,30 +100,70 @@
         }
     }
 
+    $: shortGroupList = (list: Group[]) => {
+        let str = []
+        list.forEach(g => {
+            str.push(`[\`${g.id}\`] **${g.display_name ? g.display_name : g.name}**`)
+        })
+
+        return str.join("\n")
+    }
+
+    $: longGroupList = (list: Group[]) => list.map(g => g.display_name ? g.display_name : g.name).join(", ")
+
 </script>
 {#if err}
     <Alert color="danger">{err}</Alert>
+{/if}
+{#if longGroupList(groupsWithMember).length > 1000}
+<Alert color="warning">The total length of the group list is <b>greater than 1000 characters</b>, which means the group list will be cut short when viewed in the bot!</Alert>    
 {/if}
 <Row>
     <Col xs={12} lg={6} class="text-center mb-3">
         <h5><div class="icon d-inline-block">
             <FaFolderOpen />
         </div>Current Groups
-        {#if finalGroupsList && finalGroupsList.length > 0}
+        {#if groupsWithMember && groupsWithMember.length > 0}
             ({groupsWithMember.length} total)
         {/if}
         </h5>
-        <ListPagination bind:currentPage bind:pageAmount bind:smallPages/>
-        {#if finalGroupsList && finalGroupsList.length > 0}
-        <ListGroup>
-            {#each finalGroupsList as group, index (group.id)}
-            <ListGroupItem class="d-flex"><span bind:this={listGroupElements[index]} class="d-flex justify-content-between flex-grow-1"><span><b>{group.name}</b> (<code>{group.id}</code>)</span> <span><AwaitHtml htmlPromise={group.display_name ? parseMarkdown(group.display_name) : Promise.resolve("")} /></span></span></ListGroupItem>
-            {/each}
-        </ListGroup>
-        {:else}
-        <p>This member is inside no groups.</p>
-        <p>You can add groups in this menu!</p>
-        {/if}
+        <TabContent>
+            <TabPane tabId="list" tab="List" active={true}>
+            <Card>
+                <CardBody>
+                    {#if groupsWithMember && groupsWithMember.length > 0}
+                    <ListPagination bind:currentPage bind:pageAmount bind:smallPages/>
+                    <ListGroup>
+                        {#each finalGroupsList as group, index (group.id)}
+                        <ListGroupItem class="d-flex"><span bind:this={listGroupElements[index]} class="d-flex justify-content-between flex-grow-1"><span><b>{group.name}</b> (<code>{group.id}</code>)</span> <span><AwaitHtml htmlPromise={group.display_name ? parseMarkdown(group.display_name) : Promise.resolve("")} /></span></span></ListGroupItem>
+                        {/each}
+                    </ListGroup>
+                    {:else}
+                    <p>This member is not a part of any group.</p>
+                    <p>You can add this member to groups in this menu!</p>
+                {/if}
+                </CardBody>
+            </Card>
+            </TabPane>
+            <TabPane tabId="formatted" tab="Formatted">
+                <Card>
+                    <CardBody>
+                        {#if groupsWithMember && groupsWithMember.length > 0}
+                        <p class="mb-0" style="text-align: left;">
+                            {#if finalGroupsList.length <= 5}
+                                <AwaitHtml htmlPromise={parseMarkdown(shortGroupList(groupsWithMember), { embed: true, parseTimestamps: true })} />
+                            {:else}
+                                <AwaitHtml htmlPromise={parseMarkdown(longGroupList(groupsWithMember), { embed: true, parseTimestamps: true })} />
+                            {/if}
+                        </p>
+                        {:else}
+                            <p>This member is not a part of any group.</p>
+                            <p>You can add this member to groups in this menu!</p>
+                        {/if}
+                    </CardBody>
+                </Card>
+            </TabPane>
+        </TabContent>
     </Col>
     <Col xs={12} lg={6} class="text-center mb-3">
         <h5><div class="icon d-inline-block">
