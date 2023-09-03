@@ -206,4 +206,28 @@ public static class ContextEntityArgumentsExt
 
         return guild;
     }
+
+    public static async Task<Guild> FindGuildTarget(this Context ctx)
+    {
+        if (ulong.TryParse(ctx.PeekArgument(), out var guildId))
+        {
+            var guild = await ctx.Rest.GetGuildOrNull(guildId);
+            GuildMember guildMember = null;
+            if (guild != null)
+            {
+                guildMember = await ctx.Rest.GetGuildMember(guildId, ctx.Author.Id);
+                ctx.PopArgument();
+            }
+            if (guild == null || guildMember == null)
+                throw Errors.GuildNotFound(guildId);
+
+            return guild;
+        }
+
+        // if guild isn't null return it, if it is null. return null. 
+        // only returns null if there is no target *and* we are not in a server
+        if (ctx.Guild == null)
+            throw Errors.NoGuild();
+        return ctx.Guild;
+    }
 }

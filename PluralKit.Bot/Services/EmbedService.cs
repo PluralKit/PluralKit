@@ -45,16 +45,7 @@ public class EmbedService
         var accounts = await _repo.GetSystemAccounts(system.Id);
         var users = (await GetUsers(accounts)).Select(x => x.User?.NameAndMention() ?? $"(deleted account {x.Id})");
 
-        var countctx = LookupContext.ByNonOwner;
-        if (cctx.MatchFlag("a", "all"))
-        {
-            if (system.Id == cctx.System.Id)
-                countctx = LookupContext.ByOwner;
-            else
-                throw Errors.LookupNotAllowed;
-        }
-
-        var memberCount = await _repo.GetSystemMemberCount(system.Id, countctx == LookupContext.ByOwner ? null : PrivacyLevel.Public);
+        var memberCount = await _repo.GetSystemMemberCount(system.Id, cctx.GetPrivacyFilter(await cctx.DirectLookupContextFor(system.Id)));
 
         uint color;
         try
@@ -222,7 +213,7 @@ public class EmbedService
             eb.Image(new Embed.EmbedImage(member.BannerImage));
 
         var description = "";
-        if (member.MemberVisibility == PrivacyLevel.Private) description += "*(this member is hidden)*\n";
+        if (member.MemberVisibility != PrivacyLevel.Public) description += "*(this member is hidden)*\n";
         if (guildSettings?.AvatarUrl != null)
             if (member.AvatarFor(ctx) != null)
                 description +=
@@ -267,25 +258,16 @@ public class EmbedService
 
     public async Task<Embed> CreateGroupEmbed(Context ctx, PKSystem system, PKGroup target)
     {
-        var pctx = ctx.LookupContextFor(system.Id);
+        var pctx = await ctx.LookupContextFor(system.Id);
 
-        var countctx = LookupContext.ByNonOwner;
-        if (ctx.MatchFlag("a", "all"))
-        {
-            if (system.Id == ctx.System.Id)
-                countctx = LookupContext.ByOwner;
-            else
-                throw Errors.LookupNotAllowed;
-        }
+        var memberCount = await _repo.GetGroupMemberCount(target.Id, ctx.GetPrivacyFilter(await ctx.DirectLookupContextFor(target.System)));
 
-        var memberCount = await _repo.GetGroupMemberCount(target.Id, countctx == LookupContext.ByOwner ? null : PrivacyLevel.Public);
-
-        var nameField = target.NameFor(ctx);
+        var nameField = target.NameFor(pctx);
         var systemGuildSettings = ctx.Guild != null ? await _repo.GetSystemGuild(ctx.Guild.Id, system.Id) : null;
         if (systemGuildSettings != null && systemGuildSettings.DisplayName != null)
             nameField = $"{nameField} ({systemGuildSettings.DisplayName})";
-        else if (system.NameFor(ctx) != null)
-            nameField = $"{nameField} ({system.NameFor(ctx)})";
+        else if (system.NameFor(pctx) != null)
+            nameField = $"{nameField} ({system.NameFor(pctx)})";
         else
             nameField = $"{nameField} ({system.Name})";
 
@@ -319,11 +301,11 @@ public class EmbedService
             if (memberCount == 0 && pctx == LookupContext.ByOwner)
                 // Only suggest the add command if this is actually the owner lol
                 eb.Field(new Embed.Field("Members (0)",
-                    $"Add one with `pk;group {target.Reference(ctx)} add <member>`!"));
+                    $"Add one with `pk;group {target.Reference(pctx)} add <member>`!"));
             else
             {
                 var name = pctx == LookupContext.ByOwner
-                    ? target.Reference(ctx)
+                    ? target.Reference(pctx)
                     : target.Hid;
                 eb.Field(new Embed.Field($"Members ({memberCount})", $"(see `pk;group {name} list`)"));
             }
@@ -521,5 +503,50 @@ public class EmbedService
                     .FormatDuration(), true));
 
         return Task.FromResult(eb.Build());
+    }
+
+    public async Task<Embed[]> CreateTrustedEmbeds(Context ctx, (IEnumerable<ulong> users, IEnumerable<ulong> guilds) trusted)
+    {
+        var color = ctx.System.Color;
+        uint? embedColor;
+        try
+        {
+            embedColor = color?.ToDiscordColor();
+        }
+        catch (ArgumentException)
+        {
+            embedColor = null;
+        }
+
+        var usersEmbed = new EmbedBuilder()
+            .Title("Trusted users for your system")
+            .Color(embedColor)
+            .Footer(new Embed.EmbedFooter($"Showing trusted users for the system {ctx.System.NameFor(LookupContext.ByOwner)}")); //todo accept flags
+        var guildsEmbed = new EmbedBuilder()
+            .Title("Trusted servers for your system")
+            .Color(embedColor)
+            .Footer(new Embed.EmbedFooter(
+                $"Showing trusted servers for the system {ctx.System.NameFor(LookupContext.ByOwner)}"));
+
+        if (trusted.users.Any())
+        {
+            var users = (await GetUsers(trusted.users)).Select(x => x.User?.NameAndMention() ?? $"(deleted account {x.Id})");
+            usersEmbed.Description(string.Join("\n", users).Truncate(4000));
+        }
+        else
+        {
+            usersEmbed.Description("*(none)*");
+        }
+        if (trusted.guilds.Any())
+        {
+            var guilds = (trusted.guilds).Select(x => $"https://discord.com/channels/{x}/1 ([link](<https://discord.com/channels/{x}>))");
+            guildsEmbed.Description(string.Join("\n", guilds).Truncate(4000));
+        }
+        else
+        {
+            guildsEmbed.Description("*(none)*");
+        }
+
+        return new[] { usersEmbed.Build(), guildsEmbed.Build() };
     }
 }

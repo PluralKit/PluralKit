@@ -35,13 +35,14 @@ public class Switch
         // Find the last switch and its members if applicable
         await using var conn = await ctx.Database.Obtain();
         var lastSwitch = await ctx.Repository.GetLatestSwitch(ctx.System.Id);
+        var lctx = await ctx.LookupContextFor(ctx.System.Id);
         if (lastSwitch != null)
         {
             var lastSwitchMembers = ctx.Repository.GetSwitchMembers(conn, lastSwitch.Id);
             // Make sure the requested switch isn't identical to the last one
             if (await lastSwitchMembers.Select(m => m.Id)
                     .SequenceEqualAsync(members.Select(m => m.Id).ToAsyncEnumerable()))
-                throw Errors.SameSwitch(members, ctx.LookupContextFor(ctx.System.Id));
+                throw Errors.SameSwitch(members, lctx);
         }
 
         await ctx.Repository.AddSwitch(conn, ctx.System.Id, members.Select(m => m.Id).ToList());
@@ -50,10 +51,10 @@ public class Switch
             await ctx.Reply($"{Emojis.Success} Switch-out registered.");
         else if (members.Count == 1)
             await ctx.Reply(
-                $"{Emojis.Success} Switch registered. Current fronter is now {string.Join(", ", members.Select(m => m.NameFor(ctx)))}.");
+                $"{Emojis.Success} Switch registered. Current fronter is now {string.Join(", ", members.Select(m => m.NameFor(lctx)))}.");
         else
             await ctx.Reply(
-                $"{Emojis.Success} Switch registered. Current fronters are now {string.Join(", ", members.Select(m => m.NameFor(ctx)))}.");
+                $"{Emojis.Success} Switch registered. Current fronters are now {string.Join(", ", members.Select(m => m.NameFor(lctx)))}.");
     }
 
     public async Task SwitchMove(Context ctx)
@@ -82,11 +83,13 @@ public class Switch
             if (lastTwoSwitches[1].Timestamp > time.ToInstant())
                 throw Errors.SwitchMoveBeforeSecondLast(lastTwoSwitches[1].Timestamp.InZone(tz));
 
+        var lctx = await ctx.LookupContextFor(ctx.System.Id);
+
         // Now we can actually do the move, yay!
         // But, we do a prompt to confirm.
         var lastSwitchMembers = ctx.Database.Execute(conn => ctx.Repository.GetSwitchMembers(conn, lastTwoSwitches[0].Id));
         var lastSwitchMemberStr =
-            string.Join(", ", await lastSwitchMembers.Select(m => m.NameFor(ctx)).ToListAsync());
+            string.Join(", ", await lastSwitchMembers.Select(m => m.NameFor(lctx)).ToListAsync());
         var lastSwitchTime = lastTwoSwitches[0].Timestamp.ToUnixTimeSeconds(); // .FormatZoned(ctx.System)
         var lastSwitchDeltaStr =
             (SystemClock.Instance.GetCurrentInstant() - lastTwoSwitches[0].Timestamp).FormatDuration();
@@ -130,15 +133,16 @@ public class Switch
         if (lastSwitch == null) throw Errors.NoRegisteredSwitches;
         var lastSwitchMembers = ctx.Repository.GetSwitchMembers(conn, lastSwitch.Id);
         // Make sure switch isn't being edited to have the members it already does
+        var lctx = await ctx.LookupContextFor(ctx.System.Id);
         if (await lastSwitchMembers.Select(m => m.Id)
                 .SequenceEqualAsync(members.Select(m => m.Id).ToAsyncEnumerable()))
-            throw Errors.SameSwitch(members, ctx.LookupContextFor(ctx.System.Id));
+            throw Errors.SameSwitch(members, lctx);
 
         // Send a prompt asking the user to confirm the switch
         var lastSwitchDeltaStr = (SystemClock.Instance.GetCurrentInstant() - lastSwitch.Timestamp).FormatDuration();
-        var lastSwitchMemberStr =
-            string.Join(", ", await lastSwitchMembers.Select(m => m.NameFor(ctx)).ToListAsync());
-        var newSwitchMemberStr = string.Join(", ", members.Select(m => m.NameFor(ctx)));
+        var lastSwitchMemberStr = await lastSwitchMembers.CountAsync() == 0 ? "*no fronter*" :
+            string.Join(", ", await lastSwitchMembers.Select(m => m.NameFor(lctx)).ToListAsync());
+        var newSwitchMemberStr = string.Join(", ", members.Select(m => m.NameFor(lctx)));
 
         string msg;
         if (members.Count == 0)
@@ -175,13 +179,15 @@ public class Switch
             return;
         }
 
+        var lctx = await ctx.LookupContextFor(ctx.System.Id);
+
         // Fetch the last two switches for the system to do bounds checking on
         var lastTwoSwitches = await ctx.Repository.GetSwitches(ctx.System.Id).Take(2).ToListAsync();
         if (lastTwoSwitches.Count == 0) throw Errors.NoRegisteredSwitches;
 
         var lastSwitchMembers = ctx.Database.Execute(conn => ctx.Repository.GetSwitchMembers(conn, lastTwoSwitches[0].Id));
         var lastSwitchMemberStr =
-            string.Join(", ", await lastSwitchMembers.Select(m => m.NameFor(ctx)).ToListAsync());
+            string.Join(", ", await lastSwitchMembers.Select(m => m.NameFor(lctx)).ToListAsync());
         var lastSwitchDeltaStr =
             (SystemClock.Instance.GetCurrentInstant() - lastTwoSwitches[0].Timestamp).FormatDuration();
 
@@ -194,7 +200,7 @@ public class Switch
         {
             var secondSwitchMembers = ctx.Database.Execute(conn => ctx.Repository.GetSwitchMembers(conn, lastTwoSwitches[1].Id));
             var secondSwitchMemberStr =
-                string.Join(", ", await secondSwitchMembers.Select(m => m.NameFor(ctx)).ToListAsync());
+                string.Join(", ", await secondSwitchMembers.Select(m => m.NameFor(lctx)).ToListAsync());
             var secondSwitchDeltaStr = (SystemClock.Instance.GetCurrentInstant() - lastTwoSwitches[1].Timestamp)
                 .FormatDuration();
             msg = $"{Emojis.Warn} This will delete the latest switch ({lastSwitchMemberStr}, {lastSwitchDeltaStr} ago). The next latest switch is {secondSwitchMemberStr} ({secondSwitchDeltaStr} ago). Is this okay?";

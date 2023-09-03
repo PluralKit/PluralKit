@@ -348,6 +348,8 @@ public partial class CommandTree
             await ctx.Execute<MemberEdit>(MemberPrivacy, m => m.Privacy(ctx, target, PrivacyLevel.Private));
         else if (ctx.Match("public", "shown", "show"))
             await ctx.Execute<MemberEdit>(MemberPrivacy, m => m.Privacy(ctx, target, PrivacyLevel.Public));
+        else if (ctx.Match("trusted", "trusted-only"))
+            await ctx.Execute<MemberEdit>(MemberPrivacy, m => m.Privacy(ctx, target, PrivacyLevel.Trusted));
         else if (ctx.Match("soulscream"))
             await ctx.Execute<Member>(MemberInfo, m => m.Soulscream(ctx, target));
         else if (!ctx.HasNext()) // Bare command
@@ -388,10 +390,12 @@ public partial class CommandTree
                 await ctx.Execute<Random>(GroupMemberRandom, r => r.GroupMember(ctx, target));
             else if (ctx.Match("privacy"))
                 await ctx.Execute<Groups>(GroupPrivacy, g => g.GroupPrivacy(ctx, target, null));
-            else if (ctx.Match("public", "pub"))
+            else if (ctx.Match("public", "shown", "show"))
                 await ctx.Execute<Groups>(GroupPrivacy, g => g.GroupPrivacy(ctx, target, PrivacyLevel.Public));
-            else if (ctx.Match("private", "priv"))
+            else if (ctx.Match("private", "hidden", "hide"))
                 await ctx.Execute<Groups>(GroupPrivacy, g => g.GroupPrivacy(ctx, target, PrivacyLevel.Private));
+            else if (ctx.Match("trusted", "trusted-only"))
+                await ctx.Execute<Groups>(GroupPrivacy, g => g.GroupPrivacy(ctx, target, PrivacyLevel.Trusted));
             else if (ctx.Match("delete", "destroy", "erase", "yeet"))
                 await ctx.Execute<Groups>(GroupDelete, g => g.DeleteGroup(ctx, target));
             else if (ctx.Match("avatar", "picture", "icon", "image", "pic", "pfp"))
@@ -519,23 +523,102 @@ public partial class CommandTree
             return ctx.Execute<Config>(null, m => m.ShowConfig(ctx));
 
         if (ctx.MatchMultiple(new[] { "autoproxy", "ap" }, new[] { "account", "ac" }))
-            return ctx.Execute<Config>(null, m => m.AutoproxyAccount(ctx));
+            return ctx.Execute<Config>(ConfigAutoproxyAccount, m => m.AutoproxyAccount(ctx));
         if (ctx.MatchMultiple(new[] { "autoproxy", "ap" }, new[] { "timeout", "tm" }))
-            return ctx.Execute<Config>(null, m => m.AutoproxyTimeout(ctx));
+            return ctx.Execute<Config>(ConfigAutoproxyTimeout, m => m.AutoproxyTimeout(ctx));
         if (ctx.Match("timezone", "zone", "tz"))
-            return ctx.Execute<Config>(null, m => m.SystemTimezone(ctx));
+            return ctx.Execute<Config>(ConfigTimezone, m => m.SystemTimezone(ctx));
         if (ctx.Match("ping"))
-            return ctx.Execute<Config>(null, m => m.SystemPing(ctx));
-        if (ctx.MatchMultiple(new[] { "private" }, new[] { "member" }) || ctx.Match("mp"))
-            return ctx.Execute<Config>(null, m => m.MemberDefaultPrivacy(ctx));
-        if (ctx.MatchMultiple(new[] { "private" }, new[] { "group" }) || ctx.Match("gp"))
-            return ctx.Execute<Config>(null, m => m.GroupDefaultPrivacy(ctx));
-        if (ctx.MatchMultiple(new[] { "show" }, new[] { "private" }) || ctx.Match("sp"))
-            return ctx.Execute<Config>(null, m => m.ShowPrivateInfo(ctx));
-        if (ctx.MatchMultiple(new[] { "proxy" }, new[] { "case" }))
+            return ctx.Execute<Config>(ConfigPing, m => m.SystemPing(ctx));
+        if (ctx.MatchMultiple(new[] { "member" }, new[] { "privacy" }) || ctx.Match("mp", "pm"))
+        {
+            var deprecated = true;
+            try
+            {
+                ctx.MatchToggle();
+            }
+            catch
+            {
+                deprecated = false;
+            }
+            return ctx.Execute<Config>(ConfigMemberDefaultPrivacy, m => m.MemberDefaultPrivacy(ctx), deprecated);
+        }
+        if (ctx.MatchMultiple(new[] { "group" }, new[] { "privacy" }) || ctx.Match("gp", "pg"))
+        {
+            var deprecated = true;
+            try
+            {
+                ctx.MatchToggle();
+            }
+            catch
+            {
+                deprecated = false;
+            }
+            return ctx.Execute<Config>(ConfigGroupDefaultPrivacy, m => m.GroupDefaultPrivacy(ctx), deprecated);
+        }
+        if (ctx.MatchMultiple(new[] { "show" }, new[] { "private", "privacy" }) || ctx.Match("sp", "ps"))
+        {
+            var deprecated = true;
+            try
+            {
+                ctx.MatchToggle();
+            }
+            catch
+            {
+                deprecated = false;
+            }
+            return ctx.Execute<Config>(ConfigDefaultPrivacyShown, m => m.DefaultPrivacyShown(ctx), deprecated);
+        }
+        if (ctx.Match("privacy", "private"))
+        {
+
+            if (ctx.Match("member"))
+            {
+                var deprecated = true;
+                try
+                {
+                    ctx.MatchToggle();
+                }
+                catch
+                {
+                    deprecated = false;
+                }
+                return ctx.Execute<Config>(ConfigMemberDefaultPrivacy, m => m.MemberDefaultPrivacy(ctx), deprecated);
+            }
+            if (ctx.Match("group"))
+            {
+                var deprecated = true;
+                try
+                {
+                    ctx.MatchToggle();
+                }
+                catch
+                {
+                    deprecated = false;
+                }
+                return ctx.Execute<Config>(ConfigGroupDefaultPrivacy, m => m.GroupDefaultPrivacy(ctx), deprecated);
+            }
+            if (ctx.Match("shown"))
+            {
+                var deprecated = true;
+                try
+                {
+                    ctx.MatchToggle();
+                }
+                catch
+                {
+                    deprecated = false;
+                }
+                return ctx.Execute<Config>(ConfigDefaultPrivacyShown, m => m.DefaultPrivacyShown(ctx), deprecated);
+            }
+        }
+        else if (ctx.MatchMultiple(new[] { "proxy" }, new[] { "case" }))
             return ctx.Execute<Config>(null, m => m.CaseSensitiveProxyTags(ctx));
-        if (ctx.MatchMultiple(new[] { "proxy" }, new[] { "error" }) || ctx.Match("pe"))
+        else if (ctx.MatchMultiple(new[] { "proxy" }, new[] { "error" }) || ctx.Match("pe"))
             return ctx.Execute<Config>(null, m => m.ProxyErrorMessageEnabled(ctx));
+        //should "auth" be an alias? Worried it will be confusing if authenticated-only becomes a thing
+        else if (ctx.Match("trust", "trusted", "authorize", "authorized", "whitelist", "whitelisted", "tr"))
+            return ctx.Execute<Config>(null, m => m.Trusted(ctx));
 
         // todo: maybe add the list of configuration keys here?
         return ctx.Reply($"{Emojis.Error} Could not find a setting with that name. Please see `pk;commands config` for the list of possible config settings.");

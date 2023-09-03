@@ -692,7 +692,7 @@ To update your system privacy settings, use the following commands:
   * `avatar`
   * `all` (to change all subjects at once)
 
-* `level` is either `public` or `private`
+* `level` is either `public`, `private`, or `trusted`
 
 For example:
 
@@ -733,7 +733,7 @@ To update a member's privacy, you can use the command:
   * `visiblity`
   * `all` (to change all subjects at once)
 
-* `level` is either `public` or `private`
+* `level` is either `public`, `private`, or `trusted`
 
 For example:
 

@@ -29,7 +29,7 @@ public class Context
     private Command? _currentCommand;
 
     public Context(ILifetimeScope provider, int shardId, Guild? guild, Channel channel, MessageCreateEvent message,
-                                                    int commandParseOffset, PKSystem senderSystem, SystemConfig config)
+        int commandParseOffset, PKSystem senderSystem, SystemConfig config)
     {
         Message = (Message)message;
         ShardId = shardId;
@@ -77,7 +77,7 @@ public class Context
     internal readonly ModelRepository Repository;
     internal readonly RedisService Redis;
 
-    public async Task<Message> Reply(string text = null, Embed embed = null, AllowedMentions? mentions = null)
+    public async Task<Message> Reply(string text = null, Embed embed = null, Embed[] embeds = null, AllowedMentions? mentions = null)
     {
         var botPerms = await BotPermissions;
 
@@ -85,13 +85,15 @@ public class Context
             // Will be "swallowed" during the error handler anyway, this message is never shown.
             throw new PKError("PluralKit does not have permission to send messages in this channel.");
 
-        if (embed != null && !botPerms.HasFlag(PermissionSet.EmbedLinks))
+        if ((embed != null || embeds != null) && !botPerms.HasFlag(PermissionSet.EmbedLinks))
             throw new PKError("PluralKit does not have permission to send embeds in this channel. Please ensure I have the **Embed Links** permission enabled.");
+
+        var embedArr = embeds ?? (embed != null ? new[] { embed } : null);
 
         var msg = await Rest.CreateMessage(Channel.Id, new MessageRequest
         {
             Content = text,
-            Embeds = embed != null ? new[] { embed } : null,
+            Embeds = embedArr,
             // Default to an empty allowed mentions object instead of null (which means no mentions allowed)
             AllowedMentions = mentions ?? new AllowedMentions()
         });
@@ -141,32 +143,70 @@ public class Context
     /// <summary>
     /// Same as LookupContextFor, but skips flags / config checks.
     /// </summary>
-    public LookupContext DirectLookupContextFor(SystemId systemId)
-        => System?.Id == systemId ? LookupContext.ByOwner : LookupContext.ByNonOwner;
-
-    public LookupContext LookupContextFor(SystemId systemId)
+    public async Task<LookupContext> DirectLookupContextFor(SystemId systemId)
     {
+        var trusted = await this.CheckTrusted(system: systemId);
+        if (System?.Id == systemId)
+            return LookupContext.ByOwner;
+        if (trusted)
+            return LookupContext.ByTrusted;
+        return LookupContext.ByNonOwner;
+    }
+
+    public async Task<LookupContext> LookupContextFor(SystemId targetSystemId)
+    {
+        var trusted = await this.CheckTrusted(system: targetSystemId);
+
         var hasPrivateOverride = this.MatchFlag("private", "priv");
         var hasPublicOverride = this.MatchFlag("public", "pub");
+        var hasTrustedOverride = this.MatchFlag("trusted", "tru");
 
-        if (hasPrivateOverride && hasPublicOverride)
-            throw new PKError("Cannot match both public and private flags at the same time.");
+        var overrideCount = new[] { hasPrivateOverride, hasPublicOverride, hasTrustedOverride }.Count(e => e);
 
-        if (System?.Id != systemId)
+        if (overrideCount > 1)
+            throw new PKError("Cannot match more than one type of privacy flag (`-private`, `-public`, `-trusted`) at once.");
+
+        if (hasPrivateOverride)
         {
-            if (hasPrivateOverride)
-                throw Errors.NotOwnInfo;
+            if (System?.Id == targetSystemId)
+                return LookupContext.ByOwner;
+            if (trusted)
+                return LookupContext.ByTrusted;
+            throw Errors.NotOwnInfo;
+        }
+        if (hasTrustedOverride)
+        {
+            if (System?.Id == targetSystemId || trusted)
+                return LookupContext.ByTrusted;
+            throw Errors.NotTrusted;
+        }
+        if (hasPublicOverride)
+        {
             return LookupContext.ByNonOwner;
         }
 
-        if (hasPrivateOverride)
-            return LookupContext.ByOwner;
-        if (hasPublicOverride)
-            return LookupContext.ByNonOwner;
+        if (System?.Id == targetSystemId)
+        {
+            return Config.DefaultPrivacyShown switch
+            {
+                PrivacyLevel.Private => LookupContext.ByOwner,
+                PrivacyLevel.Public => LookupContext.ByNonOwner,
+                PrivacyLevel.Trusted => LookupContext.ByTrusted,
+                _ => LookupContext.ByNonOwner,
+            };
+        }
 
-        return Config.ShowPrivateInfo
-            ? LookupContext.ByOwner
-            : LookupContext.ByNonOwner;
+        if (trusted)
+        {
+            return Config.DefaultPrivacyShown switch
+            {
+                PrivacyLevel.Private => LookupContext.ByTrusted,
+                PrivacyLevel.Trusted => LookupContext.ByTrusted,
+                PrivacyLevel.Public => LookupContext.ByNonOwner,
+                _ => LookupContext.ByNonOwner
+            };
+        }
+        return LookupContext.ByNonOwner;
     }
 
     public IComponentContext Services => _provider;

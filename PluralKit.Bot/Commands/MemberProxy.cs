@@ -9,6 +9,7 @@ public class MemberProxy
     public async Task Proxy(Context ctx, PKMember target)
     {
         ctx.CheckSystem().CheckOwnMember(target);
+        var lctx = await ctx.LookupContextFor(target.System);
 
         ProxyTag ParseProxyTags(string exampleProxy)
         {
@@ -28,7 +29,7 @@ public class MemberProxy
 
             if (conflicts.Count <= 0) return true;
 
-            var conflictList = conflicts.Select(m => $"- **{m.NameFor(ctx)}**");
+            var conflictList = conflicts.Select(m => $"- **{m.NameFor(lctx)}**");
             var msg = $"{Emojis.Warn} The following members have conflicting proxy tags:\n{string.Join('\n', conflictList)}\nDo you want to proceed anyway?";
             return await ctx.PromptYesNo(msg, "Proceed");
         }
@@ -64,7 +65,7 @@ public class MemberProxy
                 throw new PKSyntaxError("You must pass an example proxy to add (eg. `[text]` or `J:text`).");
 
             var tagToAdd = ParseProxyTags(ctx.RemainderOrNull(false));
-            if (tagToAdd.IsEmpty) throw Errors.EmptyProxyTags(target, ctx);
+            if (tagToAdd.IsEmpty) throw Errors.EmptyProxyTags(target, lctx);
             if (target.ProxyTags.Contains(tagToAdd))
                 throw Errors.ProxyTagAlreadyExists(tagToAdd, target);
             if (tagToAdd.ProxyString.Length > Limits.MaxProxyTagLength)
@@ -88,7 +89,7 @@ public class MemberProxy
                 throw new PKSyntaxError("You must pass a proxy tag to remove (eg. `[text]` or `J:text`).");
 
             var tagToRemove = ParseProxyTags(ctx.RemainderOrNull(false));
-            if (tagToRemove.IsEmpty) throw Errors.EmptyProxyTags(target, ctx);
+            if (tagToRemove.IsEmpty) throw Errors.EmptyProxyTags(target, lctx);
             if (!target.ProxyTags.Contains(tagToRemove))
                 throw Errors.ProxyTagDoesNotExist(tagToRemove, target);
 
@@ -103,7 +104,7 @@ public class MemberProxy
         else
         {
             var requestedTag = ParseProxyTags(ctx.RemainderOrNull(false));
-            if (requestedTag.IsEmpty) throw Errors.EmptyProxyTags(target, ctx);
+            if (requestedTag.IsEmpty) throw Errors.EmptyProxyTags(target, lctx);
 
             // This is mostly a legacy command, so it's gonna warn if there's
             // already more than one proxy tag.

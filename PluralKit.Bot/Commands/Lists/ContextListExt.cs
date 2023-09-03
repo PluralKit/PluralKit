@@ -51,13 +51,7 @@ public static class ContextListExt
             p.Reverse = true;
 
         // Privacy filter (default is public only)
-        if (ctx.MatchFlag("a", "all")) p.PrivacyFilter = null;
-        if (ctx.MatchFlag("private-only", "po")) p.PrivacyFilter = PrivacyLevel.Private;
-
-        // PERM CHECK: If we're trying to access non-public members of another system, error
-        if (p.PrivacyFilter != PrivacyLevel.Public && lookupCtx != LookupContext.ByOwner)
-            // TODO: should this just return null instead of throwing or something? >.>
-            throw Errors.NotOwnInfo;
+        p.PrivacyFilter = ctx.GetPrivacyFilter(lookupCtx);
 
         // Additional fields to include in the search results
         if (ctx.MatchFlag("with-last-switch", "with-last-fronted", "with-last-front", "wls", "wlf"))
@@ -128,7 +122,7 @@ public static class ContextListExt
             // so run it through a helper that "makes it work" :)
             eb.WithSimpleLineContent(page.Select(m =>
             {
-                var ret = $"[`{m.Hid}`] **{m.NameFor(ctx)}** ";
+                var ret = $"[`{m.Hid}`] **{m.NameFor(lookupCtx)}** ";
 
                 if (opts.IncludeMessageCount && m.MessageCountFor(lookupCtx) is { } count)
                     ret += $"({count} messages)";
@@ -197,15 +191,15 @@ public static class ContextListExt
                 if (m.DescriptionFor(lookupCtx) is { } desc)
                     profile.Append($"\n\n{desc}");
 
-                if (m.MemberVisibility == PrivacyLevel.Private)
+                if (m.MemberVisibility != PrivacyLevel.Public)
                     profile.Append("\n*(this member is hidden)*");
 
-                eb.Field(new Embed.Field(m.NameFor(ctx), profile.ToString().Truncate(1024)));
+                eb.Field(new Embed.Field(m.NameFor(lookupCtx), profile.ToString().Truncate(1024)));
             }
         }
     }
 
-    public static async Task RenderGroupList(this Context ctx, LookupContext lookupCtx,
+    public static async Task RenderGroupList(this Context ctx, LookupContext lookupCtx, LookupContext directLookupCtx,
                                 SystemId system, string embedTitle, string color, ListOptions opts)
     {
         // We take an IDatabase instead of a IPKConnection so we don't keep the handle open for the entire runtime
@@ -238,7 +232,7 @@ public static class ContextListExt
             // so run it through a helper that "makes it work" :)
             eb.WithSimpleLineContent(page.Select(g =>
             {
-                var ret = $"[`{g.Hid}`] **{g.NameFor(ctx)}** ";
+                var ret = $"[`{g.Hid}`] **{g.NameFor(lookupCtx)}** ";
 
                 switch (opts.SortProperty)
                 {
@@ -273,25 +267,33 @@ public static class ContextListExt
                             {
                                 // -priv/-pub and listprivacy affects whether count is shown
                                 // -all and visibility affects what the count is
-                                if (ctx.DirectLookupContextFor(system) == LookupContext.ByOwner)
+                                var privacyFilter = ctx.GetPrivacyFilter(directLookupCtx);
+                                if (g.ListPrivacy.CanAccess(lookupCtx))
                                 {
-                                    if (g.ListPrivacy == PrivacyLevel.Public || lookupCtx == LookupContext.ByOwner)
+                                    switch (privacyFilter)
                                     {
-                                        if (ctx.MatchFlag("all", "a"))
-                                        {
-                                            ret += $"({"member".ToQuantity(g.TotalMemberCount)})";
-                                        }
-                                        else
-                                        {
+                                        case 0:
+                                        case PrivacyFilter.Private | PrivacyFilter.Public | PrivacyFilter.Trusted:
+                                            ret += $"({"member".ToQuantity(g.PrivateMemberCount) + "member".ToQuantity(g.PublicMemberCount) + "member".ToQuantity(g.TrustedMemberCount)})";
+                                            break;
+                                        case PrivacyFilter.Private:
+                                            ret += $"({"member".ToQuantity(g.PrivateMemberCount)})";
+                                            break;
+                                        case PrivacyFilter.Public:
                                             ret += $"({"member".ToQuantity(g.PublicMemberCount)})";
-                                        }
-                                    }
-                                }
-                                else
-                                {
-                                    if (g.ListPrivacy == PrivacyLevel.Public)
-                                    {
-                                        ret += $"({"member".ToQuantity(g.PublicMemberCount)})";
+                                            break;
+                                        case PrivacyFilter.Trusted:
+                                            ret += $"({"member".ToQuantity(g.TrustedMemberCount)})";
+                                            break;
+                                        case PrivacyFilter.Private | PrivacyFilter.Public:
+                                            ret += $"({"member".ToQuantity(g.PrivateMemberCount) + "member".ToQuantity(g.PublicMemberCount)})";
+                                            break;
+                                        case PrivacyFilter.Private | PrivacyFilter.Trusted:
+                                            ret += $"({"member".ToQuantity(g.PrivateMemberCount) + "member".ToQuantity(g.TrustedMemberCount)})";
+                                            break;
+                                        case PrivacyFilter.Public | PrivacyFilter.Trusted:
+                                            ret += $"({"member".ToQuantity(g.PublicMemberCount) + "member".ToQuantity(g.TrustedMemberCount)})";
+                                            break;
                                     }
                                 }
                             }
@@ -313,12 +315,23 @@ public static class ContextListExt
                 if (g.DisplayName != null && g.NamePrivacy.CanAccess(lookupCtx))
                     profile.Append($"\n**Display name**: {g.DisplayName}");
 
-                if (g.ListPrivacy == PrivacyLevel.Public || lookupCtx == LookupContext.ByOwner)
+
+                var privacyFilter = ctx.GetPrivacyFilter(directLookupCtx);
+                if (g.ListPrivacy.CanAccess(lookupCtx))
                 {
-                    if (ctx.MatchFlag("all", "a") && ctx.DirectLookupContextFor(system) == LookupContext.ByOwner)
-                        profile.Append($"\n**Member Count:** {g.TotalMemberCount}");
+                    if (privacyFilter == 0)
+                        profile.Append($"\n**Member Count:** {g.PublicMemberCount + g.PrivateMemberCount + g.TrustedMemberCount}");
                     else
-                        profile.Append($"\n**Member Count:** {g.PublicMemberCount}");
+                    {
+                        var count = 0;
+                        if (((int)privacyFilter & (int)PrivacyLevel.Public) > 0)
+                            count += g.PublicMemberCount;
+                        if (((int)privacyFilter & (int)PrivacyLevel.Private) > 0)
+                            count += g.PrivateMemberCount;
+                        if (((int)privacyFilter & (int)PrivacyLevel.Trusted) > 0)
+                            count += g.TrustedMemberCount;
+                        profile.Append($"\n**Member Count:** {count}");
+                    }
                 }
 
                 if ((opts.IncludeCreated || opts.SortProperty == SortProperty.CreationDate) &&
@@ -331,10 +344,10 @@ public static class ContextListExt
                 if (g.DescriptionFor(lookupCtx) is { } desc)
                     profile.Append($"\n\n{desc}");
 
-                if (g.Visibility == PrivacyLevel.Private)
+                if (g.Visibility != PrivacyLevel.Public)
                     profile.Append("\n*(this group is hidden)*");
 
-                eb.Field(new Embed.Field(g.NameFor(ctx), profile.ToString().Truncate(1024)));
+                eb.Field(new Embed.Field(g.NameFor(lookupCtx), profile.ToString().Truncate(1024)));
             }
         }
     }

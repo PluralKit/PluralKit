@@ -27,7 +27,7 @@ public class ListOptions
 
     public bool Reverse { get; set; }
 
-    public PrivacyLevel? PrivacyFilter { get; set; } = PrivacyLevel.Public;
+    public PrivacyFilter PrivacyFilter { get; set; } = PrivacyFilter.Public;
     public GroupId? GroupFilter { get; set; }
     public string? Search { get; set; }
     public bool SearchDescription { get; set; }
@@ -81,9 +81,13 @@ public class ListOptions
 
         str.Append(PrivacyFilter switch
         {
-            null => ", showing all items",
-            PrivacyLevel.Private => ", showing only private items",
-            PrivacyLevel.Public => "", // (default, no extra line needed)
+            0 => ", showing all items",
+            PrivacyFilter.Public => "", // (default, no extra line needed)
+            PrivacyFilter.Private => ", showing only private items",
+            PrivacyFilter.Trusted => ", showing only trusted items",
+            PrivacyFilter.Private | PrivacyFilter.Public => ", showing only private and public items", // I don't this is ever used but it can't hurt
+            PrivacyFilter.Private | PrivacyFilter.Trusted => ", showing only private and trusted items",
+            PrivacyFilter.Public | PrivacyFilter.Trusted => ", showing only public and trusted items",
             _ => new ArgumentOutOfRangeException(
                 $"Couldn't find readable string for privacy filter {PrivacyFilter}")
         });

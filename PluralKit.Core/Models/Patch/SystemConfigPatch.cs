@@ -11,9 +11,9 @@ public class SystemConfigPatch: PatchObject
     public Partial<string> UiTz { get; set; }
     public Partial<bool> PingsEnabled { get; set; }
     public Partial<int?> LatchTimeout { get; set; }
-    public Partial<bool> MemberDefaultPrivate { get; set; }
-    public Partial<bool> GroupDefaultPrivate { get; set; }
-    public Partial<bool> ShowPrivateInfo { get; set; }
+    public Partial<PrivacyLevel> MemberDefaultPrivacy { get; set; }
+    public Partial<PrivacyLevel> GroupDefaultPrivacy { get; set; }
+    public Partial<PrivacyLevel> DefaultPrivacyShown { get; set; }
     public Partial<int?> MemberLimitOverride { get; set; }
     public Partial<int?> GroupLimitOverride { get; set; }
     public Partial<string[]> DescriptionTemplates { get; set; }
@@ -25,9 +25,9 @@ public class SystemConfigPatch: PatchObject
         .With("ui_tz", UiTz)
         .With("pings_enabled", PingsEnabled)
         .With("latch_timeout", LatchTimeout)
-        .With("member_default_private", MemberDefaultPrivate)
-        .With("group_default_private", GroupDefaultPrivate)
-        .With("show_private_info", ShowPrivateInfo)
+        .With("member_default_privacy", MemberDefaultPrivacy)
+        .With("group_default_privacy", GroupDefaultPrivacy)
+        .With("default_privacy_shown", DefaultPrivacyShown)
         .With("member_limit_override", MemberLimitOverride)
         .With("group_limit_override", GroupLimitOverride)
         .With("description_templates", DescriptionTemplates)
@@ -64,14 +64,14 @@ public class SystemConfigPatch: PatchObject
         if (LatchTimeout.IsPresent)
             o.Add("latch_timeout", LatchTimeout.Value);
 
-        if (MemberDefaultPrivate.IsPresent)
-            o.Add("member_default_private", MemberDefaultPrivate.Value);
+        if (MemberDefaultPrivacy.IsPresent)
+            o.Add("member_default_privacy", MemberDefaultPrivacy.Value.ToJsonString());
 
-        if (GroupDefaultPrivate.IsPresent)
-            o.Add("group_default_private", GroupDefaultPrivate.Value);
+        if (GroupDefaultPrivacy.IsPresent)
+            o.Add("group_default_private", GroupDefaultPrivacy.Value.ToJsonString());
 
-        if (ShowPrivateInfo.IsPresent)
-            o.Add("show_private_info", ShowPrivateInfo.Value);
+        if (DefaultPrivacyShown.IsPresent)
+            o.Add("default_privacy_shown", DefaultPrivacyShown.Value.ToJsonString());
 
         if (MemberLimitOverride.IsPresent)
             o.Add("member_limit", MemberLimitOverride.Value);
@@ -91,7 +91,7 @@ public class SystemConfigPatch: PatchObject
         return o;
     }
 
-    public static SystemConfigPatch FromJson(JObject o)
+    public static SystemConfigPatch FromJson(JObject o, bool isImport = false)
     {
         var patch = new SystemConfigPatch();
 
@@ -104,11 +104,21 @@ public class SystemConfigPatch: PatchObject
         if (o.ContainsKey("latch_timeout"))
             patch.LatchTimeout = o.Value<int?>("latch_timeout");
 
-        if (o.ContainsKey("member_default_private"))
-            patch.MemberDefaultPrivate = o.Value<bool>("member_default_private");
+        if (isImport)
+        {
+            // legacy: used in old export files
+            if (o.ContainsKey("member_default_private"))
+                patch.MemberDefaultPrivacy = o.Value<bool>("member_default_private") ? PrivacyLevel.Private : PrivacyLevel.Public;
 
-        if (o.ContainsKey("group_default_private"))
-            patch.GroupDefaultPrivate = o.Value<bool>("group_default_private");
+            if (o.ContainsKey("group_default_private"))
+                patch.GroupDefaultPrivacy = o.Value<bool>("group_default_private") ? PrivacyLevel.Private : PrivacyLevel.Public;
+        }
+
+        if (o.ContainsKey("member_default_privacy"))
+            patch.MemberDefaultPrivacy = patch.ParsePrivacy(o, "member_default_privacy");
+
+        if (o.ContainsKey("group_default_privacy"))
+            patch.GroupDefaultPrivacy = patch.ParsePrivacy(o, "group_default_privacy");
 
         if (o.ContainsKey("description_templates"))
             patch.DescriptionTemplates = o.Value<JArray>("description_templates").Select(x => x.Value<string>()).ToArray();

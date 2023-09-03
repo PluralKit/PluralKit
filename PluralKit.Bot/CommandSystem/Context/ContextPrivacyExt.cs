@@ -12,11 +12,14 @@ public static class ContextPrivacyExt
         if (ctx.Match("private", "hide", "hidden"))
             return PrivacyLevel.Private;
 
+        if (ctx.Match("trusted", "authorized", "whitelisted", "trusted-only"))
+            return PrivacyLevel.Trusted;
+
         if (!ctx.HasNext())
-            throw new PKSyntaxError("You must pass a privacy level (`public` or `private`)");
+            throw new PKSyntaxError("You must pass a privacy level (`public`, `private`, or `trusted`)");
 
         throw new PKSyntaxError(
-            $"Invalid privacy level {ctx.PopArgument().AsCode()} (must be `public` or `private`).");
+            $"Invalid privacy level {ctx.PopArgument().AsCode()} (must be `public`, `private`, or `trusted`).");
     }
 
     public static SystemPrivacySubject PopSystemPrivacySubject(this Context ctx)
@@ -47,5 +50,64 @@ public static class ContextPrivacyExt
 
         ctx.PopArgument();
         return subject;
+    }
+
+    public static PrivacyFilter GetPrivacyFilter(this Context ctx, LookupContext dlCtx)
+    {
+        var privacyFilter = PrivacyFilter.Public;
+        if (ctx.MatchFlag("a", "all"))
+        {
+            switch (dlCtx)
+            {
+                case LookupContext.ByOwner:
+                    privacyFilter = 0;
+                    break;
+                case LookupContext.ByTrusted:
+                    privacyFilter = PrivacyFilter.Public | PrivacyFilter.Trusted;
+                    break;
+                default:
+                    throw Errors.LookupNotAllowed;
+            }
+        }
+        else if (ctx.MatchFlag("po", "private-only"))
+        {
+            switch (dlCtx)
+            {
+                case LookupContext.ByOwner:
+                    privacyFilter = PrivacyFilter.Private;
+                    break;
+                case LookupContext.ByTrusted:
+                    privacyFilter = PrivacyFilter.Trusted;
+                    break;
+                default:
+                    throw Errors.LookupNotAllowed;
+            }
+        }
+        else if (ctx.MatchFlag("to", "trusted-only"))
+        {
+            switch (dlCtx)
+            {
+                case LookupContext.ByOwner:
+                case LookupContext.ByTrusted:
+                    privacyFilter = PrivacyFilter.Trusted;
+                    break;
+                default:
+                    throw Errors.LookupNotAllowed;
+            }
+        }
+        else if (ctx.MatchFlag("tv", "trusted-view"))
+        {
+            switch (dlCtx)
+            {
+                case LookupContext.ByOwner:
+                case LookupContext.ByTrusted:
+                    privacyFilter = PrivacyFilter.Trusted | PrivacyFilter.Public;
+                    break;
+                default:
+                    throw Errors.LookupNotAllowed;
+            }
+        }
+
+        return privacyFilter;
     }
 }

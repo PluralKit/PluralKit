@@ -29,8 +29,13 @@ select members.*,
         case
            -- Privacy '1' = public; just return description as normal
            when members.description_privacy = 1 then members.description
-           -- Any other privacy (rn just '2'), return null description (missing case = null in SQL)
-        end as public_description
+           -- Any other privacy (rn 2:private and 4:trusted), return null description (missing case = null in SQL)
+        end as public_description,
+        case
+            -- Privacy '4' = trusted; just return description as normal
+            when members.description_privacy = 1 or members.description_privacy = 4 then members.description
+            -- Any other privacy (rn 2:private), return null description (missing case = null in SQL)
+        end as trusted_description
 from members;
 
 create view group_list as
@@ -47,6 +52,13 @@ select groups.*,
         select count(*) from group_members
             inner join members on group_members.member_id = members.id
         where
-            group_members.group_id = groups.id
-    ) as total_member_count
+            group_members.group_id = groups.id and members.member_visibility = 2
+    ) as private_member_count,
+   -- Find trusted group member count
+   (
+       select count(*) from group_members
+                                inner join members on group_members.member_id = members.id
+       where
+               group_members.group_id = groups.id and members.member_visibility = 4
+   ) as trusted_member_count
 from groups;
