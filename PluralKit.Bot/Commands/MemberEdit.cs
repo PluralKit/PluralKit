@@ -541,7 +541,7 @@ public class MemberEdit
         if (newValue)
             keepProxyUpdateMessage += $"{Emojis.Success} this member now has keepproxy **enabled**. Member proxy tags will be **included** in the resulting message when proxying.";
         else
-            keepProxyUpdateMessage += $"{Emojis.Success} this member now has keepproxy **disabled**. Member proxy tags will be **included** in the resulting message when proxying.";
+            keepProxyUpdateMessage += $"{Emojis.Success} this member now has keepproxy **disabled**. Member proxy tags will **not** be included in the resulting message when proxying.";
 
         if (memberGuildConfig != null && memberGuildConfig.KeepProxy.HasValue && memberGuildConfig.KeepProxy.Value)
             keepProxyUpdateMessage += $"\n{Emojis.Warn} This member has keepproxy **enabled in this server**, which means proxy tags will **always** be included when proxying in this server, regardless of the global keepproxy. To clear this setting in this server, type `pk;m <member> serverkeepproxy clear`.";
