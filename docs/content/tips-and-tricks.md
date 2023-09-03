@@ -79,8 +79,7 @@ You cannot look up private members or groups of another system.
 |pk;edit|-prepend|-p|Prepend the new content to the old message instead of overwriting it|
 |pk;edit|-nospace|-ns|Append/prepend without adding a space|
 |pk;edit|-clear-embed|-ce|Remove embeds from a message|
-|pk;edit|-regex|-x|Edit using a C# Regex formatted like s/X/Y, where X is a Regex and Y is a substitution pattern|
-|pk;edit|-global|-g|Replace all matches of a Regex, not just the first|
+|pk;edit|-regex|-x|Edit using a C# Regex formatted like s|X|Y or s|X|Y|F, where | is any character, X is a Regex, Y is a substitution string, and F is a set of Regex flags|
 |Most commands|-all|-a|Show hidden/private information|
 |Most commands|-raw|-r|Show text with formatting, for easier copy-pasting|
 |All commands|-private|-priv|Show private information|

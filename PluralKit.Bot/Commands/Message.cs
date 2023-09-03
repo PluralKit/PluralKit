@@ -104,8 +104,6 @@ public class ProxiedMessage
 
         // Regex flag
         var useRegex = ctx.MatchFlag("regex", "x");
-        // Replace all Regex matches instead of just the first one
-        var globalMatch = ctx.MatchFlag("global", "g");
 
         // Check if we should append or prepend
         var mutateSpace = ctx.MatchFlag("nospace", "ns") ? "" : " ";
@@ -128,25 +126,67 @@ public class ProxiedMessage
         if (useRegex && (append || prepend))
             throw new PKError("You can't use the append or prepend options with a Regex.");
 
-        // Global match doesn't mean anything outside of Regexes
-        if (globalMatch && !useRegex)
-            throw new PKError("Global match option requires Regex.");
-
         // Use the Regex to substitute the message content
         if (useRegex)
         {
-            const string regexErrorStr = "Could not parse Regex. The expected format is s/X/Y, where X is a valid Regex to search for matches of and Y is a substitution string.";
+            const string regexErrorStr = "Could not parse Regex. The expected formats are s|X|Y or s|X|Y|F, where | is any character, X is a valid Regex to search for matches of, Y is a substitution string, and F is a set of Regex flags.";
 
-            var splitString = newContent.Split('/');
-            if (splitString.Length != 3)
+            // Smallest valid Regex string is "s||"; 3 chars long
+            if (newContent.Length < 3 || !newContent.StartsWith('s'))
                 throw new PKError(regexErrorStr);
-            if (splitString[0] != "s")
+
+            var separator = newContent[1];
+
+            // s|X|Y   => ["s", "X", "Y"]
+            // s|X|Y|F => ["s", "X", "Y", "F"] ("F" may be empty)
+            var splitString = newContent.Split(separator);
+
+            if (splitString.Length != 3 && splitString.Length != 4)
                 throw new PKError(regexErrorStr);
+
+            var flags = splitString.Length == 4 ? splitString[3] : "";
+
+            var regexOptions = RegexOptions.None;
+            var globalMatch = false;
+
+            // Parse flags
+            foreach (char c in flags)
+            {
+                switch (c)
+                {
+                    case 'g':
+                        globalMatch = true;
+                        break;
+
+                    case 'i':
+                        regexOptions |= RegexOptions.IgnoreCase;
+                        break;
+
+                    case 'm':
+                        regexOptions |= RegexOptions.Multiline;
+                        break;
+
+                    case 'n':
+                        regexOptions |= RegexOptions.ExplicitCapture;
+                        break;
+
+                    case 's':
+                        regexOptions |= RegexOptions.Singleline;
+                        break;
+
+                    case 'x':
+                        regexOptions |= RegexOptions.IgnorePatternWhitespace;
+                        break;
+
+                    default:
+                        throw new PKError($"Invalid Regex flag '{c}'. Valid flags include 'g', 'i', 'm', 'n', 's', and 'x'.");
+                }
+            }
 
             try
             {
                 // I would use RegexOptions.NonBacktracking but that's only .NET 7 :(
-                var regex = new Regex(splitString[1], RegexOptions.None, TimeSpan.FromSeconds(0.5));
+                var regex = new Regex(splitString[1], regexOptions, TimeSpan.FromSeconds(0.5));
                 var numMatches = globalMatch ? -1 : 1; // Negative means all matches
                 newContent = regex.Replace(originalContent!, splitString[2], numMatches);
             }
