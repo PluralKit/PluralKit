@@ -1,4 +1,5 @@
 #nullable enable
+using System;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -101,6 +102,9 @@ public class ProxiedMessage
         if (originalMsg == null)
             throw new PKError("Could not edit message.");
 
+        // Regex flag
+        var useRegex = ctx.MatchFlag("regex", "x");
+
         // Check if we should append or prepend
         var mutateSpace = ctx.MatchFlag("nospace", "ns") ? "" : " ";
         var append = ctx.MatchFlag("append", "a");
@@ -118,12 +122,93 @@ public class ProxiedMessage
         if (newContent == null)
             throw new PKSyntaxError("You need to include the message to edit in.");
 
+        // Can't append or prepend a Regex
+        if (useRegex && (append || prepend))
+            throw new PKError("You can't use the append or prepend options with a Regex.");
+
+        // Use the Regex to substitute the message content
+        if (useRegex)
+        {
+            const string regexErrorStr = "Could not parse Regex. The expected formats are s|X|Y or s|X|Y|F, where | is any character, X is a valid Regex to search for matches of, Y is a substitution string, and F is a set of Regex flags.";
+
+            // Smallest valid Regex string is "s||"; 3 chars long
+            if (newContent.Length < 3 || !newContent.StartsWith('s'))
+                throw new PKError(regexErrorStr);
+
+            var separator = newContent[1];
+
+            // s|X|Y   => ["s", "X", "Y"]
+            // s|X|Y|F => ["s", "X", "Y", "F"] ("F" may be empty)
+            var splitString = newContent.Split(separator);
+
+            if (splitString.Length != 3 && splitString.Length != 4)
+                throw new PKError(regexErrorStr);
+
+            var flags = splitString.Length == 4 ? splitString[3] : "";
+
+            var regexOptions = RegexOptions.None;
+            var globalMatch = false;
+
+            // Parse flags
+            foreach (char c in flags)
+            {
+                switch (c)
+                {
+                    case 'g':
+                        globalMatch = true;
+                        break;
+
+                    case 'i':
+                        regexOptions |= RegexOptions.IgnoreCase;
+                        break;
+
+                    case 'm':
+                        regexOptions |= RegexOptions.Multiline;
+                        break;
+
+                    case 'n':
+                        regexOptions |= RegexOptions.ExplicitCapture;
+                        break;
+
+                    case 's':
+                        regexOptions |= RegexOptions.Singleline;
+                        break;
+
+                    case 'x':
+                        regexOptions |= RegexOptions.IgnorePatternWhitespace;
+                        break;
+
+                    default:
+                        throw new PKError($"Invalid Regex flag '{c}'. Valid flags include 'g', 'i', 'm', 'n', 's', and 'x'.");
+                }
+            }
+
+            try
+            {
+                // I would use RegexOptions.NonBacktracking but that's only .NET 7 :(
+                var regex = new Regex(splitString[1], regexOptions, TimeSpan.FromSeconds(0.5));
+                var numMatches = globalMatch ? -1 : 1; // Negative means all matches
+                newContent = regex.Replace(originalContent!, splitString[2], numMatches);
+            }
+            catch (ArgumentException)
+            {
+                throw new PKError(regexErrorStr);
+            }
+            catch (RegexMatchTimeoutException)
+            {
+                throw new PKError("Regex took too long to run.");
+            }
+        }
+
         // Append or prepend the new content to the original message content if needed.
         // If no flag is supplied, the new contents will completly overwrite the old contents
         // If both flags are specified. the message will be prepended AND appended
-        if (append && prepend) newContent = $"{newContent}{mutateSpace}{originalContent}{mutateSpace}{newContent}";
-        else if (append) newContent = $"{originalContent}{mutateSpace}{newContent}";
-        else if (prepend) newContent = $"{newContent}{mutateSpace}{originalContent}";
+        if (append && prepend)
+            newContent = $"{newContent}{mutateSpace}{originalContent}{mutateSpace}{newContent}";
+        else if (append)
+            newContent = $"{originalContent}{mutateSpace}{newContent}";
+        else if (prepend)
+            newContent = $"{newContent}{mutateSpace}{originalContent}";
 
         if (newContent.Length > 2000)
             throw new PKError("PluralKit cannot proxy messages over 2000 characters in length.");
