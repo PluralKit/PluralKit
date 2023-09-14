@@ -619,6 +619,10 @@ public partial class CommandTree
         //should "auth" be an alias? Worried it will be confusing if authenticated-only becomes a thing
         else if (ctx.Match("trust", "trusted", "authorize", "authorized", "whitelist", "whitelisted", "tr"))
             return ctx.Execute<Config>(null, m => m.Trusted(ctx));
+        else if (ctx.Match("tu"))
+            return ctx.Execute<Config>(null, m => m.Trusted(ctx, "user"));
+        else if (ctx.Match("ts", "tg"))
+            return ctx.Execute<Config>(null, m => m.Trusted(ctx, "server"));
 
         // todo: maybe add the list of configuration keys here?
         return ctx.Reply($"{Emojis.Error} Could not find a setting with that name. Please see `pk;commands config` for the list of possible config settings.");

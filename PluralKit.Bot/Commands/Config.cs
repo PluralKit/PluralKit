@@ -605,9 +605,9 @@ public class Config
         }
     }
 
-    public async Task Trusted(Context ctx)
+    public async Task Trusted(Context ctx, string? subject = null)
     {
-        if (ctx.Match("user", "users", "u"))
+        if (subject == "user" || ctx.Match("user", "users", "u"))
         {
             if (ctx.Match("add", "a", "authorize", "auth"))
             {
@@ -632,7 +632,7 @@ public class Config
                 return;
             }
         }
-        else if (ctx.Match("server", "servers", "guild", "guilds", "g"))
+        else if (subject == "server" || ctx.Match("server", "servers", "s", "guild", "guilds", "g"))
         {
             if (ctx.Match("add", "a", "authorize", "auth"))
             {
