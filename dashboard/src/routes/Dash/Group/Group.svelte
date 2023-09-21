@@ -15,6 +15,8 @@
     import { filterList, paginateList, getPageAmount } from '../../../components/list/functions';
     import PageControl from "../../../components/list/PageControl.svelte";
     import { writable, type Writable } from "svelte/store";
+    import TinyView from "../../../components/list/TinyView.svelte";
+    import TextView from "../../../components/list/TextView.svelte";
 
     // get the state from the navigator so that we know which tab to start on
     let location = useLocation();
@@ -110,6 +112,7 @@
 
     function getDefaultItemsPerpage(): number {
         if (listView === 'card') return 24;
+        else if (listView === 'tiny') return 36;
         else if (settings && settings.accessibility && settings.accessibility.expandedcards) 
             return 10;
         else return 25;
@@ -184,6 +187,10 @@
                 <ListPagination bind:currentPage={pageOptions.currentPage} {pageAmount} />
                 {#if pageOptions.view === "card"}
                 <CardView {pageOptions} currentList={currentPage} />
+                {:else if pageOptions.view === "tiny"}
+                <TinyView {pageOptions} currentList={currentPage} />
+                {:else if pageOptions.view === "text"}
+                <TextView {pageOptions} currentList={currentPage} {listOptions} />
                 {:else}
                 <ListView {pageOptions} currentList={currentPage} fullListLength={groupMembers.length}/>
                 {/if}
