@@ -22,6 +22,7 @@
     export let member: Member;
     export let searchBy: string;
     export let sortBy: string;
+    export let avatarUsed: "proxy"|"avatar"|"proxy_only"|"avatar_only" = "proxy"
     export let isPublic = false;
     export let isDash = false;
 
@@ -55,10 +56,21 @@
         if (prnsElement) twemoji.parse(prnsElement, { base: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/' });
     }
 
+    let icon_url = null
+
+    $: if (avatarUsed === "proxy" || avatarUsed === "proxy_only") {
+            if (member.webhook_avatar_url) icon_url = member.webhook_avatar_url
+            else if (avatarUsed === "proxy_only") icon_url = default_avatar
+            else icon_url = member.avatar_url || default_avatar
+        } else {
+            if (member.avatar_url) icon_url = member.avatar_url
+            else if (avatarUsed === "avatar_only") icon_url = default_avatar
+            else icon_url = member.webhook_avatar_url ?? default_avatar
+        }
+
     let avatarOpen = false;
     const toggleAvatarModal = () => (avatarOpen = !avatarOpen);
 
-    $: icon_url = member.avatar_url ? member.avatar_url : default_avatar;
     $: icon_url_resized = resizeMedia(icon_url);
 
     let altText = `member ${member.name} avatar`;

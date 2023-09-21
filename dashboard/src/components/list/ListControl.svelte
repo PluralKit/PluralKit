@@ -173,7 +173,6 @@ function resetPage() {
                 <InputGroup>
                     <InputGroupText>Extra Info</InputGroupText>
                     <Input bind:value={options.extra} type="select" aria-label="view mode" on:change={(e) => onViewChange(e)} >
-                        <option value={null}>None</option>
                         <option value="display_name">Display Name</option>
                         {#if pageOptions.type === "member"}
                         <option value="avatar_url">Avatar Url</option>
@@ -186,6 +185,16 @@ function resetPage() {
                         <option value="banner">Banner Url</option>
                         <option value="color">Color</option>
                         <option value="created">Created</option>
+                    </Input>
+                </InputGroup>
+            {:else if pageOptions.type === "member"}
+                <InputGroup>
+                    <InputGroupText>Avatar Used</InputGroupText>
+                    <Input bind:value={options.pfp} type="select" aria-label="view mode" >
+                        <option value="proxy">Proxy (fall back to main)</option>
+                        <option value="avatar">Main (fall back to proxy)</option>
+                        <option value="proxy_only">Proxy only</option>
+                        <option value="avatar_only">Main only</option>
                     </Input>
                 </InputGroup>
             {/if}

@@ -48,6 +48,9 @@
     let bannerOpen = false;
     const toggleBannerModal = () => (bannerOpen = !bannerOpen);
     
+    let avatarOpen = false;
+    const toggleAvatarModal = () => (avatarOpen = !avatarOpen);
+
     let proxyAvatarOpen = false;
     const toggleProxyAvatarModal = () => (proxyAvatarOpen = !proxyAvatarOpen);
     
@@ -132,6 +135,16 @@
         {#if member.color}
         <Col xs={12} lg={4} class="mb-2">
             <b>Color:</b> {member.color}
+        </Col>
+        {/if}
+        {#if member.avatar_url}
+        <Col xs={12} lg={4} class="mb-2">
+            <b>Avatar:</b> <Button size="sm" color="secondary" on:click={toggleAvatarModal} aria-label="view member avatar">View</Button>
+            <Modal isOpen={avatarOpen} toggle={toggleAvatarModal}>
+                <div slot="external" on:click={toggleAvatarModal} style="height: 100%; width: max-content; max-width: 100%; margin-left: auto; margin-right: auto; display: flex;">
+                    <img class="img-thumbnail d-block m-auto" src={member.avatar_url} tabindex={0} alt={`Member ${member.name} avatar (full size)`} use:focus/>
+                </div>
+            </Modal>
         </Col>
         {/if}
         {#if member.webhook_avatar_url}

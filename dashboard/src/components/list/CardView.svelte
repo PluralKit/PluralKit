@@ -7,10 +7,11 @@
     import type { Member, Group } from '../../api/types';
     import MemberCard from '../member/CardView.svelte';
     import GroupCard from '../group/CardView.svelte';
-    import type { PageOptions } from './types';
+    import type { ListOptions, PageOptions } from './types';
 
     export let pageOptions: PageOptions;
     export let currentList: Member[]|Group[];
+    export let listOptions: ListOptions;
 
     let copiedItems = {};
 
@@ -50,7 +51,7 @@
     {#if pageOptions.type === "member"}
         {#each currentList as item (item.uuid)}
         <div class="col-12 col-md-6 col-lg-4 col-xxl-3 mx-auto mx-sm-0 dont-squish">
-            <MemberCard on:update member={item} searchBy="name" sortBy="name" isPublic={pageOptions.isPublic} isDash={pageOptions.isMain}>
+            <MemberCard on:update member={item} searchBy="name" sortBy="name" isPublic={pageOptions.isPublic} isDash={pageOptions.isMain} avatarUsed={listOptions.pfp}>
                     <button class="button-reset" slot="icon" style="width: auto; height: 1em; cursor: pointer;" id={`${pageOptions.type}-copy-${item.uuid}`} on:click|stopPropagation={() => copyShortLink(item.uuid, item.id)} on:keydown={(e) => copyShortLink(item.uuid, item.id, e)} tabindex={0} >
                         {#if item.privacy && item.privacy.visibility === "private"}
                             <FaLock />

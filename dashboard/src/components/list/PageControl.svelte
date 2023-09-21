@@ -96,6 +96,37 @@
                     </Input>
                 </InputGroup>
             </Col>
+            <Col xs={12} md={6} lg={4} class="mb-2">
+                {#if pageOptions.view === "text"}
+                    <InputGroup>
+                        <InputGroupText>Extra Info</InputGroupText>
+                        <Input bind:value={options.extra} type="select" aria-label="view mode" >
+                            <option value="display_name">Display Name</option>
+                            {#if pageOptions.type === "member"}
+                            <option value="avatar_url">Avatar Url</option>
+                            <option value="webhook_avatar_url">Proxy Avatar Url</option>
+                            <option value="pronouns">Pronouns</option>
+                            <option value="birthday">Birthday</option>
+                            {:else if pageOptions.type === "group"}
+                            <option value="icon">Icon Url</option>
+                            {/if}
+                            <option value="banner">Banner Url</option>
+                            <option value="color">Color</option>
+                            <option value="created">Created</option>
+                        </Input>
+                    </InputGroup>
+                {:else if pageOptions.type === "member"}
+                    <InputGroup>
+                        <InputGroupText>Avatar Used</InputGroupText>
+                        <Input bind:value={options.pfp} type="select" aria-label="view mode" >
+                            <option value="proxy">Proxy (fall back to main)</option>
+                            <option value="avatar">Main (fall back to proxy)</option>
+                            <option value="proxy_only">Proxy only</option>
+                            <option value="avatar_only">Main only</option>
+                        </Input>
+                    </InputGroup>
+                {/if}
+            </Col>
         </Row>
         <hr/>
         <Row>

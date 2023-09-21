@@ -60,6 +60,7 @@ export interface ListOptions {
     
     // text only view options
     extra: keyof Member | keyof Group | null
+    pfp: "proxy"|"avatar"|"proxy_only"|"avatar_only"
 }
 
 export interface PageOptions {
@@ -128,7 +129,8 @@ export const defaultListOptions: ListOptions = {
     sort: 'name',
     order: 'ascending',
     show: 'all',
-    extra: 'display_name'
+    extra: 'display_name',
+    pfp: "proxy"
 }
 
 export const defaultPageOptions: PageOptions = {

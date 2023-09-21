@@ -118,7 +118,7 @@
         <Card style="border-radius: 0;">
             <h2 class="accordion-header">
                 <button class="w-100 accordion-button collapsed bg-transparent" id={`${pageOptions.type}-card-${indexStart + index}`} on:click={() => toggleCard(item.uuid, index)} on:keydown={(e) => skipToNextItem(e, indexStart + index)}>
-                    <CardsHeader {item} sortBy={options.sort}>
+                    <CardsHeader {item} sortBy={options.sort} type={pageOptions.type} avatarUsed={options.pfp}>
                         <button class="button-reset" slot="icon" style="cursor: pointer;" id={`${pageOptions.type}-copy-${item.id}-${indexStart + index}`} on:click|stopPropagation={() => copyShortLink(indexStart + index, item.id)} on:keydown={(e) => copyShortLink(indexStart + index, item.id, e)} tabindex={0} >
                             {#if item.privacy && item.privacy.visibility === "private"}
                             <FaLock />
@@ -149,7 +149,7 @@
     <Card class="mb-3">
         <h2 class="accordion-header card-header">
             <button class="w-100 accordion-button collapsed bg-transparent" id={`${pageOptions.type}-card-${indexStart + index}`} on:keydown={(e) => skipToNextItem(e, indexStart + index)} tabindex={0}>
-                <CardsHeader {item} sortBy={options.sort}>
+                <CardsHeader {item} sortBy={options.sort} type={pageOptions.type} avatarUsed={options.pfp}>
                     <button class="button-reset" slot="icon" style="cursor: pointer;" id={`${pageOptions.type}-copy-${item.id}-${indexStart + index}`} on:click|stopPropagation={() => copyShortLink(indexStart + index, item.id)} on:keydown|stopPropagation={(e) => copyShortLink(indexStart + index, item.id, e)} tabindex={0} >
                         {#if item.privacy && item.privacy.visibility === "private"}
                         <FaLock />
@@ -177,7 +177,7 @@
     {#each currentList as item, index(pageOptions.randomized ? item.uuid + '-' + index : item.uuid)}
     <Card style="border-radius: 0;">
         <a class="accordion-button p-3 collapsed bg-transparent" style="text-decoration: none;" href={getItemLink(item)} id={`${pageOptions.type}-card-${indexStart + index}`} on:keydown={(e) => skipToNextItem(e, indexStart + index)} use:link >
-            <CardsHeader {item} sortBy={options.sort}>
+            <CardsHeader {item} sortBy={options.sort} type={pageOptions.type} avatarUsed={options.pfp}>
                 <button class="button-reset" slot="icon" style="cursor: pointer;" id={`${pageOptions.type}-copy-${item.id}-${indexStart + index}`} on:click|stopPropagation={() => copyShortLink(indexStart + index, item.id)} on:keydown|stopPropagation={(e) => copyShortLink(indexStart + index, item.id, e)} tabindex={0} >
                     {#if item.privacy && item.privacy.visibility === "private"}
                     <FaLock />

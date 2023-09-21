@@ -87,9 +87,9 @@
     <NewMember />
 {/if}
 {#if pageOptions.view === "card"}
-    <CardView {pageOptions} currentList={currentMembers} />
+    <CardView {pageOptions} currentList={currentMembers} listOptions={options} />
 {:else if pageOptions.view === "tiny"}
-    <TinyView {pageOptions} currentList={currentMembers} />
+    <TinyView {pageOptions} currentList={currentMembers} listOptions={options} />
 {:else if pageOptions.view === "text"}
     <TextView {pageOptions} listOptions={options} currentList={currentMembers} />
 {:else}

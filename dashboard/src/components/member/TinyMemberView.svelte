@@ -8,6 +8,7 @@
   import FaUserCircle from "svelte-icons/fa/FaUserCircle.svelte"
   
   export let member: Member
+  export let avatarUsed: "proxy"|"avatar"|"proxy_only"|"avatar_only" = "proxy"
 
   let location = useLocation()
     let pathName = $location.pathname;
@@ -21,11 +22,23 @@
 
     return str;
   }
+
+  let icon_url = null
+
+  $: if (avatarUsed === "proxy" || avatarUsed === "proxy_only") {
+        if (member.webhook_avatar_url) icon_url = member.webhook_avatar_url
+        else if (avatarUsed === "proxy_only") icon_url = default_avatar
+        else icon_url = member.avatar_url || default_avatar
+    } else {
+        if (member.avatar_url) icon_url = member.avatar_url
+        else if (avatarUsed === "avatar_only") icon_url = default_avatar
+        else icon_url = member.webhook_avatar_url ?? default_avatar
+    }
 </script>
 
 <a href={getMemberPageUrl()} class="card-link rounded flex-1 mb-3" >
   <Card style={`border: 3px solid #${member.color}`} class="h-100" >
-    <CardImg style="border-bottom-right-radius: 0; border-bottom-left-radius: 0;" src={member.avatar_url ? resizeMedia(member.avatar_url, [256, 256], "webp") : default_avatar} />
+    <CardImg style="border-bottom-right-radius: 0; border-bottom-left-radius: 0;" src={icon_url ? resizeMedia(icon_url, [512, 512], "webp") : default_avatar} />
     <CardBody class="text-center p-2 d-flex flex-col align-items-center justify-content-center">
       <h3>
         <button class="button-reset" style="width: auto; height: 1em; cursor: pointer; margin-right: 0.25em;" id={`m-copy-${member.uuid}`} >

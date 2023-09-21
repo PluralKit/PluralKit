@@ -165,7 +165,7 @@
             {:else if group && group.id}
                 <Card class="mb-4">
                     <CardHeader>
-                        <CardsHeader item={group}>
+                        <CardsHeader item={group} type="group" avatarUsed="avatar">
                             <div slot="icon" style="cursor: pointer;" id={`group-copy-${group.id}`} on:click|stopPropagation={() => copyShortLink()} on:keydown={(e) => copyShortLink(e)} tabindex={0} >
                                 <FaUsers slot="icon" />
                             </div>
@@ -186,13 +186,13 @@
             <span class="itemcounter">{processedList.length} {pageOptions.type}s ({currentPage.length} shown)</span>
                 <ListPagination bind:currentPage={pageOptions.currentPage} {pageAmount} />
                 {#if pageOptions.view === "card"}
-                <CardView {pageOptions} currentList={currentPage} />
+                <CardView {pageOptions} currentList={currentPage} {listOptions} />
                 {:else if pageOptions.view === "tiny"}
-                <TinyView {pageOptions} currentList={currentPage} />
+                <TinyView {pageOptions} currentList={currentPage} {listOptions} />
                 {:else if pageOptions.view === "text"}
                 <TextView {pageOptions} currentList={currentPage} {listOptions} />
                 {:else}
-                <ListView {pageOptions} currentList={currentPage} fullListLength={groupMembers.length}/>
+                <ListView {pageOptions} currentList={currentPage} fullListLength={groupMembers.length} options={listOptions}/>
                 {/if}
                 <ListPagination bind:currentPage={pageOptions.currentPage} {pageAmount} />
             {/if}
