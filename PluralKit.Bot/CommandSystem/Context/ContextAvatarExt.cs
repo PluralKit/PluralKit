@@ -33,8 +33,11 @@ public static class ContextAvatarExt
         // If we have an attachment, use that
         if (ctx.Message.Attachments.FirstOrDefault() is { } attachment)
         {
-            var url = attachment.ProxyUrl;
-            return new ParsedImage { Url = url, Source = AvatarSource.Attachment };
+            // XXX: strip query params from attachment URLs because of new Discord CDN shenanigans
+            var uriBuilder = new UriBuilder(attachment.ProxyUrl);
+            uriBuilder.Query = "";
+
+            return new ParsedImage { Url = uriBuilder.Uri.AbsoluteUri, Source = AvatarSource.Attachment };
         }
 
         // We should only get here if there are no arguments (which would get parsed as URL + throw if error)
