@@ -128,6 +128,7 @@ public class ProxyService
             Channel.ChannelType.GuildVoice => true,
             Channel.ChannelType.GuildStageVoice => true,
             Channel.ChannelType.GuildForum => isRootChannel,
+            Channel.ChannelType.GuildMedia => isRootChannel,
             _ => false,
         };
     }
