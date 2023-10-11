@@ -43,6 +43,7 @@ public class LoggerCleanService
     private static readonly Regex _DozerRegex = new("Message ID: (\\d{17,19}) - (\\d{17,19})\nUserID: (\\d{17,19})");
     private static readonly Regex _SkyraRegex = new("https://discord.com/channels/(\\d{17,19})/(\\d{17,19})/(\\d{17,19})");
     private static readonly Regex _AnnabelleRegex = new("```\n(\\d{17,19})\n```");
+    private static readonly Regex _AnnabelleRegexFuzzy = new("A message from \\*\\*[\\w.]{2,32}\\*\\* \\(`(\\d{17,19})`\\) was deleted in <#\\d{17,19}>");
 
     private static readonly Regex _VortexRegex =
         new("`\\[(\\d\\d:\\d\\d:\\d\\d)\\]` .* \\(ID:(\\d{17,19})\\).* <#\\d{17,19}>:");
@@ -80,7 +81,7 @@ public class LoggerCleanService
         new LoggerBot("ProBot Prime", 567703512763334685, fuzzyExtractFunc: ExtractProBot), // webhook (?)
         new LoggerBot("Dozer", 356535250932858885, ExtractDozer),
         new LoggerBot("Skyra", 266624760782258186, ExtractSkyra),
-        new LoggerBot("Annabelle", 231241068383961088, ExtractAnnabelle),
+        new LoggerBot("Annabelle", 231241068383961088, ExtractAnnabelle, fuzzyExtractFunc: ExtractAnnabelleFuzzy),
     }.ToDictionary(b => b.Id);
 
     private static Dictionary<ulong, LoggerBot> _botsByApplicationId
@@ -143,6 +144,7 @@ public class LoggerCleanService
 
                     // Otherwise, we can *reasonably assume* that this is a logged deletion, so delete the log message.
                     await _client.DeleteMessage(msg.ChannelId, msg.Id);
+
                 }
             }
             if (bot.ExtractFunc != null)
@@ -415,10 +417,28 @@ public class LoggerCleanService
 
     private static ulong? ExtractAnnabelle(Message msg)
     {
+        // this bot has both an embed and a non-embed log format
+        // the embed is precise matching (this), the non-embed is fuzzy (below)
         var embed = msg.Embeds?.FirstOrDefault();
         if (embed?.Author?.Name == null || !embed.Author.Name.EndsWith("Deleted Message")) return null;
         var match = _AnnabelleRegex.Match(embed.Fields[2].Value);
         return match.Success ? ulong.Parse(match.Groups[1].Value) : null;
+    }
+
+    private static FuzzyExtractResult? ExtractAnnabelleFuzzy(Message msg)
+    {
+        // matching for annabelle's non-precise non-embed format
+        // it has a discord (unix) timestamp but I (Petalss) can't get that to convert to rfc3339 so
+        // we use the message timestamp
+        if (msg.Embeds.Length != 0) return null;
+        var match = _AnnabelleRegexFuzzy.Match(msg.Content);
+        return match.Success
+            ? new FuzzyExtractResult
+            {
+                User = ulong.Parse(match.Groups[1].Value),
+                ApproxTimestamp = msg.Timestamp().ToInstant()
+            }
+            : null;
     }
 
     public class LoggerBot
