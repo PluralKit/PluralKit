@@ -70,8 +70,12 @@ public class Member
         if (avatarArg != null)
             try
             {
-                await AvatarUtils.VerifyAvatarOrThrow(_client, avatarArg.Url);
-                await ctx.Repository.UpdateMember(member.Id, new MemberPatch { AvatarUrl = avatarArg.Url }, conn);
+                // XXX: strip query params from attachment URLs because of new Discord CDN shenanigans
+                var uriBuilder = new UriBuilder(avatarArg.Url);
+                uriBuilder.Query = "";
+
+                await AvatarUtils.VerifyAvatarOrThrow(_client, uriBuilder.Uri.AbsoluteUri);
+                await ctx.Repository.UpdateMember(member.Id, new MemberPatch { AvatarUrl = uriBuilder.Uri.AbsoluteUri }, conn);
 
                 dispatchData.Add("avatar_url", avatarArg.Url);
             }
