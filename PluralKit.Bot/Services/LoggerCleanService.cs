@@ -76,7 +76,7 @@ public class LoggerCleanService
         new LoggerBot("ProBot Prime", 567703512763334685, fuzzyExtractFunc: ExtractProBot), // webhook (?)
         new LoggerBot("Dozer", 356535250932858885, ExtractDozer),
         new LoggerBot("Skyra", 266624760782258186, ExtractSkyra),
-        new LoggerBot("Annabelle", 231241068383961088, ExtractAnnabelle),       
+        new LoggerBot("Annabelle", 231241068383961088, ExtractAnnabelle),
     }.ToDictionary(b => b.Id);
 
     private static Dictionary<ulong, LoggerBot> _botsByApplicationId
@@ -117,6 +117,7 @@ public class LoggerCleanService
         try
         {
             // We try two ways of extracting the actual message, depending on the bots
+            // Some bots have different log formats so we check for both types of extract function
             if (bot.FuzzyExtractFunc != null)
             {
                 // Some bots (Carl, Circle, etc) only give us a user ID and a rough timestamp, so we try our best to
@@ -125,20 +126,22 @@ public class LoggerCleanService
                 // delete event timestamp, which is... good enough, I think? Potential for false positives and negatives
                 // either way but shouldn't be too much, given it's constrained by user ID and guild.
                 var fuzzy = bot.FuzzyExtractFunc(msg);
-                if (fuzzy == null) return;
+                if (fuzzy != null)
+                {
 
-                _logger.Debug("Fuzzy logclean for {BotName} on {MessageId}: {@FuzzyExtractResult}",
-                    bot.Name, msg.Id, fuzzy);
+                    _logger.Debug("Fuzzy logclean for {BotName} on {MessageId}: {@FuzzyExtractResult}",
+                        bot.Name, msg.Id, fuzzy);
 
-                var exists = await _redis.HasLogCleanup(fuzzy.Value.User, msg.GuildId.Value);
+                    var exists = await _redis.HasLogCleanup(fuzzy.Value.User, msg.GuildId.Value);
 
-                // If we didn't find a corresponding message, bail
-                if (!exists) return;
+                    // If we didn't find a corresponding message, bail
+                    if (!exists) return;
 
-                // Otherwise, we can *reasonably assume* that this is a logged deletion, so delete the log message.
-                await _client.DeleteMessage(msg.ChannelId, msg.Id);
+                    // Otherwise, we can *reasonably assume* that this is a logged deletion, so delete the log message.
+                    await _client.DeleteMessage(msg.ChannelId, msg.Id);
+                }
             }
-            else if (bot.ExtractFunc != null)
+            if (bot.ExtractFunc != null)
             {
                 // Other bots give us the message ID itself, and we can just extract that from the database directly.
                 var extractedId = bot.ExtractFunc(msg);
@@ -148,10 +151,11 @@ public class LoggerCleanService
                     bot.Name, msg.Id, extractedId);
 
                 var mid = await _redis.GetOriginalMid(extractedId.Value);
-                if (mid == null) return;
-
-                // If we've gotten this far, we found a logged deletion of a trigger message. Just yeet it!
-                await _client.DeleteMessage(msg.ChannelId, msg.Id);
+                if (mid != null)
+                {
+                    // If we've gotten this far, we found a logged deletion of a trigger message. Just yeet it!
+                    await _client.DeleteMessage(msg.ChannelId, msg.Id);
+                }
             } // else should not happen, but idk, it might
         }
         catch (NotFoundException)
