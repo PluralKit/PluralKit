@@ -46,6 +46,7 @@ func main() {
 	r.NotFound(notFoundHandler)
 
 	r.Get("/profile/{type}/{id}", func(rw http.ResponseWriter, r *http.Request) {
+		rw.Header().Set("X-Robots-Tag", "noindex")
 		defer func() {
 			if a := recover(); a != nil {
 				notFoundHandler(rw, r)
