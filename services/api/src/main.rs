@@ -61,6 +61,7 @@ async fn main() -> anyhow::Result<()> {
 
         .route("/v2/systems/:system_id/autoproxy", get(util::rproxy))
         .route("/v2/systems/:system_id/autoproxy", patch(util::rproxy))
+        .route("/v2/systems/:system_id/autoproxy/unlatch", post(util::rproxy))
 
         .route("/v2/messages/:message_id", get(util::rproxy))
 

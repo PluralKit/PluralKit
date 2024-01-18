@@ -94,6 +94,24 @@ Returns an [autoproxy settings](/api/models/#autoproxy-settings-model) object on
 Currently, only autoproxy with `guild_id` is supported. The API will return an error message if you specify `channel_id`, or do not specify a `guild_id`.
 :::
 
+### Clear System Autoproxy Latch
+
+POST `/systems/@me/autoproxy/unlatch`
+
+Query String Parameters
+|name|type|
+|---|---|
+|guild_id?|snowflake|
+|channel_id?|snowflake|
+
+If autoproxy latch is enabled: clear latch status, without disabling autoproxy.  If autoproxy latch is not enabled, this endpoint is a no-op.
+
+Returns 204 No Content on success.
+
+::: warning
+Currently, only autoproxy with `guild_id` is supported. The API will return an error message if you specify `channel_id`, or do not specify a `guild_id`.
+:::
+
 ---
 ## Members
 

@@ -22,6 +22,10 @@ public class AutoproxyControllerV2: PKControllerBase
     public Task<IActionResult> PatchWrapper([FromRoute] string systemRef, [FromQuery] ulong? guild_id, [FromQuery] ulong? channel_id, [FromBody] JObject? data)
         => Entrypoint(systemRef, guild_id, channel_id, data);
 
+    [HttpPost("systems/{systemRef}/autoproxy/unlatch")]
+    public Task<IActionResult> PostWrapper([FromRoute] string systemRef, [FromQuery] ulong? guild_id, [FromQuery] ulong? channel_id)
+        => Entrypoint(systemRef, guild_id, channel_id, null);
+
     public async Task<IActionResult> Entrypoint(string systemRef, ulong? guild_id, ulong? channel_id, JObject? data)
     {
         var system = await ResolveSystem(systemRef);
@@ -39,6 +43,8 @@ public class AutoproxyControllerV2: PKControllerBase
             return await Get(settings);
         else if (HttpContext.Request.Method == "PATCH")
             return await Patch(system, guild_id, channel_id, data, settings);
+        else if (HttpContext.Request.Method == "POST")
+            return await Post(system, guild_id, channel_id, settings);
         else return StatusCode(415);
     }
 
@@ -80,5 +86,18 @@ public class AutoproxyControllerV2: PKControllerBase
         if (!updateMember && oldData.AutoproxyMember != null)
             member = await _repo.GetMember(oldData.AutoproxyMember.Value);
         return Ok(res.ToJson(member?.Hid));
+    }
+
+    private async Task<IActionResult> Post(PKSystem system, ulong? guildId, ulong? channelId, AutoproxySettings settings)
+    {
+        if (settings.AutoproxyMode == AutoproxyMode.Latch)
+        {
+            await _repo.UpdateAutoproxy(system.Id, guildId, channelId, new()
+            {
+                AutoproxyMember = null
+            });
+        }
+
+        return NoContent();
     }
 }
