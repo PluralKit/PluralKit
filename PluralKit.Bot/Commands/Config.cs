@@ -41,7 +41,7 @@ public class Config
 
         items.Add(new(
             "timezone",
-            "The system's time zone - shows timestamps in your local time",
+            "The system's time zone - shows timestamps in your local time.",
             ctx.Config.UiTz,
             "UTC"
         ));
@@ -97,7 +97,7 @@ public class Config
 
         items.Add(new(
             "Proxy error",
-            "Whether to send an error message when proxying fails.",
+            "Whether to send an error message when proxying fails",
             EnabledDisabled(ctx.Config.ProxyErrorMessageEnabled),
             "enabled"
         ));
