@@ -41,7 +41,7 @@ public class Config
 
         items.Add(new(
             "timezone",
-            "The system's time zone - shows timestamps in your local time.",
+            "The system's time zone - shows timestamps in your local time",
             ctx.Config.UiTz,
             "UTC"
         ));
