@@ -11,7 +11,7 @@ public class Help
     {
         Title = "PluralKit",
         Description = "PluralKit is a bot designed for plural communities on Discord, and is open for anyone to use. It allows you to register systems, maintain system information, set up message proxying, log switches, and more.",
-        Footer = new("By @Ske#6201 | Myriad design by @Layl#8888, art by https://twitter.com/sillyvizion | GitHub: https://github.com/PluralKit/PluralKit/ | Website: https://pluralkit.me/"),
+        Footer = new("By @ske | Myriad design by @layl, art by @tedkalashnikov | GitHub: https://github.com/PluralKit/PluralKit/ | Website: https://pluralkit.me/"),
         Color = DiscordUtils.Blue,
     };
 
