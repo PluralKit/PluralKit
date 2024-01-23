@@ -45,7 +45,7 @@ public class MemberEdit
         await ctx.Reply($"{Emojis.Success} Member renamed (using {newName.Length}/{Limits.MaxMemberNameLength} characters).");
         if (newName.Contains(" "))
             await ctx.Reply(
-                $"{Emojis.Note} Note that this member's name now contains spaces. You will need to surround it with \"double quotes\" when using commands referring to it.");
+                $"{Emojis.Note} Note that this member's name now contains spaces. You will need to surround it with \"double quotes\" when using commands referring to it, or just use the member's 5-character ID (which is `{member.Hid}`).");
         if (target.DisplayName != null)
             await ctx.Reply(
                 $"{Emojis.Note} Note that this member has a display name set ({target.DisplayName}), and will be proxied using that name instead.");
