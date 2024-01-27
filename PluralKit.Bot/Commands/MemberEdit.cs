@@ -213,7 +213,7 @@ public class MemberEdit
             else
             {
                 throw new PKSyntaxError(
-                    "This member does not have a banner image set. Set one by attaching an image to this command, or by passing an image URL or @mention.");
+                    "This member does not have a banner image set. Set one by attaching an image to this command, or by passing an image URL.");
             }
         }
 
