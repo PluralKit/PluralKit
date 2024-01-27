@@ -71,7 +71,7 @@ func update_stats() {
 
 	data_stats := run_data_stats_query()
 	for _, key := range table_stat_keys {
-		val := data_stats[key+"_count"].(int32)
+		val := data_stats[key+"_count"].(int64)
 		do_stats_insert(plural(key), int(val))
 	}
 }
