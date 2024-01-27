@@ -69,7 +69,7 @@ func run_data_stats_query() map[string]interface{} {
 	return s
 }
 
-func do_stats_insert(table string, value int) {
+func do_stats_insert(table string, value int64) {
 	if stats_db == nil {
 		return
 	}
