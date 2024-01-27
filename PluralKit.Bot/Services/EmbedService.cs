@@ -432,7 +432,8 @@ public class EmbedService
                     : $"{msg.Member.NameFor(ctx)} (`{msg.Member.Hid}`)"
             , true))
             .Field(new Embed.Field("Sent by", userStr, true))
-            .Timestamp(DiscordUtils.SnowflakeToInstant(msg.Message.Mid).ToDateTimeOffset().ToString("O"));
+            .Timestamp(DiscordUtils.SnowflakeToInstant(msg.Message.Mid).ToDateTimeOffset().ToString("O"))
+            .Footer(new Embed.EmbedFooter($"Original Message ID: {msg.Message.OriginalMid}"));
 
         var roles = memberInfo?.Roles?.ToList();
         if (roles != null && roles.Count > 0 && showContent)
