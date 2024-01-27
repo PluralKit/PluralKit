@@ -44,7 +44,7 @@ public class Groups
         var groupLimit = ctx.Config.GroupLimitOverride ?? Limits.MaxGroupCount;
         if (existingGroupCount >= groupLimit)
             throw new PKError(
-                $"System has reached the maximum number of groups ({groupLimit}). Please delete unused groups first in order to create new ones.");
+                $"System has reached the maximum number of groups ({groupLimit}). If you need to add more groups, you can either delete existing groups, or ask for your limit to be raised in the PluralKit support server: <https://discord.gg/PczBt78>");
 
         // Warn if there's already a group by this name
         var existingGroup = await ctx.Repository.GetGroupByName(ctx.System.Id, groupName);
@@ -93,7 +93,7 @@ public class Groups
 
         if (existingGroupCount >= Limits.WarnThreshold(groupLimit))
             await ctx.Reply(
-                $"{Emojis.Warn} You are approaching the per-system group limit ({existingGroupCount} / {groupLimit} groups). Please review your group list for unused or duplicate groups.");
+                $"{Emojis.Warn} You are approaching the per-system group limit ({existingGroupCount} / {groupLimit} groups). Once you reach this limit, you will be unable to create new groups until existing groups are deleted, or you can ask for your limit to be raised in the PluralKit support server: <https://discord.gg/PczBt78>");
     }
 
     public async Task RenameGroup(Context ctx, PKGroup target)
