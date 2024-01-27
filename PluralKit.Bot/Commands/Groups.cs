@@ -300,7 +300,7 @@ public class Groups
             else
             {
                 throw new PKSyntaxError(
-                    "This group does not have an icon set. Set one by attaching an image to this command, or by passing an image URL or @mention.");
+                    "This group does not have an avatar set. Set one by attaching an image to this command, or by passing an image URL or @mention.");
             }
         }
 
@@ -364,7 +364,7 @@ public class Groups
             else
             {
                 throw new PKSyntaxError(
-                    "This group does not have a banner image set. Set one by attaching an image to this command, or by passing an image URL or @mention.");
+                    "This group does not have a banner image set. Set one by attaching an image to this command, or by passing an image URL.");
             }
         }
 
