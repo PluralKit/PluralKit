@@ -26,6 +26,7 @@ public static class AvatarUtils
             throw new PKError("Due to server issues, PluralKit is unable to read images hosted on toyhou.se.");
 
         url = TryRewriteCdnUrl(url);
+        Console.WriteLine(url);
 
         var response = await client.GetAsync(url);
         if (!response.IsSuccessStatusCode) // Check status code
@@ -63,11 +64,24 @@ public static class AvatarUtils
     // This lets us add resizing parameters to "borrow" their media proxy server to downsize the image
     // which in turn makes it more likely to be underneath the size limit!
     private static readonly Regex DiscordCdnUrl =
-        new(@"^https?://(?:cdn\.discordapp\.com|media\.discordapp\.net)/attachments/(\d{17,19})/(\d{17,19})/([^/\\&\?]+)\.(png|jpg|jpeg|webp)(\?.*)?$");
+        new(@"^https?://(?:cdn\.discordapp\.com|media\.discordapp\.net)/attachments/(\d{17,19})/(\d{17,19})/([^/\\&\?]+)\.(png|jpg|jpeg|webp)(?<query>\?.*)?$");
 
-    private static readonly string DiscordMediaUrlReplacement =
-        "https://media.discordapp.net/attachments/$1/$2/$3.$4$5width=256&height=256";
+    private static string DiscordMediaUrlReplacement(bool query = false)
+    {
+        var regexp = "https://media.discordapp.net/attachments/$1/$2/$3.$4";
+        regexp += query ? "$5" : "?";
+        regexp += "width=256&height=256";
+        return regexp;
+    }
 
-    public static string? TryRewriteCdnUrl(string? url) =>
-        url == null ? null : DiscordCdnUrl.Replace(url, DiscordMediaUrlReplacement);
+    public static string? TryRewriteCdnUrl(string? url)
+    {
+        if (url == null)
+            return null;
+        
+        var match = DiscordCdnUrl.Match(url);
+        var query = match.Groups["query"].Success;
+
+        return DiscordCdnUrl.Replace(url, DiscordMediaUrlReplacement(query));
+    }
 }
