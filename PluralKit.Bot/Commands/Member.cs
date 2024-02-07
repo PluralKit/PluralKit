@@ -70,14 +70,18 @@ public class Member
         if (avatarArg != null)
             try
             {
-                // XXX: strip query params from attachment URLs because of new Discord CDN shenanigans
-                var uriBuilder = new UriBuilder(avatarArg.Url);
+                // XXX: discord attachment URLs are unable to be validated without their query params
+                // keep both the URL with query (for validation) and the clean URL (for storage) around
+                var uriBuilder = new UriBuilder(avatarArg.ProxyUrl);
+                ParsedImage img = new ParsedImage { Url = uriBuilder.Uri.AbsoluteUri, Source = AvatarSource.Attachment };
+
                 uriBuilder.Query = "";
+                img.CleanUrl = uriBuilder.Uri.AbsoluteUri;
 
-                await AvatarUtils.VerifyAvatarOrThrow(_client, uriBuilder.Uri.AbsoluteUri);
-                await ctx.Repository.UpdateMember(member.Id, new MemberPatch { AvatarUrl = uriBuilder.Uri.AbsoluteUri }, conn);
+                await AvatarUtils.VerifyAvatarOrThrow(_client, img.Url);
+                await ctx.Repository.UpdateMember(member.Id, new MemberPatch { AvatarUrl = img.CleanUrl }, conn);
 
-                dispatchData.Add("avatar_url", avatarArg.Url);
+                dispatchData.Add("avatar_url", img.CleanUrl);
             }
             catch (Exception e)
             {

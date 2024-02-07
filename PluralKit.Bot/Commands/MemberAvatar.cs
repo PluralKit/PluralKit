@@ -3,6 +3,7 @@ using Myriad.Builders;
 using Myriad.Types;
 
 using PluralKit.Core;
+using Serilog;
 
 namespace PluralKit.Bot;
 
@@ -139,7 +140,7 @@ public class MemberAvatar
 
         ctx.CheckSystem().CheckOwnMember(target);
         await AvatarUtils.VerifyAvatarOrThrow(_client, avatarArg.Value.Url);
-        await UpdateAvatar(location, ctx, target, avatarArg.Value.Url);
+        await UpdateAvatar(location, ctx, target, avatarArg.Value.CleanUrl);
         await PrintResponse(location, ctx, target, avatarArg.Value, guildData);
     }
 
