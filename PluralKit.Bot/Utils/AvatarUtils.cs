@@ -78,7 +78,7 @@ public static class AvatarUtils
     {
         if (url == null)
             return null;
-        
+
         var match = DiscordCdnUrl.Match(url);
         var query = match.Groups["query"].Success;
 
