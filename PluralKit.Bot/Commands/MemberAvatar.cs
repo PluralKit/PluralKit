@@ -3,7 +3,6 @@ using Myriad.Builders;
 using Myriad.Types;
 
 using PluralKit.Core;
-using Serilog;
 
 namespace PluralKit.Bot;
 
