@@ -26,7 +26,6 @@ public static class AvatarUtils
             throw new PKError("Due to server issues, PluralKit is unable to read images hosted on toyhou.se.");
 
         url = TryRewriteCdnUrl(url);
-        Console.WriteLine(url);
 
         var response = await client.GetAsync(url);
         if (!response.IsSuccessStatusCode) // Check status code
