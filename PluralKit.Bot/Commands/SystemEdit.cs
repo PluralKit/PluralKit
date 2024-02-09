@@ -475,7 +475,7 @@ public class SystemEdit
 
             await AvatarUtils.VerifyAvatarOrThrow(_client, img.Url);
 
-            await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { AvatarUrl = img.Url });
+            await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { AvatarUrl = img.CleanUrl ?? img.Url });
 
             var msg = img.Source switch
             {
@@ -543,7 +543,7 @@ public class SystemEdit
 
             await AvatarUtils.VerifyAvatarOrThrow(_client, img.Url);
 
-            await ctx.Repository.UpdateSystemGuild(target.Id, ctx.Guild.Id, new SystemGuildPatch { AvatarUrl = img.Url });
+            await ctx.Repository.UpdateSystemGuild(target.Id, ctx.Guild.Id, new SystemGuildPatch { AvatarUrl = img.CleanUrl ?? img.Url });
 
             var msg = img.Source switch
             {
@@ -640,7 +640,7 @@ public class SystemEdit
         {
             await AvatarUtils.VerifyAvatarOrThrow(_client, img.Url, true);
 
-            await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { BannerImage = img.Url });
+            await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { BannerImage = img.CleanUrl ?? img.Url });
 
             var msg = img.Source switch
             {

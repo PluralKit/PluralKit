@@ -139,7 +139,7 @@ public class MemberAvatar
 
         ctx.CheckSystem().CheckOwnMember(target);
         await AvatarUtils.VerifyAvatarOrThrow(_client, avatarArg.Value.Url);
-        await UpdateAvatar(location, ctx, target, avatarArg.Value.Url);
+        await UpdateAvatar(location, ctx, target, avatarArg.Value.CleanUrl ?? avatarArg.Value.Url);
         await PrintResponse(location, ctx, target, avatarArg.Value, guildData);
     }
 
