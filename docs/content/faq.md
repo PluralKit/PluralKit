@@ -88,3 +88,6 @@ You probably set your timezone in PluralKit to a specific timezone, and PluralKi
 ### Why am I not able to edit a message via ID? or, Why is PluralKit editing the wrong message?
 It is not possible to edit messages via ID. Please use the full link, or reply to the message.
 
+### How do I reply-ping/reply-@ proxied messages?
+You cannot reply-@ a proxied messages due to their nature as webhooks. If you want to "reply-@" a proxied message, you must react to the message with 🔔, 🛎, or 🏓. This will send a message from PluralKit that reads "Psst, MEMBER (@User), you have been pinged by @You", which will being the Discord account behind the proxied message.
+
