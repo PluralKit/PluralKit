@@ -263,7 +263,7 @@ public class Groups
 
             await AvatarUtils.VerifyAvatarOrThrow(_client, img.Url);
 
-            await ctx.Repository.UpdateGroup(target.Id, new GroupPatch { Icon = img.Url });
+            await ctx.Repository.UpdateGroup(target.Id, new GroupPatch { Icon = img.CleanUrl ?? img.Url });
 
             var msg = img.Source switch
             {
@@ -328,7 +328,7 @@ public class Groups
 
             await AvatarUtils.VerifyAvatarOrThrow(_client, img.Url, true);
 
-            await ctx.Repository.UpdateGroup(target.Id, new GroupPatch { BannerImage = img.Url });
+            await ctx.Repository.UpdateGroup(target.Id, new GroupPatch { BannerImage = img.CleanUrl ?? img.Url });
 
             var msg = img.Source switch
             {
