@@ -79,7 +79,7 @@ public class Member
                 img.CleanUrl = uriBuilder.Uri.AbsoluteUri;
 
                 await AvatarUtils.VerifyAvatarOrThrow(_client, img.Url);
-                await ctx.Repository.UpdateMember(member.Id, new MemberPatch { AvatarUrl = img.CleanUrl }, conn);
+                await ctx.Repository.UpdateMember(member.Id, new MemberPatch { AvatarUrl = img.CleanUrl ?? img.Url }, conn);
 
                 dispatchData.Add("avatar_url", img.CleanUrl);
             }

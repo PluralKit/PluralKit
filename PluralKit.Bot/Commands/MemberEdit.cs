@@ -182,7 +182,7 @@ public class MemberEdit
         {
             await AvatarUtils.VerifyAvatarOrThrow(_client, img.Url, true);
 
-            await ctx.Repository.UpdateMember(target.Id, new MemberPatch { BannerImage = img.CleanUrl });
+            await ctx.Repository.UpdateMember(target.Id, new MemberPatch { BannerImage = img.CleanUrl ?? img.Url });
 
             var msg = img.Source switch
             {

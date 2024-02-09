@@ -52,7 +52,7 @@ public static class ContextAvatarExt
 public struct ParsedImage
 {
     public string Url;
-    public string CleanUrl;
+    public string? CleanUrl;
     public AvatarSource Source;
     public User? SourceUser;
 }
