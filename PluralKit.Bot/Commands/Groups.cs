@@ -21,13 +21,15 @@ public class Groups
     private readonly HttpClient _client;
     private readonly DispatchService _dispatch;
     private readonly EmbedService _embeds;
+    private readonly AvatarHostingService _avatarHosting;
 
     public Groups(EmbedService embeds, HttpClient client,
-                  DispatchService dispatch)
+                  DispatchService dispatch, AvatarHostingService avatarHosting)
     {
         _embeds = embeds;
         _client = client;
         _dispatch = dispatch;
+        _avatarHosting = avatarHosting;
     }
 
     public async Task CreateGroup(Context ctx)
@@ -261,6 +263,7 @@ public class Groups
         {
             ctx.CheckOwnGroup(target);
 
+            img = await _avatarHosting.TryRehostImage(img, AvatarHostingService.RehostedImageType.Avatar, ctx.Author.Id);
             await AvatarUtils.VerifyAvatarOrThrow(_client, img.Url);
 
             await ctx.Repository.UpdateGroup(target.Id, new GroupPatch { Icon = img.CleanUrl ?? img.Url });
@@ -326,6 +329,7 @@ public class Groups
         {
             ctx.CheckOwnGroup(target);
 
+            img = await _avatarHosting.TryRehostImage(img, AvatarHostingService.RehostedImageType.Banner, ctx.Author.Id);
             await AvatarUtils.VerifyAvatarOrThrow(_client, img.Url, true);
 
             await ctx.Repository.UpdateGroup(target.Id, new GroupPatch { BannerImage = img.CleanUrl ?? img.Url });

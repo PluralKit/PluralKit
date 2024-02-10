@@ -80,4 +80,6 @@ public static class AvatarUtils
 
         return newUrl;
     }
+
+    public static bool IsDiscordCdnUrl(string? url) => url != null && DiscordCdnUrl.Match(url).Success;
 }

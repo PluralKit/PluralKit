@@ -18,12 +18,14 @@ public class SystemEdit
     private readonly HttpClient _client;
     private readonly DataFileService _dataFiles;
     private readonly PrivateChannelService _dmCache;
+    private readonly AvatarHostingService _avatarHosting;
 
-    public SystemEdit(DataFileService dataFiles, HttpClient client, PrivateChannelService dmCache)
+    public SystemEdit(DataFileService dataFiles, HttpClient client, PrivateChannelService dmCache, AvatarHostingService avatarHosting)
     {
         _dataFiles = dataFiles;
         _client = client;
         _dmCache = dmCache;
+        _avatarHosting = avatarHosting;
     }
 
     public async Task Name(Context ctx, PKSystem target)
@@ -473,6 +475,7 @@ public class SystemEdit
         {
             ctx.CheckOwnSystem(target);
 
+            img = await _avatarHosting.TryRehostImage(img, AvatarHostingService.RehostedImageType.Avatar, ctx.Author.Id);
             await AvatarUtils.VerifyAvatarOrThrow(_client, img.Url);
 
             await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { AvatarUrl = img.CleanUrl ?? img.Url });
@@ -541,6 +544,7 @@ public class SystemEdit
         {
             ctx.CheckOwnSystem(target);
 
+            img = await _avatarHosting.TryRehostImage(img, AvatarHostingService.RehostedImageType.Avatar, ctx.Author.Id);
             await AvatarUtils.VerifyAvatarOrThrow(_client, img.Url);
 
             await ctx.Repository.UpdateSystemGuild(target.Id, ctx.Guild.Id, new SystemGuildPatch { AvatarUrl = img.CleanUrl ?? img.Url });
@@ -638,6 +642,7 @@ public class SystemEdit
 
         else if (await ctx.MatchImage() is { } img)
         {
+            img = await _avatarHosting.TryRehostImage(img, AvatarHostingService.RehostedImageType.Banner, ctx.Author.Id);
             await AvatarUtils.VerifyAvatarOrThrow(_client, img.Url, true);
 
             await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { BannerImage = img.CleanUrl ?? img.Url });

@@ -9,10 +9,12 @@ namespace PluralKit.Bot;
 public class MemberAvatar
 {
     private readonly HttpClient _client;
+    private readonly AvatarHostingService _avatarHosting;
 
-    public MemberAvatar(HttpClient client)
+    public MemberAvatar(HttpClient client, AvatarHostingService avatarHosting)
     {
         _client = client;
+        _avatarHosting = avatarHosting;
     }
 
     private async Task AvatarClear(MemberAvatarLocation location, Context ctx, PKMember target, MemberGuildSettings? mgs)
@@ -138,6 +140,8 @@ public class MemberAvatar
         }
 
         ctx.CheckSystem().CheckOwnMember(target);
+
+        avatarArg = await _avatarHosting.TryRehostImage(avatarArg.Value, AvatarHostingService.RehostedImageType.Avatar, ctx.Author.Id);
         await AvatarUtils.VerifyAvatarOrThrow(_client, avatarArg.Value.Url);
         await UpdateAvatar(location, ctx, target, avatarArg.Value.CleanUrl ?? avatarArg.Value.Url);
         await PrintResponse(location, ctx, target, avatarArg.Value, guildData);
