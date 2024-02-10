@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using System.Net.Http.Json;
 
 namespace PluralKit.Bot;
@@ -40,7 +40,7 @@ public class AvatarHostingService
             RehostedImageType.Banner => "banner",
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
         };
-        
+
         var response = await _client.PostAsJsonAsync(_config.AvatarServiceUrl + "/pull",
             new { url = avatarUrl, kind, uploaded_by = userId });
         if (response.StatusCode != HttpStatusCode.OK)
