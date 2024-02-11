@@ -16,13 +16,15 @@ public class Member
     private readonly HttpClient _client;
     private readonly DispatchService _dispatch;
     private readonly EmbedService _embeds;
+    private readonly AvatarHostingService _avatarHosting;
 
     public Member(EmbedService embeds, HttpClient client,
-                  DispatchService dispatch)
+                  DispatchService dispatch, AvatarHostingService avatarHosting)
     {
         _embeds = embeds;
         _client = client;
         _dispatch = dispatch;
+        _avatarHosting = avatarHosting;
     }
 
     public async Task NewMember(Context ctx)
@@ -77,6 +79,8 @@ public class Member
 
                 uriBuilder.Query = "";
                 img.CleanUrl = uriBuilder.Uri.AbsoluteUri;
+
+                img = await _avatarHosting.TryRehostImage(img, AvatarHostingService.RehostedImageType.Avatar, ctx.Author.Id);
 
                 await AvatarUtils.VerifyAvatarOrThrow(_client, img.Url);
                 await ctx.Repository.UpdateMember(member.Id, new MemberPatch { AvatarUrl = img.CleanUrl ?? img.Url }, conn);

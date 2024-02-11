@@ -13,10 +13,12 @@ namespace PluralKit.Bot;
 public class MemberEdit
 {
     private readonly HttpClient _client;
+    private readonly AvatarHostingService _avatarHosting;
 
-    public MemberEdit(HttpClient client)
+    public MemberEdit(HttpClient client, AvatarHostingService avatarHosting)
     {
         _client = client;
+        _avatarHosting = avatarHosting;
     }
 
     public async Task Name(Context ctx, PKMember target)
@@ -180,6 +182,7 @@ public class MemberEdit
 
         async Task SetBannerImage(ParsedImage img)
         {
+            img = await _avatarHosting.TryRehostImage(img, AvatarHostingService.RehostedImageType.Banner, ctx.Author.Id);
             await AvatarUtils.VerifyAvatarOrThrow(_client, img.Url, true);
 
             await ctx.Repository.UpdateMember(target.Id, new MemberPatch { BannerImage = img.CleanUrl ?? img.Url });

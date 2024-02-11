@@ -136,6 +136,7 @@ public class BotModule: Module
         builder.RegisterType<ErrorMessageService>().AsSelf().SingleInstance();
         builder.RegisterType<CommandMessageService>().AsSelf().SingleInstance();
         builder.RegisterType<InteractionDispatchService>().AsSelf().SingleInstance();
+        builder.RegisterType<AvatarHostingService>().AsSelf().SingleInstance();
 
         // Sentry stuff
         builder.Register(_ => new Scope(null)).AsSelf().InstancePerLifetimeScope();

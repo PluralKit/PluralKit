@@ -25,6 +25,7 @@ public class BotConfig
     public string? RedisGatewayUrl { get; set; }
 
     public string? DiscordBaseUrl { get; set; }
+    public string? AvatarServiceUrl { get; set; }
 
     public bool DisableErrorReporting { get; set; } = false;
 
