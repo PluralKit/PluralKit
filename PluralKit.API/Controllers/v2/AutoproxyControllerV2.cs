@@ -69,19 +69,25 @@ public class AutoproxyControllerV2: PKControllerBase
         var newAutoproxyMode = patch.AutoproxyMode.IsPresent ? patch.AutoproxyMode : oldData.AutoproxyMode;
         var newAutoproxyMember = patch.AutoproxyMember.IsPresent ? patch.AutoproxyMember : oldData.AutoproxyMember;
 
-        if (updateMember && member == null) {
+        if (updateMember && member == null)
+        {
             patch.Errors.Add(new("autoproxy_member", "Member not found."));
         }
 
-        if (newAutoproxyMode.Value == AutoproxyMode.Member) {
-            if (!updateMember) {
+        if (newAutoproxyMode.Value == AutoproxyMode.Member)
+        {
+            if (!updateMember)
+            {
                 patch.Errors.Add(new("autoproxy_member", "An autoproxy member must be supplied for autoproxy mode 'member'"));
             }
 
             patch.AutoproxyMode = newAutoproxyMode;
             patch.AutoproxyMember = newAutoproxyMember;
-        } else {
-            if (updateMember) {
+        }
+        else
+        {
+            if (updateMember)
+            {
                 patch.Errors.Add(new("autoproxy_member", "Cannot update autoproxy member if autoproxy mode is not set to 'member'"));
             }
 
