@@ -1,3 +1,4 @@
+using PluralKit.Core;
 using System.Net;
 using System.Net.Http.Json;
 
@@ -14,9 +15,9 @@ public class AvatarHostingService
         _client = client;
     }
 
-    public async Task<ParsedImage> TryRehostImage(ParsedImage input, RehostedImageType type, ulong userId)
+    public async Task<ParsedImage> TryRehostImage(ParsedImage input, RehostedImageType type, ulong userId, PKSystem? system)
     {
-        var uploaded = await TryUploadAvatar(input.Url, type, userId);
+        var uploaded = await TryUploadAvatar(input.Url, type, userId, system);
         if (uploaded != null)
         {
             // todo: make new image type called Cdn?
@@ -26,7 +27,7 @@ public class AvatarHostingService
         return input;
     }
 
-    public async Task<string?> TryUploadAvatar(string? avatarUrl, RehostedImageType type, ulong userId)
+    public async Task<string?> TryUploadAvatar(string? avatarUrl, RehostedImageType type, ulong userId, PKSystem? system)
     {
         if (!AvatarUtils.IsDiscordCdnUrl(avatarUrl))
             return null;
@@ -42,7 +43,7 @@ public class AvatarHostingService
         };
 
         var response = await _client.PostAsJsonAsync(_config.AvatarServiceUrl + "/pull",
-            new { url = avatarUrl, kind, uploaded_by = userId });
+            new { url = avatarUrl, kind, uploaded_by = userId, system_id = system?.Uuid.ToString() });
         if (response.StatusCode != HttpStatusCode.OK)
         {
             var error = await response.Content.ReadFromJsonAsync<ErrorResponse>();
