@@ -475,7 +475,7 @@ public class SystemEdit
         {
             ctx.CheckOwnSystem(target);
 
-            img = await _avatarHosting.TryRehostImage(img, AvatarHostingService.RehostedImageType.Avatar, ctx.Author.Id);
+            img = await _avatarHosting.TryRehostImage(img, AvatarHostingService.RehostedImageType.Avatar, ctx.Author.Id, ctx.System);
             await AvatarUtils.VerifyAvatarOrThrow(_client, img.Url);
 
             await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { AvatarUrl = img.CleanUrl ?? img.Url });
@@ -545,7 +545,7 @@ public class SystemEdit
         {
             ctx.CheckOwnSystem(target);
 
-            img = await _avatarHosting.TryRehostImage(img, AvatarHostingService.RehostedImageType.Avatar, ctx.Author.Id);
+            img = await _avatarHosting.TryRehostImage(img, AvatarHostingService.RehostedImageType.Avatar, ctx.Author.Id, ctx.System);
             await AvatarUtils.VerifyAvatarOrThrow(_client, img.Url);
 
             await ctx.Repository.UpdateSystemGuild(target.Id, ctx.Guild.Id, new SystemGuildPatch { AvatarUrl = img.CleanUrl ?? img.Url });
@@ -644,7 +644,7 @@ public class SystemEdit
 
         else if (await ctx.MatchImage() is { } img)
         {
-            img = await _avatarHosting.TryRehostImage(img, AvatarHostingService.RehostedImageType.Banner, ctx.Author.Id);
+            img = await _avatarHosting.TryRehostImage(img, AvatarHostingService.RehostedImageType.Banner, ctx.Author.Id, ctx.System);
             await AvatarUtils.VerifyAvatarOrThrow(_client, img.Url, true);
 
             await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { BannerImage = img.CleanUrl ?? img.Url });
