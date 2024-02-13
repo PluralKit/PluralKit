@@ -61,5 +61,6 @@ public enum AvatarSource
 {
     Url,
     User,
-    Attachment
+    Attachment,
+    HostedCdn
 }

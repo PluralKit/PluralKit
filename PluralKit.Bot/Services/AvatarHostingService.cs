@@ -20,7 +20,7 @@ public class AvatarHostingService
         if (uploaded != null)
         {
             // todo: make new image type called Cdn?
-            return new ParsedImage { Url = uploaded, Source = AvatarSource.Url };
+            return new ParsedImage { Url = uploaded, Source = AvatarSource.HostedCdn };
         }
 
         return input;
