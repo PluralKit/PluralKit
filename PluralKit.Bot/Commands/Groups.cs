@@ -273,13 +273,14 @@ public class Groups
                 AvatarSource.User =>
                     $"{Emojis.Success} Group icon changed to {img.SourceUser?.Username}'s avatar!\n{Emojis.Warn} If {img.SourceUser?.Username} changes their avatar, the group icon will need to be re-set.",
                 AvatarSource.Url => $"{Emojis.Success} Group icon changed to the image at the given URL.",
+                AvatarSource.HostedCdn => $"{Emojis.Success} Group icon changed to attached image.",
                 AvatarSource.Attachment =>
                     $"{Emojis.Success} Group icon changed to attached image.\n{Emojis.Warn} If you delete the message containing the attachment, the group icon will stop working.",
                 _ => throw new ArgumentOutOfRangeException()
             };
 
             // The attachment's already right there, no need to preview it.
-            var hasEmbed = img.Source != AvatarSource.Attachment;
+            var hasEmbed = img.Source != AvatarSource.Attachment && img.Source != AvatarSource.HostedCdn;
             await (hasEmbed
                 ? ctx.Reply(msg, new EmbedBuilder().Image(new Embed.EmbedImage(img.Url)).Build())
                 : ctx.Reply(msg));
@@ -337,6 +338,7 @@ public class Groups
             var msg = img.Source switch
             {
                 AvatarSource.Url => $"{Emojis.Success} Group banner image changed to the image at the given URL.",
+                AvatarSource.HostedCdn => $"{Emojis.Success} Group banner image changed to attached image.",
                 AvatarSource.Attachment =>
                     $"{Emojis.Success} Group banner image changed to attached image.\n{Emojis.Warn} If you delete the message containing the attachment, the banner image will stop working.",
                 AvatarSource.User => throw new PKError("Cannot set a banner image to an user's avatar."),
@@ -344,7 +346,7 @@ public class Groups
             };
 
             // The attachment's already right there, no need to preview it.
-            var hasEmbed = img.Source != AvatarSource.Attachment;
+            var hasEmbed = img.Source != AvatarSource.Attachment && img.Source != AvatarSource.HostedCdn;
             await (hasEmbed
                 ? ctx.Reply(msg, new EmbedBuilder().Image(new Embed.EmbedImage(img.Url)).Build())
                 : ctx.Reply(msg));

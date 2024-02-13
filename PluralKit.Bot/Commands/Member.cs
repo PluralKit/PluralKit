@@ -69,13 +69,14 @@ public class Member
         // Try to match an image attached to the message
         var avatarArg = ctx.Message.Attachments.FirstOrDefault();
         Exception imageMatchError = null;
+        ParsedImage img = new();
         if (avatarArg != null)
             try
             {
                 // XXX: discord attachment URLs are unable to be validated without their query params
                 // keep both the URL with query (for validation) and the clean URL (for storage) around
                 var uriBuilder = new UriBuilder(avatarArg.ProxyUrl);
-                ParsedImage img = new ParsedImage { Url = uriBuilder.Uri.AbsoluteUri, Source = AvatarSource.Attachment };
+                img = new ParsedImage { Url = uriBuilder.Uri.AbsoluteUri, Source = AvatarSource.Attachment };
 
                 uriBuilder.Query = "";
                 img.CleanUrl = uriBuilder.Uri.AbsoluteUri;
@@ -109,7 +110,7 @@ public class Member
         if (avatarArg != null)
             if (imageMatchError == null)
                 await ctx.Reply(
-                    $"{Emojis.Success} Member avatar set to attached image.\n{Emojis.Warn} If you delete the message containing the attachment, the avatar will stop working.");
+                    $"{Emojis.Success} Member avatar set to attached image." + (img.Source == AvatarSource.Attachment ? $"\n{Emojis.Warn} If you delete the message containing the attachment, the avatar will stop working." : ""));
             else
                 await ctx.Reply($"{Emojis.Error} Couldn't set avatar: {imageMatchError.Message}");
         if (memberName.Contains(" "))

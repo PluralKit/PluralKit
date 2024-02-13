@@ -174,13 +174,15 @@ public class MemberAvatar
                 $"{Emojis.Success} Member {location.Name()} changed to {avatar.SourceUser?.Username}'s avatar!{serverFrag}\n{Emojis.Warn} If {avatar.SourceUser?.Username} changes their avatar, the member's avatar will need to be re-set.",
             AvatarSource.Url =>
                 $"{Emojis.Success} Member {location.Name()} changed to the image at the given URL.{serverFrag}",
+            AvatarSource.HostedCdn =>
+                $"{Emojis.Success} Member {location.Name()} changed to attached image.{serverFrag}",
             AvatarSource.Attachment =>
                 $"{Emojis.Success} Member {location.Name()} changed to attached image.{serverFrag}\n{Emojis.Warn} If you delete the message containing the attachment, the avatar will stop working.",
             _ => throw new ArgumentOutOfRangeException()
         };
 
         // The attachment's already right there, no need to preview it.
-        var hasEmbed = avatar.Source != AvatarSource.Attachment;
+        var hasEmbed = avatar.Source != AvatarSource.Attachment && avatar.Source != AvatarSource.HostedCdn;
         return hasEmbed
             ? ctx.Reply(msg, new EmbedBuilder().Image(new Embed.EmbedImage(avatar.Url)).Build())
             : ctx.Reply(msg);

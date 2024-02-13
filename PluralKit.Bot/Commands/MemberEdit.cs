@@ -190,6 +190,7 @@ public class MemberEdit
             var msg = img.Source switch
             {
                 AvatarSource.Url => $"{Emojis.Success} Member banner image changed to the image at the given URL.",
+                AvatarSource.HostedCdn => $"{Emojis.Success} Member banner image changed to attached image.",
                 AvatarSource.Attachment =>
                     $"{Emojis.Success} Member banner image changed to attached image.\n{Emojis.Warn} If you delete the message containing the attachment, the banner image will stop working.",
                 AvatarSource.User => throw new PKError("Cannot set a banner image to an user's avatar."),
@@ -197,7 +198,7 @@ public class MemberEdit
             };
 
             // The attachment's already right there, no need to preview it.
-            var hasEmbed = img.Source != AvatarSource.Attachment;
+            var hasEmbed = img.Source != AvatarSource.Attachment && img.Source != AvatarSource.HostedCdn;
             await (hasEmbed
                 ? ctx.Reply(msg, new EmbedBuilder().Image(new Embed.EmbedImage(img.Url)).Build())
                 : ctx.Reply(msg));

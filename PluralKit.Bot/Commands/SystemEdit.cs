@@ -485,13 +485,14 @@ public class SystemEdit
                 AvatarSource.User =>
                     $"{Emojis.Success} System icon changed to {img.SourceUser?.Username}'s avatar!\n{Emojis.Warn} If {img.SourceUser?.Username} changes their avatar, the system icon will need to be re-set.",
                 AvatarSource.Url => $"{Emojis.Success} System icon changed to the image at the given URL.",
+                AvatarSource.HostedCdn => $"{Emojis.Success} System icon changed to attached image.",
                 AvatarSource.Attachment =>
                     $"{Emojis.Success} System icon changed to attached image.\n{Emojis.Warn} If you delete the message containing the attachment, the system icon will stop working.",
                 _ => throw new ArgumentOutOfRangeException()
             };
 
             // The attachment's already right there, no need to preview it.
-            var hasEmbed = img.Source != AvatarSource.Attachment;
+            var hasEmbed = img.Source != AvatarSource.Attachment && img.Source != AvatarSource.HostedCdn;
             await (hasEmbed
                 ? ctx.Reply(msg, new EmbedBuilder().Image(new Embed.EmbedImage(img.Url)).Build())
                 : ctx.Reply(msg));
@@ -555,13 +556,14 @@ public class SystemEdit
                     $"{Emojis.Success} System icon for this server changed to {img.SourceUser?.Username}'s avatar! It will now be used for anything that uses system avatar in this server.\n{Emojis.Warn} If {img.SourceUser?.Username} changes their avatar, the system icon for this server will need to be re-set.",
                 AvatarSource.Url =>
                     $"{Emojis.Success} System icon for this server changed to the image at the given URL. It will now be used for anything that uses system avatar in this server.",
+                AvatarSource.HostedCdn => $"{Emojis.Success} System icon for this server changed to attached image.",
                 AvatarSource.Attachment =>
                     $"{Emojis.Success} System icon for this server changed to attached image. It will now be used for anything that uses system avatar in this server.\n{Emojis.Warn} If you delete the message containing the attachment, the system icon for this server will stop working.",
                 _ => throw new ArgumentOutOfRangeException()
             };
 
             // The attachment's already right there, no need to preview it.
-            var hasEmbed = img.Source != AvatarSource.Attachment;
+            var hasEmbed = img.Source != AvatarSource.Attachment && img.Source != AvatarSource.HostedCdn;
             await (hasEmbed
                 ? ctx.Reply(msg, new EmbedBuilder().Image(new Embed.EmbedImage(img.Url)).Build())
                 : ctx.Reply(msg));
@@ -650,6 +652,7 @@ public class SystemEdit
             var msg = img.Source switch
             {
                 AvatarSource.Url => $"{Emojis.Success} System banner image changed to the image at the given URL.",
+                AvatarSource.HostedCdn => $"{Emojis.Success} System banner image changed to attached image.",
                 AvatarSource.Attachment =>
                     $"{Emojis.Success} System banner image changed to attached image.\n{Emojis.Warn} If you delete the message containing the attachment, the banner image will stop working.",
                 AvatarSource.User => throw new PKError("Cannot set a banner image to an user's avatar."),
@@ -657,7 +660,7 @@ public class SystemEdit
             };
 
             // The attachment's already right there, no need to preview it.
-            var hasEmbed = img.Source != AvatarSource.Attachment;
+            var hasEmbed = img.Source != AvatarSource.Attachment && img.Source != AvatarSource.HostedCdn;
             await (hasEmbed
                 ? ctx.Reply(msg, new EmbedBuilder().Image(new Embed.EmbedImage(img.Url)).Build())
                 : ctx.Reply(msg));
