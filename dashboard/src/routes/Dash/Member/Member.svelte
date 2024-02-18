@@ -87,7 +87,7 @@
     async function fetchGroups() {
         try {
             let memberGroups: Group[] = await api().members($params.id).groups().get({auth: !isPublic });
-            memberGroups.forEach(g => g.members = [])
+            if (!isPublic) memberGroups.forEach(g => g.members = [])
             groups.set(memberGroups)
 
             if (!isPublic) {
@@ -136,7 +136,7 @@
         }
     }
 
-    $: memberGroups = $groups.filter(g => g.members.includes(member.uuid));
+    $: memberGroups = !isPublic ? $groups.filter(g => g.members.includes(member.uuid)) : $groups;
     $: processedList = filterList(memberGroups, $groups,listOptions);
     $: currentPage = paginateList(processedList, pageOptions);
     $: pageAmount = getPageAmount(processedList, pageOptions);
