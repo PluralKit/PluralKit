@@ -22,6 +22,7 @@
         },
         accessibility: {
             opendyslexic: false,
+            atkinsonHyperlegible: false,
             pagelinks: false,
             expandedcards: false
         }
@@ -38,9 +39,18 @@
         localStorage.setItem("pk-config", JSON.stringify(res));
     }
 
-    function toggleOpenDyslexic() {
-        if (settings.accessibility.opendyslexic) document.getElementById("app").classList.add("dyslexic");
-        else document.getElementById("app").classList.remove("dyslexic");
+    function changeFont(value: string) {
+        document.getElementById("app").classList.remove("dyslexic");
+        document.getElementById("app").classList.remove("atkinson");
+        if (value !== "default") document.getElementById("app").classList.add(value);
+        
+        if (value === "dyslexic") settings.accessibility.opendyslexic = true
+        else settings.accessibility.opendyslexic = false
+
+        if (value === "atkinson") settings.accessibility.atkinsonHyperlegible = true
+        else settings.accessibility.atkinsonHyperlegible = false
+
+        localStorage.setItem("pk-settings", JSON.stringify(settings));
     }
 
     const revealToken = () => showToken = !showToken;
@@ -82,10 +92,14 @@
                     <h4>Accessibility</h4>
                     <hr/>
                     <Row>
-                        <!-- <Col xs={12} lg={4} class="mb-2">
-                            <span id="s-opendyslexic">Use the opendyslexic font?</span> <Toggle toggledColor="#da9317" hideLabel style="display: inline" label="Use the opendyslexic font" toggled={settings.accessibility.opendyslexic} on:toggle={() => {settings.accessibility.opendyslexic = !settings.accessibility.opendyslexic; localStorage.setItem("pk-settings", JSON.stringify(settings)); toggleOpenDyslexic();}}/>
-                            <Tooltip target="s-opendyslexic" placement="bottom">If enabled, uses the opendyslexic font as it's main font.</Tooltip>
-                        </Col> -->
+                        <Col xs={12} lg={4} class="mb-2">
+                            <label for="s-fonts">Font used on the dashboard</label>
+                            <select class="form-select"  on:change={(e) => changeFont(e.target.value)}>
+                                <option value="default">Default</option>
+                                <option value="atkinson">Atkinson Hyperlegible</option>
+                                <option value="dyslexic">OpenDyslexic</option>
+                            </select>
+                        </Col>
                         <Col xs={12} lg={4} class="mb-2">
                             <span id="s-expandedcards">Expand cards by default?</span> <Toggle toggledColor="#da9317" hideLabel style="display: inline" label="Expand cards by default in list" toggled={settings.accessibility.expandedcards} on:toggle={() => {settings.accessibility.expandedcards = !settings.accessibility.expandedcards; localStorage.setItem("pk-settings", JSON.stringify(settings));}}/>
                             <Tooltip target="s-expandedcards" placement="bottom">If enabled, lists will be expanded by default (overrides page links).</Tooltip>

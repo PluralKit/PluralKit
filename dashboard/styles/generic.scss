@@ -3,7 +3,7 @@ This stylesheet should be used globally regardless of theming
 
 some specific rules are meant to be overwritten by the individual themes
 */
-@import url('http://fonts.cdnfonts.com/css/open-dyslexic');
+@import "fonts";
 
 // some variables
 $breakpoint-xs: 0px;
@@ -45,7 +45,11 @@ code {
 }
 
 .dyslexic {
-    font-family: 'Open-Dyslexic', sans-serif;
+    font-family: 'OpenDyslexic', sans-serif;
+}
+
+.atkinson {
+    font-family: 'Atkinson Hyperlegible', sans-serif;
 }
 
 // dashboard specific elements
