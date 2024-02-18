@@ -195,6 +195,7 @@
                 <ListView {pageOptions} currentList={currentPage} fullListLength={groupMembers.length} options={listOptions}/>
                 {/if}
                 <ListPagination bind:currentPage={pageOptions.currentPage} {pageAmount} />
+                <div class="spacer"></div>
             {/if}
             {/if}
         </Col>
