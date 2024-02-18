@@ -63,7 +63,7 @@
 </script>
 
 <ol start={pageOptions.itemsPerPage * (pageOptions.currentPage - 1) + 1}>
-  {#each currentList as item (item.uuid)}
+  {#each currentList as item, index (pageOptions.randomized ? item.uuid + '-' + index : item.uuid)}
     <li style="padding-left: 0.75rem">
       <Row class="justify-content-between">
         <Col xs={12} md="auto" class="d-flex align-items-center">

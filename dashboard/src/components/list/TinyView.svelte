@@ -16,13 +16,13 @@
 
 <Row class="mx-4 mx-sm-5 mx-md-0">
   {#if pageOptions.type === "member"}
-    {#each memberList as item (item.uuid)}
+    {#each memberList as item, index (pageOptions.randomized ? item.uuid + '-' + index : item.uuid)}
     <Col xs={6} md={4} lg={3} xl={2} class="d-flex flex-col">
       <TinyMemberView member={item} avatarUsed={listOptions.pfp} />
     </Col>
     {/each}
   {:else if pageOptions.type === "group"}
-    {#each groupList as item (item.uuid)}
+    {#each groupList as item, index (pageOptions.randomized ? item.uuid + '-' + index : item.uuid)}
     <Col xs={6} md={4} lg={3} xl={2} class="d-flex flex-col">
       <TinyGroupView group={item} />
     </Col>
