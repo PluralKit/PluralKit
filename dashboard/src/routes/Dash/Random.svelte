@@ -236,7 +236,7 @@
                 <Alert color="danger">{err}</Alert>
             {:else}
                 {#if pageOptions.view === 'card'}
-                    <CardView {pageOptions} currentList={lists.currentPage}/>
+                    <CardView {listOptions} {pageOptions} currentList={lists.currentPage} />
                 {:else}
                     <ListView {pageOptions} currentList={lists.currentPage} fullListLength={1} />
                 {/if}
