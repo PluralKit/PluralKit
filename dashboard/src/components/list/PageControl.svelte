@@ -32,13 +32,13 @@
         }
     }
 
-    $: updateItemsPerPage(pageOptions.view)
+    // $: updateItemsPerPage(pageOptions.view)
 
-    function updateItemsPerPage(..._: any) {
-        if (pageOptions.view === "card") pageOptions.itemsPerPage = 24
-        else if (pageOptions.view === "tiny") pageOptions.itemsPerPage = 36
-        else pageOptions.itemsPerPage = 25
-    }
+    // function updateItemsPerPage(..._: any) {
+    //     if (pageOptions.view === "card") pageOptions.itemsPerPage = 24
+    //     else if (pageOptions.view === "tiny") pageOptions.itemsPerPage = 36
+    //     else pageOptions.itemsPerPage = 25
+    // }
 </script>
 
 <Card class="mb-3">
