@@ -58,7 +58,7 @@ public class DispatchService
         _logger.Debug(
             "Dispatching webhook for system {SystemId} autoproxy update in guild {GuildId}/{ChannelId}",
             system.Id, guildId, channelId
-	);
+        );
         await DoPostRequest(system.Id, system.WebhookUrl, data.GetPayloadBody());
     }
 
