@@ -28,7 +28,8 @@ public enum DispatchEvent
     UPDATE_SWITCH,
     DELETE_SWITCH,
     DELETE_ALL_SWITCHES,
-    SUCCESSFUL_IMPORT
+    SUCCESSFUL_IMPORT,
+    UPDATE_AUTOPROXY,
 }
 
 public struct UpdateDispatchData

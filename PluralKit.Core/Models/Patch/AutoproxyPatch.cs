@@ -44,4 +44,23 @@ public class AutoproxyPatch: PatchObject
 
         return p;
     }
+
+    public JObject ToJson(ulong? guild_id, ulong? channel_id, string? memberId = null)
+    {
+        var o = new JObject();
+
+        o.Add("guild_id", guild_id?.ToString());
+        o.Add("channel_id", channel_id?.ToString());
+
+        if (AutoproxyMode.IsPresent)
+            o.Add("autoproxy_mode", AutoproxyMode.Value.ToString().ToLower());
+
+        if (AutoproxyMember.IsPresent)
+            o.Add("autoproxy_member", memberId);
+
+        if (LastLatchTimestamp.IsPresent)
+            o.Add("last_latch_timestamp", LastLatchTimestamp.Value.FormatExport());
+
+        return o;
+    }
 }
