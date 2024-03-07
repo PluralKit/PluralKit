@@ -91,7 +91,7 @@ public class ProxiedMessage
         }
     }
 
-    public async Task EditMessage(Context ctx)
+    public async Task EditMessage(Context ctx, bool useRegex)
     {
         var (msg, systemId) = await GetMessageToEdit(ctx, EditTimeout, false);
 
@@ -103,7 +103,7 @@ public class ProxiedMessage
             throw new PKError("Could not edit message.");
 
         // Regex flag
-        var useRegex = ctx.MatchFlag("regex", "x");
+        useRegex = useRegex || ctx.MatchFlag("regex", "x");
 
         // Check if we should append or prepend
         var mutateSpace = ctx.MatchFlag("nospace", "ns") ? "" : " ";
