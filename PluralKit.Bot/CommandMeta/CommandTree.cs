@@ -47,7 +47,9 @@ public partial class CommandTree
         if (ctx.Match("message", "msg"))
             return ctx.Execute<ProxiedMessage>(Message, m => m.GetMessage(ctx));
         if (ctx.Match("edit", "e"))
-            return ctx.Execute<ProxiedMessage>(MessageEdit, m => m.EditMessage(ctx));
+            return ctx.Execute<ProxiedMessage>(MessageEdit, m => m.EditMessage(ctx, false));
+        if (ctx.Match("x"))
+            return ctx.Execute<ProxiedMessage>(MessageEdit, m => m.EditMessage(ctx, true));
         if (ctx.Match("reproxy", "rp", "crimes"))
             return ctx.Execute<ProxiedMessage>(MessageReproxy, m => m.ReproxyMessage(ctx));
         if (ctx.Match("log"))

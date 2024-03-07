@@ -27,6 +27,8 @@ PluralKit has a couple of useful command shorthands to reduce the typing:
 |pk;switch|pk;sw|
 |pk;message|pk;msg|
 |pk;autoproxy|pk;ap|
+|pk;edit|pk;e|
+|pk;edit -regex|pk;x|
 
 ## Member list flags
 There are a number of option flags that can be added to the `pk;system list` command.
