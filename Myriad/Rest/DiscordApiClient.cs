@@ -159,6 +159,9 @@ public class DiscordApiClient
     public Task<Channel> CreateDm(ulong recipientId) =>
         _client.Post<Channel>("/users/@me/channels", ("CreateDM", default), new CreateDmRequest(recipientId))!;
 
+    public Task<RefreshedUrlsResponse> RefreshUrls(string[] urls) =>
+        _client.Post<RefreshedUrlsResponse>("/attachments/refresh-urls", ("RefreshUrls", default), new RefreshUrlsRequest(urls));
+
     private static string EncodeEmoji(Emoji emoji) =>
         WebUtility.UrlEncode(emoji.Id != null ? $"{emoji.Name}:{emoji.Id}" : emoji.Name) ??
         throw new ArgumentException("Could not encode emoji");
