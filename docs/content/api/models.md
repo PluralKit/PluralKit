@@ -134,6 +134,8 @@ Every PluralKit entity has two IDs: a short (5-character) ID and a longer UUID. 
 ### Autoproxy settings model
 |key|type|notes|
 |---|---|---|
+|?guild_id|snowflake|only sent if the guild ID isn't already known (in dispatch payloads)|
+|?channel_id|snowflake|only sent if the channel ID isn't already known (in dispatch payloads)|
 |autoproxy_mode|[autoproxy mode](#autoproxy-mode-enum)||
 |autoproxy_member|?member id|must be `null` if autoproxy_mode is set to `front`|
 |last_latch_timestamp|?datetime|read-only|
