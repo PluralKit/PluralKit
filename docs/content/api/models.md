@@ -50,7 +50,7 @@ Every PluralKit entity has two IDs: a short (5-character) ID and a longer UUID. 
 |banner|?string|256-character limit, must be a publicly-accessible URL|
 |description|?string|1000-character limit|
 |created|?datetime||
-|proxy_tags|array of [ProxyTag objects](#proxytag-object)|
+|proxy_tags|array of [ProxyTag](#proxytag-object) objects|
 |keep_proxy|boolean||
 |tts|boolean||
 |autoproxy_enabled|?boolean||
@@ -91,7 +91,7 @@ Every PluralKit entity has two IDs: a short (5-character) ID and a longer UUID. 
 |---|---|---|
 |id|uuid||
 |timestamp|datetime||
-| members   | list of id/Member | Is sometimes in plain ID list form (eg. `GET /systems/:id/switches`), sometimes includes the full Member model (eg. `GET /systems/:id/fronters`). |
+| members   | array of id or [Member](#member-model) objects | Is sometimes in plain ID list form (eg. `GET /systems/:id/switches`), sometimes includes the full Member model (eg. `GET /systems/:id/fronters`). |
 
 ### Message model
 
@@ -103,8 +103,8 @@ Every PluralKit entity has two IDs: a short (5-character) ID and a longer UUID. 
 |sender|snowflake|The user ID of the account that triggered the proxy. Encoded as string for precision reasons.|
 |channel|snowflake|The ID of the channel the message was sent in. Encoded as string for precision reasons.|
 |guild|snowflake|The ID of the server the message was sent in. Encoded as string for precision reasons.|
-|system?|full System object|The system that proxied the message. Null if the member associated with this message was deleted.|
-|member?|full Member object|The member that proxied the message. Null if the member associated with this message was deleted.|
+|system|?full [System](#system-model) object|The system that proxied the message. Null if the member associated with this message was deleted.|
+|member|?full [Member](#member-model) object|The member that proxied the message. Null if the member associated with this message was deleted.|
 
 ### System settings model
 
@@ -112,7 +112,7 @@ Every PluralKit entity has two IDs: a short (5-character) ID and a longer UUID. 
 |---|---|---|
 |timezone|string|defaults to `UTC`|
 |pings_enabled|boolean|
-|latch_timeout|int?|
+|latch_timeout|?int|
 |member_default_private*|boolean|whether members created through the bot have privacy settings set to private by default|
 |group_default_private*|boolean|whether groups created through the bot have privacy settings set to private by default|
 |show_private_info|boolean|whether the bot shows the system's own private information without a `-private` flag|
@@ -125,7 +125,7 @@ Every PluralKit entity has two IDs: a short (5-character) ID and a longer UUID. 
 
 |key|type|notes|
 |---|---|---|
-|?guild_id|snowflake|only sent if the guild ID isn't already known (in dispatch payloads)|
+|guild_id|?snowflake|only sent if the guild ID isn't already known (in dispatch payloads)|
 |proxying_enabled|boolean||
 |tag|?string|79-character limit|
 |tag_enabled|boolean||
@@ -134,7 +134,7 @@ Every PluralKit entity has two IDs: a short (5-character) ID and a longer UUID. 
 ### Autoproxy settings model
 |key|type|notes|
 |---|---|---|
-|autoproxy_mode|[autoproxy mode](#autoproxy-mode-enum)||
+|autoproxy_mode|[Autoproxy mode](#autoproxy-mode-enum)||
 |autoproxy_member|?member id|must be `null` if autoproxy_mode is set to `front`|
 |last_latch_timestamp|?datetime|read-only|
 
@@ -151,7 +151,7 @@ Every PluralKit entity has two IDs: a short (5-character) ID and a longer UUID. 
 
 |key|type|notes|
 |---|---|---|
-|guild_id|snowflake|only sent if the guild ID isn't already known (in dispatch payloads)|
+|guild_id|?snowflake|only sent if the guild ID isn't already known (in dispatch payloads)|
 |display_name|?string|100-character limit|
 |avatar_url|?string|256-character limit, must be a publicly-accessible URL|
 |keep_proxy|?boolean||
