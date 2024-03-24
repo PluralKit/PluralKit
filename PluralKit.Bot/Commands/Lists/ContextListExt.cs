@@ -69,10 +69,6 @@ public static class ContextListExt
             if (p.SortProperty == SortProperty.CreationDate) p.IncludeCreated = true;
         }
 
-        // Make sure the options are valid
-        p.AssertIsValid();
-
-        // Done!
         return p;
     }
 
@@ -117,7 +113,13 @@ public static class ContextListExt
 
     public static ListOptions ParseListOptionsGroup(this Context ctx, LookupContext lookupCtx)
     {
-        return ctx.ParseListOptions(lookupCtx);
+        var p = ctx.ParseListOptions(lookupCtx);
+
+        // Make sure the options are valid
+        p.AssertIsValid();
+
+        // Done!
+        return p;
     }
 
     public static async Task RenderMemberList(this Context ctx, LookupContext lookupCtx,
