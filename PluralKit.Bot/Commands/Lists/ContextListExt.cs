@@ -38,12 +38,7 @@ public static class ContextListExt
         if (ctx.MatchFlag("by-name", "bn")) p.SortProperty = SortProperty.Name;
         if (ctx.MatchFlag("by-display-name", "bdn")) p.SortProperty = SortProperty.DisplayName;
         if (ctx.MatchFlag("by-id", "bid")) p.SortProperty = SortProperty.Hid;
-        if (ctx.MatchFlag("by-message-count", "bmc")) p.SortProperty = SortProperty.MessageCount;
         if (ctx.MatchFlag("by-created", "bc", "bcd")) p.SortProperty = SortProperty.CreationDate;
-        if (ctx.MatchFlag("by-last-fronted", "by-last-front", "by-last-switch", "blf", "bls"))
-            p.SortProperty = SortProperty.LastSwitch;
-        if (ctx.MatchFlag("by-last-message", "blm", "blp")) p.SortProperty = SortProperty.LastMessage;
-        if (ctx.MatchFlag("by-birthday", "by-birthdate", "bbd")) p.SortProperty = SortProperty.Birthdate;
         if (ctx.MatchFlag("random")) p.SortProperty = SortProperty.Random;
 
         // Sort reverse?
@@ -60,29 +55,54 @@ public static class ContextListExt
             throw Errors.NotOwnInfo;
 
         // Additional fields to include in the search results
+        if (ctx.MatchFlag("with-created", "wc"))
+            p.IncludeCreated = true;
+        if (ctx.MatchFlag("with-avatar", "with-image", "with-icon", "wa", "wi", "ia", "ii", "img"))
+            p.IncludeAvatar = true;
+        if (ctx.MatchFlag("with-displayname", "wdn"))
+            p.IncludeDisplayName = true;
+
+        // Always show the sort property, too (unless this is the short list and we are already showing something else)
+        if (p.Type != ListType.Short || p.includedCount == 0)
+        {
+            if (p.SortProperty == SortProperty.DisplayName) p.IncludeDisplayName = true;
+            if (p.SortProperty == SortProperty.CreationDate) p.IncludeCreated = true;
+        }
+
+        // Make sure the options are valid
+        p.AssertIsValid();
+
+        // Done!
+        return p;
+    }
+
+    public static ListOptions ParseListOptionsMember(this Context ctx, LookupContext lookupCtx)
+    {
+        var p = ctx.ParseListOptions(lookupCtx);
+
+        // Sort property (default is by name, but adding a flag anyway, 'cause why not)
+        if (ctx.MatchFlag("by-message-count", "bmc")) p.SortProperty = SortProperty.MessageCount;
+        if (ctx.MatchFlag("by-last-fronted", "by-last-front", "by-last-switch", "blf", "bls"))
+            p.SortProperty = SortProperty.LastSwitch;
+        if (ctx.MatchFlag("by-last-message", "blm", "blp")) p.SortProperty = SortProperty.LastMessage;
+        if (ctx.MatchFlag("by-birthday", "by-birthdate", "bbd")) p.SortProperty = SortProperty.Birthdate;
+
+        // Additional fields to include in the search results
         if (ctx.MatchFlag("with-last-switch", "with-last-fronted", "with-last-front", "wls", "wlf"))
             p.IncludeLastSwitch = true;
         if (ctx.MatchFlag("with-last-message", "with-last-proxy", "wlm", "wlp"))
             p.IncludeLastMessage = true;
         if (ctx.MatchFlag("with-message-count", "wmc"))
             p.IncludeMessageCount = true;
-        if (ctx.MatchFlag("with-created", "wc"))
-            p.IncludeCreated = true;
-        if (ctx.MatchFlag("with-avatar", "with-image", "with-icon", "wa", "wi", "ia", "ii", "img"))
-            p.IncludeAvatar = true;
         if (ctx.MatchFlag("with-pronouns", "wp", "wprns"))
             p.IncludePronouns = true;
-        if (ctx.MatchFlag("with-displayname", "wdn"))
-            p.IncludeDisplayName = true;
         if (ctx.MatchFlag("with-birthday", "wbd", "wb"))
             p.IncludeBirthday = true;
 
         // Always show the sort property, too (unless this is the short list and we are already showing something else)
         if (p.Type != ListType.Short || p.includedCount == 0)
         {
-            if (p.SortProperty == SortProperty.DisplayName) p.IncludeDisplayName = true;
             if (p.SortProperty == SortProperty.MessageCount) p.IncludeMessageCount = true;
-            if (p.SortProperty == SortProperty.CreationDate) p.IncludeCreated = true;
             if (p.SortProperty == SortProperty.LastSwitch) p.IncludeLastSwitch = true;
             if (p.SortProperty == SortProperty.LastMessage) p.IncludeLastMessage = true;
             if (p.SortProperty == SortProperty.Birthdate) p.IncludeBirthday = true;
@@ -93,6 +113,11 @@ public static class ContextListExt
 
         // Done!
         return p;
+    }
+
+    public static ListOptions ParseListOptionsGroup(this Context ctx, LookupContext lookupCtx)
+    {
+        return ctx.ParseListOptions(lookupCtx);
     }
 
     public static async Task RenderMemberList(this Context ctx, LookupContext lookupCtx,
