@@ -11,7 +11,7 @@ namespace PluralKit.Bot;
 
 public static class ContextListExt
 {
-    public static ListOptions ParseListOptions(this Context ctx, LookupContext lookupCtx)
+    private static ListOptions ParseListOptions(this Context ctx, LookupContext lookupCtx)
     {
         var p = new ListOptions();
 
