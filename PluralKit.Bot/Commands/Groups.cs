@@ -443,10 +443,10 @@ public class Groups
         ctx.CheckSystemPrivacy(system.Id, system.GroupListPrivacy);
 
         // explanation of privacy lookup here:
-        // - ParseListOptions checks list access privacy and sets the privacy filter (which members show up in list)
+        // - ParseListOptionsGroup checks list access privacy and sets the privacy filter (which members show up in list)
         // - RenderGroupList checks the indivual privacy for each member (NameFor, etc)
         // the own system is always allowed to look up their list
-        var opts = ctx.ParseListOptions(ctx.DirectLookupContextFor(system.Id));
+        var opts = ctx.ParseListOptionsGroup(ctx.DirectLookupContextFor(system.Id));
         await ctx.RenderGroupList(
             ctx.LookupContextFor(system.Id),
             system.Id,

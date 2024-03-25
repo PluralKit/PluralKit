@@ -127,7 +127,7 @@ public class GroupMember
         var targetSystem = await GetGroupSystem(ctx, target);
         ctx.CheckSystemPrivacy(targetSystem.Id, target.ListPrivacy);
 
-        var opts = ctx.ParseListOptions(ctx.DirectLookupContextFor(target.System));
+        var opts = ctx.ParseListOptionsMember(ctx.DirectLookupContextFor(target.System));
         opts.GroupFilter = target.Id;
 
         var title = new StringBuilder($"Members of {target.DisplayName ?? target.Name} (`{target.Hid}`) in ");
