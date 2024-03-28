@@ -53,31 +53,33 @@ public class GroupMember
 
     public async Task ListMemberGroups(Context ctx, PKMember target)
     {
-        var pctx = ctx.DirectLookupContextFor(target.System);
+        var targetSystem = await ctx.Repository.GetSystem(target.System);
+        var opts = ctx.ParseListOptions(ctx.DirectLookupContextFor(target.System));
+        opts.MemberFilter = target.Id;
 
-        var groups = await ctx.Repository.GetMemberGroups(target.Id)
-            .Where(g => g.Visibility.CanAccess(pctx))
-            .OrderBy(g => (g.DisplayName ?? g.Name), StringComparer.InvariantCultureIgnoreCase)
-            .ToListAsync();
-
-        var description = "";
-        var msg = "";
-
-        if (groups.Count == 0)
-            description = "This member has no groups.";
-        else
-            description = string.Join("\n", groups.Select(g => $"[`{g.Hid}`] **{g.DisplayName ?? g.Name}**"));
-
-        if (pctx == LookupContext.ByOwner)
+        var title = new StringBuilder($"Groups containing {target.Name} (`{target.Hid}`) in ");
+        if (ctx.Guild != null)
         {
-            msg +=
-                $"\n\nTo add this member to one or more groups, use `pk;m {target.Reference(ctx)} group add <group> [group 2] [group 3...]`";
-            if (groups.Count > 0)
-                msg +=
-                    $"\nTo remove this member from one or more groups, use `pk;m {target.Reference(ctx)} group remove <group> [group 2] [group 3...]`";
+            var guildSettings = await ctx.Repository.GetSystemGuild(ctx.Guild.Id, targetSystem.Id);
+            if (guildSettings.DisplayName != null)
+                title.Append($"{guildSettings.DisplayName} (`{targetSystem.Hid}`)");
+            else if (targetSystem.NameFor(ctx) != null)
+                title.Append($"{targetSystem.NameFor(ctx)} (`{targetSystem.Hid}`)");
+            else
+                title.Append($"`{targetSystem.Hid}`");
         }
+        else
+        {
+            if (targetSystem.NameFor(ctx) != null)
+                title.Append($"{targetSystem.NameFor(ctx)} (`{targetSystem.Hid}`)");
+            else
+                title.Append($"`{targetSystem.Hid}`");
+        }
+        if (opts.Search != null)
+            title.Append($" matching **{opts.Search.Truncate(100)}**");
 
-        await ctx.Reply(msg, new EmbedBuilder().Title($"{target.Name}'s groups").Description(description).Build());
+        await ctx.RenderGroupList(ctx.LookupContextFor(target.System), target.System, title.ToString(),
+            target.Color, opts);
     }
 
     public async Task AddRemoveMembers(Context ctx, PKGroup target, Groups.AddRemoveOperation op)

@@ -29,6 +29,7 @@ public class ListOptions
 
     public PrivacyLevel? PrivacyFilter { get; set; } = PrivacyLevel.Public;
     public GroupId? GroupFilter { get; set; }
+    public MemberId? MemberFilter { get; set; }
     public string? Search { get; set; }
     public bool SearchDescription { get; set; }
 
@@ -96,6 +97,7 @@ public class ListOptions
         {
             PrivacyFilter = PrivacyFilter,
             GroupFilter = GroupFilter,
+            MemberFilter = MemberFilter,
             Search = Search,
             SearchDescription = SearchDescription
         };
