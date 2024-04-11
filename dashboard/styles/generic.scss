@@ -227,3 +227,9 @@ img.emoji {
     font-size: 1.125em;
     font-weight: bold;
 }
+
+.description {
+    ul, ol {
+        margin: 0;
+    }
+}
