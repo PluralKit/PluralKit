@@ -75,6 +75,12 @@ func notFoundHandler(rw http.ResponseWriter, r *http.Request) {
 		rw.Header().Set("content-type", "text/css")
 	} else if strings.HasSuffix(r.URL.Path, ".map") {
 		data, err = fs.ReadFile("dist" + r.URL.Path)
+	} else if strings.HasSuffix(r.URL.Path, ".ttf") {
+		data, err = fs.ReadFile("dist" + r.URL.Path)
+		rw.Header().Set("content-type", "application/x-font-ttf")
+	} else if strings.HasSuffix(r.URL.Path, ".woff2") {
+		data, err = fs.ReadFile("dist" + r.URL.Path)
+		rw.Header().Set("content-type", "application/font-woff2")
 	} else {
 		data, err = fs.ReadFile("dist/index.html")
 		rw.Header().Set("content-type", "text/html")
