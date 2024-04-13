@@ -68,7 +68,7 @@ No. This is a limitation in Discord itself, and cannot be changed. The color com
 * Discord sometimes has issues displaying avatars. We can't do anything about that, sorry :(
 
 ### Why can't I use nitro emoji in some channels?
-* Webhooks inherit nitro emoji permissions from the `@everyone` role, so `@everyone` must have the "Use External Emoji" permission to be able to use nitro emoji with PluralKit.
+* PluralKit must have the "Use External Emoji" permission to be able to use nitro emojis with the bot.
 If it still doesn't work, make sure this permission isn't denied in channel overrides (found in channel settings -> permissions). You can also check if it's a permissions issue with `pk;permcheck`.
 * PluralKit must be in the server the emojis are from. This is because of a change made by Discord in 2022.
 * Because PluralKit cannot be a Twitch subscriber, it will never be able to use emojis from Twitch integrations.
@@ -87,4 +87,7 @@ You probably set your timezone in PluralKit to a specific timezone, and PluralKi
 
 ### Why am I not able to edit a message via ID? or, Why is PluralKit editing the wrong message?
 It is not possible to edit messages via ID. Please use the full link, or reply to the message.
+
+### How do I reply-ping/reply-@ proxied messages?
+You cannot reply-@ a proxied messages due to their nature as webhooks. If you want to "reply-@" a proxied message, you must react to the message with 🔔, 🛎, or 🏓. This will send a message from PluralKit that reads "Psst, MEMBER (@User), you have been pinged by @You", which will ping the Discord account behind the proxied message.
 
