@@ -29,8 +29,8 @@ public class Help
                 ),
                 new
                 (
-                    "Why are people's names saying [BOT] next to them?",
-                    "These people are not actually bots, this is just a Discord limitation. See [the documentation](https://pluralkit.me/guide#proxying) for an in-depth explanation."
+                    "Why are people's names saying [APP] next to them?",
+                    "These people aren't apps or bots, this is just a Discord limitation. See [the documentation](https://pluralkit.me/guide#proxying) for an in-depth explanation."
                 ),
             }
         },
