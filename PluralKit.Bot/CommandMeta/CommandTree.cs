@@ -538,7 +538,7 @@ public partial class CommandTree
             return ctx.Execute<Config>(null, m => m.CaseSensitiveProxyTags(ctx));
         if (ctx.MatchMultiple(new[] { "proxy" }, new[] { "error" }) || ctx.Match("pe"))
             return ctx.Execute<Config>(null, m => m.ProxyErrorMessageEnabled(ctx));
-        if (ctx.MatchMultiple(new[] { "split" }, new[] { "ids" }) || ctx.Match("sid"))
+        if (ctx.MatchMultiple(new[] { "split" }, new[] { "id", "ids" }) || ctx.Match("sid"))
             return ctx.Execute<Config>(null, m => m.HidDisplaySplit(ctx));
 
         // todo: maybe add the list of configuration keys here?
