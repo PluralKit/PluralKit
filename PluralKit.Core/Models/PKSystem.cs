@@ -33,7 +33,13 @@ public readonly struct SystemId: INumericId<SystemId, int>
 public class PKSystem
 {
     [Key] public SystemId Id { get; }
-    public string Hid { get; }
+    private string _hid = null!;
+    public string Hid
+    {
+        private set => _hid = value.Trim();
+        get => _hid;
+    }
+
     public Guid Uuid { get; private set; }
     public string Name { get; }
     public string Description { get; }

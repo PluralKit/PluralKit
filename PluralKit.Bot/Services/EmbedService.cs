@@ -70,7 +70,7 @@ public class EmbedService
         var eb = new EmbedBuilder()
             .Title(system.NameFor(ctx))
             .Footer(new Embed.EmbedFooter(
-                $"System ID: {system.Hid} | Created on {system.Created.FormatZoned(cctx.Zone)}"))
+                $"System ID: {system.DisplayHid(cctx.Config)} | Created on {system.Created.FormatZoned(cctx.Zone)}"))
             .Color(color)
             .Url($"https://dash.pluralkit.me/profile/s/{system.Hid}");
 
@@ -90,7 +90,7 @@ public class EmbedService
             {
                 var memberStr = string.Join(", ", switchMembers.Select(m => m.NameFor(ctx)));
                 if (memberStr.Length > 200)
-                    memberStr = $"[too many to show, see `pk;system {system.Hid} fronters`]";
+                    memberStr = $"[too many to show, see `pk;system {system.DisplayHid(cctx.Config)} fronters`]";
                 eb.Field(new Embed.Field("Fronter".ToQuantity(switchMembers.Count, ShowQuantityAs.None), memberStr));
             }
         }
@@ -137,7 +137,7 @@ public class EmbedService
         {
             if (memberCount > 0)
                 eb.Field(new Embed.Field($"Members ({memberCount})",
-                    $"(see `pk;system {system.Hid} list` or `pk;system {system.Hid} list full`)", true));
+                    $"(see `pk;system {system.DisplayHid(cctx.Config)} list` or `pk;system {system.DisplayHid(cctx.Config)} list full`)", true));
             else
                 eb.Field(new Embed.Field($"Members ({memberCount})", "Add one with `pk;member new`!", true));
         }
@@ -175,7 +175,7 @@ public class EmbedService
         return embed.Build();
     }
 
-    public async Task<Embed> CreateMemberEmbed(PKSystem system, PKMember member, Guild guild, LookupContext ctx, DateTimeZone zone)
+    public async Task<Embed> CreateMemberEmbed(PKSystem system, PKMember member, Guild guild, SystemConfig? ccfg, LookupContext ctx, DateTimeZone zone)
     {
         // string FormatTimestamp(Instant timestamp) => DateTimeFormats.ZonedDateTimeFormat.Format(timestamp.InZone(system.Zone));
 
@@ -216,7 +216,7 @@ public class EmbedService
             // .WithColor(member.ColorPrivacy.CanAccess(ctx) ? color : DiscordUtils.Gray)
             .Color(color)
             .Footer(new Embed.EmbedFooter(
-                $"System ID: {system.Hid} | Member ID: {member.Hid} {(member.MetadataPrivacy.CanAccess(ctx) ? $"| Created on {member.Created.FormatZoned(zone)}" : "")}"));
+                $"System ID: {system.DisplayHid(ccfg)} | Member ID: {member.DisplayHid(ccfg)} {(member.MetadataPrivacy.CanAccess(ctx) ? $"| Created on {member.Created.FormatZoned(zone)}" : "")}"));
 
         if (member.DescriptionPrivacy.CanAccess(ctx))
             eb.Image(new Embed.EmbedImage(member.BannerImage));
@@ -304,7 +304,7 @@ public class EmbedService
             .Author(new Embed.EmbedAuthor(nameField, IconUrl: target.IconFor(pctx), Url: $"https://dash.pluralkit.me/profile/g/{target.Hid}"))
             .Color(color);
 
-        eb.Footer(new Embed.EmbedFooter($"System ID: {system.Hid} | Group ID: {target.Hid}{(target.MetadataPrivacy.CanAccess(pctx) ? $" | Created on {target.Created.FormatZoned(ctx.Zone)}" : "")}"));
+        eb.Footer(new Embed.EmbedFooter($"System ID: {system.DisplayHid(ctx.Config)} | Group ID: {target.DisplayHid(ctx.Config)}{(target.MetadataPrivacy.CanAccess(pctx) ? $" | Created on {target.Created.FormatZoned(ctx.Zone)}" : "")}"));
 
         if (target.DescriptionPrivacy.CanAccess(pctx))
             eb.Image(new Embed.EmbedImage(target.BannerImage));
@@ -369,7 +369,7 @@ public class EmbedService
             .Build();
     }
 
-    public async Task<Embed> CreateMessageInfoEmbed(FullMessage msg, bool showContent)
+    public async Task<Embed> CreateMessageInfoEmbed(FullMessage msg, bool showContent, SystemConfig? ccfg = null)
     {
         var channel = await _cache.GetOrFetchChannel(_rest, msg.Message.Channel);
         var ctx = LookupContext.ByNonOwner;
@@ -424,12 +424,12 @@ public class EmbedService
             .Field(new Embed.Field("System",
                 msg.System == null
                     ? "*(deleted or unknown system)*"
-                    : msg.System.NameFor(ctx) != null ? $"{msg.System.NameFor(ctx)} (`{msg.System.Hid}`)" : $"`{msg.System.Hid}`"
+                    : msg.System.NameFor(ctx) != null ? $"{msg.System.NameFor(ctx)} (`{msg.System.DisplayHid(ccfg)}`)" : $"`{msg.System.DisplayHid(ccfg)}`"
             , true))
             .Field(new Embed.Field("Member",
                 msg.Member == null
                     ? "*(deleted member)*"
-                    : $"{msg.Member.NameFor(ctx)} (`{msg.Member.Hid}`)"
+                    : $"{msg.Member.NameFor(ctx)} (`{msg.Member.DisplayHid(ccfg)}`)"
             , true))
             .Field(new Embed.Field("Sent by", userStr, true))
             .Timestamp(DiscordUtils.SnowflakeToInstant(msg.Message.Mid).ToDateTimeOffset().ToString("O"))

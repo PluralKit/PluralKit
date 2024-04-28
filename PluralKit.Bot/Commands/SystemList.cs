@@ -33,11 +33,11 @@ public class SystemList
 
         var systemGuildSettings = ctx.Guild != null ? await ctx.Repository.GetSystemGuild(ctx.Guild.Id, target.Id) : null;
         if (systemGuildSettings != null && systemGuildSettings.DisplayName != null)
-            title.Append($"{systemGuildSettings.DisplayName}  (`{target.Hid}`)");
+            title.Append($"{systemGuildSettings.DisplayName}  (`{target.DisplayHid(ctx.Config)}`)");
         else if (target.NameFor(ctx) != null)
-            title.Append($"{target.NameFor(ctx)} (`{target.Hid}`)");
+            title.Append($"{target.NameFor(ctx)} (`{target.DisplayHid(ctx.Config)}`)");
         else
-            title.Append($"`{target.Hid}`");
+            title.Append($"`{target.DisplayHid(ctx.Config)}`");
 
         if (opts.Search != null)
             title.Append($" matching **{opts.Search.Truncate(100)}**");

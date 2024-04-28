@@ -128,7 +128,7 @@ public static class ContextListExt
             // so run it through a helper that "makes it work" :)
             eb.WithSimpleLineContent(page.Select(m =>
             {
-                var ret = $"[`{m.Hid}`] **{m.NameFor(ctx)}** ";
+                var ret = $"[`{m.DisplayHid(ctx.Config)}`] **{m.NameFor(ctx)}** ";
 
                 if (opts.IncludeMessageCount && m.MessageCountFor(lookupCtx) is { } count)
                     ret += $"({count} messages)";
@@ -162,7 +162,7 @@ public static class ContextListExt
         {
             foreach (var m in page)
             {
-                var profile = new StringBuilder($"**ID**: {m.Hid}");
+                var profile = new StringBuilder($"**ID**: {m.DisplayHid(ctx.Config)}");
 
                 if (m.DisplayName != null && m.NamePrivacy.CanAccess(lookupCtx))
                     profile.Append($"\n**Display name**: {m.DisplayName}");
@@ -238,7 +238,7 @@ public static class ContextListExt
             // so run it through a helper that "makes it work" :)
             eb.WithSimpleLineContent(page.Select(g =>
             {
-                var ret = $"[`{g.Hid}`] **{g.NameFor(ctx)}** ";
+                var ret = $"[`{g.DisplayHid(ctx.Config)}`] **{g.NameFor(ctx)}** ";
 
                 switch (opts.SortProperty)
                 {
@@ -308,7 +308,7 @@ public static class ContextListExt
         {
             foreach (var g in page)
             {
-                var profile = new StringBuilder($"**ID**: {g.Hid}");
+                var profile = new StringBuilder($"**ID**: {g.DisplayHid(ctx.Config)}");
 
                 if (g.DisplayName != null && g.NamePrivacy.CanAccess(lookupCtx))
                     profile.Append($"\n**Display name**: {g.DisplayName}");

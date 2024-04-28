@@ -19,6 +19,7 @@ public class SystemConfigPatch: PatchObject
     public Partial<string[]> DescriptionTemplates { get; set; }
     public Partial<bool> CaseSensitiveProxyTags { get; set; }
     public Partial<bool> ProxyErrorMessageEnabled { get; set; }
+    public Partial<bool> HidDisplaySplit { get; set; }
 
 
     public override Query Apply(Query q) => q.ApplyPatch(wrapper => wrapper
@@ -33,6 +34,7 @@ public class SystemConfigPatch: PatchObject
         .With("description_templates", DescriptionTemplates)
         .With("case_sensitive_proxy_tags", CaseSensitiveProxyTags)
         .With("proxy_error_message_enabled", ProxyErrorMessageEnabled)
+        .With("hid_display_split", HidDisplaySplit)
     );
 
     public new void AssertIsValid()
@@ -88,6 +90,9 @@ public class SystemConfigPatch: PatchObject
         if (ProxyErrorMessageEnabled.IsPresent)
             o.Add("proxy_error_message_enabled", ProxyErrorMessageEnabled.Value);
 
+        if (HidDisplaySplit.IsPresent)
+            o.Add("hid_display_split", HidDisplaySplit.Value);
+
         return o;
     }
 
@@ -118,6 +123,9 @@ public class SystemConfigPatch: PatchObject
 
         if (o.ContainsKey("proxy_error_message_enabled"))
             patch.ProxyErrorMessageEnabled = o.Value<bool>("proxy_error_message_enabled");
+
+        if (o.ContainsKey("hid_display_split"))
+            patch.HidDisplaySplit = o.Value<bool>("hid_display_split");
 
         return patch;
     }

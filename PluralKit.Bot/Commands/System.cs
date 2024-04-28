@@ -39,6 +39,6 @@ public class System
         if (target == null)
             throw Errors.NoSystemError;
 
-        await ctx.Reply(target.Hid);
+        await ctx.Reply(target.DisplayHid(ctx.Config));
     }
 }
