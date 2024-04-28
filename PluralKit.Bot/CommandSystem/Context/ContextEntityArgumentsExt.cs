@@ -172,12 +172,12 @@ public static class ContextEntityArgumentsExt
 
         if (isIDOnlyQuery)
         {
-            if (input.Length == 5)
+            if (input.Length >= 5 && input.Length <= 6)
                 return $"{entity} with ID \"{input}\" not found.";
             return $"{entity} not found. Note that a {entity.ToLower()} ID is 5 or 6 characters long.";
         }
 
-        if (input.Length == 5)
+        if (input.Length >= 5 && input.Length <= 6)
             return $"{entity} with ID or name \"{input}\" not found.";
         return $"{entity} with name \"{input}\" not found. Note that a {entity.ToLower()} ID is 5 or 6 characters long.";
     }
