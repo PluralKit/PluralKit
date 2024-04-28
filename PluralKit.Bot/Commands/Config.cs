@@ -109,6 +109,13 @@ public class Config
             "disabled"
         ));
 
+        items.Add(new(
+            "Capitalize IDs",
+            "Whether to display IDs as capital letters, to ease readability",
+            EnabledDisabled(ctx.Config.HidDisplayCaps),
+            "disabled"
+        ));
+
         await ctx.Paginate<PaginatedConfigItem>(
             items.ToAsyncEnumerable(),
             items.Count,
@@ -463,5 +470,19 @@ public class Config
         var newVal = ctx.MatchToggle(true);
         await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { HidDisplaySplit = newVal });
         await ctx.Reply($"Splitting of 6-character IDs with a hyphen is now {EnabledDisabled(newVal)}.");
+    }
+
+    public async Task HidDisplayCaps(Context ctx)
+    {
+        if (!ctx.HasNext())
+        {
+            var msg = $"Displaying IDs as capital letters is currently **{EnabledDisabled(ctx.Config.HidDisplayCaps)}**.";
+            await ctx.Reply(msg);
+            return;
+        }
+
+        var newVal = ctx.MatchToggle(true);
+        await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { HidDisplayCaps = newVal });
+        await ctx.Reply($"Displaying IDs as capital letters is now {EnabledDisabled(newVal)}.");
     }
 }
