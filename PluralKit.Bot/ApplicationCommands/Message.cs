@@ -48,11 +48,12 @@ public class ApplicationCommandProxiedMessage
                 msg.System,
                 msg.Member,
                 guild,
+                ctx.Config,
                 LookupContext.ByNonOwner,
                 DateTimeZone.Utc
             ));
 
-        embeds.Add(await _embeds.CreateMessageInfoEmbed(msg, showContent));
+        embeds.Add(await _embeds.CreateMessageInfoEmbed(msg, showContent, ctx.Config));
 
         await ctx.Reply(embeds: embeds.ToArray());
     }

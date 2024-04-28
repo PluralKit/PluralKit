@@ -53,8 +53,10 @@ public static class ContextEntityArgumentsExt
             return await ctx.Repository.GetSystemByAccount(id);
 
         // Finally, try HID parsing
-        var system = await ctx.Repository.GetSystemByHid(input);
-        return system;
+        if (input.TryParseHid(out var hid))
+            return await ctx.Repository.GetSystemByHid(hid);
+
+        return null;
     }
 
     public static async Task<PKMember> PeekMember(this Context ctx, SystemId? restrictToSystem = null)
@@ -83,7 +85,7 @@ public static class ContextEntityArgumentsExt
 
         // Finally (or if by-HID lookup is specified), check if input is a valid HID and then try member HID parsing:
 
-        if (!Regex.IsMatch(input, @"^[a-zA-Z]{5}$"))
+        if (!input.TryParseHid(out var hid))
             return null;
 
         // For posterity:
@@ -94,21 +96,21 @@ public static class ContextEntityArgumentsExt
         PKMember memberByHid = null;
         if (restrictToSystem != null)
         {
-            memberByHid = await ctx.Repository.GetMemberByHid(input, restrictToSystem);
+            memberByHid = await ctx.Repository.GetMemberByHid(hid, restrictToSystem);
             if (memberByHid != null)
                 return memberByHid;
         }
         // otherwise we try the querier's system and if that doesn't work we do global
         else
         {
-            memberByHid = await ctx.Repository.GetMemberByHid(input, ctx.System?.Id);
+            memberByHid = await ctx.Repository.GetMemberByHid(hid, ctx.System?.Id);
             if (memberByHid != null)
                 return memberByHid;
 
             // ff ctx.System was null then this would be a duplicate of above and we don't want to run it again
             if (ctx.System != null)
             {
-                memberByHid = await ctx.Repository.GetMemberByHid(input);
+                memberByHid = await ctx.Repository.GetMemberByHid(hid);
                 if (memberByHid != null)
                     return memberByHid;
             }
@@ -148,7 +150,10 @@ public static class ContextEntityArgumentsExt
                 return byDisplayName;
         }
 
-        if (await ctx.Repository.GetGroupByHid(input, restrictToSystem) is { } byHid)
+        if (!input.TryParseHid(out var hid))
+            return null;
+
+        if (await ctx.Repository.GetGroupByHid(hid, restrictToSystem) is { } byHid)
             return byHid;
 
         return null;
@@ -169,12 +174,12 @@ public static class ContextEntityArgumentsExt
         {
             if (input.Length == 5)
                 return $"{entity} with ID \"{input}\" not found.";
-            return $"{entity} not found. Note that a {entity.ToLower()} ID is 5 characters long.";
+            return $"{entity} not found. Note that a {entity.ToLower()} ID is 5 or 6 characters long.";
         }
 
         if (input.Length == 5)
             return $"{entity} with ID or name \"{input}\" not found.";
-        return $"{entity} with name \"{input}\" not found. Note that a {entity.ToLower()} ID is 5 characters long.";
+        return $"{entity} with name \"{input}\" not found. Note that a {entity.ToLower()} ID is 5 or 6 characters long.";
     }
 
     public static async Task<Channel> MatchChannel(this Context ctx)

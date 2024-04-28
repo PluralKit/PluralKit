@@ -36,7 +36,7 @@ public class MemberEdit
         if (existingMember != null && existingMember.Id != target.Id)
         {
             var msg =
-                $"{Emojis.Warn} You already have a member in your system with the name \"{existingMember.NameFor(ctx)}\" (`{existingMember.Hid}`). Do you want to rename this member to that name too?";
+                $"{Emojis.Warn} You already have a member in your system with the name \"{existingMember.NameFor(ctx)}\" (`{existingMember.DisplayHid(ctx.Config)}`). Do you want to rename this member to that name too?";
             if (!await ctx.PromptYesNo(msg, "Rename")) throw new PKError("Member renaming cancelled.");
         }
 
@@ -47,7 +47,7 @@ public class MemberEdit
         await ctx.Reply($"{Emojis.Success} Member renamed (using {newName.Length}/{Limits.MaxMemberNameLength} characters).");
         if (newName.Contains(" "))
             await ctx.Reply(
-                $"{Emojis.Note} Note that this member's name now contains spaces. You will need to surround it with \"double quotes\" when using commands referring to it, or just use the member's 5-character ID (which is `{target.Hid}`).");
+                $"{Emojis.Note} Note that this member's name now contains spaces. You will need to surround it with \"double quotes\" when using commands referring to it, or just use the member's short ID (which is `{target.DisplayHid(ctx.Config)}`).");
         if (target.DisplayName != null)
             await ctx.Reply(
                 $"{Emojis.Note} Note that this member has a display name set ({target.DisplayName}), and will be proxied using that name instead.");
@@ -211,7 +211,7 @@ public class MemberEdit
                 var eb = new EmbedBuilder()
                     .Title($"{target.NameFor(ctx)}'s banner image")
                     .Image(new Embed.EmbedImage(target.BannerImage))
-                    .Description($"To clear, use `pk;member {target.Hid} banner clear`.");
+                    .Description($"To clear, use `pk;member {target.Reference(ctx)} banner clear`.");
                 await ctx.Reply(embed: eb.Build());
             }
             else

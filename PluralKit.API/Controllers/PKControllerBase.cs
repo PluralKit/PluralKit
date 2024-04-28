@@ -9,7 +9,6 @@ namespace PluralKit.API;
 public class PKControllerBase: ControllerBase
 {
     private readonly Guid _requestId = Guid.NewGuid();
-    private readonly Regex _shortIdRegex = new("^[a-z]{5}$");
     private readonly Regex _snowflakeRegex = new("^[0-9]{17,19}$");
 
     private List<PKMember>? _memberLookupCache { get; set; }
@@ -46,8 +45,8 @@ public class PKControllerBase: ControllerBase
         if (_snowflakeRegex.IsMatch(systemRef))
             return _repo.GetSystemByAccount(ulong.Parse(systemRef));
 
-        if (_shortIdRegex.IsMatch(systemRef))
-            return _repo.GetSystemByHid(systemRef);
+        if (systemRef.TryParseHid(out var hid))
+            return _repo.GetSystemByHid(hid);
 
         return Task.FromResult<PKSystem?>(null);
     }
@@ -71,8 +70,8 @@ public class PKControllerBase: ControllerBase
         if (Guid.TryParse(memberRef, out var guid))
             return await _repo.GetMemberByGuid(guid);
 
-        if (_shortIdRegex.IsMatch(memberRef))
-            return await _repo.GetMemberByHid(memberRef);
+        if (memberRef.TryParseHid(out var hid))
+            return await _repo.GetMemberByHid(hid);
 
         return null;
     }
@@ -96,8 +95,8 @@ public class PKControllerBase: ControllerBase
         if (Guid.TryParse(groupRef, out var guid))
             return await _repo.GetGroupByGuid(guid);
 
-        if (_shortIdRegex.IsMatch(groupRef))
-            return await _repo.GetGroupByHid(groupRef);
+        if (groupRef.TryParseHid(out var hid))
+            return await _repo.GetGroupByHid(hid);
 
         return null;
     }

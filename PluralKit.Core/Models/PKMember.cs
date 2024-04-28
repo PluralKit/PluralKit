@@ -35,7 +35,13 @@ public class PKMember
     // Dapper *can* figure out mapping to getter-only properties, but this doesn't work
     // when trying to map to *subclasses* (eg. ListedMember). Adding private setters makes it work anyway.
     public MemberId Id { get; private set; }
-    public string Hid { get; private set; }
+    private string _hid = null!;
+    public string Hid
+    {
+        private set => _hid = value.Trim();
+        get => _hid;
+    }
+
     public Guid Uuid { get; private set; }
     public SystemId System { get; private set; }
     public string Color { get; private set; }

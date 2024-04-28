@@ -122,13 +122,13 @@ begin
 end
 $$ language plpgsql;
 
-create function generate_hid() returns char(5) as $$
-    select string_agg(substr('abcdefghijklmnopqrstuvwxyz', ceil(random() * 26)::integer, 1), '') from generate_series(1, 5)
+create function generate_hid() returns char(6) as $$
+    select string_agg(substr('abcefghjknoprstuvwxyz', ceil(random() * 21)::integer, 1), '') from generate_series(1, 6)
 $$ language sql volatile;
 
 
-create function find_free_system_hid() returns char(5) as $$
-declare new_hid char(5);
+create function find_free_system_hid() returns char(6) as $$
+declare new_hid char(6);
 begin
     loop
         new_hid := generate_hid();
@@ -138,8 +138,8 @@ end
 $$ language plpgsql volatile;
 
 
-create function find_free_member_hid() returns char(5) as $$
-declare new_hid char(5);
+create function find_free_member_hid() returns char(6) as $$
+declare new_hid char(6);
 begin
     loop
         new_hid := generate_hid();
@@ -148,8 +148,9 @@ begin
 end
 $$ language plpgsql volatile;
 
-create function find_free_group_hid() returns char(5) as $$
-declare new_hid char(5);
+
+create function find_free_group_hid() returns char(6) as $$
+declare new_hid char(6);
 begin
     loop
         new_hid := generate_hid();

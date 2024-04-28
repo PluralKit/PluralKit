@@ -101,12 +101,12 @@ public class Member
 
         // Send confirmation and space hint
         await ctx.Reply(
-            $"{Emojis.Success} Member \"{memberName}\" (`{member.Hid}`) registered! Check out the getting started page for how to get a member up and running: https://pluralkit.me/start#create-a-member");
+            $"{Emojis.Success} Member \"{memberName}\" (`{member.DisplayHid(ctx.Config)}`) registered! Check out the getting started page for how to get a member up and running: https://pluralkit.me/start#create-a-member");
         // todo: move this to ModelRepository
         if (await ctx.Database.Execute(conn => conn.QuerySingleAsync<bool>("select has_private_members(@System)",
                 new { System = ctx.System.Id })) && !ctx.Config.MemberDefaultPrivate) //if has private members
             await ctx.Reply(
-                $"{Emojis.Warn} This member is currently **public**. To change this, use `pk;member {member.Hid} private`.");
+                $"{Emojis.Warn} This member is currently **public**. To change this, use `pk;member {member.DisplayHid(ctx.Config)} private`.");
         if (avatarArg != null)
             if (imageMatchError == null)
                 await ctx.Reply(
@@ -115,7 +115,7 @@ public class Member
                 await ctx.Reply($"{Emojis.Error} Couldn't set avatar: {imageMatchError.Message}");
         if (memberName.Contains(" "))
             await ctx.Reply(
-                $"{Emojis.Note} Note that this member's name contains spaces. You will need to surround it with \"double quotes\" when using commands referring to it, or just use the member's 5-character ID (which is `{member.Hid}`).");
+                $"{Emojis.Note} Note that this member's name contains spaces. You will need to surround it with \"double quotes\" when using commands referring to it, or just use the member's short ID (which is `{member.DisplayHid(ctx.Config)}`).");
         if (memberCount >= memberLimit)
             await ctx.Reply(
                 $"{Emojis.Warn} You have reached the per-system member limit ({memberLimit}). If you need to add more members, you can either delete existing members, or ask for your limit to be raised in the PluralKit support server: <https://discord.gg/PczBt78>");
@@ -128,7 +128,7 @@ public class Member
     {
         var system = await ctx.Repository.GetSystem(target.System);
         await ctx.Reply(
-            embed: await _embeds.CreateMemberEmbed(system, target, ctx.Guild, ctx.LookupContextFor(system.Id), ctx.Zone));
+            embed: await _embeds.CreateMemberEmbed(system, target, ctx.Guild, ctx.Config, ctx.LookupContextFor(system.Id), ctx.Zone));
     }
 
     public async Task Soulscream(Context ctx, PKMember target)
@@ -156,6 +156,6 @@ public class Member
 
     public async Task DisplayId(Context ctx, PKMember target)
     {
-        await ctx.Reply(target.Hid);
+        await ctx.Reply(target.DisplayHid(ctx.Config));
     }
 }

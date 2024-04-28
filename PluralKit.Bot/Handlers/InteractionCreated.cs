@@ -16,20 +16,23 @@ public class InteractionCreated: IEventHandler<InteractionCreateEvent>
     private readonly ApplicationCommandTree _commandTree;
     private readonly ILifetimeScope _services;
     private readonly ILogger _logger;
+    private readonly ModelRepository _repo;
 
     public InteractionCreated(InteractionDispatchService interactionDispatch, ApplicationCommandTree commandTree,
-                              ILifetimeScope services, ILogger logger)
+                              ILifetimeScope services, ILogger logger, ModelRepository repo)
     {
         _interactionDispatch = interactionDispatch;
         _commandTree = commandTree;
         _services = services;
         _logger = logger;
+        _repo = repo;
     }
 
     public async Task Handle(int shardId, InteractionCreateEvent evt)
     {
-        var system = await _services.Resolve<ModelRepository>().GetSystemByAccount(evt.Member?.User.Id ?? evt.User!.Id);
-        var ctx = new InteractionContext(_services, evt, system);
+        var system = await _repo.GetSystemByAccount(evt.Member?.User.Id ?? evt.User!.Id);
+        var config = system != null ? await _repo.GetSystemConfig(system!.Id) : null;
+        var ctx = new InteractionContext(_services, evt, system, config);
 
         switch (evt.Type)
         {

@@ -19,8 +19,9 @@ public class SystemConfig
 
     public DateTimeZone Zone => DateTimeZoneProviders.Tzdb.GetZoneOrNull(UiTz);
 
-    public bool CaseSensitiveProxyTags { get; set; }
+    public bool CaseSensitiveProxyTags { get; }
     public bool ProxyErrorMessageEnabled { get; }
+    public bool HidDisplaySplit { get; }
 }
 
 public static class SystemConfigExt
@@ -39,6 +40,7 @@ public static class SystemConfigExt
         o.Add("group_limit", cfg.GroupLimitOverride ?? Limits.MaxGroupCount);
         o.Add("case_sensitive_proxy_tags", cfg.CaseSensitiveProxyTags);
         o.Add("proxy_error_message_enabled", cfg.ProxyErrorMessageEnabled);
+        o.Add("hid_display_split", cfg.HidDisplaySplit);
 
         o.Add("description_templates", JArray.FromObject(cfg.DescriptionTemplates));
 

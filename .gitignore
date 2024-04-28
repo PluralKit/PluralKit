@@ -9,6 +9,7 @@ target/
 .idea/
 .run/
 .vscode/
+.mono/
 tags/
 .DS_Store
 mono_crash*
