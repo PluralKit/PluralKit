@@ -22,13 +22,16 @@ public static class HidUtils
         return hid != null;
     }
 
-    public static string HidTransform(string input, bool split = false)
+    public static string HidTransform(string input, bool split, bool caps)
     {
         if (split && input.Length > 5)
         {
             var len = (int)Math.Floor(input.Length / 2.0);
             input = string.Concat(input.AsSpan(0, len), "-", input.AsSpan(len));
         }
+
+        if (caps)
+            input = input.ToUpper();
 
         return input;
     }

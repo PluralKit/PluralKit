@@ -22,6 +22,7 @@ public class SystemConfig
     public bool CaseSensitiveProxyTags { get; }
     public bool ProxyErrorMessageEnabled { get; }
     public bool HidDisplaySplit { get; }
+    public bool HidDisplayCaps { get; }
 }
 
 public static class SystemConfigExt
@@ -41,6 +42,7 @@ public static class SystemConfigExt
         o.Add("case_sensitive_proxy_tags", cfg.CaseSensitiveProxyTags);
         o.Add("proxy_error_message_enabled", cfg.ProxyErrorMessageEnabled);
         o.Add("hid_display_split", cfg.HidDisplaySplit);
+        o.Add("hid_display_caps", cfg.HidDisplayCaps);
 
         o.Add("description_templates", JArray.FromObject(cfg.DescriptionTemplates));
 

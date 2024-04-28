@@ -31,7 +31,12 @@ public static class ModelUtils
     public static string DisplayHid(this PKSystem system, SystemConfig? cfg = null) => HidTransform(system.Hid, cfg);
     public static string DisplayHid(this PKGroup group, SystemConfig? cfg = null) => HidTransform(group.Hid, cfg);
     public static string DisplayHid(this PKMember member, SystemConfig? cfg = null) => HidTransform(member.Hid, cfg);
-    private static string HidTransform(string hid, SystemConfig? cfg = null) => HidUtils.HidTransform(hid, cfg != null && cfg.HidDisplaySplit);
+    private static string HidTransform(string hid, SystemConfig? cfg = null) =>
+        HidUtils.HidTransform(
+            hid,
+            cfg != null && cfg.HidDisplaySplit,
+            cfg != null && cfg.HidDisplayCaps
+        );
 
     private static string EntityReference(string hid, string name)
     {
