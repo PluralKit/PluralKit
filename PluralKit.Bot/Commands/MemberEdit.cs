@@ -816,8 +816,8 @@ public class MemberEdit
         ctx.CheckSystem().CheckOwnMember(target);
 
         await ctx.Reply(
-            $"{Emojis.Warn} Are you sure you want to delete \"{target.NameFor(ctx)}\"? If so, reply to this message with the member's ID (`{target.Hid}`). __***This cannot be undone!***__");
-        if (!await ctx.ConfirmWithReply(target.Hid)) throw Errors.MemberDeleteCancelled;
+            $"{Emojis.Warn} Are you sure you want to delete \"{target.NameFor(ctx)}\"? If so, reply to this message with the member's ID (`{target.DisplayHid(ctx.Config)}`). __***This cannot be undone!***__");
+        if (!await ctx.ConfirmWithReply(target.Hid, treatAsHid: true)) throw Errors.MemberDeleteCancelled;
 
         await ctx.Repository.DeleteMember(target.Id);
 

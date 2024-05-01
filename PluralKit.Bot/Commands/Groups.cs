@@ -574,10 +574,10 @@ public class Groups
         ctx.CheckOwnGroup(target);
 
         await ctx.Reply(
-            $"{Emojis.Warn} Are you sure you want to delete this group? If so, reply to this message with the group's ID (`{target.Hid}`).\n**Note: this action is permanent.**");
-        if (!await ctx.ConfirmWithReply(target.Hid))
+            $"{Emojis.Warn} Are you sure you want to delete this group? If so, reply to this message with the group's ID (`{target.DisplayHid(ctx.Config)}`).\n**Note: this action is permanent.**");
+        if (!await ctx.ConfirmWithReply(target.Hid, treatAsHid: true))
             throw new PKError(
-                $"Group deletion cancelled. Note that you must reply with your group ID (`{target.Hid}`) *verbatim*.");
+                $"Group deletion cancelled. Note that you must reply with your group ID (`{target.DisplayHid(ctx.Config)}`) *verbatim*.");
 
         await ctx.Repository.DeleteGroup(target.Id);
 
