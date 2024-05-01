@@ -12,7 +12,7 @@ All query string parameters are optional, but if present they require a non-null
 ---
 ## Systems
 
-*`systemRef` can be a system's short (5-character) ID, a system's UUID, the ID of a Discord account linked to the system, or the string `@me` to refer to the currently authenticated system.*
+*`systemRef` can be a system's short (5 or 6 character) ID, a system's UUID, the ID of a Discord account linked to the system, or the string `@me` to refer to the currently authenticated system.*
 
 ### Get System
 
@@ -97,7 +97,7 @@ Currently, only autoproxy with `guild_id` is supported. The API will return an e
 ---
 ## Members
 
-*`memberRef` can be a member's short (5-character ID) or a member's UUID.*
+*`memberRef` can be a member's short (5 or 6 character ID) or a member's UUID.*
 
 ### Get System Members
 
@@ -180,7 +180,7 @@ Returns a [member guild settings](/api/models#member-guild-settings-model) objec
 ---
 ## Groups
 
-*`groupRef` can be a group's short (5-character ID) or a group's UUID.*
+*`groupRef` can be a group's short (5 or 6 character ID) or a group's UUID.*
 
 ### Get System Groups
 
@@ -252,7 +252,7 @@ Takes an array of member references as input. (An empty list is accepted.) Retur
 ---
 ## Switches
 
-*`switchRef` must be a switch's UUID. `systemRef` can be a system's short (5-character) ID, a system's UUID, the ID of a Discord account linked to the system, or the string `@me` to refer to the currently authenticated system.*
+*`switchRef` must be a switch's UUID. `systemRef` can be a system's short (5 or 6 character) ID, a system's UUID, the ID of a Discord account linked to the system, or the string `@me` to refer to the currently authenticated system.*
 
 
 ### Get System Switches

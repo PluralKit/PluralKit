@@ -46,7 +46,7 @@ You can have a space after `pk;`, e.g. `pk;system` and `pk; system` will do the 
 :::
 
 ## System commands
-*To target a specific system, replace `[system]` with that system's 5-character ID, a Discord account ID, or a @mention - note that system names can not be used here. If no system ID is specified, defaults to targeting your own system. For most commands, adding `-clear` will clear/delete the field.*
+*To target a specific system, replace `[system]` with that system's 5 or 6 character ID, a Discord account ID, or a @mention - note that system names can not be used here. If no system ID is specified, defaults to targeting your own system. For most commands, adding `-clear` will clear/delete the field.*
 - `pk;system [system]` - Shows information about a system.
 - `pk;system new [name]` - Creates a new system registered to your account.
 - `pk;system [system] rename [new name]` - Changes the name of your system.
@@ -74,7 +74,7 @@ You can have a space after `pk;`, e.g. `pk;system` and `pk; system` will do the 
 - `pk;system [system] id` - Prints a system's id. 
 
 ## Member commands
-*Replace `<member>` with a member's name, 5-character ID or display name. For most commands, adding `-clear` will clear/delete the field.*
+*Replace `<member>` with a member's name, 5 or 6 character ID, or display name. For most commands, adding `-clear` will clear/delete the field.*
 - `pk;member <member>` - Shows information about a member.
 - `pk;member new <name>` - Creates a new system member.
 - `pk;member <member> rename <new name>` - Changes the name of a member.
@@ -101,7 +101,7 @@ You can have a space after `pk;`, e.g. `pk;system` and `pk; system` will do the 
 - `pk;member <member> id` - Prints a member's id. 
 
 ## Group commands
-*Replace `<group>` with a group's name, 5-character ID or display name. For most commands, adding `-clear` will clear/delete the field.*
+*Replace `<group>` with a group's name, 5 or 6 character ID, or display name. For most commands, adding `-clear` will clear/delete the field.*
 - `pk;group <group>` - Shows information about a group.
 - `pk;group new <name>` - Creates a new group.
 - `pk;group list` - Lists all groups in your system.
