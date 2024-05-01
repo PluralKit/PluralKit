@@ -670,19 +670,20 @@ public class SystemEdit
     public async Task Delete(Context ctx, PKSystem target)
     {
         ctx.CheckSystem().CheckOwnSystem(target);
+        var noExport = ctx.MatchFlag("ne", "no-export");
 
-        await ctx.Reply(
-            $"{Emojis.Warn} Are you sure you want to delete your system? If so, reply to this message with your system's ID (`{target.Hid}`).\n"
-                + $"**Note: this action is permanent,** but you will get a copy of your system's data that can be re-imported into PluralKit at a later date sent to you in DMs."
-                + " If you don't want this to happen, use `pk;s delete -no-export` instead.");
-        if (!await ctx.ConfirmWithReply(target.Hid))
+        var warnMsg = $"{Emojis.Warn} Are you sure you want to delete your system? If so, reply to this message with your system's ID (`{target.DisplayHid(ctx.Config)}`).\n";
+        if (!noExport)
+            warnMsg += "**Note: this action is permanent,** but you will get a copy of your system's data that can be re-imported into PluralKit at a later date sent to you in DMs."
+                + " If you don't want this to happen, use `pk;s delete -no-export` instead.";
+
+        await ctx.Reply(warnMsg);
+        if (!await ctx.ConfirmWithReply(target.Hid, treatAsHid: true))
             throw new PKError(
-                $"System deletion cancelled. Note that you must reply with your system ID (`{target.Hid}`) *verbatim*.");
+                $"System deletion cancelled. Note that you must reply with your system ID (`{target.DisplayHid(ctx.Config)}`) *verbatim*.");
 
         // If the user confirms the deletion, export their system and send them the export file before actually
         // deleting their system, unless they specifically tell us not to do an export.
-
-        var noExport = ctx.MatchFlag("ne", "no-export");
         if (!noExport)
         {
             var json = await ctx.BusyIndicator(async () =>
