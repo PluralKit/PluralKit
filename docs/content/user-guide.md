@@ -174,7 +174,7 @@ As the one exception to the rule above, if the name consists of multiple words y
 :::
 
 ### Looking up member info
-To view information about a member, there are a couple ways to do it. Either you can address a member by their name (if they're in your own system), by their 5-character *member ID*, or by their *display name*, like so:
+To view information about a member, there are a couple ways to do it. Either you can address a member by their name (if they're in your own system), by their 5 or 6 letter *member ID*, or by their *display name*, like so:
 
     pk;member John
     pk;member qazws
@@ -481,7 +481,7 @@ Then use the member's proxy tags once to set them as the latched member.
 #### Member mode 
 This autoproxy mode will autoproxy for a specific selected member, irrelevant of past proxies or fronters.
 
-To enable member-mode autoproxying for a given server, use the following command, where `<member>` is a member name (in "quotes" if multiple words) or 5-letter ID:
+To enable member-mode autoproxying for a given server, use the following command, where `<member>` is a member name (in "quotes" if multiple words), or 5 or 6 character ID:
 
     pk;autoproxy <member>
 
@@ -614,7 +614,7 @@ To create a new group, use the `pk;group new` command:
 
     pk;group new MyGroup
     
-This will create a new group. Groups all have a 5-letter ID, similar to systems and members.
+This will create a new group. Groups all have a 5 or 6 letter ID, similar to systems and members.
 
 ### Adding and removing members to groups
 To add a member to a group, use the `pk;group <group> add` command, eg:

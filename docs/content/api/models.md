@@ -14,7 +14,7 @@ Privacy objects (`privacy` key in models) contain values "private" or "public". 
 
 #### Notes on IDs
 
-Every PluralKit entity has two IDs: a short (5-character) ID and a longer UUID. The short ID is unique across the resource (a member can have the same short ID as a system, for example), while the UUID is consistent for the lifetime of the entity and globally unique across the bot.
+Every PluralKit entity has two IDs: a short (5 or 6 character) ID and a longer UUID. The short ID is unique across the resource (a member can have the same short ID as a system, for example), while the UUID is consistent for the lifetime of the entity and globally unique across the bot.
 
 ### System model
 

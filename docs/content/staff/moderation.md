@@ -17,7 +17,7 @@ An example of a message card is seen below:
 ![Example of a message query card](../assets/ExampleQuery.png)
 
 ### Looking up systems and accounts
-Looking up a system by its 5-character ID (`exmpl` in the above screenshot) will show you a list of its linked account IDs. For example:
+Looking up a system by its 5 or 6 character ID (`exmpl` in the above screenshot) will show you a list of its linked account IDs. For example:
 
     pk;system exmpl
 
