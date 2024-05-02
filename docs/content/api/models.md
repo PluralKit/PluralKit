@@ -40,6 +40,7 @@ Every PluralKit entity has two IDs: a short (5-character) ID and a longer UUID. 
 |---|---|---|
 |id|string||
 |uuid|string||
+|?system|string|id of system this member is registered in (only returned in `/members/:id` endpoint)|
 |name|string|100-character limit|
 |display_name|?string|100-character limit|
 |color|?string|6-character hex code, no `#` at the beginning|
@@ -75,6 +76,7 @@ Every PluralKit entity has two IDs: a short (5-character) ID and a longer UUID. 
 |---|---|---|
 |id|string||
 |uuid|string||
+|?system|string|id of system this group is registered in (only returned in `/groups/:id` endpoint)|
 |name|string|100-character limit|
 |display_name|?string|100-character limit|
 |description|?string|1000-character limit|
