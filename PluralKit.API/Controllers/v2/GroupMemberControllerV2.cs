@@ -19,17 +19,19 @@ public class GroupMemberControllerV2: PKControllerBase
         if (group == null)
             throw Errors.GroupNotFound;
 
+
         var ctx = ContextFor(group);
 
         if (!group.ListPrivacy.CanAccess(ctx))
             throw Errors.UnauthorizedGroupMemberList;
 
+        var system = await _repo.GetSystem(group.System);
         var members = _repo.GetGroupMembers(group.Id).Where(m => m.MemberVisibility.CanAccess(ctx));
 
         var o = new JArray();
 
         await foreach (var member in members)
-            o.Add(member.ToJson(ctx));
+            o.Add(member.ToJson(ctx, systemStr: system.Hid));
 
         return Ok(o);
     }
@@ -158,7 +160,7 @@ public class GroupMemberControllerV2: PKControllerBase
         var o = new JArray();
 
         await foreach (var group in groups)
-            o.Add(group.ToJson(ctx));
+            o.Add(group.ToJson(ctx, system.Hid));
 
         return Ok(o);
     }

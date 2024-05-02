@@ -28,7 +28,7 @@ public class GroupControllerV2: PKControllerBase
 
         var j_groups = await groups
             .Where(g => g.Visibility.CanAccess(ctx))
-            .Select(g => g.ToJson(ctx, needsMembersArray: with_members))
+            .Select(g => g.ToJson(ctx, needsMembersArray: with_members, systemStr: system.Hid))
             .ToListAsync();
 
         if (with_members && j_groups.Count > 0)
@@ -80,7 +80,7 @@ public class GroupControllerV2: PKControllerBase
 
         await tx.CommitAsync();
 
-        return Ok(newGroup.ToJson(LookupContext.ByOwner));
+        return Ok(newGroup.ToJson(LookupContext.ByOwner, system.Hid));
     }
 
     [HttpGet("groups/{groupRef}")]
@@ -127,7 +127,7 @@ public class GroupControllerV2: PKControllerBase
             throw new ModelParseError(patch.Errors);
 
         var newGroup = await _repo.UpdateGroup(group.Id, patch);
-        return Ok(newGroup.ToJson(LookupContext.ByOwner));
+        return Ok(newGroup.ToJson(LookupContext.ByOwner, system.Hid));
     }
 
     [HttpDelete("groups/{groupRef}")]
