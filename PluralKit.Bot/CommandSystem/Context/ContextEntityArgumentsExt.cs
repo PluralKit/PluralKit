@@ -169,15 +169,16 @@ public static class ContextEntityArgumentsExt
     public static string CreateNotFoundError(this Context ctx, string entity, string input)
     {
         var isIDOnlyQuery = ctx.System == null || ctx.MatchFlag("id", "by-id");
+        var inputIsHid = HidUtils.ParseHid(input) != null;
 
         if (isIDOnlyQuery)
         {
-            if (input.Length >= 5 && input.Length <= 6)
+            if (inputIsHid)
                 return $"{entity} with ID \"{input}\" not found.";
             return $"{entity} not found. Note that a {entity.ToLower()} ID is 5 or 6 characters long.";
         }
 
-        if (input.Length >= 5 && input.Length <= 6)
+        if (inputIsHid)
             return $"{entity} with ID or name \"{input}\" not found.";
         return $"{entity} with name \"{input}\" not found. Note that a {entity.ToLower()} ID is 5 or 6 characters long.";
     }
