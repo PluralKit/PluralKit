@@ -143,6 +143,9 @@ You can have a space after `pk;`, e.g. `pk;system` and `pk; system` will do the 
 - `pk;config private member [on|off]` - Toggles whether member privacy is automatically set to private for new members.
 - `pk;config private group [on|off]` - Toggles whether group privacy is automatically set to private for new groups.
 - `pk;config show private [on|off]` - Toggles whether private information is shown to linked accounts by default.
+- `pk;config proxy error [on|off]` - Toggles whether to send an error message when proxying fails.
+- `pk;config split IDs [on|off]` - Toggles whether to display 6-letter IDs with a hyphen, to ease readability.
+- `pk;config capitalize IDs [on|off]` - Toggles whether to display IDs as capital letters, to ease readability.
 
 ## Server owner commands
 *(all commands here require Manage Server permission)*
