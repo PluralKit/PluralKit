@@ -45,6 +45,9 @@ public class ImportExport
             try
             {
                 var response = await _client.GetAsync(url);
+                // hacky fix for discord api returning nonsense charsets sometimes
+                response.Content.Headers.Remove("content-type");
+                response.Content.Headers.Add("content-type", "application/json; charset=UTF-8");
                 var content = await response.Content.ReadAsStringAsync();
                 if (content == "This content is no longer available.")
                 {
@@ -54,9 +57,6 @@ public class ImportExport
                 }
                 if (!response.IsSuccessStatusCode)
                     throw Errors.InvalidImportFile;
-                // hacky fix for discord api returning nonsense charsets sometimes
-                response.Content.Headers.Remove("content-type");
-                response.Content.Headers.Add("content-type", "application/json; charset=UTF-8");
                 data = JsonConvert.DeserializeObject<JObject>(
                     content,
                     _settings
