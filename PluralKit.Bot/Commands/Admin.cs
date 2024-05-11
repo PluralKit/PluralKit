@@ -240,7 +240,7 @@ public class Admin
 
         var existingAccount = await ctx.Repository.GetSystemByAccount(account.Id);
         if (existingAccount != null)
-            throw Errors.AccountInOtherSystem(existingAccount);
+            throw Errors.AccountInOtherSystem(existingAccount, ctx.Config);
 
         var system = await ctx.Repository.GetSystem(systemId.Value!);
 

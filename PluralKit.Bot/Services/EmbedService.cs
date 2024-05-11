@@ -255,7 +255,7 @@ public class EmbedService
             // More than 5 groups show in "compact" format without ID
             var content = groups.Count > 5
                 ? string.Join(", ", groups.Select(g => g.DisplayName ?? g.Name))
-                : string.Join("\n", groups.Select(g => $"[`{g.Hid}`] **{g.DisplayName ?? g.Name}**"));
+                : string.Join("\n", groups.Select(g => $"[`{g.DisplayHid(ccfg)}`] **{g.DisplayName ?? g.Name}**"));
             eb.Field(new Embed.Field($"Groups ({groups.Count})", content.Truncate(1000)));
         }
 
@@ -324,7 +324,7 @@ public class EmbedService
             {
                 var name = pctx == LookupContext.ByOwner
                     ? target.Reference(ctx)
-                    : target.Hid;
+                    : target.DisplayHid(ctx.Config);
                 eb.Field(new Embed.Field($"Members ({memberCount})", $"(see `pk;group {name} list`)"));
             }
         }

@@ -76,7 +76,7 @@ public class SystemFront
 
                     var members = await ctx.Database.Execute(c => ctx.Repository.GetSwitchMembers(c, sw.Id)).ToListAsync();
                     var membersStr = members.Any()
-                        ? string.Join(", ", members.Select(m => $"**{m.NameFor(ctx)}**{(showMemberId ? $" (`{m.Hid}`)" : "")}"))
+                        ? string.Join(", ", members.Select(m => $"**{m.NameFor(ctx)}**{(showMemberId ? $" (`{m.DisplayHid(ctx.Config)}`)" : "")}"))
                         : "**no fronter**";
 
                     var switchSince = SystemClock.Instance.GetCurrentInstant() - sw.Timestamp;
@@ -138,13 +138,13 @@ public class SystemFront
         if (ctx.Guild != null)
             guildSettings = await ctx.Repository.GetSystemGuild(ctx.Guild.Id, system.Id);
         if (group != null)
-            title.Append($"{group.NameFor(ctx)} (`{group.Hid}`)");
+            title.Append($"{group.NameFor(ctx)} (`{group.DisplayHid(ctx.Config)}`)");
         else if (ctx.Guild != null && guildSettings.DisplayName != null)
-            title.Append($"{guildSettings.DisplayName} (`{system.Hid}`)");
+            title.Append($"{guildSettings.DisplayName} (`{system.DisplayHid(ctx.Config)}`)");
         else if (system.NameFor(ctx) != null)
-            title.Append($"{system.NameFor(ctx)} (`{system.Hid}`)");
+            title.Append($"{system.NameFor(ctx)} (`{system.DisplayHid(ctx.Config)}`)");
         else
-            title.Append($"`{system.Hid}`");
+            title.Append($"`{system.DisplayHid(ctx.Config)}`");
 
         var frontpercent = await ctx.Database.Execute(c => ctx.Repository.GetFrontBreakdown(c, system.Id, group?.Id, rangeStart.Value.ToInstant(), now));
         await ctx.Reply(embed: await _embeds.CreateFrontPercentEmbed(frontpercent, system, group, ctx.Zone,
