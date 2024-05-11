@@ -103,8 +103,20 @@ public partial class ModelRepository
 
 public class GroupMember
 {
-    public string Group { get; set; }
-    public string Member { get; set; }
+    private string _group = null!;
+    public string Group
+    {
+        set => _group = value.Trim();
+        get => _group;
+    }
+
+    private string _member = null!;
+    public string Member
+    {
+        set => _member = value.Trim();
+        get => _member;
+    }
+
     public Guid MemberUuid { get; set; }
     public PrivacyLevel MemberVisibility { get; set; }
 }
