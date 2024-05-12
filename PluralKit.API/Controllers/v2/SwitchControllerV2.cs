@@ -39,7 +39,7 @@ public class SwitchControllerV2: PKControllerBase
 
         var res = await _db.Execute(conn => conn.QueryAsync<SwitchesReturnNew>(
             @"select *, array(
-                    select members.hid from switch_members, members
+                    select trim(members.hid) from switch_members, members
                     where switch_members.switch = switches.id and members.id = switch_members.member
                 ) as members from switches
                 where switches.system = @System and switches.timestamp < @Before
