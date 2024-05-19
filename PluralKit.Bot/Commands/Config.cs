@@ -116,6 +116,13 @@ public class Config
             "disabled"
         ));
 
+        items.Add(new(
+            "Pad IDs",
+            "Whether to pad 5-character IDs in lists (left/right)",
+            ctx.Config.HidListPadding.ToUserString(),
+            "off"
+        ));
+
         await ctx.Paginate<PaginatedConfigItem>(
             items.ToAsyncEnumerable(),
             items.Count,
@@ -484,5 +491,49 @@ public class Config
         var newVal = ctx.MatchToggle(true);
         await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { HidDisplayCaps = newVal });
         await ctx.Reply($"Displaying IDs as capital letters is now {EnabledDisabled(newVal)}.");
+    }
+
+    public async Task HidListPadding(Context ctx)
+    {
+        if (!ctx.HasNext())
+        {
+            string message;
+            switch (ctx.Config.HidListPadding)
+            {
+                case SystemConfig.HidPadFormat.None: message = "Padding 5-character IDs in lists is currently disabled."; break;
+                case SystemConfig.HidPadFormat.Left: message = "5-character IDs displayed in lists will have a padding space added to the beginning."; break;
+                case SystemConfig.HidPadFormat.Right: message = "5-character IDs displayed in lists will have a padding space added to the end."; break;
+                default: throw new Exception("unreachable");
+            }
+            await ctx.Reply(message);
+            return;
+        }
+
+        var badInputError = "Valid padding settings are `left`, `right`, or `off`.";
+
+        var toggleOff = ctx.MatchToggleOrNull(false);
+
+        switch (toggleOff)
+        {
+            case true: throw new PKError(badInputError);
+            case false:
+                {
+                    await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { HidListPadding = SystemConfig.HidPadFormat.None });
+                    await ctx.Reply("Padding 5-character IDs in lists has been disabled.");
+                    return;
+                }
+        }
+
+        if (ctx.Match("left", "l"))
+        {
+            await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { HidListPadding = SystemConfig.HidPadFormat.Left });
+            await ctx.Reply("5-character IDs displayed in lists will now have a padding space added to the beginning.");
+        }
+        else if (ctx.Match("right", "r"))
+        {
+            await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { HidListPadding = SystemConfig.HidPadFormat.Right });
+            await ctx.Reply("5-character IDs displayed in lists will now have a padding space added to the end.");
+        }
+        else throw new PKError(badInputError);
     }
 }

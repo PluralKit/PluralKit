@@ -128,7 +128,9 @@ public static class ContextListExt
             // so run it through a helper that "makes it work" :)
             eb.WithSimpleLineContent(page.Select(m =>
             {
-                var ret = $"[`{m.DisplayHid(ctx.Config)}`] **{m.NameFor(ctx)}** ";
+                var leftpad = m.Hid.Length == 5 && ctx.Config.HidListPadding == SystemConfig.HidPadFormat.Left ? " " : "";
+                var rightpad = m.Hid.Length == 5 && ctx.Config.HidListPadding == SystemConfig.HidPadFormat.Right ? " " : "";
+                var ret = $"[`{leftpad}{m.DisplayHid(ctx.Config)}{rightpad}`] **{m.NameFor(ctx)}** ";
 
                 if (opts.IncludeMessageCount && m.MessageCountFor(lookupCtx) is { } count)
                     ret += $"({count} messages)";
@@ -238,7 +240,9 @@ public static class ContextListExt
             // so run it through a helper that "makes it work" :)
             eb.WithSimpleLineContent(page.Select(g =>
             {
-                var ret = $"[`{g.DisplayHid(ctx.Config)}`] **{g.NameFor(ctx)}** ";
+                var leftpad = g.Hid.Length == 5 && ctx.Config.HidListPadding == SystemConfig.HidPadFormat.Left ? " " : "";
+                var rightpad = g.Hid.Length == 5 && ctx.Config.HidListPadding == SystemConfig.HidPadFormat.Right ? " " : "";
+                var ret = $"[`{leftpad}{g.DisplayHid(ctx.Config)}{rightpad}`] **{g.NameFor(ctx)}** ";
 
                 switch (opts.SortProperty)
                 {

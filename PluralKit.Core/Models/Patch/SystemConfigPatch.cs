@@ -21,6 +21,7 @@ public class SystemConfigPatch: PatchObject
     public Partial<bool> ProxyErrorMessageEnabled { get; set; }
     public Partial<bool> HidDisplaySplit { get; set; }
     public Partial<bool> HidDisplayCaps { get; set; }
+    public Partial<SystemConfig.HidPadFormat> HidListPadding { get; set; }
 
 
     public override Query Apply(Query q) => q.ApplyPatch(wrapper => wrapper
@@ -37,6 +38,7 @@ public class SystemConfigPatch: PatchObject
         .With("proxy_error_message_enabled", ProxyErrorMessageEnabled)
         .With("hid_display_split", HidDisplaySplit)
         .With("hid_display_caps", HidDisplayCaps)
+        .With("hid_list_padding", HidListPadding)
     );
 
     public new void AssertIsValid()
@@ -97,6 +99,9 @@ public class SystemConfigPatch: PatchObject
 
         if (HidDisplayCaps.IsPresent)
             o.Add("hid_display_caps", HidDisplayCaps.Value);
+
+        if (HidListPadding.IsPresent)
+            o.Add("hid_list_padding", HidListPadding.Value.ToUserString());
 
         return o;
     }
