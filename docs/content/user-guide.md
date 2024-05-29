@@ -712,6 +712,7 @@ There are also some options for configuring member privacy:
 - Pronouns
 - Metadata *(message count, creation date, last message timestamp, etc)*
 - Visibility *(whether the member shows up in member lists)*
+- Proxy tags
 
 As with system privacy, each can be set to **public** or **private**. The same rules apply for how they are shown, too. When set to **public**, anyone who queries your system (by account or system ID, or through the API), will see this information. When set to **private**, the information will only be shown when *you yourself* query the information. The cards will still be displayed in the channel the commands are run in, so it's still your responsibility not to pull up information in servers where you don't want it displayed.
 
@@ -731,6 +732,7 @@ To update a member's privacy, you can use the command:
   * `pronouns`
   * `metadata`
   * `visiblity`
+  * `proxy` or `tag` (*not* `proxy tag`)
   * `all` (to change all subjects at once)
 
 * `level` is either `public` or `private`
@@ -743,7 +745,7 @@ For example:
     pk;member Skyler privacy all private
 
 ## Importing and exporting data
-If you're a user of another proxy bot (e.g. Tupperbox), or you want to import a saved system backup, you can use the importing and exporting commands.
+If you're a user of another proxy bot (e.g. Tupperbox), or you want to import a saved system backup, you can use the importing and exporting commands. Note, if you are on a mobile device, using the links is recommended - using the .json file from either bot may not work as Discord tends to break the file on download/upload.
 
 ### Importing from Tupperbox
 If you're a user of the *other proxying bot* Tupperbox, you can import system and member information from there. This is a fairly simple process:
