@@ -58,7 +58,7 @@ public partial class CommandTree
     public static Command MemberServerKeepProxy = new Command("member server keepproxy", "member <member> serverkeepproxy [on|off|clear]", "Sets whether to include a member's proxy tags when proxying in the current server.");
     public static Command MemberRandom = new Command("system random", "system [system] random", "Shows the info card of a randomly selected member in a system.");
     public static Command MemberId = new Command("member id", "member [member] id", "Prints a member's id.");
-    public static Command MemberPrivacy = new Command("member privacy", "member <member> privacy <name|description|birthday|pronouns|metadata|visibility|all> <public|private>", "Changes a members's privacy settings");
+    public static Command MemberPrivacy = new Command("member privacy", "member <member> privacy <name|description|birthday|pronouns|proxy|metadata|visibility|all> <public|private>", "Changes a members's privacy settings");
     public static Command GroupInfo = new Command("group", "group <name>", "Looks up information about a group");
     public static Command GroupNew = new Command("group new", "group new <name>", "Creates a new group");
     public static Command GroupList = new Command("group list", "group list", "Lists all groups in this system");

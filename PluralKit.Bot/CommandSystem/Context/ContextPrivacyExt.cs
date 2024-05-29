@@ -33,7 +33,7 @@ public static class ContextPrivacyExt
     {
         if (!MemberPrivacyUtils.TryParseMemberPrivacy(ctx.PeekArgument(), out var subject))
             throw new PKSyntaxError(
-                $"Invalid privacy subject {ctx.PopArgument().AsCode()} (must be `name`, `description`, `avatar`, `birthday`, `pronouns`, `metadata`, `visibility`, or `all`).");
+                $"Invalid privacy subject {ctx.PopArgument().AsCode()} (must be `name`, `description`, `avatar`, `birthday`, `pronouns`, `proxy`, `metadata`, `visibility`, or `all`).");
 
         ctx.PopArgument();
         return subject;
