@@ -70,7 +70,7 @@ public class SwitchControllerV2: PKControllerBase
         return Ok(new FrontersReturnNew
         {
             Timestamp = sw.Timestamp,
-            Members = await members.Select(m => m.ToJson(ctx)).ToListAsync(),
+            Members = await members.Select(m => m.ToJson(ctx, systemStr: system.Hid)).ToListAsync(),
             Uuid = sw.Uuid,
         });
     }
@@ -124,7 +124,7 @@ public class SwitchControllerV2: PKControllerBase
         {
             Uuid = newSwitch.Uuid,
             Timestamp = data.Timestamp != null ? data.Timestamp.Value : newSwitch.Timestamp,
-            Members = members.Select(x => x.ToJson(LookupContext.ByOwner)),
+            Members = members.Select(x => x.ToJson(LookupContext.ByOwner, systemStr: system.Hid)),
         });
     }
 
@@ -153,7 +153,7 @@ public class SwitchControllerV2: PKControllerBase
         {
             Uuid = sw.Uuid,
             Timestamp = sw.Timestamp,
-            Members = await members.Select(m => m.ToJson(ctx)).ToListAsync()
+            Members = await members.Select(m => m.ToJson(ctx, systemStr: system.Hid)).ToListAsync()
         });
     }
 
@@ -190,7 +190,7 @@ public class SwitchControllerV2: PKControllerBase
         {
             Uuid = sw.Uuid,
             Timestamp = sw.Timestamp,
-            Members = members.Select(x => x.ToJson(LookupContext.ByOwner))
+            Members = members.Select(x => x.ToJson(LookupContext.ByOwner, systemStr: system.Hid))
         });
     }
 
@@ -238,7 +238,7 @@ public class SwitchControllerV2: PKControllerBase
         {
             Uuid = sw.Uuid,
             Timestamp = sw.Timestamp,
-            Members = members.Select(x => x.ToJson(LookupContext.ByOwner))
+            Members = members.Select(x => x.ToJson(LookupContext.ByOwner, systemStr: system.Hid))
         });
     }
 
