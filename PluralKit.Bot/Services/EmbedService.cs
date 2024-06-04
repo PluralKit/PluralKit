@@ -255,7 +255,7 @@ public class EmbedService
             // More than 5 groups show in "compact" format without ID
             var content = groups.Count > 5
                 ? string.Join(", ", groups.Select(g => g.DisplayName ?? g.Name))
-                : string.Join("\n", groups.Select(g => $"[`{g.DisplayHid(ccfg)}`] **{g.DisplayName ?? g.Name}**"));
+                : string.Join("\n", groups.Select(g => $"[`{g.DisplayHid(ccfg, isList: true)}`] **{g.DisplayName ?? g.Name}**"));
             eb.Field(new Embed.Field($"Groups ({groups.Count})", content.Truncate(1000)));
         }
 

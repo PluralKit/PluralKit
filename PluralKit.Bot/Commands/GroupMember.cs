@@ -66,7 +66,7 @@ public class GroupMember
         if (groups.Count == 0)
             description = "This member has no groups.";
         else
-            description = string.Join("\n", groups.Select(g => $"[`{g.DisplayHid(ctx.Config)}`] **{g.DisplayName ?? g.Name}**"));
+            description = string.Join("\n", groups.Select(g => $"[`{g.DisplayHid(ctx.Config, isList: true)}`] **{g.DisplayName ?? g.Name}**"));
 
         if (pctx == LookupContext.ByOwner)
         {

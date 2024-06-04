@@ -28,14 +28,15 @@ public static class ModelUtils
     public static string Reference(this PKGroup group, Context ctx) => EntityReference(group.DisplayHid(ctx.Config), group.NameFor(ctx));
 
 
-    public static string DisplayHid(this PKSystem system, SystemConfig? cfg = null) => HidTransform(system.Hid, cfg);
-    public static string DisplayHid(this PKGroup group, SystemConfig? cfg = null) => HidTransform(group.Hid, cfg);
-    public static string DisplayHid(this PKMember member, SystemConfig? cfg = null) => HidTransform(member.Hid, cfg);
-    private static string HidTransform(string hid, SystemConfig? cfg = null) =>
+    public static string DisplayHid(this PKSystem system, SystemConfig? cfg = null, bool isList = false) => HidTransform(system.Hid, cfg, isList);
+    public static string DisplayHid(this PKGroup group, SystemConfig? cfg = null, bool isList = false) => HidTransform(group.Hid, cfg, isList);
+    public static string DisplayHid(this PKMember member, SystemConfig? cfg = null, bool isList = false) => HidTransform(member.Hid, cfg, isList);
+    private static string HidTransform(string hid, SystemConfig? cfg = null, bool isList = false) =>
         HidUtils.HidTransform(
             hid,
             cfg != null && cfg.HidDisplaySplit,
-            cfg != null && cfg.HidDisplayCaps
+            cfg != null && cfg.HidDisplayCaps,
+            isList ? (cfg?.HidListPadding ?? SystemConfig.HidPadFormat.None) : SystemConfig.HidPadFormat.None // padding only on lists
         );
 
     private static string EntityReference(string hid, string name)

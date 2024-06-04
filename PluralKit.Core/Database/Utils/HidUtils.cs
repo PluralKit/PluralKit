@@ -22,7 +22,7 @@ public static class HidUtils
         return hid != null;
     }
 
-    public static string HidTransform(string input, bool split, bool caps)
+    public static string HidTransform(string input, bool split, bool caps, SystemConfig.HidPadFormat pad)
     {
         if (split && input.Length > 5)
         {
@@ -32,6 +32,19 @@ public static class HidUtils
 
         if (caps)
             input = input.ToUpper();
+
+        if (input.Length == 5)
+            switch (pad)
+            {
+                case SystemConfig.HidPadFormat.Left:
+                    input = " " + input;
+                    if (split) input = " " + input;
+                    break;
+                case SystemConfig.HidPadFormat.Right:
+                    input = input + " ";
+                    if (split) input = input + " ";
+                    break;
+            }
 
         return input;
     }
