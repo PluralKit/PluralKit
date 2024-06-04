@@ -205,7 +205,7 @@ public partial class CommandTree
             // if we *still* haven't matched anything, the user entered an invalid command name or system reference
             if (ctx.Parameters._ptr == previousPtr)
             {
-                if (ctx.Parameters.Peek().Length != 5 && !ctx.Parameters.Peek().TryParseMention(out _))
+                if (!ctx.Parameters.Peek().TryParseHid(out _) && !ctx.Parameters.Peek().TryParseMention(out _))
                 {
                     await PrintCommandNotFoundError(ctx, SystemCommands);
                     return;
