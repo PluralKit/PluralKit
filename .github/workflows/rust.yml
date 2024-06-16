@@ -9,8 +9,10 @@ on:
     branches:
       - main
     paths:
-    - 'lib/pklib/**'
+    - 'lib/libpk/**'
     - 'services/api/**'
+    - '.github/workflows/rust.yml'
+    - 'Dockerfile.rust'
 
 jobs:
   deploy:
