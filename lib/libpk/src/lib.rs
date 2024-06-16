@@ -2,7 +2,10 @@ use gethostname::gethostname;
 use metrics_exporter_prometheus::PrometheusBuilder;
 use tracing_subscriber::{prelude::__tracing_subscriber_SubscriberExt, EnvFilter, Registry};
 
-mod _config;
+pub mod db;
+pub mod proto;
+
+pub mod _config;
 pub use crate::_config::CONFIG as config;
 
 pub fn init_logging(component: &str) -> anyhow::Result<()> {

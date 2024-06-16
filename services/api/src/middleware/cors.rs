@@ -1,5 +1,6 @@
 use axum::{
-    http::{HeaderMap, HeaderValue, Method, Request, StatusCode},
+    extract::Request,
+    http::{HeaderMap, HeaderValue, Method, StatusCode},
     middleware::Next,
     response::{IntoResponse, Response},
 };
@@ -14,7 +15,7 @@ fn add_cors_headers(headers: &mut HeaderMap) {
     headers.append("Access-Control-Max-Age", HeaderValue::from_static("86400"));
 }
 
-pub async fn cors<B>(request: Request<B>, next: Next<B>) -> Response {
+pub async fn cors(request: Request, next: Next) -> Response {
     let mut response = if request.method() == Method::OPTIONS {
         StatusCode::OK.into_response()
     } else {

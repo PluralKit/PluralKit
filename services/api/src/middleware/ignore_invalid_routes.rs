@@ -1,6 +1,7 @@
 use axum::{
     extract::MatchedPath,
-    http::{Request, StatusCode},
+    extract::Request,
+    http::StatusCode,
     middleware::Next,
     response::{IntoResponse, Response},
 };
@@ -16,7 +17,7 @@ fn is_trying_to_use_v1_path_on_v2(path: &str) -> bool {
         || path == "/v2/m"
 }
 
-pub async fn ignore_invalid_routes<B>(request: Request<B>, next: Next<B>) -> Response {
+pub async fn ignore_invalid_routes(request: Request, next: Next) -> Response {
     let path = request
         .extensions()
         .get::<MatchedPath>()

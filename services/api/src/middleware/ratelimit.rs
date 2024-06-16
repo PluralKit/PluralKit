@@ -1,13 +1,12 @@
 use std::time::{Duration, SystemTime};
 
+use axum::http::{HeaderValue, StatusCode};
 use axum::{
-    extract::State,
-    http::Request,
+    extract::{Request, State},
     middleware::{FromFnLayer, Next},
     response::Response,
 };
 use fred::{pool::RedisPool, prelude::LuaInterface, types::ReconnectPolicy, util::sha1_hash};
-use http::{HeaderValue, StatusCode};
 use metrics::increment_counter;
 use tracing::{debug, error, info, warn};
 
@@ -55,10 +54,10 @@ pub fn ratelimiter<F, T>(f: F) -> FromFnLayer<F, Option<RedisPool>, T> {
     axum::middleware::from_fn_with_state(redis, f)
 }
 
-pub async fn do_request_ratelimited<B>(
+pub async fn do_request_ratelimited(
     State(redis): State<Option<RedisPool>>,
-    request: Request<B>,
-    next: Next<B>,
+    request: Request,
+    next: Next,
 ) -> Response {
     if let Some(redis) = redis {
         let headers = request.headers().clone();

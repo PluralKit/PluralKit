@@ -1,6 +1,6 @@
 use std::time::Instant;
 
-use axum::{extract::MatchedPath, http::Request, middleware::Next, response::Response};
+use axum::{extract::MatchedPath, extract::Request, middleware::Next, response::Response};
 use metrics::histogram;
 use tracing::{info, span, warn, Instrument, Level};
 
@@ -10,7 +10,7 @@ use crate::util::header_or_unknown;
 // todo: change as necessary
 const MIN_LOG_TIME: u128 = 2_000;
 
-pub async fn logger<B>(request: Request<B>, next: Next<B>) -> Response {
+pub async fn logger(request: Request, next: Next) -> Response {
     let method = request.method().clone();
 
     let request_id = header_or_unknown(request.headers().get("Fly-Request-Id"));

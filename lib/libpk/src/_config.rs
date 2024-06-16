@@ -12,9 +12,11 @@ pub struct DiscordConfig {
 
 #[derive(Deserialize, Debug)]
 pub struct DatabaseConfig {
-    pub(crate) _data_db_uri: String,
-    pub(crate) _messages_db_uri: String,
-    pub(crate) _db_password: Option<String>,
+    pub(crate) data_db_uri: String,
+    pub(crate) data_db_max_connections: Option<u32>,
+    pub(crate) data_db_min_connections: Option<u32>,
+    //    pub(crate) _messages_db_uri: String,
+    pub(crate) db_password: Option<String>,
     pub data_redis_addr: String,
 }
 
@@ -42,6 +44,8 @@ fn _metrics_default() -> bool {
 
 #[derive(Deserialize, Debug)]
 pub struct PKConfig {
+    pub db: DatabaseConfig,
+
     pub discord: DiscordConfig,
     pub api: ApiConfig,
 
