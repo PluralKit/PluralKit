@@ -34,7 +34,7 @@ public class DispatchService
         {
             if (isVerify)
                 throw;
-            _logger.Error("Could not dispatch webhook request!", e);
+            _logger.Error(e, "Could not dispatch webhook request!");
         }
     }
 
