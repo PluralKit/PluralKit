@@ -40,6 +40,8 @@ public class LoggerCleanService
     private static readonly Regex _ProBotRegex = new("\\*\\*Message sent by <@(\\d{17,19})> deleted in <#\\d{17,19}>.\\*\\*");
     private static readonly Regex _DozerRegex = new("Message ID: (\\d{17,19}) - (\\d{17,19})\nUserID: (\\d{17,19})");
     private static readonly Regex _SkyraRegex = new("https://discord.com/channels/(\\d{17,19})/(\\d{17,19})/(\\d{17,19})");
+    private static readonly Regex _AnnabelleRegex = new("```\n(\\d{17,19})\n```");
+    private static readonly Regex _AnnabelleRegexFuzzy = new("A message from \\*\\*[\\w.]{2,32}\\*\\* \\(`(\\d{17,19})`\\) was deleted in <#\\d{17,19}>");
 
     private static readonly Regex _VortexRegex =
         new("`\\[(\\d\\d:\\d\\d:\\d\\d)\\]` .* \\(ID:(\\d{17,19})\\).* <#\\d{17,19}>:");
@@ -75,6 +77,7 @@ public class LoggerCleanService
         new LoggerBot("ProBot Prime", 567703512763334685, fuzzyExtractFunc: ExtractProBot), // webhook (?)
         new LoggerBot("Dozer", 356535250932858885, ExtractDozer),
         new LoggerBot("Skyra", 266624760782258186, ExtractSkyra),
+        new LoggerBot("Annabelle", 231241068383961088, ExtractAnnabelle, fuzzyExtractFunc: ExtractAnnabelleFuzzy),
     }.ToDictionary(b => b.Id);
 
     private static Dictionary<ulong, LoggerBot> _botsByApplicationId
@@ -115,6 +118,7 @@ public class LoggerCleanService
         try
         {
             // We try two ways of extracting the actual message, depending on the bots
+            // Some bots have different log formats so we check for both types of extract function
             if (bot.FuzzyExtractFunc != null)
             {
                 // Some bots (Carl, Circle, etc) only give us a user ID and a rough timestamp, so we try our best to
@@ -123,20 +127,23 @@ public class LoggerCleanService
                 // delete event timestamp, which is... good enough, I think? Potential for false positives and negatives
                 // either way but shouldn't be too much, given it's constrained by user ID and guild.
                 var fuzzy = bot.FuzzyExtractFunc(msg);
-                if (fuzzy == null) return;
+                if (fuzzy != null)
+                {
 
-                _logger.Debug("Fuzzy logclean for {BotName} on {MessageId}: {@FuzzyExtractResult}",
-                    bot.Name, msg.Id, fuzzy);
+                    _logger.Debug("Fuzzy logclean for {BotName} on {MessageId}: {@FuzzyExtractResult}",
+                        bot.Name, msg.Id, fuzzy);
 
-                var exists = await _redis.HasLogCleanup(fuzzy.Value.User, msg.GuildId.Value);
+                    var exists = await _redis.HasLogCleanup(fuzzy.Value.User, msg.GuildId.Value);
 
-                // If we didn't find a corresponding message, bail
-                if (!exists) return;
+                    // If we didn't find a corresponding message, bail
+                    if (!exists) return;
 
-                // Otherwise, we can *reasonably assume* that this is a logged deletion, so delete the log message.
-                await _client.DeleteMessage(msg.ChannelId, msg.Id);
+                    // Otherwise, we can *reasonably assume* that this is a logged deletion, so delete the log message.
+                    await _client.DeleteMessage(msg.ChannelId, msg.Id);
+
+                }
             }
-            else if (bot.ExtractFunc != null)
+            if (bot.ExtractFunc != null)
             {
                 // Other bots give us the message ID itself, and we can just extract that from the database directly.
                 var extractedId = bot.ExtractFunc(msg);
@@ -146,10 +153,11 @@ public class LoggerCleanService
                     bot.Name, msg.Id, extractedId);
 
                 var mid = await _redis.GetOriginalMid(extractedId.Value);
-                if (mid == null) return;
-
-                // If we've gotten this far, we found a logged deletion of a trigger message. Just yeet it!
-                await _client.DeleteMessage(msg.ChannelId, msg.Id);
+                if (mid != null)
+                {
+                    // If we've gotten this far, we found a logged deletion of a trigger message. Just yeet it!
+                    await _client.DeleteMessage(msg.ChannelId, msg.Id);
+                }
             } // else should not happen, but idk, it might
         }
         catch (NotFoundException)
@@ -381,6 +389,32 @@ public class LoggerCleanService
         if (embed?.Footer?.Text == null || !embed.Footer.Text.StartsWith("Message Deleted")) return null;
         var match = _SkyraRegex.Match(embed.Author.Url);
         return match.Success ? ulong.Parse(match.Groups[3].Value) : null;
+    }
+
+    private static ulong? ExtractAnnabelle(Message msg)
+    {
+        // this bot has both an embed and a non-embed log format
+        // the embed is precise matching (this), the non-embed is fuzzy (below)
+        var embed = msg.Embeds?.FirstOrDefault();
+        if (embed?.Author?.Name == null || !embed.Author.Name.EndsWith("Deleted Message")) return null;
+        var match = _AnnabelleRegex.Match(embed.Fields[2].Value);
+        return match.Success ? ulong.Parse(match.Groups[1].Value) : null;
+    }
+
+    private static FuzzyExtractResult? ExtractAnnabelleFuzzy(Message msg)
+    {
+        // matching for annabelle's non-precise non-embed format
+        // it has a discord (unix) timestamp but I (Petalss) can't get that to convert to rfc3339 so
+        // we use the message timestamp
+        if (msg.Embeds.Length != 0) return null;
+        var match = _AnnabelleRegexFuzzy.Match(msg.Content);
+        return match.Success
+            ? new FuzzyExtractResult
+            {
+                User = ulong.Parse(match.Groups[1].Value),
+                ApproxTimestamp = msg.Timestamp().ToInstant()
+            }
+            : null;
     }
 
     public class LoggerBot
