@@ -50,7 +50,7 @@
     let groupsStore: Writable<Group[]> = writable([])
     $: members = setContext<Writable<Member[]>>("members", membersStore)
     $: groups = setContext<Writable<Group[]>>("groups", groupsStore)
-    $: member =  $members.filter(m => m.id === $params.id)[0] || {}
+    let member: Member|null = null
 
     let title = isPublic ? "member" : "member (dash)";
 
@@ -58,12 +58,10 @@
         try {
             if (isPublic) {
                 const res: Member = await api().members($params.id).get({auth: !isPublic});
-                $members = [res]
-                member = $members.filter(m => m.id === $params.id)[0]
+                member = res;
             } else {
-                const res: Member[] = await api().systems("@me").members.get({ auth: true});
-                $members = res;
-                member = $members.filter(m => m.id === $params.id)[0]
+                const res: Member = await api().members($params.id).get({auth: !isPublic});
+                member = res
 
                 if (!member.privacy) {
                     notOwnSystem = true;
@@ -86,14 +84,17 @@
 
     async function fetchGroups() {
         try {
-            let memberGroups: Group[] = await api().members($params.id).groups().get({auth: !isPublic });
-            if (!isPublic) memberGroups.forEach(g => g.members = [])
-            groups.set(memberGroups)
-
             if (!isPublic) {
                 const systemGroups: Group[] = await api().systems("@me").groups.get({ auth: true, query: { with_members: true } });
+                const memberList: Member[] = await api().systems("@me").members.get({ auth: true })
+                members.set(memberList)
                 groups.set(systemGroups)
+            } else {
+            let memberGroups: Group[] = await api().members($params.id).groups().get({auth: !isPublic });
+                if (!isPublic) memberGroups.forEach(g => g.members = [])
+                groups.set(memberGroups)
             }
+
             groupErr = "";
             groupLoading = false;
         } catch (error) {
