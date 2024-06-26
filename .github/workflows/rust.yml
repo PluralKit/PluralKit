@@ -45,7 +45,7 @@ jobs:
 
       # add more binaries here
       - run: |
-          for binary in "api"; do
+          for binary in "api" "gateway"; do
             for tag in latest ${{ env.BRANCH_NAME }} ${{ github.sha }}; do
               cat Dockerfile.bin | sed "s/__BINARY__/$binary/g" | docker build -t ghcr.io/pluralkit/$binary:$tag -f - .
             done
