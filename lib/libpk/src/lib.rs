@@ -4,6 +4,7 @@ use tracing_subscriber::{prelude::__tracing_subscriber_SubscriberExt, EnvFilter,
 
 pub mod db;
 pub mod proto;
+pub mod util;
 
 pub mod _config;
 pub use crate::_config::CONFIG as config;

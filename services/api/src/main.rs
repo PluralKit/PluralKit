@@ -146,6 +146,7 @@ async fn main() -> anyhow::Result<()> {
 
     let addr: &str = libpk::config.api.addr.as_ref();
     let listener = tokio::net::TcpListener::bind(addr).await?;
+    info!("listening on {}", addr);
     axum::serve(listener, app).await?;
 
     Ok(())

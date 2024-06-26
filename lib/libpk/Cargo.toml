@@ -17,6 +17,7 @@ tokio = { workspace = true }
 tracing = { workspace = true }
 tracing-gelf = "0.7.1"
 tracing-subscriber = { version = "0.3.16", features = ["env-filter"] }
+twilight-model = { workspace = true }
 
 prost = { workspace = true }
 prost-types = { workspace = true }
