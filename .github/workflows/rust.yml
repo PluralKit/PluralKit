@@ -3,16 +3,16 @@
 # todo: don't use docker/build-push-action
 # todo: run builds on pull request
 
-name: Build and push API Docker image
+name: Build and push Rust service Docker images
 on:
   push:
-    branches:
-      - main
     paths:
     - 'lib/libpk/**'
     - 'services/api/**'
+    - 'services/gateway/**'
     - '.github/workflows/rust.yml'
     - 'Dockerfile.rust'
+    - 'Dockerfile.bin'
 
 jobs:
   deploy:
