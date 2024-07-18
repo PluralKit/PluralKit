@@ -25,6 +25,8 @@
         err = [];
         success = false;
 
+        if (!data.name) err.push("Group name cannot be empty.")
+
         if (data.color && !/^#?[A-Fa-f0-9]{6}$/.test(input.color)) {
             err.push(`"${data.color}" is not a valid color, the color must be a 6-digit hex code. (example: #ff0000)`);
         } else if (data.color) {
