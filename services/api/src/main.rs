@@ -135,6 +135,7 @@ async fn main() -> anyhow::Result<()> {
 
         .layer(axum::middleware::from_fn(middleware::logger))
         .layer(middleware::ratelimit::ratelimiter(middleware::ratelimit::do_request_ratelimited)) // this sucks
+        .layer(axum::middleware::from_fn_with_state(ctx.clone(), middleware::authnz))
         .layer(axum::middleware::from_fn(middleware::ignore_invalid_routes))
         .layer(axum::middleware::from_fn(middleware::cors))
 
