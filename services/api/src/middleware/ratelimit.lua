@@ -7,6 +7,7 @@ local rate = ARGV[2]
 local period = ARGV[3]
 
 -- we're only ever asking for 1 request at a time
+-- todo: this is no longer true
 local cost = 1 --local cost = tonumber(ARGV[4])
 
 local emission_interval = period / rate
