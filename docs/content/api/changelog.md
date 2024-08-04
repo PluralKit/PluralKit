@@ -5,6 +5,8 @@ permalink: /api/changelog
 
 # Version history
 
+* 2024-08-84
+  * Added ratelimit scopes (separate limits for different sets of endpoints)
 * 2024-05-01
   * Short IDs (the `id` field in system / member / group models) can now be either 5 or 6 characters.
 * 2022-12-14
