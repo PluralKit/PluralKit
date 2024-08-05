@@ -70,6 +70,8 @@ public record Message
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public Optional<Message?> ReferencedMessage { get; init; }
 
+    public MessagePoll? Poll { get; init; }
+
     // public MessageComponent[]? Components { get; init; }
 
     public record Reference(ulong? GuildId, ulong? ChannelId, ulong? MessageId);
@@ -95,5 +97,18 @@ public record Message
         public int Count { get; init; }
         public bool Me { get; init; }
         public Emoji Emoji { get; init; }
+    }
+
+    public record PollMedia(string? Text, Emoji? Emoji);
+
+    public record PollAnswer(ulong AnswerId, PollMedia PollMedia);
+
+    public record MessagePoll
+    {
+        public PollMedia Question { get; init; }
+        public PollAnswer[] Answers { get; init; }
+        public string? Expiry { get; init; }
+        public bool AllowMultiselect { get; init; }
+        public int LayoutType { get; init; }
     }
 }
