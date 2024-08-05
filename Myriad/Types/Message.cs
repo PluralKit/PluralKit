@@ -101,7 +101,7 @@ public record Message
 
     public record PollMedia(string? Text, Emoji? Emoji);
 
-    public record PollAnswer(ulong AnswerId, PollMedia PollMedia);
+    public record PollAnswer(PollMedia PollMedia);
 
     public record MessagePoll
     {
