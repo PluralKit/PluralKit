@@ -13,4 +13,14 @@ public record ExecuteWebhookRequest
     public AllowedMentions? AllowedMentions { get; init; }
     public bool? Tts { get; init; }
     public Message.MessageFlags? Flags { get; set; }
+    public WebhookPoll? Poll { get; set; }
+
+    public record WebhookPoll
+    {
+        public Message.PollMedia Question { get; init; }
+        public Message.PollAnswer[] Answers { get; init; }
+        public int? Duration { get; init; }
+        public bool AllowMultiselect { get; init; }
+        public int LayoutType { get; init; }
+    }
 }
