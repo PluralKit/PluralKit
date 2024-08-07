@@ -49,7 +49,7 @@ public class ServerConfig
         if (channel.Type != Channel.ChannelType.GuildText && channel.Type != Channel.ChannelType.GuildPublicThread && channel.Type != Channel.ChannelType.GuildPrivateThread)
             throw new PKError("PluralKit cannot log messages to this type of channel.");
 
-        var perms = await _cache.PermissionsIn(channel.Id);
+        var perms = await _cache.BotPermissionsIn(channel.Id);
         if (!perms.HasFlag(PermissionSet.SendMessages))
             throw new PKError("PluralKit is missing **Send Messages** permissions in the new log channel.");
         if (!perms.HasFlag(PermissionSet.EmbedLinks))

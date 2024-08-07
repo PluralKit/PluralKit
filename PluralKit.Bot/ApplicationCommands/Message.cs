@@ -91,7 +91,7 @@ public class ApplicationCommandProxiedMessage
 
     internal async Task DeleteMessageInner(InteractionContext ctx, ulong channelId, ulong messageId, bool isDM = false)
     {
-        if (!((await _cache.PermissionsIn(channelId)).HasFlag(PermissionSet.ManageMessages) || isDM))
+        if (!((await _cache.BotPermissionsIn(channelId)).HasFlag(PermissionSet.ManageMessages) || isDM))
             throw new PKError("PluralKit does not have the *Manage Messages* permission in this channel, and thus cannot delete the message."
                 + " Please contact a server administrator to remedy this.");
 
@@ -110,7 +110,7 @@ public class ApplicationCommandProxiedMessage
         // (if not, PK shouldn't send messages on their behalf)
         var member = await _rest.GetGuildMember(ctx.GuildId, ctx.User.Id);
         var requiredPerms = PermissionSet.ViewChannel | PermissionSet.SendMessages;
-        if (member == null || !(await _cache.PermissionsFor(ctx.ChannelId, member)).HasFlag(requiredPerms))
+        if (member == null || !(await _cache.PermissionsForMemberInChannel(ctx.ChannelId, member)).HasFlag(requiredPerms))
         {
             throw new PKError("You do not have permission to send messages in this channel.");
         };

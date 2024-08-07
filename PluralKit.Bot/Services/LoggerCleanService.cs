@@ -101,7 +101,7 @@ public class LoggerCleanService
         var channel = await _cache.GetChannel(msg.ChannelId);
 
         if (channel.Type != Channel.ChannelType.GuildText) return;
-        if (!(await _cache.PermissionsIn(channel.Id)).HasFlag(PermissionSet.ManageMessages)) return;
+        if (!(await _cache.BotPermissionsIn(channel.Id)).HasFlag(PermissionSet.ManageMessages)) return;
 
         // If this message is from a *webhook*, check if the application ID matches one of the bots we know
         // If it's from a *bot*, check the bot ID to see if we know it.

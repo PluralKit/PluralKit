@@ -69,7 +69,7 @@ public class MessageEdited: IEventHandler<MessageUpdateEvent>
             ctx = await _repo.GetMessageContext(evt.Author.Value!.Id, channel.GuildId!.Value, rootChannel.Id, evt.ChannelId);
 
         var equivalentEvt = await GetMessageCreateEvent(evt, lastMessage, channel);
-        var botPermissions = await _cache.PermissionsIn(channel.Id);
+        var botPermissions = await _cache.BotPermissionsIn(channel.Id);
 
         try
         {
@@ -123,7 +123,7 @@ public class MessageEdited: IEventHandler<MessageUpdateEvent>
         if (referencedMessageId == null)
             return null;
 
-        var botPermissions = await _cache.PermissionsIn(channelId);
+        var botPermissions = await _cache.BotPermissionsIn(channelId);
         if (!botPermissions.HasFlag(PermissionSet.ReadMessageHistory))
         {
             _logger.Warning(

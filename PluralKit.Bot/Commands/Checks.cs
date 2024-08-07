@@ -156,7 +156,7 @@ public class Checks
         if (!await ctx.CheckPermissionsInGuildChannel(channel, PermissionSet.ViewChannel))
             throw new PKError(error);
 
-        var botPermissions = PermissionExtensions.PermissionsFor(guild, channel, _botConfig.ClientId, guildMember);
+        var botPermissions = await _cache.BotPermissionsIn(channel.Id);
 
         // We use a bitfield so we can set individual permission bits
         ulong missingPermissions = 0;
