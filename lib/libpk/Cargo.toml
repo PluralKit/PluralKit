@@ -16,7 +16,7 @@ sqlx = { workspace = true }
 tokio = { workspace = true }
 tracing = { workspace = true }
 tracing-gelf = "0.7.1"
-tracing-subscriber = { version = "0.3.16", features = ["env-filter"] }
+tracing-subscriber = { version = "0.3.16", features = ["env-filter", "json"] }
 twilight-model = { workspace = true }
 
 prost = { workspace = true }
