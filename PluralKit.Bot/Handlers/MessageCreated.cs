@@ -63,7 +63,7 @@ public class MessageCreated: IEventHandler<MessageCreateEvent>
         if (evt.Type != Message.MessageType.Default && evt.Type != Message.MessageType.Reply) return;
         if (IsDuplicateMessage(evt)) return;
 
-        var botPermissions = await _cache.PermissionsIn(evt.ChannelId);
+        var botPermissions = await _cache.BotPermissionsIn(evt.ChannelId);
         if (!botPermissions.HasFlag(PermissionSet.SendMessages)) return;
 
         // spawn off saving the private channel into another thread

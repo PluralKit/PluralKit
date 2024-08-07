@@ -249,7 +249,7 @@ public class Bot
                 return;
             }
 
-            var botPerms = await _cache.PermissionsIn(reportChannel.Value);
+            var botPerms = await _cache.BotPermissionsIn(reportChannel.Value);
             if (botPerms.HasFlag(PermissionSet.SendMessages | PermissionSet.EmbedLinks))
                 await _errorMessageService.SendErrorMessage(reportChannel.Value, sentryEvent.EventId.ToString());
         }

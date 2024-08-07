@@ -31,16 +31,15 @@ public static class PermissionExtensions
         PermissionSet.AttachFiles |
         PermissionSet.EmbedLinks;
 
-    public static Task<PermissionSet> PermissionsFor(this IDiscordCache cache, MessageCreateEvent message) =>
-        PermissionsFor(cache, message.ChannelId, message.Author.Id, message.Member, message.WebhookId != null);
+    public static Task<PermissionSet> PermissionsForMCE(this IDiscordCache cache, MessageCreateEvent message) =>
+        PermissionsFor2(cache, message.ChannelId, message.Author.Id, message.Member, message.WebhookId != null);
 
     public static Task<PermissionSet>
-        PermissionsFor(this IDiscordCache cache, ulong channelId, GuildMember member) =>
-        PermissionsFor(cache, channelId, member.User.Id, member);
+        PermissionsForMemberInChannel(this IDiscordCache cache, ulong channelId, GuildMember member) =>
+        PermissionsFor2(cache, channelId, member.User.Id, member);
 
-    public static async Task<PermissionSet> PermissionsFor(this IDiscordCache cache, ulong channelId, ulong userId,
-                                                           GuildMemberPartial? member, bool isWebhook = false,
-                                                           bool isThread = false)
+    public static async Task<PermissionSet> PermissionsFor2(this IDiscordCache cache, ulong channelId, ulong userId,
+                                                           GuildMemberPartial? member, bool isThread = false)
     {
         if (!(await cache.TryGetChannel(channelId) is Channel channel))
             // todo: handle channel not found better
@@ -52,9 +51,6 @@ public static class PermissionExtensions
         var rootChannel = await cache.GetRootChannel(channelId);
 
         var guild = await cache.GetGuild(channel.GuildId.Value);
-
-        if (isWebhook)
-            return EveryonePermissions(guild);
 
         return PermissionsFor(guild, rootChannel, userId, member, isThread: isThread);
     }
@@ -78,9 +74,6 @@ public static class PermissionExtensions
 
         return perms;
     }
-
-    public static PermissionSet PermissionsFor(Guild guild, Channel channel, MessageCreateEvent msg, bool isThread = false) =>
-        PermissionsFor(guild, channel, msg.Author.Id, msg.Member, isThread: isThread);
 
     public static PermissionSet PermissionsFor(Guild guild, Channel channel, ulong userId,
                                                GuildMemberPartial? member, bool isThread = false)

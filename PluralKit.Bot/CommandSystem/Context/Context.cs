@@ -62,8 +62,8 @@ public class Context
     public readonly int ShardId;
     public readonly Cluster Cluster;
 
-    public Task<PermissionSet> BotPermissions => Cache.PermissionsIn(Channel.Id);
-    public Task<PermissionSet> UserPermissions => Cache.PermissionsFor((MessageCreateEvent)Message);
+    public Task<PermissionSet> BotPermissions => Cache.BotPermissionsIn(Channel.Id);
+    public Task<PermissionSet> UserPermissions => Cache.PermissionsForMCE((MessageCreateEvent)Message);
 
 
     public readonly PKSystem System;
