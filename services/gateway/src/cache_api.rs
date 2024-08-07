@@ -6,7 +6,8 @@ use axum::{
     Router,
 };
 use serde_json::to_string;
-use tracing::info;
+use tracing::{error, info};
+use twilight_model::guild::Permissions;
 use twilight_model::id::Id;
 
 use crate::discord::cache::DiscordCache;
@@ -40,11 +41,30 @@ pub async fn run_server(cache: Arc<DiscordCache>) -> anyhow::Result<()> {
         )
         .route(
             "/guilds/:guild_id/permissions/@me",
-            get(|| async { "todo" }),
+            get(|State(cache): State<Arc<DiscordCache>>, Path(guild_id): Path<u64>| async move {
+                match cache.guild_permissions(Id::new(guild_id), libpk::config.discord.client_id).await {
+                    Ok(val) => {
+                        println!("hh {}", Permissions::all().bits());
+                        status_code(StatusCode::FOUND, to_string(&val.bits()).unwrap())
+                    },
+                    Err(err) => {
+                        error!(?err, ?guild_id, "failed to get own guild member permissions");
+                        status_code(StatusCode::INTERNAL_SERVER_ERROR, "".to_string())
+                    },
+                }
+            }),
         )
         .route(
             "/guilds/:guild_id/permissions/:user_id",
-            get(|| async { "todo" }),
+            get(|State(cache): State<Arc<DiscordCache>>, Path((guild_id, user_id)): Path<(u64, u64)>| async move {
+                match cache.guild_permissions(Id::new(guild_id), Id::new(user_id)).await {
+                    Ok(val) => status_code(StatusCode::FOUND, to_string(&val.bits()).unwrap()),
+                    Err(err) => {
+                        error!(?err, ?guild_id, ?user_id, "failed to get guild member permissions");
+                        status_code(StatusCode::INTERNAL_SERVER_ERROR, "".to_string())
+                    },
+                }
+            }),
         )
 
         .route(
@@ -65,6 +85,7 @@ pub async fn run_server(cache: Arc<DiscordCache>) -> anyhow::Result<()> {
                                 "referenced channel {} from guild {} not found in cache",
                                 id.get(), guild_id,
                             );
+                            return status_code(StatusCode::INTERNAL_SERVER_ERROR, "".to_string());
                         }
                     }
                 }
@@ -112,6 +133,7 @@ pub async fn run_server(cache: Arc<DiscordCache>) -> anyhow::Result<()> {
                                 "referenced role {} from guild {} not found in cache",
                                 id.get(), guild_id,
                             );
+                            return status_code(StatusCode::INTERNAL_SERVER_ERROR, "".to_string());
                         }
                     }
                 }
@@ -129,6 +151,7 @@ pub async fn run_server(cache: Arc<DiscordCache>) -> anyhow::Result<()> {
             })
         )
 
+        .layer(axum::middleware::from_fn(crate::logger::logger))
         .with_state(cache);
 
     let addr: &str = libpk::config.api.addr.as_ref();

@@ -77,8 +77,8 @@ pub struct DiscordCache(pub Arc<InMemoryCache>, pub Arc<twilight_http::Client>);
 impl DiscordCache {
     pub async fn guild_permissions(
         &self,
-        user_id: Id<UserMarker>,
         guild_id: Id<GuildMarker>,
+        user_id: Id<UserMarker>,
     ) -> anyhow::Result<Permissions> {
         if self
             .0

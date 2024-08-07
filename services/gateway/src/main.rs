@@ -16,6 +16,7 @@ use twilight_model::gateway::payload::outgoing::UpdatePresence;
 
 mod cache_api;
 mod discord;
+mod logger;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {

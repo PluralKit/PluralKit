@@ -98,11 +98,13 @@ public class Bot
 
     private async Task OnEventReceived(int shardId, IGatewayEvent evt)
     {
-        // we HandleGatewayEvent **before** getting the own user, because the own user is set in HandleGatewayEvent for ReadyEvent
-        await _cache.HandleGatewayEvent(evt);
+        if (_cache is MemoryDiscordCache)
+        {
+            // we HandleGatewayEvent **before** getting the own user, because the own user is set in HandleGatewayEvent for ReadyEvent
+            await _cache.HandleGatewayEvent(evt);
 
-        await _cache.TryUpdateSelfMember(_config.ClientId, evt);
-
+            await _cache.TryUpdateSelfMember(_config.ClientId, evt);
+        }
         await OnEventReceivedInner(shardId, evt);
     }
 
@@ -173,7 +175,8 @@ public class Bot
             }
 
             using var _ = LogContext.PushProperty("EventId", Guid.NewGuid());
-            using var __ = LogContext.Push(await serviceScope.Resolve<SerilogGatewayEnricherFactory>().GetEnricher(shardId, evt));
+            // todo: this can fail (!!)
+            //            using var __ = LogContext.Push(await serviceScope.Resolve<SerilogGatewayEnricherFactory>().GetEnricher(shardId, evt));
             _logger.Verbose("Received gateway event: {@Event}", evt);
 
             try
