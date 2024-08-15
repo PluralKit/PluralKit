@@ -43,7 +43,7 @@ public class EmbedService
     {
         // Fetch/render info for all accounts simultaneously
         var accounts = await _repo.GetSystemAccounts(system.Id);
-        var users = (await GetUsers(accounts)).Select(x => x.User?.NameAndMention() ?? $"(deleted account {x.Id})");
+        var users = (await GetUsers(accounts)).Select(x => x.User?.NameAndMention().EscapeMarkdownExcludingMentions() ?? $"(deleted account {x.Id})");
 
         var countctx = LookupContext.ByNonOwner;
         if (cctx.MatchFlag("a", "all"))

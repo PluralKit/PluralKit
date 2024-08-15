@@ -156,6 +156,13 @@ public static class DiscordUtils
         return input;
     }
 
+    public static string EscapeMarkdownExcludingMentions(this string input)
+    {
+        var pattern = new Regex(@"[*_~`(||)\\]", RegexOptions.Multiline);
+        if (input != null) return pattern.Replace(input, @"\$&");
+        return input;
+    }
+
     public static string EscapeBacktickPair(this string input)
     {
         if (input == null)
