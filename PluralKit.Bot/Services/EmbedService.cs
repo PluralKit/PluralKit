@@ -43,7 +43,7 @@ public class EmbedService
     {
         // Fetch/render info for all accounts simultaneously
         var accounts = await _repo.GetSystemAccounts(system.Id);
-        var users = (await GetUsers(accounts)).Select(x => x.User?.NameAndMention().EscapeMarkdownExcludingMentions() ?? $"(deleted account {x.Id})");
+        var users = (await GetUsers(accounts)).Select(x => x.User?.NameAndMention() ?? $"(deleted account {x.Id})");
 
         var countctx = LookupContext.ByNonOwner;
         if (cctx.MatchFlag("a", "all"))
@@ -407,8 +407,8 @@ public class EmbedService
         // Calculate string displayed under "Sent by"
         string userStr;
         if (showContent && memberInfo != null && memberInfo.Nick != null)
-            userStr = $"**Username:** {userInfo.NameAndMention().EscapeMarkdownExcludingMentions()}\n**Nickname:** {memberInfo.Nick}";
-        else if (userInfo != null) userStr = userInfo.NameAndMention().EscapeMarkdownExcludingMentions();
+            userStr = $"**Username:** {userInfo.NameAndMention()}\n**Nickname:** {memberInfo.Nick}";
+        else if (userInfo != null) userStr = userInfo.NameAndMention();
         else userStr = $"*(deleted user {msg.Message.Sender})*";
 
         var content = serverMsg?.Content?.NormalizeLineEndSpacing();
