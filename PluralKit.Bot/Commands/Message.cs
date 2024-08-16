@@ -39,11 +39,12 @@ public class ProxiedMessage
     private readonly WebhookExecutorService _webhookExecutor;
     private readonly ProxyService _proxy;
     private readonly LastMessageCacheService _lastMessageCache;
+    private readonly RedisService _redisService;
 
     public ProxiedMessage(EmbedService embeds,
                           DiscordApiClient rest, IMetrics metrics, ModelRepository repo, ProxyService proxy,
                           WebhookExecutorService webhookExecutor, LogChannelService logChannel, IDiscordCache cache,
-                          LastMessageCacheService lastMessageCache)
+                          LastMessageCacheService lastMessageCache, RedisService redisService)
     {
         _embeds = embeds;
         _rest = rest;
@@ -54,6 +55,7 @@ public class ProxiedMessage
         _metrics = metrics;
         _proxy = proxy;
         _lastMessageCache = lastMessageCache;
+        _redisService = redisService;
     }
 
     public async Task ReproxyMessage(Context ctx)
@@ -220,6 +222,8 @@ public class ProxiedMessage
 
             if (ctx.Guild == null)
                 await _rest.CreateReaction(ctx.Channel.Id, ctx.Message.Id, new Emoji { Name = Emojis.Success });
+
+            await _redisService.SetOriginalMid(ctx.Message.Id, editedMsg.Id);
 
             if ((await ctx.BotPermissions).HasFlag(PermissionSet.ManageMessages))
                 await _rest.DeleteMessage(ctx.Channel.Id, ctx.Message.Id);
