@@ -1,5 +1,10 @@
 using Autofac;
 
+using System.Text;
+
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+
 using Serilog;
 
 namespace PluralKit.Core;
@@ -8,32 +13,55 @@ public class DispatchService
 {
     private readonly HttpClient _client = new();
     private readonly ILogger _logger;
+    private readonly CoreConfig _cfg;
     private readonly ILifetimeScope _provider;
 
     public DispatchService(ILogger logger, ILifetimeScope provider, CoreConfig cfg)
     {
         _logger = logger;
+        _cfg = cfg;
         _provider = provider;
     }
 
-    public async Task DoPostRequest(SystemId system, string webhookUrl, HttpContent content, bool isVerify = false)
+    public async Task<string> TestUrl(Guid systemUuid, string newUrl, string newToken)
     {
-        if (!await DispatchExt.ValidateUri(webhookUrl))
+        if (_cfg.DispatchProxyUrl == null || _cfg.DispatchProxyToken == null)
+            throw new Exception("tried to dispatch without a proxy set!");
+
+        var o = new JObject();
+        o.Add("auth", _cfg.DispatchProxyToken);
+        o.Add("url", newUrl);
+        o.Add("payload", DispatchExt.GetPingBody(systemUuid.ToString(), newToken));
+        o.Add("test", DispatchExt.GetPingBody(systemUuid.ToString(), StringUtils.GenerateToken()));
+
+        var body = new StringContent(JsonConvert.SerializeObject(o), Encoding.UTF8, "application/json");
+
+        var res = await _client.PostAsync(_cfg.DispatchProxyUrl, body);
+        return await res.Content.ReadAsStringAsync();
+    }
+
+    public async Task DoPostRequest(SystemId system, string webhookUrl, string content)
+    {
+        if (_cfg.DispatchProxyUrl == null || _cfg.DispatchProxyToken == null)
         {
-            _logger.Warning(
-                "Failed to dispatch webhook for system {SystemId}: URL is invalid or points to a private address",
-                system);
+            _logger.Warning("tried to dispatch without a proxy set!");
             return;
         }
 
+        var o = new JObject();
+        o.Add("auth", _cfg.DispatchProxyToken);
+        o.Add("url", webhookUrl);
+        o.Add("payload", content);
+
+        var body = new StringContent(JsonConvert.SerializeObject(o), Encoding.UTF8, "application/json");
+
         try
         {
-            await _client.PostAsync(webhookUrl, content);
+            await _client.PostAsync(_cfg.DispatchProxyUrl, body);
+            // todo: do something with proxy errors
         }
         catch (HttpRequestException e)
         {
-            if (isVerify)
-                throw;
             _logger.Error(e, "Could not dispatch webhook request!");
         }
     }

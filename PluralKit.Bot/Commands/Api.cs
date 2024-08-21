@@ -143,25 +143,32 @@ public class Api
         if (_webhookRegex.IsMatch(newUrl))
             throw new PKError("PluralKit does not currently support setting a Discord webhook URL as your system's webhook URL.");
 
-        try
-        {
-            await _dispatch.DoPostRequest(ctx.System.Id, newUrl, null, true);
-        }
-        catch (Exception e)
-        {
-            throw new PKError($"Could not verify that the new URL is working: {e.Message}");
-        }
-
         var newToken = StringUtils.GenerateToken();
+
+        await ctx.Reply($"{Emojis.Warn} The following token is used to authenticate requests from PluralKit to you."
+                        + " If it is exposed publicly, you **must** clear and re-set the webhook URL to get a new token."
+                        + "\n\n**Please review the security requirements at <https://pluralkit.me/api/dispatch#security> before continuing.**"
+                        + "\n\nWhen the server is correctly validating the token, click or reply 'yes' to continue."
+        );
+        await ctx.PromptYesNo(newToken, "Continue", matchFlag: false);
+
+        var status = await _dispatch.TestUrl(ctx.System.Uuid, newUrl, newToken);
+        if (status != "OK")
+        {
+            var message = status switch
+            {
+                "BadData" => "the webhook url is invalid",
+                "NoIPs" => "could not find any valid IP addresses for the provided domain",
+                "InvalidIP" => "could not find any valid IP addresses for the provided domain",
+                "FetchFailed" => "unable to reach server",
+                "TestFailed" => "server failed to validate the signing token",
+                _ => $"an unknown error occurred ({status})"
+            };
+            throw new PKError($"Failed to validate the webhook url: {message}");
+        }
 
         await ctx.Repository.UpdateSystem(ctx.System.Id, new SystemPatch { WebhookUrl = newUrl, WebhookToken = newToken });
 
-        await ctx.Reply($"{Emojis.Success} Successfully the new webhook URL for your system."
-                        + $"\n\n{Emojis.Warn} The following token is used to authenticate requests from PluralKit to you."
-                        + " If it leaks, you should clear and re-set the webhook URL to get a new token."
-                        + "\ntodo: add link to docs or something"
-        );
-
-        await ctx.Reply(newToken);
+        await ctx.Reply($"{Emojis.Success} Successfully the new webhook URL for your system.");
     }
 }

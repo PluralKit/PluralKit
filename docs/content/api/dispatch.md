@@ -19,7 +19,7 @@ To get dispatch events from PluralKit, you must set up a *public* HTTP endpoint.
 
 For this reason, when you register a webhook URL, PluralKit generates a secret token, and then includes it with every event sent to you in the `signing_token` key. If you receive an event with an invalid `signing_token`, you **must** stop processing the request and **respond with a 401 status code**.
 
-PluralKit will send invalid requests to your endpoint, with `PING` event type, once in a while to confirm that you are correctly validating requests.
+PluralKit will send invalid requests to your endpoint, with `PING` event type, once in a while to confirm that you are correctly validating requests. If validation fails, or if requests to your endpoint are repeatedly unsuccessful, the endpoint will be removed.
 
 ## Dispatch Event Model
 

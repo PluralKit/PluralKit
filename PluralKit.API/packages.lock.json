@@ -516,8 +516,8 @@
       },
       "Npgsql": {
         "type": "Transitive",
-        "resolved": "4.1.5",
-        "contentHash": "juDlNse+SKfXRP0VSgpJkpdCcaVLZt8m37EHdRX+8hw+GG69Eat1Y0MdEfl+oetdOnf9E133GjIDEjg9AF6HSQ==",
+        "resolved": "4.1.13",
+        "contentHash": "p79cObfuRgS8KD5sFmQUqVlINEkJm39bCrzRclicZE1942mKcbLlc0NdoVKhBeZPv//prK/sVTUmRVxdnoPCoA==",
         "dependencies": {
           "System.Runtime.CompilerServices.Unsafe": "4.6.0"
         }
@@ -1637,7 +1637,7 @@
           "Newtonsoft.Json": "[13.0.1, )",
           "NodaTime": "[3.0.3, )",
           "NodaTime.Serialization.JsonNet": "[3.0.0, )",
-          "Npgsql": "[4.1.5, )",
+          "Npgsql": "[4.1.13, )",
           "Npgsql.NodaTime": "[4.1.5, )",
           "Serilog": "[2.12.0, )",
           "Serilog.Extensions.Logging": "[3.0.1, )",
