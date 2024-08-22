@@ -150,7 +150,8 @@ public class Api
                         + "\n\n**Please review the security requirements at <https://pluralkit.me/api/dispatch#security> before continuing.**"
                         + "\n\nWhen the server is correctly validating the token, click or reply 'yes' to continue."
         );
-        await ctx.PromptYesNo(newToken, "Continue", matchFlag: false);
+        if (!await ctx.PromptYesNo(newToken, "Continue", matchFlag: false))
+            throw Errors.GenericCancelled();
 
         var status = await _dispatch.TestUrl(ctx.System.Uuid, newUrl, newToken);
         if (status != "OK")
