@@ -305,7 +305,7 @@ public partial class CommandTree
             await ctx.Execute<MemberEdit>(MemberPronouns, m => m.Pronouns(ctx, target));
         else if (ctx.Match("color", "colour"))
             await ctx.Execute<MemberEdit>(MemberColor, m => m.Color(ctx, target));
-        else if (ctx.Match("birthday", "bday", "birthdate", "cakeday", "bdate"))
+        else if (ctx.Match("birthday", "birth", "bday", "birthdate", "cakeday", "bdate", "bd"))
             await ctx.Execute<MemberEdit>(MemberBirthday, m => m.Birthday(ctx, target));
         else if (ctx.Match("proxy", "tags", "proxytags", "brackets"))
             await ctx.Execute<MemberProxy>(MemberProxy, m => m.Proxy(ctx, target));

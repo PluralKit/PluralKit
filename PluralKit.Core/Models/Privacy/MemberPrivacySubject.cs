@@ -64,6 +64,8 @@ public static class MemberPrivacyUtils
             case "bday":
             case "birthdate":
             case "bdate":
+            case "cakeday":
+            case "bd":
                 subject = MemberPrivacySubject.Birthday;
                 break;
             case "pronouns":
