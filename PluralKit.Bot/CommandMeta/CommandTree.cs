@@ -100,7 +100,7 @@ public partial class CommandTree
             return HandleDebugCommand(ctx);
         if (ctx.Match("admin"))
             return HandleAdminCommand(ctx);
-        if (ctx.Match("random", "r"))
+        if (ctx.Match("random", "rand", "r"))
             if (ctx.Match("group", "g") || ctx.MatchFlag("group", "g"))
                 return ctx.Execute<Random>(GroupRandom, r => r.Group(ctx, ctx.System));
             else
@@ -269,7 +269,7 @@ public partial class CommandTree
             await ctx.CheckSystem(target).Execute<SystemEdit>(SystemDelete, m => m.Delete(ctx, target));
         else if (ctx.Match("id"))
             await ctx.CheckSystem(target).Execute<System>(SystemId, m => m.DisplayId(ctx, target));
-        else if (ctx.Match("random", "r"))
+        else if (ctx.Match("random", "rand", "r"))
             if (ctx.Match("group", "g") || ctx.MatchFlag("group", "g"))
                 await ctx.CheckSystem(target).Execute<Random>(GroupRandom, r => r.Group(ctx, target));
             else
@@ -386,7 +386,7 @@ public partial class CommandTree
                     g => g.AddRemoveMembers(ctx, target, Groups.AddRemoveOperation.Remove));
             else if (ctx.Match("members", "list", "ms", "l", "ls"))
                 await ctx.Execute<GroupMember>(GroupMemberList, g => g.ListGroupMembers(ctx, target));
-            else if (ctx.Match("random"))
+            else if (ctx.Match("random", "rand"))
                 await ctx.Execute<Random>(GroupMemberRandom, r => r.GroupMember(ctx, target));
             else if (ctx.Match("privacy"))
                 await ctx.Execute<Groups>(GroupPrivacy, g => g.GroupPrivacy(ctx, target, null));
