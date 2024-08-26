@@ -91,7 +91,7 @@ public partial class CommandTree
         if (ctx.Match("rool")) return ctx.Execute<Fun>(null, m => m.Rool(ctx));
         if (ctx.Match("sus")) return ctx.Execute<Fun>(null, m => m.Sus(ctx));
         if (ctx.Match("error")) return ctx.Execute<Fun>(null, m => m.Error(ctx));
-        if (ctx.Match("stats")) return ctx.Execute<Misc>(null, m => m.Stats(ctx));
+        if (ctx.Match("stats", "status")) return ctx.Execute<Misc>(null, m => m.Stats(ctx));
         if (ctx.Match("permcheck"))
             return ctx.Execute<Checks>(PermCheck, m => m.PermCheckGuild(ctx));
         if (ctx.Match("proxycheck"))
