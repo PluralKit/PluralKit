@@ -68,6 +68,8 @@ public static class MemberPrivacyUtils
                 break;
             case "pronouns":
             case "pronoun":
+            case "prns":
+            case "pn":
                 subject = MemberPrivacySubject.Pronouns;
                 break;
             case "meta":

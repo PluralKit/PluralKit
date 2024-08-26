@@ -231,7 +231,7 @@ public partial class CommandTree
             await ctx.CheckSystem(target).Execute<SystemEdit>(SystemServerTag, m => m.ServerTag(ctx, target));
         else if (ctx.Match("description", "desc", "bio", "info", "text"))
             await ctx.CheckSystem(target).Execute<SystemEdit>(SystemDesc, m => m.Description(ctx, target));
-        else if (ctx.Match("pronouns", "prns"))
+        else if (ctx.Match("pronouns", "pronoun", "prns", "pn"))
             await ctx.CheckSystem(target).Execute<SystemEdit>(SystemPronouns, m => m.Pronouns(ctx, target));
         else if (ctx.Match("color", "colour"))
             await ctx.CheckSystem(target).Execute<SystemEdit>(SystemColor, m => m.Color(ctx, target));

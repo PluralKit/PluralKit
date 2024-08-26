@@ -60,7 +60,9 @@ public static class SystemPrivacyUtils
                 subject = SystemPrivacySubject.Description;
                 break;
             case "pronouns":
+            case "pronoun":
             case "prns":
+            case "pn":
                 subject = SystemPrivacySubject.Pronouns;
                 break;
             case "members":
