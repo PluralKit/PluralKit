@@ -348,7 +348,7 @@ public partial class CommandTree
             await ctx.Execute<MemberEdit>(MemberPrivacy, m => m.Privacy(ctx, target, null));
         else if (ctx.Match("private", "hidden", "hide"))
             await ctx.Execute<MemberEdit>(MemberPrivacy, m => m.Privacy(ctx, target, PrivacyLevel.Private));
-        else if (ctx.Match("public", "shown", "show"))
+        else if (ctx.Match("public", "shown", "show", "unhide", "unhidden"))
             await ctx.Execute<MemberEdit>(MemberPrivacy, m => m.Privacy(ctx, target, PrivacyLevel.Public));
         else if (ctx.Match("soulscream"))
             await ctx.Execute<Member>(MemberInfo, m => m.Soulscream(ctx, target));
