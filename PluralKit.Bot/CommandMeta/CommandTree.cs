@@ -229,7 +229,7 @@ public partial class CommandTree
             await ctx.CheckSystem(target).Execute<SystemEdit>(SystemTag, m => m.Tag(ctx, target));
         else if (ctx.Match("servertag", "st", "stag", "deer"))
             await ctx.CheckSystem(target).Execute<SystemEdit>(SystemServerTag, m => m.ServerTag(ctx, target));
-        else if (ctx.Match("description", "desc", "bio", "info", "text"))
+        else if (ctx.Match("description", "desc", "describe", "d", "bio", "info", "text", "intro"))
             await ctx.CheckSystem(target).Execute<SystemEdit>(SystemDesc, m => m.Description(ctx, target));
         else if (ctx.Match("pronouns", "pronoun", "prns", "pn"))
             await ctx.CheckSystem(target).Execute<SystemEdit>(SystemPronouns, m => m.Pronouns(ctx, target));
@@ -299,7 +299,7 @@ public partial class CommandTree
         // Commands that have a member target (eg. pk;member <member> delete)
         if (ctx.Match("rename", "name", "changename", "setname", "rn"))
             await ctx.Execute<MemberEdit>(MemberRename, m => m.Name(ctx, target));
-        else if (ctx.Match("description", "info", "bio", "text", "desc"))
+        else if (ctx.Match("description", "desc", "describe", "d", "bio", "info", "text", "intro"))
             await ctx.Execute<MemberEdit>(MemberDesc, m => m.Description(ctx, target));
         else if (ctx.Match("pronouns", "pronoun", "prns", "pn"))
             await ctx.Execute<MemberEdit>(MemberPronouns, m => m.Pronouns(ctx, target));
@@ -376,7 +376,7 @@ public partial class CommandTree
                 await ctx.Execute<Groups>(GroupRename, g => g.RenameGroup(ctx, target));
             else if (ctx.Match("nick", "dn", "displayname", "nickname"))
                 await ctx.Execute<Groups>(GroupDisplayName, g => g.GroupDisplayName(ctx, target));
-            else if (ctx.Match("description", "info", "bio", "text", "desc"))
+            else if (ctx.Match("description", "desc", "describe", "d", "bio", "info", "text", "intro"))
                 await ctx.Execute<Groups>(GroupDesc, g => g.GroupDescription(ctx, target));
             else if (ctx.Match("add", "a"))
                 await ctx.Execute<GroupMember>(GroupAdd,

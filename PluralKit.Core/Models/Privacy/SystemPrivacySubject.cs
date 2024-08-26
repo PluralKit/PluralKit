@@ -55,8 +55,12 @@ public static class SystemPrivacyUtils
                 break;
             case "description":
             case "desc":
-            case "text":
+            case "describe":
+            case "d":
+            case "bio":
             case "info":
+            case "text":
+            case "intro":
                 subject = SystemPrivacySubject.Description;
                 break;
             case "pronouns":
