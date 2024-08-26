@@ -44,7 +44,7 @@ public partial class CommandTree
             else return ctx.Execute<Help>(Help, m => m.HelpRoot(ctx));
         if (ctx.Match("explain"))
             return ctx.Execute<Help>(Explain, m => m.Explain(ctx));
-        if (ctx.Match("message", "msg"))
+        if (ctx.Match("message", "msg", "messageinfo"))
             return ctx.Execute<ProxiedMessage>(Message, m => m.GetMessage(ctx));
         if (ctx.Match("edit", "e"))
             return ctx.Execute<ProxiedMessage>(MessageEdit, m => m.EditMessage(ctx, false));
