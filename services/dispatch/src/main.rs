@@ -29,7 +29,7 @@ async fn main() -> anyhow::Result<()> {
     info!("hello world");
 
     let address = std::env::var("DNS_UPSTREAM").unwrap().parse().unwrap();
-    let stream = UdpClientStream::<UdpSocket>::with_timeout(address, Duration::from_secs(1));
+    let stream = UdpClientStream::<UdpSocket>::with_timeout(address, Duration::from_secs(3));
     let (client, bg) = AsyncClient::connect(stream).await?;
     tokio::spawn(bg);
 
