@@ -7,6 +7,7 @@ using NodaTime;
 using NodaTime.Extensions;
 
 using PluralKit.Core;
+using static PluralKit.Bot.ContextArgumentsExt;
 
 namespace PluralKit.Bot;
 
@@ -70,30 +71,39 @@ public class MemberEdit
             noDescriptionSetMessage +=
                 $" To set one, type `pk;member {target.Reference(ctx)} description <description>`.";
 
-        if (ctx.MatchRaw())
-        {
+        var format = ctx.MatchFormat();
+
+        // if there's nothing next or what's next is "raw"/"plaintext" we're doing a query, so check for null
+        if (!ctx.HasNext(false) || format != ReplyFormat.Standard)
             if (target.Description == null)
+            {
                 await ctx.Reply(noDescriptionSetMessage);
-            else
-                await ctx.Reply($"```\n{target.Description}\n```");
+                return;
+            }
+
+        if (format == ReplyFormat.Raw)
+        {
+            await ctx.Reply($"```\n{target.Description}\n```");
+            return;
+        }
+        if (format == ReplyFormat.Plaintext)
+        {
+            await ctx.Reply(target.Description);
             return;
         }
 
         if (!ctx.HasNext(false))
         {
-            if (target.Description == null)
-                await ctx.Reply(noDescriptionSetMessage);
-            else
-                await ctx.Reply(embed: new EmbedBuilder()
-                    .Title("Member description")
-                    .Description(target.Description)
-                    .Field(new Embed.Field("\u200B",
-                        $"To print the description with formatting, type `pk;member {target.Reference(ctx)} description -raw`."
-                        + (ctx.System?.Id == target.System
-                            ? $" To clear it, type `pk;member {target.Reference(ctx)} description -clear`."
-                            : "")
-                        + $" Using {target.Description.Length}/{Limits.MaxDescriptionLength} characters."))
-                    .Build());
+            await ctx.Reply(embed: new EmbedBuilder()
+                .Title("Member description")
+                .Description(target.Description)
+                .Field(new Embed.Field("\u200B",
+                    $"To print the description with formatting, type `pk;member {target.Reference(ctx)} description -raw`."
+                    + (ctx.System?.Id == target.System
+                        ? $" To clear it, type `pk;member {target.Reference(ctx)} description -clear`."
+                        : "")
+                    + $" Using {target.Description.Length}/{Limits.MaxDescriptionLength} characters."))
+                .Build());
             return;
         }
 
@@ -126,26 +136,35 @@ public class MemberEdit
 
         ctx.CheckSystemPrivacy(target.System, target.PronounPrivacy);
 
-        if (ctx.MatchRaw())
-        {
+        var format = ctx.MatchFormat();
+
+        // if there's nothing next or what's next is "raw"/"plaintext" we're doing a query, so check for null
+        if (!ctx.HasNext(false) || format != ReplyFormat.Standard)
             if (target.Pronouns == null)
+            {
                 await ctx.Reply(noPronounsSetMessage);
-            else
-                await ctx.Reply($"```\n{target.Pronouns}\n```");
+                return;
+            }
+
+        if (format == ReplyFormat.Raw)
+        {
+            await ctx.Reply($"```\n{target.Pronouns}\n```");
+            return;
+        }
+        if (format == ReplyFormat.Plaintext)
+        {
+            await ctx.Reply(target.Pronouns);
             return;
         }
 
         if (!ctx.HasNext(false))
         {
-            if (target.Pronouns == null)
-                await ctx.Reply(noPronounsSetMessage);
-            else
-                await ctx.Reply(
-                    $"**{target.NameFor(ctx)}**'s pronouns are **{target.Pronouns}**.\nTo print the pronouns with formatting, type `pk;member {target.Reference(ctx)} pronouns -raw`."
-                    + (ctx.System?.Id == target.System
-                        ? $" To clear them, type `pk;member {target.Reference(ctx)} pronouns -clear`."
-                        : "")
-                    + $" Using {target.Pronouns.Length}/{Limits.MaxPronounsLength} characters.");
+            await ctx.Reply(
+                $"**{target.NameFor(ctx)}**'s pronouns are **{target.Pronouns}**.\nTo print the pronouns with formatting, type `pk;member {target.Reference(ctx)} pronouns -raw`."
+                + (ctx.System?.Id == target.System
+                    ? $" To clear them, type `pk;member {target.Reference(ctx)} pronouns -clear`."
+                    : "")
+                + $" Using {target.Pronouns.Length}/{Limits.MaxPronounsLength} characters.");
             return;
         }
 
@@ -232,7 +251,7 @@ public class MemberEdit
     public async Task Color(Context ctx, PKMember target)
     {
         var isOwnSystem = ctx.System?.Id == target.System;
-        var matchedRaw = ctx.MatchRaw();
+        var matchedFormat = ctx.MatchFormat();
         var matchedClear = ctx.MatchClear();
 
         if (!isOwnSystem || !(ctx.HasNext() || matchedClear))
@@ -240,8 +259,10 @@ public class MemberEdit
             if (target.Color == null)
                 await ctx.Reply(
                     "This member does not have a color set." + (isOwnSystem ? $" To set one, type `pk;member {target.Reference(ctx)} color <color>`." : ""));
-            else if (matchedRaw)
+            else if (matchedFormat == ReplyFormat.Raw)
                 await ctx.Reply("```\n#" + target.Color + "\n```");
+            else if (matchedFormat == ReplyFormat.Plaintext)
+                await ctx.Reply(target.Color);
             else
                 await ctx.Reply(embed: new EmbedBuilder()
                     .Title("Member color")
@@ -388,12 +409,24 @@ public class MemberEdit
 
         // No perms check, display name isn't covered by member privacy
 
-        if (ctx.MatchRaw())
-        {
+        var format = ctx.MatchFormat();
+
+        // if what's next is "raw"/"plaintext" we need to check for null
+        if (format != ReplyFormat.Standard)
             if (target.DisplayName == null)
+            {
                 await ctx.Reply(noDisplayNameSetMessage);
-            else
-                await ctx.Reply($"```\n{target.DisplayName}\n```");
+                return;
+            }
+
+        if (format == ReplyFormat.Raw)
+        {
+            await ctx.Reply($"```\n{target.DisplayName}\n```");
+            return;
+        }
+        if (format == ReplyFormat.Plaintext)
+        {
+            await ctx.Reply(target.DisplayName);
             return;
         }
 
@@ -450,12 +483,24 @@ public class MemberEdit
         // No perms check, display name isn't covered by member privacy
         var memberGuildConfig = await ctx.Repository.GetMemberGuild(ctx.Guild.Id, target.Id);
 
-        if (ctx.MatchRaw())
-        {
+        var format = ctx.MatchFormat();
+
+        // if what's next is "raw"/"plaintext" we need to check for null
+        if (format != ReplyFormat.Standard)
             if (memberGuildConfig.DisplayName == null)
+            {
                 await ctx.Reply(noServerNameSetMessage);
-            else
-                await ctx.Reply($"```\n{memberGuildConfig.DisplayName}\n```");
+                return;
+            }
+
+        if (format == ReplyFormat.Raw)
+        {
+            await ctx.Reply($"```\n{memberGuildConfig.DisplayName}\n```");
+            return;
+        }
+        if (format == ReplyFormat.Plaintext)
+        {
+            await ctx.Reply(memberGuildConfig.DisplayName);
             return;
         }
 
