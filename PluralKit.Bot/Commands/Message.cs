@@ -387,7 +387,9 @@ public class ProxiedMessage
 
             if (format == ContextArgumentsExt.ReplyFormat.Plaintext)
             {
-                await ctx.Reply(content);
+                var eb = new EmbedBuilder()
+                .Description($"Showing contents of message {message.Message.Mid}");
+                await ctx.Reply(content, embed: eb.Build());
                 return;
             }
 

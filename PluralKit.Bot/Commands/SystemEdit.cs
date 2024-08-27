@@ -55,7 +55,9 @@ public class SystemEdit
         }
         if (format == ReplyFormat.Plaintext)
         {
-            await ctx.Reply(target.Name);
+            var eb = new EmbedBuilder()
+                .Description($"Showing name for system {target.DisplayHid()}");
+            await ctx.Reply(target.Name, embed: eb.Build());
             return;
         }
 
@@ -118,7 +120,9 @@ public class SystemEdit
         }
         if (format == ReplyFormat.Plaintext)
         {
-            await ctx.Reply(settings.DisplayName);
+            var eb = new EmbedBuilder()
+                .Description($"Showing servername for system {target.DisplayHid()}");
+            await ctx.Reply(settings.DisplayName, embed: eb.Build());
             return;
         }
 
@@ -179,7 +183,9 @@ public class SystemEdit
         }
         if (format == ReplyFormat.Plaintext)
         {
-            await ctx.Reply(target.Description);
+            var eb = new EmbedBuilder()
+                .Description($"Showing description for system {target.DisplayHid()}");
+            await ctx.Reply(target.Description, embed: eb.Build());
             return;
         }
 
@@ -293,7 +299,9 @@ public class SystemEdit
         }
         if (format == ReplyFormat.Plaintext)
         {
-            await ctx.Reply(target.Tag);
+            var eb = new EmbedBuilder()
+                .Description($"Showing tag for system {target.DisplayHid()}");
+            await ctx.Reply(target.Tag, embed: eb.Build());
             return;
         }
 
@@ -346,7 +354,9 @@ public class SystemEdit
                 }
                 if (format == ReplyFormat.Plaintext)
                 {
-                    await ctx.Reply(settings.Tag);
+                    var eb = new EmbedBuilder()
+                        .Description($"Showing servertag for system {target.DisplayHid()}");
+                    await ctx.Reply(settings.Tag, embed: eb.Build());
                     return;
                 }
 
@@ -479,7 +489,9 @@ public class SystemEdit
         }
         if (format == ReplyFormat.Plaintext)
         {
-            await ctx.Reply(target.Pronouns);
+            var eb = new EmbedBuilder()
+                .Description($"Showing pronouns for system {target.DisplayHid()}");
+            await ctx.Reply(target.Pronouns, embed: eb.Build());
             return;
         }
 

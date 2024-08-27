@@ -150,7 +150,9 @@ public class Groups
         }
         if (format == ReplyFormat.Plaintext)
         {
-            await ctx.Reply(target.DisplayName);
+            var eb = new EmbedBuilder()
+                .Description($"Showing displayname for group {target.Reference(ctx)}");
+            await ctx.Reply(target.DisplayName, embed: eb.Build());
             return;
         }
 
@@ -224,7 +226,9 @@ public class Groups
         }
         if (format == ReplyFormat.Plaintext)
         {
-            await ctx.Reply(target.Description);
+            var eb = new EmbedBuilder()
+                .Description($"Showing description for group {target.Reference(ctx)}");
+            await ctx.Reply(target.Description, embed: eb.Build());
             return;
         }
 

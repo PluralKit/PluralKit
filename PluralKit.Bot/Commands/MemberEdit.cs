@@ -88,7 +88,9 @@ public class MemberEdit
         }
         if (format == ReplyFormat.Plaintext)
         {
-            await ctx.Reply(target.Description);
+            var eb = new EmbedBuilder()
+                .Description($"Showing description for member {target.Reference(ctx)}");
+            await ctx.Reply(target.Description, embed: eb.Build());
             return;
         }
 
@@ -153,7 +155,9 @@ public class MemberEdit
         }
         if (format == ReplyFormat.Plaintext)
         {
-            await ctx.Reply(target.Pronouns);
+            var eb = new EmbedBuilder()
+                .Description($"Showing pronouns for member {target.Reference(ctx)}");
+            await ctx.Reply(target.Pronouns, embed: eb.Build());
             return;
         }
 
@@ -426,7 +430,9 @@ public class MemberEdit
         }
         if (format == ReplyFormat.Plaintext)
         {
-            await ctx.Reply(target.DisplayName);
+            var eb = new EmbedBuilder()
+                .Description($"Showing displayname for member {target.Reference(ctx)}");
+            await ctx.Reply(target.DisplayName, embed: eb.Build());
             return;
         }
 
@@ -500,7 +506,9 @@ public class MemberEdit
         }
         if (format == ReplyFormat.Plaintext)
         {
-            await ctx.Reply(memberGuildConfig.DisplayName);
+            var eb = new EmbedBuilder()
+                .Description($"Showing servername for member {target.Reference(ctx)}");
+            await ctx.Reply(memberGuildConfig.DisplayName, embed: eb.Build());
             return;
         }
 
