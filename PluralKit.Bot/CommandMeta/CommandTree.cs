@@ -313,7 +313,7 @@ public partial class CommandTree
             await ctx.Execute<MemberEdit>(MemberDelete, m => m.Delete(ctx, target));
         else if (ctx.Match("avatar", "profile", "picture", "icon", "image", "pfp", "pic"))
             await ctx.Execute<MemberAvatar>(MemberAvatar, m => m.Avatar(ctx, target));
-        else if (ctx.Match("proxyavatar", "proxypfp", "webhookavatar", "webhookpfp", "pa"))
+        else if (ctx.Match("proxyavatar", "proxypfp", "webhookavatar", "webhookpfp", "pa", "pavatar", "ppfp"))
             await ctx.Execute<MemberAvatar>(MemberAvatar, m => m.WebhookAvatar(ctx, target));
         else if (ctx.Match("banner", "splash", "cover"))
             await ctx.Execute<MemberEdit>(MemberBannerImage, m => m.BannerImage(ctx, target));
