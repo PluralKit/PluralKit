@@ -240,6 +240,12 @@ public class Checks
         var context = await ctx.Repository.GetMessageContext(msg.Author.Id, channel.GuildId.Value, rootChannel.Id, msg.ChannelId);
         var members = (await ctx.Repository.GetProxyMembers(msg.Author.Id, channel.GuildId.Value)).ToList();
 
+        if (await ctx.Repository.GetSystemByAccount(msg.Author.Id) == null)
+        {
+            await ctx.Reply("Your account does not have a system registered.");
+            return;
+        }
+
         // for now this is just server
         var autoproxySettings = await ctx.Repository.GetAutoproxySettings(ctx.System.Id, channel.GuildId.Value, null);
 
