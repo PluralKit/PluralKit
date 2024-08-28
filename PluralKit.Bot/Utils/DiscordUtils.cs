@@ -20,7 +20,6 @@ public static class DiscordUtils
     public const uint Blue = 0x1f99d8;
     public const uint Green = 0x00cc78;
     public const uint Red = 0xef4b3d;
-    public const uint Gray = 0x979c9f;
 
     private static readonly Regex USER_MENTION = new("<@!?(\\d{17,19})>");
     private static readonly Regex ROLE_MENTION = new("<@&(\\d{17,19})>");
