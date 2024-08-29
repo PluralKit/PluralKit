@@ -6,10 +6,10 @@ public static class ContextPrivacyExt
 {
     public static PrivacyLevel PopPrivacyLevel(this Context ctx)
     {
-        if (ctx.Match("public", "show", "shown", "visible"))
+        if (ctx.Match("public", "pub", "show", "shown", "visible", "unhide", "unhidden"))
             return PrivacyLevel.Public;
 
-        if (ctx.Match("private", "hide", "hidden"))
+        if (ctx.Match("private", "priv", "hide", "hidden"))
             return PrivacyLevel.Private;
 
         if (!ctx.HasNext())

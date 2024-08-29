@@ -49,8 +49,12 @@ public static class MemberPrivacyUtils
                 break;
             case "description":
             case "desc":
-            case "text":
+            case "describe":
+            case "d":
+            case "bio":
             case "info":
+            case "text":
+            case "intro":
                 subject = MemberPrivacySubject.Description;
                 break;
             case "avatar":
@@ -64,10 +68,14 @@ public static class MemberPrivacyUtils
             case "bday":
             case "birthdate":
             case "bdate":
+            case "cakeday":
+            case "bd":
                 subject = MemberPrivacySubject.Birthday;
                 break;
             case "pronouns":
             case "pronoun":
+            case "prns":
+            case "pn":
                 subject = MemberPrivacySubject.Pronouns;
                 break;
             case "meta":
