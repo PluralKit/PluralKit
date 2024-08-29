@@ -56,22 +56,11 @@ public class EmbedService
 
         var memberCount = await _repo.GetSystemMemberCount(system.Id, countctx == LookupContext.ByOwner ? null : PrivacyLevel.Public);
 
-        uint color;
-        try
-        {
-            color = system.Color?.ToDiscordColor() ?? DiscordUtils.Gray;
-        }
-        catch (ArgumentException)
-        {
-            // There's no API for system colors yet, but defaulting to a blank color in advance can't be a bad idea
-            color = DiscordUtils.Gray;
-        }
-
         var eb = new EmbedBuilder()
             .Title(system.NameFor(ctx))
             .Footer(new Embed.EmbedFooter(
                 $"System ID: {system.DisplayHid(cctx.Config)} | Created on {system.Created.FormatZoned(cctx.Zone)}"))
-            .Color(color)
+            .Color(system.Color?.ToDiscordColor())
             .Url($"https://dash.pluralkit.me/profile/s/{system.Hid}");
 
         var avatar = system.AvatarFor(ctx);
@@ -188,19 +177,6 @@ public class EmbedService
         else
             name = $"{name}";
 
-        uint color;
-        try
-        {
-            color = member.Color?.ToDiscordColor() ?? DiscordUtils.Gray;
-        }
-        catch (ArgumentException)
-        {
-            // Bad API use can cause an invalid color string
-            // this is now fixed in the API, but might still have some remnants in the database
-            // so we just default to a blank color, yolo
-            color = DiscordUtils.Gray;
-        }
-
         var guildSettings = guild != null ? await _repo.GetMemberGuild(guild.Id, member.Id) : null;
         var guildDisplayName = guildSettings?.DisplayName;
         var webhook_avatar = guildSettings?.AvatarUrl ?? member.WebhookAvatarFor(ctx) ?? member.AvatarFor(ctx);
@@ -213,8 +189,8 @@ public class EmbedService
 
         var eb = new EmbedBuilder()
             .Author(new Embed.EmbedAuthor(name, IconUrl: webhook_avatar.TryGetCleanCdnUrl(), Url: $"https://dash.pluralkit.me/profile/m/{member.Hid}"))
-            // .WithColor(member.ColorPrivacy.CanAccess(ctx) ? color : DiscordUtils.Gray)
-            .Color(color)
+            // .WithColor(member.ColorPrivacy.CanAccess(ctx) ? color : null)
+            .Color(member.Color?.ToDiscordColor())
             .Footer(new Embed.EmbedFooter(
                 $"System ID: {system.DisplayHid(ccfg)} | Member ID: {member.DisplayHid(ccfg)} {(member.MetadataPrivacy.CanAccess(ctx) ? $"| Created on {member.Created.FormatZoned(zone)}" : "")}"));
 
@@ -289,20 +265,9 @@ public class EmbedService
         else
             nameField = $"{nameField} ({system.Name})";
 
-        uint color;
-        try
-        {
-            color = target.Color?.ToDiscordColor() ?? DiscordUtils.Gray;
-        }
-        catch (ArgumentException)
-        {
-            // There's no API for group colors yet, but defaulting to a blank color regardless
-            color = DiscordUtils.Gray;
-        }
-
         var eb = new EmbedBuilder()
             .Author(new Embed.EmbedAuthor(nameField, IconUrl: target.IconFor(pctx), Url: $"https://dash.pluralkit.me/profile/g/{target.Hid}"))
-            .Color(color);
+            .Color(target.Color?.ToDiscordColor());
 
         eb.Footer(new Embed.EmbedFooter($"System ID: {system.DisplayHid(ctx.Config)} | Group ID: {target.DisplayHid(ctx.Config)}{(target.MetadataPrivacy.CanAccess(pctx) ? $" | Created on {target.Created.FormatZoned(ctx.Zone)}" : "")}"));
 
@@ -362,7 +327,7 @@ public class EmbedService
         }
 
         return new EmbedBuilder()
-            .Color(members.FirstOrDefault()?.Color?.ToDiscordColor() ?? DiscordUtils.Gray)
+            .Color(members.FirstOrDefault()?.Color?.ToDiscordColor())
             .Field(new Embed.Field($"Current {"fronter".ToQuantity(members.Count, ShowQuantityAs.None)}", memberStr))
             .Field(new Embed.Field("Since",
                 $"{sw.Timestamp.FormatZoned(zone)} ({timeSinceSwitch.FormatDuration()} ago)"))
@@ -461,19 +426,9 @@ public class EmbedService
         var color = system.Color;
         if (group != null) color = group.Color;
 
-        uint embedColor;
-        try
-        {
-            embedColor = color?.ToDiscordColor() ?? DiscordUtils.Gray;
-        }
-        catch (ArgumentException)
-        {
-            embedColor = DiscordUtils.Gray;
-        }
-
         var eb = new EmbedBuilder()
             .Title(embedTitle)
-            .Color(embedColor);
+            .Color(color?.ToDiscordColor());
 
         var footer =
             $"Since {breakdown.RangeStart.FormatZoned(tz)} ({(breakdown.RangeEnd - breakdown.RangeStart).FormatDuration()} ago)";
