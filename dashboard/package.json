@@ -12,7 +12,7 @@
     "@sveltejs/vite-plugin-svelte": "^1.0.0-next.30",
     "@tsconfig/svelte": "^3.0.0",
     "js-base64": "^3.7.7",
-    "svelte": "^3.44.0",
+    "svelte": "^4.2.19",
     "svelte-check": "^2.2.7",
     "svelte-toggle": "^3.1.0",
     "tslib": "^2.3.1",
