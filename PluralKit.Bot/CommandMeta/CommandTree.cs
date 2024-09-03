@@ -430,6 +430,8 @@ public partial class CommandTree
                 await ctx.Execute<Switch>(SwitchEdit, m => m.SwitchEdit(ctx));
         else if (ctx.Match("delete", "remove", "erase", "cancel", "yeet"))
             await ctx.Execute<Switch>(SwitchDelete, m => m.SwitchDelete(ctx));
+        else if (ctx.Match("add", "duplicate", "dupe", "copy"))
+            await ctx.Execute<Switch>(SwitchDelete, m => m.SwitchEdit(ctx, true));
         else if (ctx.Match("commands", "help"))
             await PrintCommandList(ctx, "switching", SwitchCommands);
         else if (ctx.HasNext()) // there are following arguments

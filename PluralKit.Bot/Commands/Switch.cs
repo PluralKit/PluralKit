@@ -104,7 +104,7 @@ public class Switch
         await ctx.Reply($"{Emojis.Success} Switch moved to <t:{newSwitchTime}> ({newSwitchDeltaStr} ago).");
     }
 
-    public async Task SwitchEdit(Context ctx)
+    public async Task SwitchEdit(Context ctx, bool newSwitch = false)
     {
         ctx.CheckSystem();
 
@@ -119,7 +119,15 @@ public class Switch
         else if (ctx.MatchFlag("prepend", "p"))
             newMembers = await PrependToSwitch(ctx, newMembers);
 
-        await DoEditCommand(ctx, newMembers);
+        if (newSwitch)
+        {
+            // if there's no edit flag, assume we're appending
+            if (!ctx.MatchFlag("first", "f", "remove", "r", "append", "a", "prepend", "p"))
+                newMembers = await AppendToSwitch(ctx, newMembers);
+            await DoSwitchCommand(ctx, newMembers);
+        }
+        else
+            await DoEditCommand(ctx, newMembers);
     }
     public async Task<List<PKMember>> PrependToSwitch(Context ctx, List<PKMember> members)
     {
