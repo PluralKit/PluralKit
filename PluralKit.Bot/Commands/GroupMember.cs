@@ -84,10 +84,22 @@ public class GroupMember
     {
         ctx.CheckOwnGroup(target);
 
-        var members = (await ctx.ParseMemberList(ctx.System.Id))
+        List<MemberId> members;
+        if (ctx.MatchFlag("all", "a"))
+        {
+            members = (await ctx.Database.Execute(conn => conn.QueryMemberList(target.System,
+                    new DatabaseViewsExt.ListQueryOptions { })))
+                .Select(m => m.Id)
+                .Distinct()
+                .ToList();
+        }
+        else
+        {
+            members = (await ctx.ParseMemberList(ctx.System.Id))
             .Select(m => m.Id)
             .Distinct()
             .ToList();
+        }
 
         var existingMembersInGroup = (await ctx.Database.Execute(conn => conn.QueryMemberList(target.System,
                 new DatabaseViewsExt.ListQueryOptions { GroupFilter = target.Id })))
