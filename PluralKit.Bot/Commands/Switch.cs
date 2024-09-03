@@ -7,6 +7,7 @@ namespace PluralKit.Bot;
 
 public class Switch
 {
+
     public async Task SwitchDo(Context ctx)
     {
         ctx.CheckSystem();
@@ -107,8 +108,47 @@ public class Switch
     {
         ctx.CheckSystem();
 
-        var members = await ctx.ParseMemberList(ctx.System.Id);
-        await DoEditCommand(ctx, members);
+        var newMembers = await ctx.ParseMemberList(ctx.System.Id);
+
+        if (ctx.MatchFlag("prepend", "p"))
+        {
+            if (ctx.MatchFlag("append", "a"))
+                throw Errors.DuplicateSwitchMembers;
+
+            await using var conn = await ctx.Database.Obtain();
+            var currentSwitch = await ctx.Repository.GetLatestSwitch(ctx.System.Id);
+            var currentSwitchMembers = await ctx.Repository.GetSwitchMembers(conn, currentSwitch.Id).ToListAsync().AsTask();
+            newMembers.AddRange(currentSwitchMembers);
+        }
+        else if (ctx.MatchFlag("append", "a"))
+        {
+            await using var conn = await ctx.Database.Obtain();
+            var currentSwitch = await ctx.Repository.GetLatestSwitch(ctx.System.Id);
+            var currentSwitchMembers = await ctx.Repository.GetSwitchMembers(conn, currentSwitch.Id).ToListAsync().AsTask();
+            currentSwitchMembers.AddRange(newMembers);
+            newMembers = currentSwitchMembers;
+        }
+        else if (ctx.MatchFlag("first", "f"))
+        {
+            await using var conn = await ctx.Database.Obtain();
+            var currentSwitch = await ctx.Repository.GetLatestSwitch(ctx.System.Id);
+            var currentSwitchMembers = await ctx.Repository.GetSwitchMembers(conn, currentSwitch.Id).ToListAsync().AsTask();
+            var member = newMembers[0];
+            currentSwitchMembers = currentSwitchMembers.Where(m => m.Id != member.Id).ToList();
+            newMembers = new List<PKMember> { member };
+            newMembers.AddRange(currentSwitchMembers);
+        }
+        else if (ctx.MatchFlag("remove", "r"))
+        {
+            await using var conn = await ctx.Database.Obtain();
+            var currentSwitch = await ctx.Repository.GetLatestSwitch(ctx.System.Id);
+            var currentSwitchMembers = await ctx.Repository.GetSwitchMembers(conn, currentSwitch.Id).ToListAsync().AsTask();
+            var memberIds = newMembers.Select(m => m.Id.Value);
+            currentSwitchMembers = currentSwitchMembers.Where(m => !memberIds.Contains(m.Id.Value)).ToList();
+            newMembers = currentSwitchMembers;
+        }
+
+        await DoEditCommand(ctx, newMembers);
     }
 
     public async Task SwitchEditOut(Context ctx)
