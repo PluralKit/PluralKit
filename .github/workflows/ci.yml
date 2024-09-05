@@ -9,9 +9,9 @@ jobs:
     steps:
     - uses: docker/build-push-action@v2
       with:
-      push: false
-      tags: pkci
-      file: ci/Dockerfile
+        push: false
+        tags: pkci
+        file: ci/Dockerfile
   setup-ci:
     runs-on: ubuntu-latest
     needs: ["build-ci-container"]
