@@ -17,3 +17,5 @@ jobs:
     needs: ["build-ci-container"]
     container:
       image: pkci
+    steps:
+    - run: /run_ci.py
