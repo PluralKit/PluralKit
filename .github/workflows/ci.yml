@@ -1,7 +1,10 @@
 name: PluralKit CI
 on:
-  - push
-  - pull_request
+  push:
+  pull_request:
+  workflow_dispatch:
+      inputs:
+        dispatchData:
 
 jobs:
   build-ci-container:
@@ -22,5 +25,7 @@ jobs:
     needs: ["build-ci-container"]
     container:
       image: ghcr.io/pluralkit/ci:${{ github.sha }}
+    env:
+      DISPATCH_DATA: ${{ inputs.dispatchData }}
     steps:
     - run: /run_ci.py
