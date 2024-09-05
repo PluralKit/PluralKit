@@ -3,4 +3,4 @@
 import os
 
 print("hello from python!")
-print(f"data: {os.environment.get("DISPATCH_DATA")}")
+print(f"data: {os.environ.get("DISPATCH_DATA")}")
