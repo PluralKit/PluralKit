@@ -15,8 +15,7 @@ jobs:
     - uses: docker/build-push-action@v2
       with:
         push: false
-        tags:
-        - ghcr.io/pluralkit/ci:${{ github.sha }}
+        tags: ghcr.io/pluralkit/ci:${{ github.sha }}
         file: ci/Dockerfile
   setup-ci:
     runs-on: ubuntu-latest
