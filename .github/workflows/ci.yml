@@ -1,0 +1,19 @@
+name: PluralKit CI
+on:
+	- push
+	- pull_request
+
+jobs:
+	build-ci-container:
+		runs-on: ubuntu-latest
+		steps:
+			- uses: docker/build-push-action@v2
+			  with:
+				push: false
+				tags: pkci
+				file: ci/Dockerfile
+	setup-ci:
+		runs-on: ubuntu-latest
+		needs: ["build-ci-container"]
+		container:
+			image: pkci
