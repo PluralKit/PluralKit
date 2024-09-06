@@ -29,7 +29,7 @@ def report_status(sha, name, start_time, exit=None):
             status = "failure"
 
     data = {
-        'name': name,
+        'name': f"PluralKit CI | {name}",
         'head_sha': sha,
         'started_at': start_time,
         'output': {
@@ -42,7 +42,7 @@ def report_status(sha, name, start_time, exit=None):
 
     if exit is not None:
         data['completed_at'] = datetime.datetime.now(tz=datetime.timezone.utc).isoformat(timespec='seconds')
-        data['completion'] = status
+        data['conclusion'] = status
         data['status'] = 'completed'
     else:
         data['status'] = status
