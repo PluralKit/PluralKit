@@ -31,7 +31,6 @@ def report_status(sha, name, start_time, exit=None):
     data = {
         'name': name,
         'head_sha': sha,
-        'status': status,
         'started_at': start_time,
         'output': {
             'title': name,
@@ -43,6 +42,10 @@ def report_status(sha, name, start_time, exit=None):
 
     if exit is not None:
         data['completed_at'] = datetime.datetime.now(tz=datetime.timezone.utc).isoformat(timespec='seconds')
+        data['completion'] = status
+        data['status'] = 'completed'
+    else:
+        data['status'] = status
 
     req = urllib.request.Request(
         f"https://api.github.com/repos/pluralkit/pluralkit/check-runs",
@@ -63,7 +66,7 @@ def report_status(sha, name, start_time, exit=None):
     except urllib.error.HTTPError as e:
         response_code = e.getcode()
         response_data = e.read()
-        print(f"{response_code} failed to update status {name}: {response_data}")
+        print(f"{response_code} failed to update status {data}: {response_data}")
         global global_fail
         global_fail = True
 
@@ -84,7 +87,7 @@ def main():
         return 1
 
     data = json.loads(dispatch_data)
-    print("running {dispatch_data}")
+    print(f"running {dispatch_data}")
 
     time_started = datetime.datetime.now(tz=datetime.timezone.utc).isoformat(timespec='seconds')
     report_status(data['sha'], data["action"], time_started)
