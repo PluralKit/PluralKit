@@ -48,7 +48,7 @@ def create_jobs():
 
     jobs = set([])
     for key in modify_regexes.keys():
-        if regex matches:
+        if true:
             jobs = jobs | modify_regexes[key]
 
     for key in changes:
