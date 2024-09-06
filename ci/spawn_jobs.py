@@ -25,10 +25,11 @@ def spawn_job(name):
             'content-type':'application/json'
         },
         data=bytes(json.dumps({
-            'ref': must_get_env("GIT_SHA"),
+            'ref': 'refs/heads/new-ci',
             'inputs': {
                 'dispatchData': json.dumps({
                    'action': name,
+                   'sha': must_get_env("GIT_SHA"),
                 })
             }
         }), 'UTF-8')

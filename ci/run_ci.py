@@ -18,7 +18,7 @@ def docker_build(data):
 def take_some_time():
     time.sleep(random.random() * 10)
 
-def report_status(name, start_time, exit=None):
+def report_status(sha, name, start_time, exit=None):
     status=""
     match exit:
         case None:
@@ -30,7 +30,7 @@ def report_status(name, start_time, exit=None):
 
     data = {
         'name': name,
-        'head_sha': must_get_env("GIT_SHA"),
+        'head_sha': sha,
         'status': status,
         'started_at': start_time,
         'output': {
@@ -70,7 +70,7 @@ def report_status(name, start_time, exit=None):
 def run_job(data):
     subprocess.run(["git", "clone", must_get_env("REPO_URL")])
     os.chdir(os.path.basename(must_get_env("REPO_URL")))
-    subprocess.run(["git", "checkout", must_get_env("GIT_SHA")])
+    subprocess.run(["git", "checkout", data['git_sha']])
     
     # run actual job
     take_some_time()
@@ -87,7 +87,7 @@ def main():
     print("running {dispatch_data}")
 
     time_started = datetime.datetime.now(tz=datetime.timezone.utc).isoformat(timespec='seconds')
-    report_status(data["action"], time_started)
+    report_status(data['git_sha'], data["action"], time_started)
 
     ok = True
     try:
@@ -101,7 +101,7 @@ def main():
     if global_fail:
         ok = False
 
-    report_status(data["action"], time_started, ok)
+    report_status(data['git_sha'], data["action"], time_started, ok)
 
     return 0 if ok else 1
 
