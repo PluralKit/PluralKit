@@ -24,4 +24,4 @@ jobs:
 
       DISPATCH_DATA: ${{ inputs.dispatchData }}
     steps:
-    - run: /ci/run_ci.py
+    - run: /run_ci.py

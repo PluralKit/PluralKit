@@ -37,4 +37,4 @@ jobs:
       OLD_SHA: ${{ github.event.before }}
       IS_FORCE_PUSH: ${{ github.event.forced }}
     steps:
-    - run: /ci/spawn_jobs.py
+    - run: /spawn_jobs.py
