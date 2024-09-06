@@ -69,6 +69,9 @@ def create_jobs():
         "all_rs": ["bin_api", "bin_dispatch"],
     }
 
+    subprocess.run(["git", "clone", must_get_env("REPO_URL")])
+    os.chdir(os.path.basename(must_get_env("REPO_URL")))
+
     now = must_get_env("GIT_SHA")
     before = must_get_env("OLD_SHA")
     changed_files = subprocess.check_output(["git", "diff", "--name-only", before, now])

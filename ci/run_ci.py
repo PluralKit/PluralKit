@@ -64,7 +64,7 @@ def report_status(name, start_time, exit=None):
         print(f"{response_code} failed to update status {name}: {response_data}")
 
 def run_job(data):
-    subprocess.check_output(["git", "clone", must_get_env("REPO_URL")])
+    subprocess.run(["git", "clone", must_get_env("REPO_URL")])
     os.chdir(os.path.basename(must_get_env("REPO_URL")))
     subprocess.run(["git", "checkout", must_get_env("GIT_SHA")])
     
