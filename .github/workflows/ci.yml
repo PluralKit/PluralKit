@@ -25,7 +25,17 @@ jobs:
     needs: ["build-ci-container"]
     container:
       image: ghcr.io/pluralkit/ci:${{ github.sha }}
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
     env:
+      DOCKER_HOST: unix:///var/run/docker.sock
+
+      COMMIT_STATUS_TOKEN: ${{ secrets.COMMIT_STATUS_TOKEN }}
+      DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
       DISPATCH_DATA: ${{ inputs.dispatchData }}
+
+      # these only work on the push/pull_request jobs
+      CUR_SHA: ${{ github.sha }}
+      OLD_SHA: ${{ github.event.before }}
     steps:
     - run: /run_ci.py
