@@ -71,7 +71,9 @@ if __name__ == "__main__":
         case "docker_build":
             return docker_build(data.get("data"))
         case "rustfmt":
+            pass
         case "dotnet_format":
+            pass
         case _:
             print (f"data unknown: {dispatch_data}")
             os.exit(1)
