@@ -70,7 +70,7 @@ def report_status(sha, name, start_time, exit=None):
 def run_job(data):
     subprocess.run(["git", "clone", must_get_env("REPO_URL")])
     os.chdir(os.path.basename(must_get_env("REPO_URL")))
-    subprocess.run(["git", "checkout", data['git_sha']])
+    subprocess.run(["git", "checkout", data['sha']])
     
     # run actual job
     take_some_time()
@@ -87,7 +87,7 @@ def main():
     print("running {dispatch_data}")
 
     time_started = datetime.datetime.now(tz=datetime.timezone.utc).isoformat(timespec='seconds')
-    report_status(data['git_sha'], data["action"], time_started)
+    report_status(data['sha'], data["action"], time_started)
 
     ok = True
     try:
@@ -101,7 +101,7 @@ def main():
     if global_fail:
         ok = False
 
-    report_status(data['git_sha'], data["action"], time_started, ok)
+    report_status(data['sha'], data["action"], time_started, ok)
 
     return 0 if ok else 1
 
