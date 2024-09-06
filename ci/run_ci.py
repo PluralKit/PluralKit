@@ -63,7 +63,8 @@ if __name__ == "__main__":
     subprocess.run(["docker", "run", "--rm", "-it", "hello-world"], check=True)
 
     return
-    return create_jobs() if dispatch_data == ""
+    if dispatch_data == "":
+        return create_jobs()
 
     data = json.loads(dispatch_data)
     match data.get("action"):
