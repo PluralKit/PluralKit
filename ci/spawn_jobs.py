@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import os, sys, json, subprocess, random, time
+import os, sys, json, subprocess, random, time, re
 import urllib.request
 
 def must_get_env(name):
@@ -22,18 +22,18 @@ def spawn_job(name):
             'Authorization': f'Bearer {must_get_env("GITHUB_APP_TOKEN")}',
             'content-type':'application/json'
         },
-        data=json.dumps({
+        data=bytes(json.dumps({
             'ref': must_get_env("GIT_SHA"),
             'inputs': {
                 'dispatchData': json.dumps({
                    'action': name,
                 })
             }
-        })
+        }), 'UTF-8')
     )
 
     try:
-        with urllib.request.urlopen(request) as response:
+        with urllib.request.urlopen(req) as response:
             response_code = response.getcode()
             response_data = response.read()
             print(f"{response_code} spawned job {name}: {response_data}")
@@ -79,16 +79,16 @@ def create_jobs():
         jobs = jobs | ["format_cs", "format_rs"]
     else:
         for key in modify_regexes.keys():
-            if re.match(key, changed_file, flags=re.MULTILINE) is not None:
-                jobs = jobs | modify_regexes[key]
+            if re.match(key, str(changed_files), flags=re.MULTILINE) is not None:
+                jobs = jobs | set(modify_regexes[key])
 
-        for key in changes:
+        for key in jobs:
             if aliases.get(key) is not None:
-                jobs = jobs | aliases[key]
-                jobs = jobs - [key]
+                jobs = jobs | set(aliases[key])
+                jobs = jobs - set([key])
 
     # test
-    jobs = jobs | ["test"]
+    jobs = jobs | set(["test"])
 
     # do this in a tx or something
     for job in jobs:

@@ -31,7 +31,7 @@ jobs:
 
       GITHUB_APP_TOKEN: ${{ secrets.COMMIT_STATUS_TOKEN }}
       DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-      CUR_SHA: ${{ github.sha }}
+      GIT_SHA: ${{ github.sha }}
 
       REPO_URL: https://github.com/${{ github.repository }}
       OLD_SHA: ${{ github.event.before }}

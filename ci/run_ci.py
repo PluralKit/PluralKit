@@ -50,11 +50,11 @@ def report_status(name, start_time, exit=None):
             'Authorization': f'Bearer {must_get_env("GITHUB_APP_TOKEN")}',
             'content-type':'application/json'
         },
-        data=json.dumps(data)
+        data=bytes(json.dumps(data), 'UTF-8')
     )
 
     try:
-        with urllib.request.urlopen(request) as response:
+        with urllib.request.urlopen(req) as response:
             response_code = response.getcode()
             response_data = response.read()
             print(f"{response_code} updated status {data}: {response_data}")
