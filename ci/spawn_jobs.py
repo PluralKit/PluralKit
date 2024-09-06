@@ -43,6 +43,7 @@ def spawn_job(name):
         response_code = e.getcode()
         response_data = e.read()
         print(f"{response_code} failed to spawn job {name}: {response_data}")
+        global global_fail
         global_fail = True
 
 def create_jobs():
@@ -103,7 +104,8 @@ def create_jobs():
     if len(jobs) == 0:
         print("no jobs to run (??)")
 
-    return 0 if not global_fail else 1
+    global global_fail
+    return 1 if global_fail else 0
 
 if __name__ == "__main__":
     print("hello from python!")

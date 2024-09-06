@@ -64,6 +64,7 @@ def report_status(name, start_time, exit=None):
         response_code = e.getcode()
         response_data = e.read()
         print(f"{response_code} failed to update status {name}: {response_data}")
+        global global_fail
         global_fail = True
 
 def run_job(data):
@@ -96,6 +97,7 @@ def main():
         print("job failed!")
         traceback.format_exc()
 
+    global global_fail
     if global_fail:
         ok = False
 
