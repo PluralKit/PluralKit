@@ -58,11 +58,11 @@ def create_jobs():
 
     pass
 
-if __name__ == "__main__":
+def main():
     print("hello from python!")
     subprocess.run(["docker", "run", "--rm", "-it", "hello-world"], check=True)
 
-    return
+    return 0
     if dispatch_data == "":
         return create_jobs()
 
@@ -76,4 +76,7 @@ if __name__ == "__main__":
             pass
         case _:
             print (f"data unknown: {dispatch_data}")
-            os.exit(1)
+            return 1
+
+if __name__ == "__main__":
+    os.exit(main())
