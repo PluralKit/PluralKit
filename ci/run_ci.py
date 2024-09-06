@@ -3,6 +3,8 @@
 import os, sys, json, subprocess, random, time, datetime
 import urllib.request
 
+global_fail = False
+
 def must_get_env(name):
     val = os.environ.get(name)
     if val == "":
@@ -62,6 +64,7 @@ def report_status(name, start_time, exit=None):
         response_code = e.getcode()
         response_data = e.read()
         print(f"{response_code} failed to update status {name}: {response_data}")
+        global_fail = True
 
 def run_job(data):
     subprocess.run(["git", "clone", must_get_env("REPO_URL")])
@@ -92,6 +95,9 @@ def main():
         ok = False
         print("job failed!")
         traceback.format_exc()
+
+    if global_fail:
+        ok = False
 
     report_status(data["action"], time_started, ok)
 

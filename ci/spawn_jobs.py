@@ -3,6 +3,8 @@
 import os, sys, json, subprocess, random, time, re
 import urllib.request
 
+global_fail = False
+
 def must_get_env(name):
     val = os.environ.get(name)
     if val == "":
@@ -41,6 +43,7 @@ def spawn_job(name):
         response_code = e.getcode()
         response_data = e.read()
         print(f"{response_code} failed to spawn job {name}: {response_data}")
+        global_fail = True
 
 def create_jobs():
     modify_regexes = {
@@ -100,7 +103,7 @@ def create_jobs():
     if len(jobs) == 0:
         print("no jobs to run (??)")
 
-    return 0
+    return 0 if not global_fail else 1
 
 if __name__ == "__main__":
     print("hello from python!")
