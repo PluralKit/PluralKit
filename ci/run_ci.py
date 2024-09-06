@@ -33,7 +33,7 @@ def report_status(name, start_time, exit=None):
         'started_at': start_time,
         'output': {
             'title': name,
-            'summary': f"dasdfasdfasdf", # todo
+            'summary': f"Check logs at {must_get_env("ACTION_LOGS_URL")}",
             'text': "[]",
             'annotations': []
         },

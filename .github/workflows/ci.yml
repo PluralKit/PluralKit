@@ -21,7 +21,7 @@ jobs:
   spawn_jobs:
     name: Spawn jobs
     runs-on: ubuntu-latest
-    needs: ["build-ci-container"]
+    needs: ["build_container"]
     container:
       image: ghcr.io/pluralkit/ci:${{ github.sha }}
       volumes:

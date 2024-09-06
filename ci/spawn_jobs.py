@@ -97,7 +97,7 @@ def create_jobs():
     if len(jobs) == 0:
         print("no jobs to run (??)")
 
-    exit 0
+    return 0
 
 if __name__ == "__main__":
     print("hello from python!")

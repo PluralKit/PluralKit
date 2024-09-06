@@ -1,10 +1,8 @@
 name: PluralKit CI
 on:
-  push:
-  pull_request:
   workflow_dispatch:
       inputs:
-        dispatchData:
+        dispatchData: {}
 
 jobs:
   run:
@@ -22,7 +20,7 @@ jobs:
       GIT_SHA: ${{ github.sha }}
       REPO_URL: https://github.com/${{ github.repository }}
 
-      ACTION_LOGS_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs/${{ jobs. }}
+      ACTION_LOGS_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
       DISPATCH_DATA: ${{ inputs.dispatchData }}
     steps:
