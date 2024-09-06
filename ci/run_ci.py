@@ -17,24 +17,24 @@ def docker_build(data):
 
 def create_jobs():
     modify_regexes = {
-        "^ci/": "all",
+        r'^ci/': "all",
 
-        "^docs/": "bin_docs",
-        "^dashboard/": "bin_dashboard",
+        r'^docs/': "bin_docs",
+        r'^dashboard/': "bin_dashboard",
 
-        "\.rs$": "format_rs",
-        "\.cs$": "format_cs",
+        r'\.rs$': "format_rs",
+        r'\.cs$': "format_cs",
 
-        "^Cargo.lock": "all_rs",
+        r'^Cargo.lock': "all_rs",
 
-        "^services/api": "bin_api",
+        r'^services/api': "bin_api",
         # dispatch doesn't use libpk
-        "^services/dispatch": "bin_dispatch",
-        "^services/scheduled_tasks": "bin_scheduled_tasks",
+        r'^services/dispatch': "bin_dispatch",
+        r'^services/scheduled_tasks': "bin_scheduled_tasks",
 
         # one image for all dotnet
-        "^PluralKit\.": "bin_dotnet",
-        "^Myriad": "bin_dotnet",
+        r'^PluralKit\.': "bin_dotnet",
+        r'^Myriad': "bin_dotnet",
     }
 
     aliases = {
@@ -60,7 +60,7 @@ def create_jobs():
 
 def main():
     print("hello from python!")
-    subprocess.run(["docker", "run", "--rm", "-it", "hello-world"], check=True)
+    subprocess.run(["docker", "run", "--rm", "-i", "hello-world"], check=True)
 
     return 0
     if dispatch_data == "":
