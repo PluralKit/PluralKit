@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 
-import os, json, subprocess
+import os, sys, json, subprocess
 
 dispatch_data = os.environ.get("DISPATCH_DATA")
 
@@ -79,4 +79,4 @@ def main():
             return 1
 
 if __name__ == "__main__":
-    os.exit(main())
+    sys.exit(main())
