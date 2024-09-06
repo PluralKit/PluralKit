@@ -17,7 +17,7 @@ def docker_build(data):
 
 def spawn_job(name):
     req = urllib.request.Request(
-        f"https://api.github.com/repos/pluralkit/pluralkit/actions/workflows/ci-runner/dispatches",
+        f"https://api.github.com/repos/pluralkit/pluralkit/actions/workflows/ci-runner.yml/dispatches",
         method='POST',
         headers={
             'Accept': 'application/vnd.github+json',
