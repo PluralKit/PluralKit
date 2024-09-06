@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 
-
-import os, sys, json, subprocess
-
-dispatch_data = os.environ.get("DISPATCH_DATA")
+import os, sys, json, subprocess, random, time, datetime
+import urllib.request
 
 def must_get_env(name):
     val = os.environ.get(name)
@@ -15,68 +13,89 @@ def docker_build(data):
     # file="", tags=[], root="/"
     pass
 
-def create_jobs():
-    modify_regexes = {
-        r'^ci/': "all",
+def take_some_time():
+    time.sleep(random.random() * 10)
 
-        r'^docs/': "bin_docs",
-        r'^dashboard/': "bin_dashboard",
+def report_status(name, start_time, exit=None):
+    status=""
+    match exit:
+        case None:
+            status = "in_progress"
+        case True:
+            status = "success"
+        case False:
+            status = "failure"
 
-        r'\.rs$': "format_rs",
-        r'\.cs$': "format_cs",
-
-        r'^Cargo.lock': "all_rs",
-
-        r'^services/api': "bin_api",
-        # dispatch doesn't use libpk
-        r'^services/dispatch': "bin_dispatch",
-        r'^services/scheduled_tasks': "bin_scheduled_tasks",
-
-        # one image for all dotnet
-        r'^PluralKit\.': "bin_dotnet",
-        r'^Myriad': "bin_dotnet",
+    data = {
+        'name': name,
+        'head_sha': must_get_env("GIT_SHA"),
+        'status': status,
+        'started_at': start_time,
+        'output': {
+            'title': name,
+            'summary': f"dasdfasdfasdf", # todo
+            'text': "[]",
+            'annotations': []
+        },
     }
 
-    aliases = {
-        "all": ["bin_dotnet", "bin_api", "bin_dispatch", "bin_scheduled_tasks", "bin_dashboard"],
-        "all_rs": ["bin_api", "bin_dispatch"],
-    }
+    if exit is not None:
+        data['completed_at'] = datetime.datetime.now(tz=datetime.timezone.utc).isoformat(timespec='seconds')
 
-    now = must_get_env("CUR_SHA")
-    before = must_get_env("OLD_SHA")
-    changed_files = subprocess.check_output(["git", "diff", "--name-only", before, now])
+    req = urllib.request.Request(
+        f"https://api.github.com/repos/pluralkit/pluralkit/check-runs",
+        method='POST',
+        headers={
+            'Accept': 'application/vnd.github+json',
+            'Authorization': f'Bearer {must_get_env("GITHUB_APP_TOKEN")}',
+            'content-type':'application/json'
+        },
+        data=json.dumps(data)
+    )
 
-    jobs = set([])
-    for key in modify_regexes.keys():
-        if true:
-            jobs = jobs | modify_regexes[key]
+    try:
+        with urllib.request.urlopen(request) as response:
+            response_code = response.getcode()
+            response_data = response.read()
+            print(f"{response_code} updated status {data}: {response_data}")
+    except urllib.error.HTTPError as e:
+        response_code = e.getcode()
+        response_data = e.read()
+        print(f"{response_code} failed to update status {name}: {response_data}")
 
-    for key in changes:
-        if aliases.get(key) is not None:
-            jobs = jobs | aliases[key]
-            jobs = jobs - [key]
-
-    pass
+def run_job(data):
+    subprocess.check_output(["git", "clone", must_get_env("REPO_URL")])
+    os.chdir(os.path.basename(must_get_env("REPO_URL")))
+    subprocess.run(["git", "checkout", must_get_env("GIT_SHA")])
+    
+    # run actual job
+    take_some_time()
 
 def main():
     print("hello from python!")
-    subprocess.run(["docker", "run", "--rm", "-i", "hello-world"], check=True)
 
-    return 0
+    dispatch_data = os.environ.get("DISPATCH_DATA")
     if dispatch_data == "":
-        return create_jobs()
+        print("no data!")
+        return 1
 
     data = json.loads(dispatch_data)
-    match data.get("action"):
-        case "docker_build":
-            return docker_build(data.get("data"))
-        case "rustfmt":
-            pass
-        case "dotnet_format":
-            pass
-        case _:
-            print (f"data unknown: {dispatch_data}")
-            return 1
+    print("running {dispatch_data}")
+
+    time_started = datetime.datetime.now(tz=datetime.timezone.utc).isoformat(timespec='seconds')
+    report_status(data["action"], time_started)
+
+    ok = True
+    try:
+        run_job(data)
+    except Exception:
+        ok = False
+        print("job failed!")
+        traceback.format_exc()
+
+    report_status(data["action"], time_started, ok)
+
+    return 0 if ok else 1
 
 if __name__ == "__main__":
     sys.exit(main())

@@ -1,0 +1,29 @@
+name: PluralKit CI
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+      inputs:
+        dispatchData:
+
+jobs:
+  run:
+    name: Run CI
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/pluralkit/ci:${{ github.sha }}
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
+    env:
+      DOCKER_HOST: unix:///var/run/docker.sock
+
+      GITHUB_APP_TOKEN: ${{ secrets.COMMIT_STATUS_TOKEN }}
+      DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+      GIT_SHA: ${{ github.sha }}
+      REPO_URL: https://github.com/${{ github.repository }}
+
+      ACTION_LOGS_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs/${{ jobs. }}
+
+      DISPATCH_DATA: ${{ inputs.dispatchData }}
+    steps:
+    - run: /ci/run_ci.py

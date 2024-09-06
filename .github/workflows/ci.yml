@@ -2,12 +2,10 @@ name: PluralKit CI
 on:
   push:
   pull_request:
-  workflow_dispatch:
-      inputs:
-        dispatchData:
 
 jobs:
-  build-ci-container:
+  build_container:
+    name: Build CI container
     runs-on: ubuntu-latest
     steps:
     - uses: docker/login-action@v1
@@ -20,7 +18,8 @@ jobs:
         push: true
         tags: ghcr.io/pluralkit/ci:${{ github.sha }}
         file: ci/Dockerfile
-  setup-ci:
+  spawn_jobs:
+    name: Spawn jobs
     runs-on: ubuntu-latest
     needs: ["build-ci-container"]
     container:
@@ -30,12 +29,12 @@ jobs:
     env:
       DOCKER_HOST: unix:///var/run/docker.sock
 
-      COMMIT_STATUS_TOKEN: ${{ secrets.COMMIT_STATUS_TOKEN }}
+      GITHUB_APP_TOKEN: ${{ secrets.COMMIT_STATUS_TOKEN }}
       DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-      DISPATCH_DATA: ${{ inputs.dispatchData }}
-
-      # these only work on the push/pull_request jobs
       CUR_SHA: ${{ github.sha }}
+
+      REPO_URL: https://github.com/${{ github.repository }}
       OLD_SHA: ${{ github.event.before }}
+      IS_FORCE_PUSH: ${{ github.event.forced }}
     steps:
-    - run: /run_ci.py
+    - run: /ci/spawn_jobs.py
