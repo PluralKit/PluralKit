@@ -1,0 +1,13 @@
+namespace commands {
+    CommandResult parse_command(string input);
+};
+[Enum]
+interface CommandResult {
+	Ok(ParsedCommand command);
+	Err(string error);
+};
+dictionary ParsedCommand {
+	string command_ref;
+	sequence<string> args;
+	record<string, string?> flags;
+};

@@ -1,0 +1,16 @@
+[package]
+name = "commands"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+lazy_static = { workspace = true }
+command_system_macros = { path = "../command_system_macros" }
+
+uniffi = { version = "0.25" }
+
+[build-dependencies]
+uniffi = { version = "0.25", features = [ "build" ] }

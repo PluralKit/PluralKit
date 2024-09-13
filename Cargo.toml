@@ -1,6 +1,8 @@
 [workspace]
+resolver = "2"
 members = [
     "./lib/libpk",
+    "./lib/commands",
     "./services/api",
     "./services/dispatch"
 ]

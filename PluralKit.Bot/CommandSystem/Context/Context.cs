@@ -45,9 +45,19 @@ public class Context
         _provider = provider;
         _commandMessageService = provider.Resolve<CommandMessageService>();
         CommandPrefix = message.Content?.Substring(0, commandParseOffset);
-        Parameters = new Parameters(message.Content?.Substring(commandParseOffset));
         Rest = provider.Resolve<DiscordApiClient>();
         Cluster = provider.Resolve<Cluster>();
+
+        try
+        {
+            Parameters = new ParametersFFI(message.Content?.Substring(commandParseOffset));
+        }
+        catch (PKError e)
+        {
+            // todo: not this
+            Reply($"{Emojis.Error} {e.Message}");
+            throw;
+        }
     }
 
     public readonly IDiscordCache Cache;
@@ -71,7 +81,7 @@ public class Context
     public DateTimeZone Zone => Config?.Zone ?? DateTimeZone.Utc;
 
     public readonly string CommandPrefix;
-    public readonly Parameters Parameters;
+    public readonly ParametersFFI Parameters;
 
     internal readonly IDatabase Database;
     internal readonly ModelRepository Repository;
