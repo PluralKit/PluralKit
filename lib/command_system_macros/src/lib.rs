@@ -1,57 +1,95 @@
-use proc_macro2::{Delimiter, TokenStream, TokenTree, Ident, Literal, Span};
-use quote::quote;
+use proc_macro2::{Delimiter, TokenStream, TokenTree, Literal, Span};
+use syn::parse::{Parse, ParseStream, Result as ParseResult};
+use syn::{parse_macro_input, Token, Ident};
+use quote::{quote, quote_spanned};
 
-fn make_command(
-    tokens: Vec<TokenStream>,
-    help: Literal,
-    cb: Literal,
-) -> TokenStream {
-    quote! {
-        Command { tokens: vec![#(#tokens),*], help: #help.to_string(), cb: #cb.to_string() }
+enum CommandToken {
+    /// "typed argument" being a member of the `Token` enum in the
+    /// command parser crate.
+    ///
+    /// prefixed with `@` in the command macro.
+    TypedArgument(Ident, Span),
+
+    /// interpreted as a literal string in the command input.
+    ///
+    /// no prefix in the command macro.
+    Literal(Literal, Span),
+}
+
+impl Parse for CommandToken {
+    fn parse(input: ParseStream) -> ParseResult<Self> {
+        let lookahead = input.lookahead1();
+        if lookahead.peek(Token![@]) {
+            // typed argument
+            input.parse::<Token![@]>()?;
+            let ident = input.parse::<Ident>()?;
+            Ok(Self::TypedArgument(ident.clone(), ident.span()))
+        } else if lookahead.peek(Ident) {
+            // literal string
+            let ident = input.parse::<Ident>()?;
+            let lit = Literal::string(&format!("{ident}"));
+            Ok(Self::Literal(lit, ident.span()))
+        } else {
+            Err(input.error("expected a command token"))
+        }
     }
 }
 
-fn command_from_stream(stream: TokenStream) -> TokenStream {
-    let mut part = 0;
-    let mut found_tokens: Vec<TokenStream> = Vec::new();
-    let mut found_cb: Option<Literal> = None;
-    let mut found_help: Option<Literal> = None;
+impl Into<TokenStream> for CommandToken {
+    fn into(self) -> TokenStream {
+        match self {
+            Self::TypedArgument(ident, span) => quote_spanned! {span=>
+                Token::#ident
+            },
 
-    let mut is_token_lit = false;
-    let mut tokens = stream.clone().into_iter();
-    'a: loop {
-        let cur_token = tokens.next();
-        match cur_token {
-            None if part == 2 && found_help.is_some() => break 'a,
-            Some(TokenTree::Ident(ident)) if part == 0 => {
-                found_tokens.push(if is_token_lit {
-                    quote! { Token::#ident }.into()
-                } else {
-                    let lit = Literal::string(&format!("{ident}"));
-                    quote! { Token::Value(vec![#lit.to_string() ]) }
-                });
-                // reset this
-                is_token_lit = false;
+            Self::Literal(lit, span) => quote_spanned! {span=>
+                Token::Value(vec![ #lit.to_string(), ])
+            },
+        }.into()
+    }
+}
+
+struct Command {
+    tokens: Vec<CommandToken>,
+    help: Literal,
+    cb: Literal,
+}
+
+impl Parse for Command {
+    fn parse(input: ParseStream) -> ParseResult<Self> {
+        let mut tokens = Vec::<CommandToken>::new();
+        loop {
+            if input.peek(Token![,]) {
+                break;
             }
-            Some(TokenTree::Punct(punct)) if part == 0 && format!("{punct}") == "@" => {
-                is_token_lit = true
-            }
-            Some(TokenTree::Punct(punct))
-                if ((part == 0 && found_tokens.len() > 0) || (part == 1 && found_cb.is_some()))
-                    && format!("{punct}") == "," =>
-            {
-                part += 1
-            }
-            Some(TokenTree::Ident(ident)) if part == 1 => {
-                found_cb = Some(Literal::string(&format!("{ident}")))
-            }
-            Some(TokenTree::Literal(lit)) if part == 2 => {
-                found_help = Some(lit)
-            }
-            _ => panic!("invalid command definition: {stream}"),
+
+            tokens.push(input.parse::<CommandToken>()?);
+        }
+        input.parse::<Token![,]>()?;
+
+        let cb_ident = input.parse::<Ident>()?;
+        let cb = Literal::string(&format!("{cb_ident}"));
+        input.parse::<Token![,]>()?;
+
+        let help = input.parse::<Literal>()?;
+
+        Ok(Self {
+            tokens,
+            cb,
+            help,
+        })
+    }
+}
+
+impl Into<TokenStream> for Command {
+    fn into(self) -> TokenStream {
+        let Self { tokens, help, cb } = self;
+        let tokens = tokens.into_iter().map(Into::into).collect::<Vec<TokenStream>>();
+
+        quote! {
+            Command { tokens: vec![#(#tokens),*], help: #help.to_string(), cb: #cb.to_string() }
         }
     }
-    make_command(found_tokens, found_help.unwrap(), found_cb.unwrap())
 }
 
 #[proc_macro]
@@ -70,7 +108,8 @@ pub fn commands(stream: proc_macro::TokenStream) -> proc_macro::TokenStream {
         //
         match top_level_tokens.next() {
             Some(TokenTree::Group(group)) if group.delimiter() == Delimiter::Parenthesis => {
-                commands.push(command_from_stream(group.stream()));
+                let group_stream: proc_macro::TokenStream = group.stream().into();
+                commands.push(parse_macro_input!(group_stream as Command).into());
             }
             _ => panic!("contents of commands! macro is invalid"),
         }
@@ -83,8 +122,8 @@ pub fn commands(stream: proc_macro::TokenStream) -> proc_macro::TokenStream {
 
     let command_registrations = commands
         .iter()
-        .map(|v| -> proc_macro2::TokenStream { quote! { tree.register_command(#v); }.into() })
-        .collect::<proc_macro2::TokenStream>();
+        .map(|v| -> TokenStream { quote! { tree.register_command(#v); }.into() })
+        .collect::<TokenStream>();
 
     let res = quote! {
         lazy_static::lazy_static! {
