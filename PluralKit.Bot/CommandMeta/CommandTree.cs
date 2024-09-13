@@ -18,7 +18,7 @@ public partial class CommandTree
             return CommandHelpRoot(ctx);
         if (ctx.Match("ap", "autoproxy", "auto"))
             return HandleAutoproxyCommand(ctx);
-        if (ctx.Match("config", "cfg"))
+        if (ctx.Match("config", "cfg", "configure"))
             return HandleConfigCommand(ctx);
         if (ctx.Match("list", "find", "members", "search", "query", "l", "f", "fd", "ls"))
             return ctx.Execute<SystemList>(SystemList, m => m.MemberList(ctx, ctx.System));
