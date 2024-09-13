@@ -1,19 +1,28 @@
 use proc_macro::{Delimiter, TokenStream, TokenTree};
+use proc_macro2::{Ident, Literal, Span};
+use quote::quote;
 
-fn make_command(tokens: Vec<String>, help: String, cb: String) -> String {
-    let tokens = tokens
-        .iter()
-        .map(|v| format!("Token::{v}"))
-        .collect::<Vec<String>>()
-        .join(",");
-    format!(
-        r#"Command {{ tokens: vec![{tokens}], help: {help}.to_string(), cb: "{cb}".to_string() }}"#
-    )
+fn make_command(
+    tokens: Vec<proc_macro2::TokenStream>,
+    help: String,
+    cb: String,
+) -> proc_macro2::TokenStream {
+    let help = Literal::string(&help);
+    let cb = Literal::string(&cb);
+
+    quote! {
+        Command { tokens: vec![#(#tokens),*], help: #help.to_string(), cb: #cb.to_string() }
+    }
 }
 
-fn command_from_stream(stream: TokenStream) -> String {
+// horrible, but the best way i could find to do this
+fn token_to_string(i: String) -> String {
+    i.to_string()[1..i.to_string().len() - 1].to_string()
+}
+
+fn command_from_stream(stream: TokenStream) -> proc_macro2::TokenStream {
     let mut part = 0;
-    let mut found_tokens: Vec<String> = Vec::new();
+    let mut found_tokens: Vec<proc_macro2::TokenStream> = Vec::new();
     let mut found_cb: Option<String> = None;
     let mut found_help: Option<String> = None;
 
@@ -25,9 +34,11 @@ fn command_from_stream(stream: TokenStream) -> String {
             None if part == 2 && found_help.is_some() => break 'a,
             Some(TokenTree::Ident(ident)) if part == 0 => {
                 found_tokens.push(if is_token_lit {
-                    format!("{ident}")
+                    let ident = Ident::new(ident.to_string().as_str(), Span::call_site());
+                    quote! { Token::#ident }.into()
                 } else {
-                    format!("Value(vec![\"{ident}\".to_string()])")
+                    let ident = Literal::string(format!("{ident}").as_str());
+                    quote! { Token::Value(vec![#ident.to_string() ]) }
                 });
                 // reset this
                 is_token_lit = false;
@@ -42,7 +53,9 @@ fn command_from_stream(stream: TokenStream) -> String {
                 part += 1
             }
             Some(TokenTree::Ident(ident)) if part == 1 => found_cb = Some(format!("{ident}")),
-            Some(TokenTree::Literal(lit)) if part == 2 => found_help = Some(format!("{lit}")),
+            Some(TokenTree::Literal(lit)) if part == 2 => {
+                found_help = Some(token_to_string(lit.to_string()))
+            }
             _ => panic!("invalid command definition: {stream}"),
         }
     }
@@ -51,7 +64,7 @@ fn command_from_stream(stream: TokenStream) -> String {
 
 #[proc_macro]
 pub fn commands(stream: TokenStream) -> TokenStream {
-    let mut commands: Vec<String> = Vec::new();
+    let mut commands: Vec<proc_macro2::TokenStream> = Vec::new();
 
     let mut top_level_tokens = stream.into_iter();
     'a: loop {
@@ -77,33 +90,30 @@ pub fn commands(stream: TokenStream) -> TokenStream {
 
     let command_registrations = commands
         .iter()
-        .map(|v| format!("tree.register_command({v});"))
-        .collect::<Vec<String>>()
-        .join("\n");
+        .map(|v| -> proc_macro2::TokenStream { quote! { tree.register_command(#v); }.into() })
+        .collect::<proc_macro2::TokenStream>();
 
-    let res = format!(
-        r#"
-lazy_static::lazy_static! {{
-    static ref COMMAND_TREE: TreeBranch = {{
-        let mut tree = TreeBranch {{
-            current_command_key: None,
-            possible_tokens: vec![],
-            branches: HashMap::new(),
-        }};
+    let res = quote! {
+        lazy_static::lazy_static! {
+            static ref COMMAND_TREE: TreeBranch = {
+                let mut tree = TreeBranch {
+                    current_command_key: None,
+                    possible_tokens: vec![],
+                    branches: HashMap::new(),
+                };
 
-        {command_registrations}
+                #command_registrations
 
-        tree.sort_tokens();
+                tree.sort_tokens();
 
-        // println!("{{tree:#?}}");
+                // println!("{{tree:#?}}");
 
-        tree
-    }};
-}}
-    "#
-    );
+                tree
+            };
+        }
+    };
 
     // panic!("{res}");
 
-    res.parse().unwrap()
+    res.into()
 }
