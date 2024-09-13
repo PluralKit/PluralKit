@@ -3,6 +3,7 @@ namespace Myriad.Types;
 public record Activity
 {
     public string Name { get; init; }
+    public string State { get; init; }
     public ActivityType Type { get; init; }
     public string? Url { get; init; }
 }

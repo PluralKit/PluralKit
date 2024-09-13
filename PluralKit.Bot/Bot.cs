@@ -67,8 +67,9 @@ public class Bot
             {
                 new Activity
                 {
-                    Type = ActivityType.Game,
-                    Name = BotStatus
+                    Type = ActivityType.Custom,
+                    Name = BotStatus,
+                    State = BotStatus
                 }
             }
         };
@@ -141,7 +142,8 @@ public class Bot
                     new Activity
                     {
                         Name = "Restarting... (please wait)",
-                        Type = ActivityType.Game
+                        State = "Restarting... (please wait)",
+                        Type = ActivityType.Custom
                     }
                 },
                 Status = GatewayStatusUpdate.UserStatus.Idle
@@ -276,7 +278,8 @@ public class Bot
                             new Activity
                             {
                                 Name = BotStatus,
-                                Type = ActivityType.Game
+                                State = BotStatus,
+                                Type = ActivityType.Custom,
                             }
                         },
                         Status = GatewayStatusUpdate.UserStatus.Online
