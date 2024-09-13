@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "./lib/libpk",
+    "./lib/commands",
     "./services/api",
     "./services/dispatch"
 ]

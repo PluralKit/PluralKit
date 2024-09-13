@@ -29,3 +29,4 @@ logs/
 .version
 recipe.json
 .docker-bin/
+PluralKit.Bot/commands.cs
