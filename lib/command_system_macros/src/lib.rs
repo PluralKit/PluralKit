@@ -1,30 +1,21 @@
-use proc_macro::{Delimiter, TokenStream, TokenTree};
-use proc_macro2::{Ident, Literal, Span};
+use proc_macro2::{Delimiter, TokenStream, TokenTree, Ident, Literal, Span};
 use quote::quote;
 
 fn make_command(
-    tokens: Vec<proc_macro2::TokenStream>,
-    help: String,
-    cb: String,
-) -> proc_macro2::TokenStream {
-    let help = Literal::string(&help);
-    let cb = Literal::string(&cb);
-
+    tokens: Vec<TokenStream>,
+    help: Literal,
+    cb: Literal,
+) -> TokenStream {
     quote! {
         Command { tokens: vec![#(#tokens),*], help: #help.to_string(), cb: #cb.to_string() }
     }
 }
 
-// horrible, but the best way i could find to do this
-fn token_to_string(i: String) -> String {
-    i.to_string()[1..i.to_string().len() - 1].to_string()
-}
-
-fn command_from_stream(stream: TokenStream) -> proc_macro2::TokenStream {
+fn command_from_stream(stream: TokenStream) -> TokenStream {
     let mut part = 0;
-    let mut found_tokens: Vec<proc_macro2::TokenStream> = Vec::new();
-    let mut found_cb: Option<String> = None;
-    let mut found_help: Option<String> = None;
+    let mut found_tokens: Vec<TokenStream> = Vec::new();
+    let mut found_cb: Option<Literal> = None;
+    let mut found_help: Option<Literal> = None;
 
     let mut is_token_lit = false;
     let mut tokens = stream.clone().into_iter();
@@ -34,11 +25,10 @@ fn command_from_stream(stream: TokenStream) -> proc_macro2::TokenStream {
             None if part == 2 && found_help.is_some() => break 'a,
             Some(TokenTree::Ident(ident)) if part == 0 => {
                 found_tokens.push(if is_token_lit {
-                    let ident = Ident::new(ident.to_string().as_str(), Span::call_site());
                     quote! { Token::#ident }.into()
                 } else {
-                    let ident = Literal::string(format!("{ident}").as_str());
-                    quote! { Token::Value(vec![#ident.to_string() ]) }
+                    let lit = Literal::string(&format!("{ident}"));
+                    quote! { Token::Value(vec![#lit.to_string() ]) }
                 });
                 // reset this
                 is_token_lit = false;
@@ -52,9 +42,11 @@ fn command_from_stream(stream: TokenStream) -> proc_macro2::TokenStream {
             {
                 part += 1
             }
-            Some(TokenTree::Ident(ident)) if part == 1 => found_cb = Some(format!("{ident}")),
+            Some(TokenTree::Ident(ident)) if part == 1 => {
+                found_cb = Some(Literal::string(&format!("{ident}")))
+            }
             Some(TokenTree::Literal(lit)) if part == 2 => {
-                found_help = Some(token_to_string(lit.to_string()))
+                found_help = Some(lit)
             }
             _ => panic!("invalid command definition: {stream}"),
         }
@@ -63,8 +55,9 @@ fn command_from_stream(stream: TokenStream) -> proc_macro2::TokenStream {
 }
 
 #[proc_macro]
-pub fn commands(stream: TokenStream) -> TokenStream {
-    let mut commands: Vec<proc_macro2::TokenStream> = Vec::new();
+pub fn commands(stream: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    let stream: TokenStream = stream.into();
+    let mut commands: Vec<TokenStream> = Vec::new();
 
     let mut top_level_tokens = stream.into_iter();
     'a: loop {
