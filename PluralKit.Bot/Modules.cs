@@ -48,8 +48,10 @@ public class BotModule: Module
         {
             var botConfig = c.Resolve<BotConfig>();
 
-            if (botConfig.UseRedisCache)
-                return new RedisDiscordCache(c.Resolve<ILogger>(), botConfig.ClientId);
+            if (botConfig.HttpCacheUrl != null)
+                return new HttpDiscordCache(c.Resolve<ILogger>(),
+                    c.Resolve<HttpClient>(), botConfig.HttpCacheUrl, botConfig.ClientId);
+
             return new MemoryDiscordCache(botConfig.ClientId);
         }).AsSelf().SingleInstance();
         builder.RegisterType<PrivateChannelService>().AsSelf().SingleInstance();

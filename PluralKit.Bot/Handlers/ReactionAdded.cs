@@ -62,7 +62,7 @@ public class ReactionAdded: IEventHandler<MessageReactionAddEvent>
         // but we aren't able to get DMs from bots anyway, so it's not really needed
         if (evt.GuildId != null && (evt.Member?.User?.Bot ?? false)) return;
 
-        var channel = await _cache.GetChannel(evt.ChannelId);
+        var channel = await _cache.GetChannel(evt.GuildId ?? 0, evt.ChannelId);
 
         // check if it's a command message first
         // since this can happen in DMs as well
@@ -75,10 +75,10 @@ public class ReactionAdded: IEventHandler<MessageReactionAddEvent>
                 return;
             }
 
-            var (authorId, _) = await _commandMessageService.GetCommandMessage(evt.MessageId);
-            if (authorId != null)
+            var cmessage = await _commandMessageService.GetCommandMessage(evt.MessageId);
+            if (cmessage != null)
             {
-                await HandleCommandDeleteReaction(evt, authorId.Value, false);
+                await HandleCommandDeleteReaction(evt, cmessage.AuthorId, false);
                 return;
             }
         }
@@ -123,7 +123,7 @@ public class ReactionAdded: IEventHandler<MessageReactionAddEvent>
 
     private async ValueTask HandleProxyDeleteReaction(MessageReactionAddEvent evt, PKMessage msg)
     {
-        if (!(await _cache.BotPermissionsIn(evt.ChannelId)).HasFlag(PermissionSet.ManageMessages))
+        if (!(await _cache.BotPermissionsIn(evt.GuildId ?? 0, evt.ChannelId)).HasFlag(PermissionSet.ManageMessages))
             return;
 
         var isSameSystem = msg.Member != null && await _repo.IsMemberOwnedByAccount(msg.Member.Value, evt.UserId);
@@ -150,7 +150,7 @@ public class ReactionAdded: IEventHandler<MessageReactionAddEvent>
         if (authorId != null && authorId != evt.UserId)
             return;
 
-        if (!((await _cache.BotPermissionsIn(evt.ChannelId)).HasFlag(PermissionSet.ManageMessages) || isDM))
+        if (!((await _cache.BotPermissionsIn(evt.GuildId ?? 0, evt.ChannelId)).HasFlag(PermissionSet.ManageMessages) || isDM))
             return;
 
         // todo: don't try to delete the user's own messages in DMs
@@ -206,14 +206,14 @@ public class ReactionAdded: IEventHandler<MessageReactionAddEvent>
 
     private async ValueTask HandlePingReaction(MessageReactionAddEvent evt, FullMessage msg)
     {
-        if (!(await _cache.BotPermissionsIn(evt.ChannelId)).HasFlag(PermissionSet.ManageMessages))
+        if (!(await _cache.BotPermissionsIn(evt.GuildId ?? 0, evt.ChannelId)).HasFlag(PermissionSet.ManageMessages))
             return;
 
         // Check if the "pinger" has permission to send messages in this channel
         // (if not, PK shouldn't send messages on their behalf)
         var member = await _rest.GetGuildMember(evt.GuildId!.Value, evt.UserId);
         var requiredPerms = PermissionSet.ViewChannel | PermissionSet.SendMessages;
-        if (member == null || !(await _cache.PermissionsForMemberInChannel(evt.ChannelId, member)).HasFlag(requiredPerms)) return;
+        if (member == null || !(await _cache.PermissionsForMemberInChannel(evt.GuildId ?? 0, evt.ChannelId, member)).HasFlag(requiredPerms)) return;
 
         if (msg.Member == null) return;
 
@@ -266,7 +266,7 @@ public class ReactionAdded: IEventHandler<MessageReactionAddEvent>
 
     private async Task TryRemoveOriginalReaction(MessageReactionAddEvent evt)
     {
-        if ((await _cache.BotPermissionsIn(evt.ChannelId)).HasFlag(PermissionSet.ManageMessages))
+        if ((await _cache.BotPermissionsIn(evt.GuildId ?? 0, evt.ChannelId)).HasFlag(PermissionSet.ManageMessages))
             await _rest.DeleteUserReaction(evt.ChannelId, evt.MessageId, evt.Emoji, evt.UserId);
     }
 }

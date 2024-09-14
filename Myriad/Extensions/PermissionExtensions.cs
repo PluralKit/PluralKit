@@ -32,23 +32,23 @@ public static class PermissionExtensions
         PermissionSet.EmbedLinks;
 
     public static Task<PermissionSet> PermissionsForMCE(this IDiscordCache cache, MessageCreateEvent message) =>
-        PermissionsFor2(cache, message.ChannelId, message.Author.Id, message.Member, message.WebhookId != null);
+        PermissionsFor2(cache, message.GuildId ?? 0, message.ChannelId, message.Author.Id, message.Member, message.WebhookId != null);
 
     public static Task<PermissionSet>
-        PermissionsForMemberInChannel(this IDiscordCache cache, ulong channelId, GuildMember member) =>
-        PermissionsFor2(cache, channelId, member.User.Id, member);
+        PermissionsForMemberInChannel(this IDiscordCache cache, ulong guildId, ulong channelId, GuildMember member) =>
+        PermissionsFor2(cache, guildId, channelId, member.User.Id, member);
 
-    public static async Task<PermissionSet> PermissionsFor2(this IDiscordCache cache, ulong channelId, ulong userId,
+    public static async Task<PermissionSet> PermissionsFor2(this IDiscordCache cache, ulong guildId, ulong channelId, ulong userId,
                                                            GuildMemberPartial? member, bool isThread = false)
     {
-        if (!(await cache.TryGetChannel(channelId) is Channel channel))
+        if (!(await cache.TryGetChannel(guildId, channelId) is Channel channel))
             // todo: handle channel not found better
             return PermissionSet.Dm;
 
         if (channel.GuildId == null)
             return PermissionSet.Dm;
 
-        var rootChannel = await cache.GetRootChannel(channelId);
+        var rootChannel = await cache.GetRootChannel(guildId, channelId);
 
         var guild = await cache.GetGuild(channel.GuildId.Value);
 

@@ -1,0 +1,25 @@
+[package]
+name = "gateway"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = { workspace = true }
+axum = { workspace = true }
+bytes = { workspace = true }
+chrono = { workspace = true }
+fred = { workspace = true }
+futures = { workspace = true }
+lazy_static = { workspace = true }
+libpk = { path = "../../lib/libpk" }
+prost = { workspace = true }
+serde_json = { workspace = true }
+signal-hook = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+
+twilight-gateway = { workspace = true }
+twilight-cache-inmemory = { workspace = true }
+twilight-util = { workspace = true }
+twilight-model = { workspace = true }
+twilight-http = { workspace = true }

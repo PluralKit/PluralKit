@@ -188,7 +188,8 @@ public static class ContextEntityArgumentsExt
         if (!MentionUtils.TryParseChannel(ctx.PeekArgument(), out var id))
             return null;
 
-        var channel = await ctx.Cache.TryGetChannel(id);
+        // todo: match channels in other guilds
+        var channel = await ctx.Cache.TryGetChannel(ctx.Guild!.Id, id);
         if (channel == null)
             channel = await ctx.Rest.GetChannelOrNull(id);
         if (channel == null)

@@ -3,11 +3,23 @@ use lazy_static::lazy_static;
 use serde::Deserialize;
 use std::sync::Arc;
 
+use twilight_model::id::{marker::UserMarker, Id};
+
+#[derive(Clone, Deserialize, Debug)]
+pub struct ClusterSettings {
+    pub node_id: u32,
+    pub total_shards: u32,
+    pub total_nodes: u32,
+}
+
 #[derive(Deserialize, Debug)]
 pub struct DiscordConfig {
-    pub client_id: u32,
+    pub client_id: Id<UserMarker>,
     pub bot_token: String,
     pub client_secret: String,
+    pub max_concurrency: u32,
+    pub cluster: Option<ClusterSettings>,
+    pub api_base_url: Option<String>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -41,6 +53,9 @@ pub struct ApiConfig {
 fn _metrics_default() -> bool {
     false
 }
+fn _json_log_default() -> bool {
+    false
+}
 
 #[derive(Deserialize, Debug)]
 pub struct PKConfig {
@@ -52,13 +67,20 @@ pub struct PKConfig {
     #[serde(default = "_metrics_default")]
     pub run_metrics_server: bool,
 
-    pub(crate) gelf_log_url: Option<String>,
+    #[serde(default = "_json_log_default")]
+    pub(crate) json_log: bool,
 }
 
 lazy_static! {
     #[derive(Debug)]
-    pub static ref CONFIG: Arc<PKConfig> = Arc::new(Config::builder()
-    .add_source(config::Environment::with_prefix("pluralkit").separator("__"))
-    .build().unwrap()
-    .try_deserialize::<PKConfig>().unwrap());
+    pub static ref CONFIG: Arc<PKConfig> = {
+        if let Ok(var) = std::env::var("NOMAD_ALLOC_INDEX") {
+            std::env::set_var("pluralkit__discord__cluster__node_id", var);
+        }
+
+        Arc::new(Config::builder()
+        .add_source(config::Environment::with_prefix("pluralkit").separator("__"))
+        .build().unwrap()
+        .try_deserialize::<PKConfig>().unwrap())
+    };
 }

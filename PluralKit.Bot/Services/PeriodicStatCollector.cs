@@ -54,33 +54,6 @@ public class PeriodicStatCollector
         var stopwatch = new Stopwatch();
         stopwatch.Start();
 
-        // Aggregate guild/channel stats
-        var guildCount = 0;
-        var channelCount = 0;
-
-        // No LINQ today, sorry
-        await foreach (var guild in _cache.GetAllGuilds())
-        {
-            guildCount++;
-            foreach (var channel in await _cache.GetGuildChannels(guild.Id))
-                if (DiscordUtils.IsValidGuildChannel(channel))
-                    channelCount++;
-        }
-
-        if (_config.UseRedisMetrics)
-        {
-            var db = _redis.Connection.GetDatabase();
-            await db.HashSetAsync("pluralkit:cluster_stats", new StackExchange.Redis.HashEntry[] {
-                new(_botConfig.Cluster.NodeIndex, JsonConvert.SerializeObject(new ClusterMetricInfo
-                {
-                    GuildCount = guildCount,
-                    ChannelCount = channelCount,
-                    DatabaseConnectionCount = _countHolder.ConnectionCount,
-                    WebhookCacheSize = _webhookCache.CacheSize,
-                })),
-            });
-        }
-
         // Process info
         var process = Process.GetCurrentProcess();
         _metrics.Measure.Gauge.SetValue(CoreMetrics.ProcessPhysicalMemory, process.WorkingSet64);

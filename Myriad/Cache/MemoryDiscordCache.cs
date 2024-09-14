@@ -137,7 +137,7 @@ public class MemoryDiscordCache: IDiscordCache
         return Task.FromResult(cg?.Guild);
     }
 
-    public Task<Channel?> TryGetChannel(ulong channelId)
+    public Task<Channel?> TryGetChannel(ulong _, ulong channelId)
     {
         _channels.TryGetValue(channelId, out var channel);
         return Task.FromResult(channel);
@@ -153,19 +153,6 @@ public class MemoryDiscordCache: IDiscordCache
     {
         _guildMembers.TryGetValue(guildId, out var guildMember);
         return Task.FromResult(guildMember);
-    }
-
-    public Task<Role?> TryGetRole(ulong roleId)
-    {
-        _roles.TryGetValue(roleId, out var role);
-        return Task.FromResult(role);
-    }
-
-    public IAsyncEnumerable<Guild> GetAllGuilds()
-    {
-        return _guilds.Values
-            .Select(g => g.Guild)
-            .ToAsyncEnumerable();
     }
 
     public Task<IEnumerable<Channel>> GetGuildChannels(ulong guildId)
