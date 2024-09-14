@@ -49,7 +49,7 @@ public class ServerConfig
         if (channel.Type != Channel.ChannelType.GuildText && channel.Type != Channel.ChannelType.GuildPublicThread && channel.Type != Channel.ChannelType.GuildPrivateThread)
             throw new PKError("PluralKit cannot log messages to this type of channel.");
 
-        var perms = await _cache.BotPermissionsIn(channel.Id);
+        var perms = await _cache.BotPermissionsIn(ctx.Guild.Id, channel.Id);
         if (!perms.HasFlag(PermissionSet.SendMessages))
             throw new PKError("PluralKit is missing **Send Messages** permissions in the new log channel.");
         if (!perms.HasFlag(PermissionSet.EmbedLinks))
@@ -104,7 +104,7 @@ public class ServerConfig
 
         // Resolve all channels from the cache and order by position
         var channels = (await Task.WhenAll(blacklist.Blacklist
-                .Select(id => _cache.TryGetChannel(id))))
+                .Select(id => _cache.TryGetChannel(ctx.Guild.Id, id))))
             .Where(c => c != null)
             .OrderBy(c => c.Position)
             .ToList();
@@ -121,7 +121,7 @@ public class ServerConfig
             async (eb, l) =>
             {
                 async Task<string> CategoryName(ulong? id) =>
-                    id != null ? (await _cache.GetChannel(id.Value)).Name : "(no category)";
+                    id != null ? (await _cache.GetChannel(ctx.Guild.Id, id.Value)).Name : "(no category)";
 
                 ulong? lastCategory = null;
 
@@ -153,8 +153,9 @@ public class ServerConfig
         var config = await ctx.Repository.GetGuild(ctx.Guild.Id);
 
         // Resolve all channels from the cache and order by position
+        // todo: GetAllChannels?
         var channels = (await Task.WhenAll(config.LogBlacklist
-                .Select(id => _cache.TryGetChannel(id))))
+                .Select(id => _cache.TryGetChannel(ctx.Guild.Id, id))))
             .Where(c => c != null)
             .OrderBy(c => c.Position)
             .ToList();
@@ -171,7 +172,7 @@ public class ServerConfig
             async (eb, l) =>
             {
                 async Task<string> CategoryName(ulong? id) =>
-                    id != null ? (await _cache.GetChannel(id.Value)).Name : "(no category)";
+                    id != null ? (await _cache.GetChannel(ctx.Guild.Id, id.Value)).Name : "(no category)";
 
                 ulong? lastCategory = null;
 

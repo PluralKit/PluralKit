@@ -13,25 +13,11 @@ public static class CacheExtensions
         return guild;
     }
 
-    public static async Task<Channel> GetChannel(this IDiscordCache cache, ulong channelId)
+    public static async Task<Channel> GetChannel(this IDiscordCache cache, ulong guildId, ulong channelId)
     {
-        if (!(await cache.TryGetChannel(channelId) is Channel channel))
+        if (!(await cache.TryGetChannel(guildId, channelId) is Channel channel))
             throw new KeyNotFoundException($"Channel {channelId} not found in cache");
         return channel;
-    }
-
-    public static async Task<User> GetUser(this IDiscordCache cache, ulong userId)
-    {
-        if (!(await cache.TryGetUser(userId) is User user))
-            throw new KeyNotFoundException($"User {userId} not found in cache");
-        return user;
-    }
-
-    public static async Task<Role> GetRole(this IDiscordCache cache, ulong roleId)
-    {
-        if (!(await cache.TryGetRole(roleId) is Role role))
-            throw new KeyNotFoundException($"Role {roleId} not found in cache");
-        return role;
     }
 
     public static async ValueTask<User?> GetOrFetchUser(this IDiscordCache cache, DiscordApiClient rest,
@@ -47,9 +33,9 @@ public static class CacheExtensions
     }
 
     public static async ValueTask<Channel?> GetOrFetchChannel(this IDiscordCache cache, DiscordApiClient rest,
-                                                              ulong channelId)
+                                                              ulong guildId, ulong channelId)
     {
-        if (await cache.TryGetChannel(channelId) is { } cacheChannel)
+        if (await cache.TryGetChannel(guildId, channelId) is { } cacheChannel)
             return cacheChannel;
 
         var restChannel = await rest.GetChannel(channelId);
@@ -58,13 +44,13 @@ public static class CacheExtensions
         return restChannel;
     }
 
-    public static async Task<Channel> GetRootChannel(this IDiscordCache cache, ulong channelOrThread)
+    public static async Task<Channel> GetRootChannel(this IDiscordCache cache, ulong guildId, ulong channelOrThread)
     {
-        var channel = await cache.GetChannel(channelOrThread);
+        var channel = await cache.GetChannel(guildId, channelOrThread);
         if (!channel.IsThread())
             return channel;
 
-        var parent = await cache.GetChannel(channel.ParentId!.Value);
+        var parent = await cache.GetChannel(guildId, channel.ParentId!.Value);
         return parent;
     }
 }

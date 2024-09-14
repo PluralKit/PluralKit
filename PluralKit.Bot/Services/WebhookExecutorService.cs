@@ -87,7 +87,7 @@ public class WebhookExecutorService
         return webhookMessage;
     }
 
-    public async Task<Message> EditWebhookMessage(ulong channelId, ulong messageId, string newContent, bool clearEmbeds = false)
+    public async Task<Message> EditWebhookMessage(ulong guildId, ulong channelId, ulong messageId, string newContent, bool clearEmbeds = false)
     {
         var allowedMentions = newContent.ParseMentions() with
         {
@@ -96,7 +96,7 @@ public class WebhookExecutorService
         };
 
         ulong? threadId = null;
-        var channel = await _cache.GetOrFetchChannel(_rest, channelId);
+        var channel = await _cache.GetOrFetchChannel(_rest, guildId, channelId);
         if (channel.IsThread())
         {
             threadId = channelId;

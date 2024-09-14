@@ -27,9 +27,12 @@ COPY proto/ /build/proto
 # this needs to match workspaces in Cargo.toml
 COPY lib/libpk /build/lib/libpk
 COPY services/api/ /build/services/api
+COPY services/gateway/ /build/services/gateway
 
 RUN cargo build --bin api --release --target x86_64-unknown-linux-musl
+RUN cargo build --bin gateway --release --target x86_64-unknown-linux-musl
 
 FROM scratch 
 
 COPY --from=binary-builder /build/target/x86_64-unknown-linux-musl/release/api /api
+COPY --from=binary-builder /build/target/x86_64-unknown-linux-musl/release/gateway /gateway

@@ -59,7 +59,7 @@ public class ProxyService
     public async Task<bool> HandleIncomingMessage(MessageCreateEvent message, MessageContext ctx,
                                 Guild guild, Channel channel, bool allowAutoproxy, PermissionSet botPermissions)
     {
-        var rootChannel = await _cache.GetRootChannel(message.ChannelId);
+        var rootChannel = await _cache.GetRootChannel(message.GuildId!.Value, message.ChannelId);
 
         if (!ShouldProxy(channel, rootChannel, message, ctx))
             return false;
@@ -207,8 +207,8 @@ public class ProxyService
         var content = match.ProxyContent;
         if (!allowEmbeds) content = content.BreakLinkEmbeds();
 
-        var messageChannel = await _cache.GetChannel(trigger.ChannelId);
-        var rootChannel = await _cache.GetRootChannel(trigger.ChannelId);
+        var messageChannel = await _cache.GetChannel(trigger.GuildId!.Value, trigger.ChannelId);
+        var rootChannel = await _cache.GetRootChannel(trigger.GuildId!.Value, trigger.ChannelId);
         var threadId = messageChannel.IsThread() ? messageChannel.Id : (ulong?)null;
         var guild = await _cache.GetGuild(trigger.GuildId.Value);
         var guildMember = await _rest.GetGuildMember(trigger.GuildId!.Value, trigger.Author.Id);

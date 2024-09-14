@@ -218,7 +218,7 @@ public class ProxiedMessage
         try
         {
             var editedMsg =
-                await _webhookExecutor.EditWebhookMessage(msg.Channel, msg.Mid, newContent, clearEmbeds);
+                await _webhookExecutor.EditWebhookMessage(msg.Guild ?? 0, msg.Channel, msg.Mid, newContent, clearEmbeds);
 
             if (ctx.Guild == null)
                 await _rest.CreateReaction(ctx.Channel.Id, ctx.Message.Id, new Emoji { Name = Emojis.Success });
@@ -436,14 +436,14 @@ public class ProxiedMessage
 
     private async Task DeleteCommandMessage(Context ctx, ulong messageId)
     {
-        var (authorId, channelId) = await ctx.Services.Resolve<CommandMessageService>().GetCommandMessage(messageId);
-        if (authorId == null)
+        var cmessage = await ctx.Services.Resolve<CommandMessageService>().GetCommandMessage(messageId);
+        if (cmessage == null)
             throw Errors.MessageNotFound(messageId);
 
-        if (authorId != ctx.Author.Id)
+        if (cmessage!.AuthorId != ctx.Author.Id)
             throw new PKError("You can only delete command messages queried by this account.");
 
-        await ctx.Rest.DeleteMessage(channelId!.Value, messageId);
+        await ctx.Rest.DeleteMessage(cmessage.ChannelId, messageId);
 
         if (ctx.Guild != null)
             await ctx.Rest.DeleteMessage(ctx.Message);

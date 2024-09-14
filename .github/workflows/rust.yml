@@ -3,16 +3,18 @@
 # todo: don't use docker/build-push-action
 # todo: run builds on pull request
 
-name: Build and push API Docker image
+name: Build and push Rust service Docker images
 on:
   push:
-    branches:
-      - main
     paths:
     - 'lib/libpk/**'
     - 'services/api/**'
+    - 'services/gateway/**'
     - '.github/workflows/rust.yml'
     - 'Dockerfile.rust'
+    - 'Dockerfile.bin'
+    - 'Cargo.toml'
+    - 'Cargo.lock'
 
 jobs:
   deploy:
@@ -45,7 +47,7 @@ jobs:
 
       # add more binaries here
       - run: |
-          for binary in "api"; do
+          for binary in "api" "gateway"; do
             for tag in latest ${{ env.BRANCH_NAME }} ${{ github.sha }}; do
               cat Dockerfile.bin | sed "s/__BINARY__/$binary/g" | docker build -t ghcr.io/pluralkit/$binary:$tag -f - .
             done
