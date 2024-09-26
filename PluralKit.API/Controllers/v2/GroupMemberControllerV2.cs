@@ -147,6 +147,8 @@ public class GroupMemberControllerV2: PKControllerBase
     public async Task<IActionResult> GetMemberGroups(string memberRef)
     {
         var member = await ResolveMember(memberRef);
+        if (member == null)
+            throw Errors.MemberNotFoundWithRef(memberRef);
         var ctx = ContextFor(member);
 
         var system = await _repo.GetSystem(member.System);
