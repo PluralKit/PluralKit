@@ -137,24 +137,23 @@ pub async fn do_request_ratelimited(
             rlimit.key()
         );
 
-        let burst = 5;
         let period = 1; // seconds
+        let cost = 1; // todo: update this for group member endpoints
 
         // local rate_limit_key = KEYS[1]
-        // local burst = ARGV[1]
-        // local rate = ARGV[2]
-        // local period = ARGV[3]
+        // local rate = ARGV[1]
+        // local period = ARGV[2]
         // return {remaining, tostring(retry_after), reset_after}
         let resp = redis
             .evalsha::<(i32, String, u64), String, Vec<String>, Vec<i32>>(
                 LUA_SCRIPT_SHA.to_string(),
                 vec![rl_key.clone()],
-                vec![burst, rlimit.rate(), period],
+                vec![rlimit.rate(), period, cost],
             )
             .await;
 
         match resp {
-            Ok((mut remaining, retry_after, reset_after)) => {
+            Ok((remaining, retry_after, reset_after)) => {
                 // redis's lua doesn't support returning floats
                 let retry_after: f64 = retry_after
                     .parse()
@@ -174,9 +173,6 @@ pub async fn do_request_ratelimited(
                         ),
                     )
                 };
-
-                // the redis script puts burst in remaining for ??? some reason
-                remaining -= burst - rlimit.rate();
 
                 let reset_time = SystemTime::now()
                     .checked_add(Duration::from_secs(reset_after))
