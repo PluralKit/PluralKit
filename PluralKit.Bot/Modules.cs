@@ -50,7 +50,7 @@ public class BotModule: Module
 
             if (botConfig.HttpCacheUrl != null)
                 return new HttpDiscordCache(c.Resolve<ILogger>(),
-                    c.Resolve<HttpClient>(), botConfig.HttpCacheUrl, botConfig.ClientId);
+                    c.Resolve<HttpClient>(), botConfig.HttpCacheUrl, botConfig.Cluster?.TotalShards ?? 1, botConfig.ClientId);
 
             return new MemoryDiscordCache(botConfig.ClientId);
         }).AsSelf().SingleInstance();
