@@ -103,7 +103,7 @@ public static class DiscordCacheExtensions
     public static async Task<PermissionSet> BotPermissionsIn(this IDiscordCache cache, ulong guildId, ulong channelId)
     {
         if (cache is HttpDiscordCache)
-            return await ((HttpDiscordCache)cache).BotPermissions(guildId, channelId);
+            return await ((HttpDiscordCache)cache).BotChannelPermissions(guildId, channelId);
 
         var channel = await cache.GetRootChannel(guildId, channelId);
 
