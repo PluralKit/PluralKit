@@ -49,11 +49,11 @@ pub async fn logger(request: Request, next: Next) -> Response {
     );
     histogram!(
         "pk_http_requests",
-        (elapsed as f64) / 1_000_f64,
         "method" => method.to_string(),
         "route" => endpoint.clone(),
         "status" => response.status().to_string()
-    );
+    )
+    .record((elapsed as f64) / 1_000_f64);
 
     if elapsed > MIN_LOG_TIME {
         warn!(
