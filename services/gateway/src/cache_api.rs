@@ -5,12 +5,15 @@ use axum::{
     routing::get,
     Router,
 };
-use serde_json::to_string;
+use serde_json::{json, to_string};
 use tracing::{error, info};
 use twilight_model::guild::Permissions;
 use twilight_model::id::Id;
 
-use crate::discord::cache::{dm_channel, DiscordCache, DM_PERMISSIONS};
+use crate::discord::{
+    cache::{dm_channel, DiscordCache, DM_PERMISSIONS},
+    gateway::cluster_config,
+};
 use std::sync::Arc;
 
 fn status_code(code: StatusCode, body: String) -> Response {
@@ -155,6 +158,17 @@ pub async fn run_server(cache: Arc<DiscordCache>) -> anyhow::Result<()> {
                 status_code(StatusCode::FOUND, to_string(&roles).unwrap())
             })
         )
+
+        .route("/stats", get(|State(cache): State<Arc<DiscordCache>>| async move {
+            let cluster = cluster_config();
+            let has_been_up = cache.2.read().await.len() as u32 == if cluster.total_shards > 16 {16} else {cluster.total_shards};
+            let stats = json!({
+                "guild_count": cache.0.stats().guilds(),
+                "channel_count": cache.0.stats().channels(),
+                "up": has_been_up,
+            });
+            status_code(StatusCode::FOUND, to_string(&stats).unwrap())
+        }))
 
         .layer(axum::middleware::from_fn(crate::logger::logger))
         .with_state(cache);
