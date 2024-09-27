@@ -74,7 +74,7 @@ func wrapRecover(todo func()) {
 
 			stack := strings.Split(string(debug.Stack()), "\n")
 			stack = stack[7:]
-			log.Println("error running tasks:", err.(error).Error())
+			log.Printf("error running tasks: %v\n", err)
 			fmt.Println(strings.Join(stack, "\n"))
 		}
 	}()
