@@ -5,7 +5,76 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"io"
+	"net/http"
 )
+
+type httpstats struct {
+	Up bool `json:"up"`
+	GuildCount   int `json:"guild_count"`
+	ChannelCount int `json:"channel_count"`
+}
+
+func query_http_cache() []httpstats {
+	var values []httpstats
+
+	resp, err := http.Get("http://consul.svc.pluralkit.net/v1/health/service/pluralkit-gateway")
+	if err != nil {
+		panic(err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		panic(fmt.Sprintf("got status %v trying to query consul for all_gateway_instances", resp.Status))
+	}
+
+	var ips []string
+
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		panic(err)
+	}
+	var cs []any
+	err = json.Unmarshal(data, &cs)
+	if err != nil {
+		panic(err)
+	}
+
+	for idx, itm := range cs {
+		if ip, ok := itm.(map[string]any)["Service"].(map[string]any)["Address"].(string); ok {
+				ips = append(ips, ip)
+		} else {
+			panic(fmt.Sprintf("got bad data from consul for all_gateway_instances, at index %v", idx))
+		}
+	}
+
+	log.Printf("querying %v gateway clusters for discord stats\n", len(ips))
+
+	for _, ip := range ips {
+		resp, err := http.Get("http://"+ip+":5000/stats")
+		if err != nil {
+			panic(err)
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode != http.StatusFound {
+			panic(fmt.Sprintf("got status %v trying to query %v:5000", resp.Status, ip))
+		}
+		var s httpstats
+		data, err := io.ReadAll(resp.Body)
+		if err != nil {
+			panic(err)
+		}
+		err = json.Unmarshal(data, &s)
+		if err != nil {
+			panic(err)
+		}
+		if s.Up == false {
+			panic("gateway is not up yet, skipping stats collection")
+		}
+		values = append(values, s)
+	}
+
+	return values
+}
 
 type rstatval struct {
 	GuildCount   int `json:"GuildCount"`

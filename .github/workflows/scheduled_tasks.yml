@@ -2,8 +2,9 @@ name: Build scheduled tasks runner Docker image
 
 on:
   push:
-    branches: [main]
+    branches: [main, gateway-service]
     paths:
+      - .github/workflows/scheduled_tasks.yml
       - 'services/scheduled_tasks/**'
 
 jobs:

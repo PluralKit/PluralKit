@@ -1,3 +1,4 @@
+use libpk::_config::ClusterSettings;
 use std::sync::{mpsc::Sender, Arc};
 use tracing::{info, warn};
 use twilight_gateway::{
@@ -13,6 +14,18 @@ use crate::discord::identify_queue::{self, RedisQueue};
 
 use super::{cache::DiscordCache, shard_state::ShardStateManager};
 
+pub fn cluster_config() -> ClusterSettings {
+    libpk::config
+        .discord
+        .cluster
+        .clone()
+        .unwrap_or(libpk::_config::ClusterSettings {
+            node_id: 0,
+            total_shards: 1,
+            total_nodes: 1,
+        })
+}
+
 pub fn create_shards(redis: fred::pool::RedisPool) -> anyhow::Result<Vec<Shard<RedisQueue>>> {
     let intents = Intents::GUILDS
         | Intents::DIRECT_MESSAGES
@@ -23,16 +36,7 @@ pub fn create_shards(redis: fred::pool::RedisPool) -> anyhow::Result<Vec<Shard<R
 
     let queue = identify_queue::new(redis);
 
-    let cluster_settings =
-        libpk::config
-            .discord
-            .cluster
-            .clone()
-            .unwrap_or(libpk::_config::ClusterSettings {
-                node_id: 0,
-                total_shards: 1,
-                total_nodes: 1,
-            });
+    let cluster_settings = cluster_config();
 
     let (start_shard, end_shard): (u32, u32) = if cluster_settings.total_shards < 16 {
         warn!("we have less than 16 shards, assuming single gateway process");
@@ -76,6 +80,11 @@ pub async fn runner(
                     .await
                 {
                     tracing::warn!(?error, "error updating redis state")
+                }
+                if let Event::Ready(_) = event {
+                    if !cache.2.read().await.contains(&shard.id().number()) {
+                        cache.2.write().await.push(shard.id().number());
+                    }
                 }
                 cache.0.update(&event);
                 //if let Err(error) = tx.send((shard.id(), event)) {

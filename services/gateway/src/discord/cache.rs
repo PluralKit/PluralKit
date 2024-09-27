@@ -1,6 +1,7 @@
 use anyhow::format_err;
 use lazy_static::lazy_static;
 use std::sync::Arc;
+use tokio::sync::RwLock;
 use twilight_cache_inmemory::{
     model::CachedMember,
     permission::{MemberRoles, RootError},
@@ -110,10 +111,14 @@ pub fn new() -> DiscordCache {
             .build(),
     );
 
-    DiscordCache(cache, client)
+    DiscordCache(cache, client, RwLock::new(Vec::new()))
 }
 
-pub struct DiscordCache(pub Arc<InMemoryCache>, pub Arc<twilight_http::Client>);
+pub struct DiscordCache(
+    pub Arc<InMemoryCache>,
+    pub Arc<twilight_http::Client>,
+    pub RwLock<Vec<u32>>,
+);
 
 impl DiscordCache {
     pub async fn guild_permissions(

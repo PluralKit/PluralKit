@@ -49,7 +49,7 @@ func update_db_message_meta() {
 }
 
 func get_discord_counts() (int, int) {
-	redisStats := run_redis_query()
+	redisStats := query_http_cache()
 
 	guild_count := 0
 	channel_count := 0
