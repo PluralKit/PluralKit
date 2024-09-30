@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"io"
+	"os"
 	"net/http"
 )
 
@@ -18,7 +19,12 @@ type httpstats struct {
 func query_http_cache() []httpstats {
 	var values []httpstats
 
-	resp, err := http.Get("http://consul.svc.pluralkit.net/v1/health/service/pluralkit-gateway")
+	url := os.Getenv("CONSUL_URL")
+	if url == "" {
+		panic("missing consul api url in environment")
+	}
+
+	resp, err := http.Get(fmt.Sprintf("%v/v1/health/service/pluralkit-gateway", url))
 	if err != nil {
 		panic(err)
 	}
