@@ -10,7 +10,6 @@ using Myriad.Types;
 using Newtonsoft.Json;
 
 using PluralKit.Core;
-using static PluralKit.Bot.ContextArgumentsExt;
 
 namespace PluralKit.Bot;
 

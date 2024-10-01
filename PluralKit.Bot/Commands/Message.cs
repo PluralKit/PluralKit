@@ -354,7 +354,7 @@ public class ProxiedMessage
 
         var format = ctx.MatchFormat();
 
-        if (format != ContextArgumentsExt.ReplyFormat.Standard)
+        if (format != ReplyFormat.Standard)
         {
             var discordMessage = await _rest.GetMessageOrNull(message.Message.Channel, message.Message.Mid);
             if (discordMessage == null || !showContent)
@@ -367,7 +367,7 @@ public class ProxiedMessage
                 return;
             }
 
-            if (format == ContextArgumentsExt.ReplyFormat.Raw)
+            if (format == ReplyFormat.Raw)
             {
                 await ctx.Reply($"```{content}```");
 
@@ -385,7 +385,7 @@ public class ProxiedMessage
                 return;
             }
 
-            if (format == ContextArgumentsExt.ReplyFormat.Plaintext)
+            if (format == ReplyFormat.Plaintext)
             {
                 var eb = new EmbedBuilder()
                 .Description($"Showing contents of message {message.Message.Mid}");

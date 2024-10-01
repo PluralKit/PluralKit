@@ -7,7 +7,6 @@ using Myriad.Types;
 using Newtonsoft.Json.Linq;
 
 using PluralKit.Core;
-using static PluralKit.Bot.ContextArgumentsExt;
 
 namespace PluralKit.Bot;
 

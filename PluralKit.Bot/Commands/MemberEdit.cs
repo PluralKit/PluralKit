@@ -7,7 +7,6 @@ using NodaTime;
 using NodaTime.Extensions;
 
 using PluralKit.Core;
-using static PluralKit.Bot.ContextArgumentsExt;
 
 namespace PluralKit.Bot;
 

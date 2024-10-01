@@ -91,13 +91,6 @@ public static class ContextArgumentsExt
     public static bool MatchClear(this Context ctx)
         => ctx.Match("clear", "reset", "default") || ctx.MatchFlag("c", "clear");
 
-    public enum ReplyFormat
-    {
-        Standard,
-        Raw,
-        Plaintext
-    }
-
     public static ReplyFormat MatchFormat(this Context ctx)
     {
         if (ctx.Match("r", "raw") || ctx.MatchFlag("r", "raw")) return ReplyFormat.Raw;
@@ -195,4 +188,11 @@ public static class ContextArgumentsExt
 
         return groups;
     }
+}
+
+public enum ReplyFormat
+{
+    Standard,
+    Raw,
+    Plaintext
 }
