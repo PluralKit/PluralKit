@@ -189,9 +189,9 @@ public class ProxyService
             throw new ProxyChecksFailedException(
                 "Your system has proxying disabled in this server. Type `pk;proxy on` to enable it.");
 
-        // Make sure we have either an attachment or message content
+        // Make sure we have an attachment, message content, or poll
         var isMessageBlank = msg.Content == null || msg.Content.Trim().Length == 0;
-        if (isMessageBlank && msg.Attachments.Length == 0)
+        if (isMessageBlank && msg.Attachments.Length == 0 && msg.Poll == null)
             throw new ProxyChecksFailedException("Message cannot be blank.");
 
         if (msg.Activity != null)
@@ -242,6 +242,7 @@ public class ProxyService
             GuildId = trigger.GuildId!.Value,
             ChannelId = rootChannel.Id,
             ThreadId = threadId,
+            MessageId = trigger.Id,
             Name = await FixSameName(messageChannel.Id, ctx, match.Member),
             AvatarUrl = AvatarUtils.TryRewriteCdnUrl(match.Member.ProxyAvatar(ctx)),
             Content = content,
@@ -252,6 +253,7 @@ public class ProxyService
             AllowEveryone = allowEveryone,
             Flags = trigger.Flags.HasFlag(Message.MessageFlags.VoiceMessage) ? Message.MessageFlags.VoiceMessage : null,
             Tts = tts,
+            Poll = trigger.Poll,
         });
         await HandleProxyExecutedActions(ctx, autoproxySettings, trigger, proxyMessage, match);
     }
@@ -310,6 +312,7 @@ public class ProxyService
             GuildId = guild.Id,
             ChannelId = rootChannel.Id,
             ThreadId = threadId,
+            MessageId = originalMsg.Id,
             Name = match.Member.ProxyName(ctx),
             AvatarUrl = AvatarUtils.TryRewriteCdnUrl(match.Member.ProxyAvatar(ctx)),
             Content = match.ProxyContent!,
@@ -320,6 +323,7 @@ public class ProxyService
             AllowEveryone = allowEveryone,
             Flags = originalMsg.Flags.HasFlag(Message.MessageFlags.VoiceMessage) ? Message.MessageFlags.VoiceMessage : null,
             Tts = tts,
+            Poll = originalMsg.Poll,
         });
 
 
