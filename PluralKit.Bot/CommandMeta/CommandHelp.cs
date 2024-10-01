@@ -138,7 +138,7 @@ public partial class CommandTree
 
     public static Command[] SwitchCommands =
     {
-        Switch, SwitchOut, SwitchMove, SwitchEdit, SwitchEditOut, SwitchDelete, SwitchDeleteAll
+        Switch, SwitchOut, SwitchMove, SwitchEdit, SwitchEditOut, SwitchDelete, SwitchDeleteAll, SwitchCopy
     };
 
     public static Command[] ConfigCommands =
