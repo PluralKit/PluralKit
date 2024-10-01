@@ -430,15 +430,15 @@ public partial class CommandTree
                 await ctx.Execute<Switch>(SwitchEdit, m => m.SwitchEdit(ctx));
         else if (ctx.Match("delete", "remove", "erase", "cancel", "yeet"))
             await ctx.Execute<Switch>(SwitchDelete, m => m.SwitchDelete(ctx));
-        else if (ctx.Match("add", "duplicate", "dupe", "copy"))
-            await ctx.Execute<Switch>(SwitchDelete, m => m.SwitchEdit(ctx, true));
+        else if (ctx.Match("copy", "add", "duplicate", "dupe"))
+            await ctx.Execute<Switch>(SwitchCopy, m => m.SwitchEdit(ctx, true));
         else if (ctx.Match("commands", "help"))
             await PrintCommandList(ctx, "switching", SwitchCommands);
         else if (ctx.HasNext()) // there are following arguments
             await ctx.Execute<Switch>(Switch, m => m.SwitchDo(ctx));
         else
             await PrintCommandNotFoundError(ctx, Switch, SwitchOut, SwitchMove, SwitchEdit, SwitchEditOut,
-                SwitchDelete, SystemFronter, SystemFrontHistory);
+                SwitchDelete, SwitchCopy, SystemFronter, SystemFrontHistory);
     }
 
     private async Task CommandHelpRoot(Context ctx)

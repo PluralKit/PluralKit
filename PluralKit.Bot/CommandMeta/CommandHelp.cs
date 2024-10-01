@@ -82,6 +82,7 @@ public partial class CommandTree
     public static Command SwitchMove = new Command("switch move", "switch move <date/time>", "Moves the latest switch in time");
     public static Command SwitchEdit = new Command("switch edit", "switch edit <member> [member 2] [member 3...]", "Edits the members in the latest switch");
     public static Command SwitchEditOut = new Command("switch edit out", "switch edit out", "Turns the latest switch into a switch-out");
+    public static Command SwitchCopy = new Command("switch copy", "switch copy <member> [member 2] [member 3...]", "Makes a new switch with the listed members added");
     public static Command SwitchDelete = new Command("switch delete", "switch delete", "Deletes the latest switch");
     public static Command SwitchDeleteAll = new Command("switch delete", "switch delete all", "Deletes all logged switches");
     public static Command Link = new Command("link", "link <account>", "Links your system to another account");
