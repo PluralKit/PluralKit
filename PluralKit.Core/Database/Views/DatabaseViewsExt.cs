@@ -10,7 +10,11 @@ public static class DatabaseViewsExt
     public static Task<IEnumerable<ListedGroup>> QueryGroupList(this IPKConnection conn, SystemId system,
                                                                   ListQueryOptions opts)
     {
-        StringBuilder query = new StringBuilder("select * from group_list where system = @system");
+        StringBuilder query;
+        if (opts.MemberFilter == null)
+            query = new StringBuilder("select * from group_list where system = @system");
+        else
+            query = new StringBuilder("select group_list.* from group_members inner join group_list on group_list.id = group_members.group_id where member_id = @MemberFilter");
 
         if (opts.PrivacyFilter != null)
             query.Append($" and visibility = {(int)opts.PrivacyFilter}");
@@ -36,7 +40,7 @@ public static class DatabaseViewsExt
 
         return conn.QueryAsync<ListedGroup>(
             query.ToString(),
-            new { system, filter = opts.Search });
+            new { system, filter = opts.Search, memberFilter = opts.MemberFilter });
     }
     public static Task<IEnumerable<ListedMember>> QueryMemberList(this IPKConnection conn, SystemId system,
                                                                   ListQueryOptions opts)
@@ -81,5 +85,6 @@ public static class DatabaseViewsExt
         public bool SearchDescription;
         public LookupContext Context;
         public GroupId? GroupFilter;
+        public MemberId? MemberFilter;
     }
 }
