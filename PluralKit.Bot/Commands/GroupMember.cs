@@ -57,23 +57,23 @@ public class GroupMember
         var opts = ctx.ParseListOptions(ctx.DirectLookupContextFor(target.System));
         opts.MemberFilter = target.Id;
 
-        var title = new StringBuilder($"Groups containing {target.Name} (`{target.Hid}`) in ");
+        var title = new StringBuilder($"Groups containing {target.Name} (`{target.DisplayHid(ctx.Config)}`) in ");
         if (ctx.Guild != null)
         {
             var guildSettings = await ctx.Repository.GetSystemGuild(ctx.Guild.Id, targetSystem.Id);
             if (guildSettings.DisplayName != null)
-                title.Append($"{guildSettings.DisplayName} (`{targetSystem.Hid}`)");
+                title.Append($"{guildSettings.DisplayName} (`{targetSystem.DisplayHid(ctx.Config)}`)");
             else if (targetSystem.NameFor(ctx) != null)
-                title.Append($"{targetSystem.NameFor(ctx)} (`{targetSystem.Hid}`)");
+                title.Append($"{targetSystem.NameFor(ctx)} (`{targetSystem.DisplayHid(ctx.Config)}`)");
             else
-                title.Append($"`{targetSystem.Hid}`");
+                title.Append($"`{targetSystem.DisplayHid(ctx.Config)}`");
         }
         else
         {
             if (targetSystem.NameFor(ctx) != null)
-                title.Append($"{targetSystem.NameFor(ctx)} (`{targetSystem.Hid}`)");
+                title.Append($"{targetSystem.NameFor(ctx)} (`{targetSystem.DisplayHid(ctx.Config)}`)");
             else
-                title.Append($"`{targetSystem.Hid}`");
+                title.Append($"`{targetSystem.DisplayHid(ctx.Config)}`");
         }
         if (opts.Search != null)
             title.Append($" matching **{opts.Search.Truncate(100)}**");
