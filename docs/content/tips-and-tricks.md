@@ -77,7 +77,7 @@ You cannot look up private members or groups of another system.
 |pk;system frontpercent|-flat||Show "flat" frontpercent - percentages add up to 100%|
 |pk;group \<group> frontpercent|-fronters-only|-fo|Show a group's frontpercent without the "no fronter" entry|
 |pk;group \<group> frontpercent|-flat||Show "flat" frontpercent - percentages add up to 100%|
-|pk;group \<group> \<add/remove>|-all|Add or remove all members from a group.
+|pk;group \<group> \<add/remove>|-all|-a|Add or remove all members from a group.|
 |pk;edit|-append|-a|Append the new content to the old message instead of overwriting it|
 |pk;edit|-prepend|-p|Prepend the new content to the old message instead of overwriting it|
 |pk;edit|-nospace|-ns|Append/prepend without adding a space|
