@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"net/http"
+	"strconv"
 )
 
 type httpstats struct {
@@ -21,7 +22,12 @@ func query_http_cache() []httpstats {
 
 	url := os.Getenv("CONSUL_URL")
 	if url == "" {
-		panic("missing consul api url in environment")
+		panic("missing CONSUL_URL in environment")
+	}
+
+	expected_gateway_count, err := strconv.Atoi(os.Getenv("EXPECTED_GATEWAY_COUNT"))
+	if err != nil {
+		panic(fmt.Sprintf("missing or invalid EXPECTED_GATEWAY_COUNT in environment"))
 	}
 
 	resp, err := http.Get(fmt.Sprintf("%v/v1/health/service/pluralkit-gateway", url))
@@ -43,6 +49,10 @@ func query_http_cache() []httpstats {
 	err = json.Unmarshal(data, &cs)
 	if err != nil {
 		panic(err)
+	}
+
+	if len(cs) != expected_gateway_count {
+		panic(fmt.Sprintf("got unexpected number of gateway instances from consul (expected %v, got %v)", expected_gateway_count, len(cs)))
 	}
 
 	for idx, itm := range cs {
