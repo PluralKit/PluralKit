@@ -39,8 +39,6 @@
         else icon_url = item.webhook_avatar_url ?? default_avatar
     }
 
-    $: icon_url_resized = icon_url ? resizeMedia(icon_url) : default_avatar
-
     let avatarOpen = false;
     const toggleAvatarModal = () => (avatarOpen = !avatarOpen);
 
@@ -65,8 +63,8 @@
             <span bind:this={nameElement} style="vertical-align: middle;"><AwaitHtml htmlPromise={htmlNamePromise} /> ({item.id})</span>
         </div>
         <div style="margin-left: auto;">
-        {#if item && (item.avatar_url || item.icon)}
-        <img tabindex={0} on:keydown|stopPropagation={(event) => {if (event.key === "Enter") {avatarOpen = true}}} on:click|stopPropagation={toggleAvatarModal} class="rounded-circle avatar" src={icon_url_resized} alt={altText} />
+        {#if item && (item.avatar_url || item.webhook_avatar_url || item.icon)}
+        <img tabindex={0} on:keydown|stopPropagation={(event) => {if (event.key === "Enter") {avatarOpen = true}}} on:click|stopPropagation={toggleAvatarModal} class="rounded-circle avatar" src={icon_url} alt={altText} />
         {:else}
         <img class="rounded-circle avatar" src={default_avatar} alt="icon (default)" tabindex={0} />
         {/if}
