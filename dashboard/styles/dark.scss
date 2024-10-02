@@ -52,4 +52,8 @@
     .d-spoiler:active {
         color: $body-color-alt; //overwrite
     }
+
+    small {
+        color: #707070;
+    }
 }
