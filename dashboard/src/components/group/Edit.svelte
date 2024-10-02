@@ -25,6 +25,9 @@
         err = [];
         success = false;
 
+        // trim all string fields
+        Object.keys(data).forEach(k => data[k] = typeof data[k] == "string" ? data[k].trim() : data[k]);
+
         if (!data.name) err.push("Group name cannot be empty.")
 
         if (data.color && !/^#?[A-Fa-f0-9]{6}$/.test(input.color)) {
@@ -34,9 +37,6 @@
                 data.color = input.color.slice(1, input.color.length);
             }
         }
-
-        // trim all string fields
-        Object.keys(data).forEach(k => data[k] = typeof data[k] == "string" ? data[k].trim() : data[k]);
 
         err = err;
         if (err.length > 0) return;
