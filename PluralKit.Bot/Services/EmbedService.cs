@@ -263,7 +263,7 @@ public class EmbedService
         else if (system.NameFor(ctx) != null)
             nameField = $"{nameField} ({system.NameFor(ctx)})";
         else
-            nameField = $"{nameField} ({system.Name})";
+            nameField = $"{nameField}";
 
         var eb = new EmbedBuilder()
             .Author(new Embed.EmbedAuthor(nameField, IconUrl: target.IconFor(pctx), Url: $"https://dash.pluralkit.me/profile/g/{target.Hid}"))
