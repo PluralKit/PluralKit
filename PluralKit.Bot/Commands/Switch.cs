@@ -7,6 +7,7 @@ namespace PluralKit.Bot;
 
 public class Switch
 {
+
     public async Task SwitchDo(Context ctx)
     {
         ctx.CheckSystem();
@@ -103,12 +104,67 @@ public class Switch
         await ctx.Reply($"{Emojis.Success} Switch moved to <t:{newSwitchTime}> ({newSwitchDeltaStr} ago).");
     }
 
-    public async Task SwitchEdit(Context ctx)
+    public async Task SwitchEdit(Context ctx, bool newSwitch = false)
     {
         ctx.CheckSystem();
 
-        var members = await ctx.ParseMemberList(ctx.System.Id);
-        await DoEditCommand(ctx, members);
+        var newMembers = await ctx.ParseMemberList(ctx.System.Id);
+
+        await using var conn = await ctx.Database.Obtain();
+        var currentSwitch = await ctx.Repository.GetLatestSwitch(ctx.System.Id);
+        var currentSwitchMembers = await ctx.Repository.GetSwitchMembers(conn, currentSwitch.Id).ToListAsync().AsTask();
+
+        if (ctx.MatchFlag("first", "f"))
+            newMembers = FirstInSwitch(newMembers[0], currentSwitchMembers);
+        else if (ctx.MatchFlag("remove", "r"))
+            newMembers = RemoveFromSwitch(newMembers, currentSwitchMembers);
+        else if (ctx.MatchFlag("append", "a"))
+            newMembers = AppendToSwitch(newMembers, currentSwitchMembers);
+        else if (ctx.MatchFlag("prepend", "p"))
+            newMembers = PrependToSwitch(newMembers, currentSwitchMembers);
+
+        if (newSwitch)
+        {
+            // if there's no edit flag, assume we're appending
+            if (!ctx.MatchFlag("first", "f", "remove", "r", "append", "a", "prepend", "p"))
+                newMembers = AppendToSwitch(newMembers, currentSwitchMembers);
+            await DoSwitchCommand(ctx, newMembers);
+        }
+        else
+            await DoEditCommand(ctx, newMembers);
+    }
+
+    public List<PKMember> PrependToSwitch(List<PKMember> members, List<PKMember> currentSwitchMembers)
+    {
+        members.AddRange(currentSwitchMembers);
+
+        return members;
+    }
+
+    public List<PKMember> AppendToSwitch(List<PKMember> members, List<PKMember> currentSwitchMembers)
+    {
+        currentSwitchMembers.AddRange(members);
+        members = currentSwitchMembers;
+
+        return members;
+    }
+
+    public List<PKMember> RemoveFromSwitch(List<PKMember> members, List<PKMember> currentSwitchMembers)
+    {
+        var memberIds = members.Select(m => m.Id.Value);
+        currentSwitchMembers = currentSwitchMembers.Where(m => !memberIds.Contains(m.Id.Value)).ToList();
+        members = currentSwitchMembers;
+
+        return members;
+    }
+
+    public List<PKMember> FirstInSwitch(PKMember member, List<PKMember> currentSwitchMembers)
+    {
+        currentSwitchMembers = currentSwitchMembers.Where(m => m.Id != member.Id).ToList();
+        var members = new List<PKMember> { member };
+        members.AddRange(currentSwitchMembers);
+
+        return members;
     }
 
     public async Task SwitchEditOut(Context ctx)
