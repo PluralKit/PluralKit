@@ -35,7 +35,13 @@ public class PKMember
     // Dapper *can* figure out mapping to getter-only properties, but this doesn't work
     // when trying to map to *subclasses* (eg. ListedMember). Adding private setters makes it work anyway.
     public MemberId Id { get; private set; }
-    public string Hid { get; private set; }
+    private string _hid = null!;
+    public string Hid
+    {
+        private set => _hid = value.Trim();
+        get => _hid;
+    }
+
     public Guid Uuid { get; private set; }
     public SystemId System { get; private set; }
     public string Color { get; private set; }
@@ -49,6 +55,7 @@ public class PKMember
     public string Description { get; private set; }
     public ICollection<ProxyTag> ProxyTags { get; private set; }
     public bool KeepProxy { get; private set; }
+    public bool Tts { get; private set; }
     public Instant Created { get; private set; }
     public int MessageCount { get; private set; }
     public Instant? LastMessageTimestamp { get; private set; }
@@ -60,8 +67,8 @@ public class PKMember
     public PrivacyLevel NamePrivacy { get; private set; } //ignore setting if no display name is set
     public PrivacyLevel BirthdayPrivacy { get; private set; }
     public PrivacyLevel PronounPrivacy { get; private set; }
-
     public PrivacyLevel MetadataPrivacy { get; private set; }
+    public PrivacyLevel ProxyPrivacy { get; private set; }
     // public PrivacyLevel ColorPrivacy { get; private set; }
 
     /// Returns a formatted string representing the member's birthday, taking into account that a year of "0001" or "0004" is hidden
@@ -137,6 +144,7 @@ public static class PKMemberExt
         o.Add("description", member.DescriptionFor(ctx));
         o.Add("created", member.CreatedFor(ctx)?.FormatExport());
         o.Add("keep_proxy", member.KeepProxy);
+        o.Add("tts", member.Tts);
 
         o.Add("autoproxy_enabled", ctx == LookupContext.ByOwner ? member.AllowAutoproxy : null);
 
@@ -144,8 +152,11 @@ public static class PKMemberExt
         o.Add("last_message_timestamp", member.LastMessageTimestampFor(ctx)?.FormatExport());
 
         var tagArray = new JArray();
-        foreach (var tag in member.ProxyTags)
-            tagArray.Add(new JObject { { "prefix", tag.Prefix }, { "suffix", tag.Suffix } });
+        if (member.ProxyPrivacy.CanAccess(ctx))
+        {
+            foreach (var tag in member.ProxyTags)
+                tagArray.Add(new JObject { { "prefix", tag.Prefix }, { "suffix", tag.Suffix } });
+        }
         o.Add("proxy_tags", tagArray);
 
         if (includePrivacy)
@@ -159,6 +170,7 @@ public static class PKMemberExt
             p.Add("pronoun_privacy", member.PronounPrivacy.ToJsonString());
             p.Add("avatar_privacy", member.AvatarPrivacy.ToJsonString());
             p.Add("metadata_privacy", member.MetadataPrivacy.ToJsonString());
+            p.Add("proxy_privacy", member.ProxyPrivacy.ToJsonString());
 
             o.Add("privacy", p);
         }

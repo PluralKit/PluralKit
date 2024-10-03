@@ -3,6 +3,7 @@
 -- This does mean we can't use any functions in row triggers, etc. Still unsure how to handle this.
 
 drop view if exists system_last_switch;
+drop view if exists system_fronters;
 drop view if exists member_list;
 drop view if exists group_list;
 

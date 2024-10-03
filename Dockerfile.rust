@@ -2,7 +2,7 @@ FROM alpine:latest AS builder
 
 WORKDIR /build
 
-RUN apk add rustup build-base
+RUN apk add rustup build-base protoc
 # todo: arm64 target
 RUN rustup-init --default-host x86_64-unknown-linux-musl --default-toolchain stable --profile default -y
 
@@ -22,6 +22,7 @@ RUN cargo chef cook --release --recipe-path recipe.json --target x86_64-unknown-
 
 COPY Cargo.toml /build/
 COPY Cargo.lock /build/
+COPY proto/ /build/proto
 
 # this needs to match workspaces in Cargo.toml
 COPY lib/libpk /build/lib/libpk

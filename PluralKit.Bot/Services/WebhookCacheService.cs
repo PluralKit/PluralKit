@@ -94,9 +94,9 @@ public class WebhookCacheService
 
         // We don't have one, so we gotta create a new one
         // but first, make sure we haven't hit the webhook cap yet...
-        if (webhooks.Length >= 10)
+        if (webhooks.Length >= 15)
             throw new PKError(
-                "This channel has the maximum amount of possible webhooks (10) already created. A server admin must delete one or more webhooks so PluralKit can create one for proxying.");
+                "This channel has the maximum amount of possible webhooks (15) already created. A server admin must delete one or more webhooks so PluralKit can create one for proxying.");
 
         return await DoCreateWebhook(channelId);
     }

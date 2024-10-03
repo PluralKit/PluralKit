@@ -18,7 +18,7 @@ public partial class CommandTree
             return CommandHelpRoot(ctx);
         if (ctx.Match("ap", "autoproxy", "auto"))
             return HandleAutoproxyCommand(ctx);
-        if (ctx.Match("config", "cfg"))
+        if (ctx.Match("config", "cfg", "configure"))
             return HandleConfigCommand(ctx);
         if (ctx.Match("list", "find", "members", "search", "query", "l", "f", "fd", "ls"))
             return ctx.Execute<SystemList>(SystemList, m => m.MemberList(ctx, ctx.System));
@@ -44,11 +44,13 @@ public partial class CommandTree
             else return ctx.Execute<Help>(Help, m => m.HelpRoot(ctx));
         if (ctx.Match("explain"))
             return ctx.Execute<Help>(Explain, m => m.Explain(ctx));
-        if (ctx.Match("message", "msg"))
+        if (ctx.Match("message", "msg", "messageinfo"))
             return ctx.Execute<ProxiedMessage>(Message, m => m.GetMessage(ctx));
         if (ctx.Match("edit", "e"))
-            return ctx.Execute<ProxiedMessage>(MessageEdit, m => m.EditMessage(ctx));
-        if (ctx.Match("reproxy", "rp", "crimes"))
+            return ctx.Execute<ProxiedMessage>(MessageEdit, m => m.EditMessage(ctx, false));
+        if (ctx.Match("x"))
+            return ctx.Execute<ProxiedMessage>(MessageEdit, m => m.EditMessage(ctx, true));
+        if (ctx.Match("reproxy", "rp", "crimes", "crime"))
             return ctx.Execute<ProxiedMessage>(MessageReproxy, m => m.ReproxyMessage(ctx));
         if (ctx.Match("log"))
             if (ctx.Match("channel"))
@@ -89,7 +91,7 @@ public partial class CommandTree
         if (ctx.Match("rool")) return ctx.Execute<Fun>(null, m => m.Rool(ctx));
         if (ctx.Match("sus")) return ctx.Execute<Fun>(null, m => m.Sus(ctx));
         if (ctx.Match("error")) return ctx.Execute<Fun>(null, m => m.Error(ctx));
-        if (ctx.Match("stats")) return ctx.Execute<Misc>(null, m => m.Stats(ctx));
+        if (ctx.Match("stats", "status")) return ctx.Execute<Misc>(null, m => m.Stats(ctx));
         if (ctx.Match("permcheck"))
             return ctx.Execute<Checks>(PermCheck, m => m.PermCheckGuild(ctx));
         if (ctx.Match("proxycheck"))
@@ -98,7 +100,7 @@ public partial class CommandTree
             return HandleDebugCommand(ctx);
         if (ctx.Match("admin"))
             return HandleAdminCommand(ctx);
-        if (ctx.Match("random", "r"))
+        if (ctx.Match("random", "rand", "r"))
             if (ctx.Match("group", "g") || ctx.MatchFlag("group", "g"))
                 return ctx.Execute<Random>(GroupRandom, r => r.Group(ctx, ctx.System));
             else
@@ -203,7 +205,7 @@ public partial class CommandTree
             // if we *still* haven't matched anything, the user entered an invalid command name or system reference
             if (ctx.Parameters._ptr == previousPtr)
             {
-                if (ctx.Parameters.Peek().Length != 5 && !ctx.Parameters.Peek().TryParseMention(out _))
+                if (!ctx.Parameters.Peek().TryParseHid(out _) && !ctx.Parameters.Peek().TryParseMention(out _))
                 {
                     await PrintCommandNotFoundError(ctx, SystemCommands);
                     return;
@@ -220,13 +222,16 @@ public partial class CommandTree
     {
         if (ctx.Match("name", "rename", "changename", "rn"))
             await ctx.CheckSystem(target).Execute<SystemEdit>(SystemRename, m => m.Name(ctx, target));
+        else if (ctx.Match("servername", "sn", "sname", "snick", "snickname", "servernick", "servernickname",
+                     "serverdisplayname", "guildname", "guildnick", "guildnickname", "serverdn"))
+            await ctx.Execute<SystemEdit>(SystemServerName, m => m.ServerName(ctx, target));
         else if (ctx.Match("tag", "t"))
             await ctx.CheckSystem(target).Execute<SystemEdit>(SystemTag, m => m.Tag(ctx, target));
         else if (ctx.Match("servertag", "st", "stag", "deer"))
             await ctx.CheckSystem(target).Execute<SystemEdit>(SystemServerTag, m => m.ServerTag(ctx, target));
-        else if (ctx.Match("description", "desc", "bio", "info", "text"))
+        else if (ctx.Match("description", "desc", "describe", "d", "bio", "info", "text", "intro"))
             await ctx.CheckSystem(target).Execute<SystemEdit>(SystemDesc, m => m.Description(ctx, target));
-        else if (ctx.Match("pronouns", "prns"))
+        else if (ctx.Match("pronouns", "pronoun", "prns", "pn"))
             await ctx.CheckSystem(target).Execute<SystemEdit>(SystemPronouns, m => m.Pronouns(ctx, target));
         else if (ctx.Match("color", "colour"))
             await ctx.CheckSystem(target).Execute<SystemEdit>(SystemColor, m => m.Color(ctx, target));
@@ -234,6 +239,9 @@ public partial class CommandTree
             await ctx.CheckSystem(target).Execute<SystemEdit>(SystemBannerImage, m => m.BannerImage(ctx, target));
         else if (ctx.Match("avatar", "picture", "icon", "image", "pic", "pfp"))
             await ctx.CheckSystem(target).Execute<SystemEdit>(SystemAvatar, m => m.Avatar(ctx, target));
+        else if (ctx.Match("serveravatar", "sa", "servericon", "serverimage", "serverpfp", "serverpic", "savatar", "spic",
+                     "guildavatar", "guildpic", "guildicon", "sicon", "spfp"))
+            await ctx.CheckSystem(target).Execute<SystemEdit>(SystemServerAvatar, m => m.ServerAvatar(ctx, target));
         else if (ctx.Match("list", "l", "members", "ls"))
             await ctx.CheckSystem(target).Execute<SystemList>(SystemList, m => m.MemberList(ctx, target));
         else if (ctx.Match("find", "search", "query", "fd", "s"))
@@ -261,7 +269,7 @@ public partial class CommandTree
             await ctx.CheckSystem(target).Execute<SystemEdit>(SystemDelete, m => m.Delete(ctx, target));
         else if (ctx.Match("id"))
             await ctx.CheckSystem(target).Execute<System>(SystemId, m => m.DisplayId(ctx, target));
-        else if (ctx.Match("random", "r"))
+        else if (ctx.Match("random", "rand", "r"))
             if (ctx.Match("group", "g") || ctx.MatchFlag("group", "g"))
                 await ctx.CheckSystem(target).Execute<Random>(GroupRandom, r => r.Group(ctx, target));
             else
@@ -291,13 +299,13 @@ public partial class CommandTree
         // Commands that have a member target (eg. pk;member <member> delete)
         if (ctx.Match("rename", "name", "changename", "setname", "rn"))
             await ctx.Execute<MemberEdit>(MemberRename, m => m.Name(ctx, target));
-        else if (ctx.Match("description", "info", "bio", "text", "desc"))
+        else if (ctx.Match("description", "desc", "describe", "d", "bio", "info", "text", "intro"))
             await ctx.Execute<MemberEdit>(MemberDesc, m => m.Description(ctx, target));
         else if (ctx.Match("pronouns", "pronoun", "prns", "pn"))
             await ctx.Execute<MemberEdit>(MemberPronouns, m => m.Pronouns(ctx, target));
         else if (ctx.Match("color", "colour"))
             await ctx.Execute<MemberEdit>(MemberColor, m => m.Color(ctx, target));
-        else if (ctx.Match("birthday", "bday", "birthdate", "cakeday", "bdate"))
+        else if (ctx.Match("birthday", "birth", "bday", "birthdate", "cakeday", "bdate", "bd"))
             await ctx.Execute<MemberEdit>(MemberBirthday, m => m.Birthday(ctx, target));
         else if (ctx.Match("proxy", "tags", "proxytags", "brackets"))
             await ctx.Execute<MemberProxy>(MemberProxy, m => m.Proxy(ctx, target));
@@ -305,7 +313,7 @@ public partial class CommandTree
             await ctx.Execute<MemberEdit>(MemberDelete, m => m.Delete(ctx, target));
         else if (ctx.Match("avatar", "profile", "picture", "icon", "image", "pfp", "pic"))
             await ctx.Execute<MemberAvatar>(MemberAvatar, m => m.Avatar(ctx, target));
-        else if (ctx.Match("proxyavatar", "proxypfp", "webhookavatar", "webhookpfp", "pa"))
+        else if (ctx.Match("proxyavatar", "proxypfp", "webhookavatar", "webhookpfp", "pa", "pavatar", "ppfp"))
             await ctx.Execute<MemberAvatar>(MemberAvatar, m => m.WebhookAvatar(ctx, target));
         else if (ctx.Match("banner", "splash", "cover"))
             await ctx.Execute<MemberEdit>(MemberBannerImage, m => m.BannerImage(ctx, target));
@@ -319,7 +327,7 @@ public partial class CommandTree
             else
                 await ctx.Execute<GroupMember>(MemberGroups, m => m.ListMemberGroups(ctx, target));
         else if (ctx.Match("serveravatar", "sa", "servericon", "serverimage", "serverpfp", "serverpic", "savatar", "spic",
-                     "guildavatar", "guildpic", "guildicon", "sicon"))
+                     "guildavatar", "guildpic", "guildicon", "sicon", "spfp"))
             await ctx.Execute<MemberAvatar>(MemberServerAvatar, m => m.ServerAvatar(ctx, target));
         else if (ctx.Match("displayname", "dn", "dname", "nick", "nickname", "dispname"))
             await ctx.Execute<MemberEdit>(MemberDisplayName, m => m.DisplayName(ctx, target));
@@ -330,13 +338,17 @@ public partial class CommandTree
             await ctx.Execute<MemberEdit>(MemberAutoproxy, m => m.MemberAutoproxy(ctx, target));
         else if (ctx.Match("keepproxy", "keeptags", "showtags", "kp"))
             await ctx.Execute<MemberEdit>(MemberKeepProxy, m => m.KeepProxy(ctx, target));
+        else if (ctx.Match("texttospeech", "text-to-speech", "tts"))
+            await ctx.Execute<MemberEdit>(MemberTts, m => m.Tts(ctx, target));
+        else if (ctx.Match("serverkeepproxy", "servershowtags", "guildshowtags", "guildkeeptags", "serverkeeptags", "skp"))
+            await ctx.Execute<MemberEdit>(MemberServerKeepProxy, m => m.ServerKeepProxy(ctx, target));
         else if (ctx.Match("id"))
             await ctx.Execute<Member>(MemberId, m => m.DisplayId(ctx, target));
         else if (ctx.Match("privacy"))
             await ctx.Execute<MemberEdit>(MemberPrivacy, m => m.Privacy(ctx, target, null));
         else if (ctx.Match("private", "hidden", "hide"))
             await ctx.Execute<MemberEdit>(MemberPrivacy, m => m.Privacy(ctx, target, PrivacyLevel.Private));
-        else if (ctx.Match("public", "shown", "show"))
+        else if (ctx.Match("public", "shown", "show", "unhide", "unhidden"))
             await ctx.Execute<MemberEdit>(MemberPrivacy, m => m.Privacy(ctx, target, PrivacyLevel.Public));
         else if (ctx.Match("soulscream"))
             await ctx.Execute<Member>(MemberInfo, m => m.Soulscream(ctx, target));
@@ -364,7 +376,7 @@ public partial class CommandTree
                 await ctx.Execute<Groups>(GroupRename, g => g.RenameGroup(ctx, target));
             else if (ctx.Match("nick", "dn", "displayname", "nickname"))
                 await ctx.Execute<Groups>(GroupDisplayName, g => g.GroupDisplayName(ctx, target));
-            else if (ctx.Match("description", "info", "bio", "text", "desc"))
+            else if (ctx.Match("description", "desc", "describe", "d", "bio", "info", "text", "intro"))
                 await ctx.Execute<Groups>(GroupDesc, g => g.GroupDescription(ctx, target));
             else if (ctx.Match("add", "a"))
                 await ctx.Execute<GroupMember>(GroupAdd,
@@ -374,7 +386,7 @@ public partial class CommandTree
                     g => g.AddRemoveMembers(ctx, target, Groups.AddRemoveOperation.Remove));
             else if (ctx.Match("members", "list", "ms", "l", "ls"))
                 await ctx.Execute<GroupMember>(GroupMemberList, g => g.ListGroupMembers(ctx, target));
-            else if (ctx.Match("random"))
+            else if (ctx.Match("random", "rand"))
                 await ctx.Execute<Random>(GroupMemberRandom, r => r.GroupMember(ctx, target));
             else if (ctx.Match("privacy"))
                 await ctx.Execute<Groups>(GroupPrivacy, g => g.GroupPrivacy(ctx, target, null));
@@ -418,13 +430,15 @@ public partial class CommandTree
                 await ctx.Execute<Switch>(SwitchEdit, m => m.SwitchEdit(ctx));
         else if (ctx.Match("delete", "remove", "erase", "cancel", "yeet"))
             await ctx.Execute<Switch>(SwitchDelete, m => m.SwitchDelete(ctx));
+        else if (ctx.Match("copy", "add", "duplicate", "dupe"))
+            await ctx.Execute<Switch>(SwitchCopy, m => m.SwitchEdit(ctx, true));
         else if (ctx.Match("commands", "help"))
             await PrintCommandList(ctx, "switching", SwitchCommands);
         else if (ctx.HasNext()) // there are following arguments
             await ctx.Execute<Switch>(Switch, m => m.SwitchDo(ctx));
         else
             await PrintCommandNotFoundError(ctx, Switch, SwitchOut, SwitchMove, SwitchEdit, SwitchEditOut,
-                SwitchDelete, SystemFronter, SystemFrontHistory);
+                SwitchDelete, SwitchCopy, SystemFronter, SystemFrontHistory);
     }
 
     private async Task CommandHelpRoot(Context ctx)
@@ -526,6 +540,12 @@ public partial class CommandTree
             return ctx.Execute<Config>(null, m => m.CaseSensitiveProxyTags(ctx));
         if (ctx.MatchMultiple(new[] { "proxy" }, new[] { "error" }) || ctx.Match("pe"))
             return ctx.Execute<Config>(null, m => m.ProxyErrorMessageEnabled(ctx));
+        if (ctx.MatchMultiple(new[] { "split" }, new[] { "id", "ids" }) || ctx.Match("sid", "sids"))
+            return ctx.Execute<Config>(null, m => m.HidDisplaySplit(ctx));
+        if (ctx.MatchMultiple(new[] { "cap", "caps", "capitalize", "capitalise" }, new[] { "id", "ids" }) || ctx.Match("capid", "capids"))
+            return ctx.Execute<Config>(null, m => m.HidDisplayCaps(ctx));
+        if (ctx.MatchMultiple(new[] { "pad" }, new[] { "id", "ids" }) || ctx.MatchMultiple(new[] { "id" }, new[] { "pad", "padding" }) || ctx.Match("idpad", "padid", "padids"))
+            return ctx.Execute<Config>(null, m => m.HidListPadding(ctx));
 
         // todo: maybe add the list of configuration keys here?
         return ctx.Reply($"{Emojis.Error} Could not find a setting with that name. Please see `pk;commands config` for the list of possible config settings.");

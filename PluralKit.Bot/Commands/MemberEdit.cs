@@ -13,10 +13,12 @@ namespace PluralKit.Bot;
 public class MemberEdit
 {
     private readonly HttpClient _client;
+    private readonly AvatarHostingService _avatarHosting;
 
-    public MemberEdit(HttpClient client)
+    public MemberEdit(HttpClient client, AvatarHostingService avatarHosting)
     {
         _client = client;
+        _avatarHosting = avatarHosting;
     }
 
     public async Task Name(Context ctx, PKMember target)
@@ -34,7 +36,7 @@ public class MemberEdit
         if (existingMember != null && existingMember.Id != target.Id)
         {
             var msg =
-                $"{Emojis.Warn} You already have a member in your system with the name \"{existingMember.NameFor(ctx)}\" (`{existingMember.Hid}`). Do you want to rename this member to that name too?";
+                $"{Emojis.Warn} You already have a member in your system with the name \"{existingMember.NameFor(ctx)}\" (`{existingMember.DisplayHid(ctx.Config)}`). Do you want to rename this member to that name too?";
             if (!await ctx.PromptYesNo(msg, "Rename")) throw new PKError("Member renaming cancelled.");
         }
 
@@ -45,7 +47,7 @@ public class MemberEdit
         await ctx.Reply($"{Emojis.Success} Member renamed (using {newName.Length}/{Limits.MaxMemberNameLength} characters).");
         if (newName.Contains(" "))
             await ctx.Reply(
-                $"{Emojis.Note} Note that this member's name now contains spaces. You will need to surround it with \"double quotes\" when using commands referring to it.");
+                $"{Emojis.Note} Note that this member's name now contains spaces. You will need to surround it with \"double quotes\" when using commands referring to it, or just use the member's short ID (which is `{target.DisplayHid(ctx.Config)}`).");
         if (target.DisplayName != null)
             await ctx.Reply(
                 $"{Emojis.Note} Note that this member has a display name set ({target.DisplayName}), and will be proxied using that name instead.");
@@ -68,30 +70,41 @@ public class MemberEdit
             noDescriptionSetMessage +=
                 $" To set one, type `pk;member {target.Reference(ctx)} description <description>`.";
 
-        if (ctx.MatchRaw())
-        {
+        var format = ctx.MatchFormat();
+
+        // if there's nothing next or what's next is "raw"/"plaintext" we're doing a query, so check for null
+        if (!ctx.HasNext(false) || format != ReplyFormat.Standard)
             if (target.Description == null)
+            {
                 await ctx.Reply(noDescriptionSetMessage);
-            else
-                await ctx.Reply($"```\n{target.Description}\n```");
+                return;
+            }
+
+        if (format == ReplyFormat.Raw)
+        {
+            await ctx.Reply($"```\n{target.Description}\n```");
+            return;
+        }
+        if (format == ReplyFormat.Plaintext)
+        {
+            var eb = new EmbedBuilder()
+                .Description($"Showing description for member {target.Reference(ctx)}");
+            await ctx.Reply(target.Description, embed: eb.Build());
             return;
         }
 
         if (!ctx.HasNext(false))
         {
-            if (target.Description == null)
-                await ctx.Reply(noDescriptionSetMessage);
-            else
-                await ctx.Reply(embed: new EmbedBuilder()
-                    .Title("Member description")
-                    .Description(target.Description)
-                    .Field(new Embed.Field("\u200B",
-                        $"To print the description with formatting, type `pk;member {target.Reference(ctx)} description -raw`."
-                        + (ctx.System?.Id == target.System
-                            ? $" To clear it, type `pk;member {target.Reference(ctx)} description -clear`."
-                            : "")
-                        + $" Using {target.Description.Length}/{Limits.MaxDescriptionLength} characters."))
-                    .Build());
+            await ctx.Reply(embed: new EmbedBuilder()
+                .Title("Member description")
+                .Description(target.Description)
+                .Field(new Embed.Field("\u200B",
+                    $"To print the description with formatting, type `pk;member {target.Reference(ctx)} description -raw`."
+                    + (ctx.System?.Id == target.System
+                        ? $" To clear it, type `pk;member {target.Reference(ctx)} description -clear`."
+                        : "")
+                    + $" Using {target.Description.Length}/{Limits.MaxDescriptionLength} characters."))
+                .Build());
             return;
         }
 
@@ -124,26 +137,37 @@ public class MemberEdit
 
         ctx.CheckSystemPrivacy(target.System, target.PronounPrivacy);
 
-        if (ctx.MatchRaw())
-        {
+        var format = ctx.MatchFormat();
+
+        // if there's nothing next or what's next is "raw"/"plaintext" we're doing a query, so check for null
+        if (!ctx.HasNext(false) || format != ReplyFormat.Standard)
             if (target.Pronouns == null)
+            {
                 await ctx.Reply(noPronounsSetMessage);
-            else
-                await ctx.Reply($"```\n{target.Pronouns}\n```");
+                return;
+            }
+
+        if (format == ReplyFormat.Raw)
+        {
+            await ctx.Reply($"```\n{target.Pronouns}\n```");
+            return;
+        }
+        if (format == ReplyFormat.Plaintext)
+        {
+            var eb = new EmbedBuilder()
+                .Description($"Showing pronouns for member {target.Reference(ctx)}");
+            await ctx.Reply(target.Pronouns, embed: eb.Build());
             return;
         }
 
         if (!ctx.HasNext(false))
         {
-            if (target.Pronouns == null)
-                await ctx.Reply(noPronounsSetMessage);
-            else
-                await ctx.Reply(
-                    $"**{target.NameFor(ctx)}**'s pronouns are **{target.Pronouns}**.\nTo print the pronouns with formatting, type `pk;member {target.Reference(ctx)} pronouns -raw`."
-                    + (ctx.System?.Id == target.System
-                        ? $" To clear them, type `pk;member {target.Reference(ctx)} pronouns -clear`."
-                        : "")
-                    + $" Using {target.Pronouns.Length}/{Limits.MaxPronounsLength} characters.");
+            await ctx.Reply(
+                $"**{target.NameFor(ctx)}**'s pronouns are **{target.Pronouns}**.\nTo print the pronouns with formatting, type `pk;member {target.Reference(ctx)} pronouns -raw`."
+                + (ctx.System?.Id == target.System
+                    ? $" To clear them, type `pk;member {target.Reference(ctx)} pronouns -clear`."
+                    : "")
+                + $" Using {target.Pronouns.Length}/{Limits.MaxPronounsLength} characters.");
             return;
         }
 
@@ -180,13 +204,15 @@ public class MemberEdit
 
         async Task SetBannerImage(ParsedImage img)
         {
+            img = await _avatarHosting.TryRehostImage(img, AvatarHostingService.RehostedImageType.Banner, ctx.Author.Id, ctx.System);
             await AvatarUtils.VerifyAvatarOrThrow(_client, img.Url, true);
 
-            await ctx.Repository.UpdateMember(target.Id, new MemberPatch { BannerImage = img.Url });
+            await ctx.Repository.UpdateMember(target.Id, new MemberPatch { BannerImage = img.CleanUrl ?? img.Url });
 
             var msg = img.Source switch
             {
                 AvatarSource.Url => $"{Emojis.Success} Member banner image changed to the image at the given URL.",
+                AvatarSource.HostedCdn => $"{Emojis.Success} Member banner image changed to attached image.",
                 AvatarSource.Attachment =>
                     $"{Emojis.Success} Member banner image changed to attached image.\n{Emojis.Warn} If you delete the message containing the attachment, the banner image will stop working.",
                 AvatarSource.User => throw new PKError("Cannot set a banner image to an user's avatar."),
@@ -194,7 +220,7 @@ public class MemberEdit
             };
 
             // The attachment's already right there, no need to preview it.
-            var hasEmbed = img.Source != AvatarSource.Attachment;
+            var hasEmbed = img.Source != AvatarSource.Attachment && img.Source != AvatarSource.HostedCdn;
             await (hasEmbed
                 ? ctx.Reply(msg, new EmbedBuilder().Image(new Embed.EmbedImage(img.Url)).Build())
                 : ctx.Reply(msg));
@@ -207,13 +233,13 @@ public class MemberEdit
                 var eb = new EmbedBuilder()
                     .Title($"{target.NameFor(ctx)}'s banner image")
                     .Image(new Embed.EmbedImage(target.BannerImage))
-                    .Description($"To clear, use `pk;member {target.Hid} banner clear`.");
+                    .Description($"To clear, use `pk;member {target.Reference(ctx)} banner clear`.");
                 await ctx.Reply(embed: eb.Build());
             }
             else
             {
                 throw new PKSyntaxError(
-                    "This member does not have a banner image set. Set one by attaching an image to this command, or by passing an image URL or @mention.");
+                    "This member does not have a banner image set. Set one by attaching an image to this command, or by passing an image URL.");
             }
         }
 
@@ -228,7 +254,7 @@ public class MemberEdit
     public async Task Color(Context ctx, PKMember target)
     {
         var isOwnSystem = ctx.System?.Id == target.System;
-        var matchedRaw = ctx.MatchRaw();
+        var matchedFormat = ctx.MatchFormat();
         var matchedClear = ctx.MatchClear();
 
         if (!isOwnSystem || !(ctx.HasNext() || matchedClear))
@@ -236,8 +262,10 @@ public class MemberEdit
             if (target.Color == null)
                 await ctx.Reply(
                     "This member does not have a color set." + (isOwnSystem ? $" To set one, type `pk;member {target.Reference(ctx)} color <color>`." : ""));
-            else if (matchedRaw)
+            else if (matchedFormat == ReplyFormat.Raw)
                 await ctx.Reply("```\n#" + target.Color + "\n```");
+            else if (matchedFormat == ReplyFormat.Plaintext)
+                await ctx.Reply(target.Color);
             else
                 await ctx.Reply(embed: new EmbedBuilder()
                     .Title("Member color")
@@ -335,7 +363,7 @@ public class MemberEdit
         var eb = new EmbedBuilder()
             .Title("Member names")
             .Footer(new Embed.EmbedFooter(
-                $"Member ID: {target.Hid} | Active name in bold. Server name overrides display name, which overrides base name."
+                $"Member ID: {target.DisplayHid(ctx.Config)} | Active name in bold. Server name overrides display name, which overrides base name."
                 + (target.DisplayName != null && ctx.System?.Id == target.System ? $" Using {target.DisplayName.Length}/{Limits.MaxMemberNameLength} characters for the display name." : "")
                 + (memberGuildConfig?.DisplayName != null ? $" Using {memberGuildConfig?.DisplayName.Length}/{Limits.MaxMemberNameLength} characters for the server name." : "")));
 
@@ -384,12 +412,26 @@ public class MemberEdit
 
         // No perms check, display name isn't covered by member privacy
 
-        if (ctx.MatchRaw())
-        {
+        var format = ctx.MatchFormat();
+
+        // if what's next is "raw"/"plaintext" we need to check for null
+        if (format != ReplyFormat.Standard)
             if (target.DisplayName == null)
+            {
                 await ctx.Reply(noDisplayNameSetMessage);
-            else
-                await ctx.Reply($"```\n{target.DisplayName}\n```");
+                return;
+            }
+
+        if (format == ReplyFormat.Raw)
+        {
+            await ctx.Reply($"```\n{target.DisplayName}\n```");
+            return;
+        }
+        if (format == ReplyFormat.Plaintext)
+        {
+            var eb = new EmbedBuilder()
+                .Description($"Showing displayname for member {target.Reference(ctx)}");
+            await ctx.Reply(target.DisplayName, embed: eb.Build());
             return;
         }
 
@@ -446,12 +488,26 @@ public class MemberEdit
         // No perms check, display name isn't covered by member privacy
         var memberGuildConfig = await ctx.Repository.GetMemberGuild(ctx.Guild.Id, target.Id);
 
-        if (ctx.MatchRaw())
-        {
+        var format = ctx.MatchFormat();
+
+        // if what's next is "raw"/"plaintext" we need to check for null
+        if (format != ReplyFormat.Standard)
             if (memberGuildConfig.DisplayName == null)
+            {
                 await ctx.Reply(noServerNameSetMessage);
-            else
-                await ctx.Reply($"```\n{memberGuildConfig.DisplayName}\n```");
+                return;
+            }
+
+        if (format == ReplyFormat.Raw)
+        {
+            await ctx.Reply($"```\n{memberGuildConfig.DisplayName}\n```");
+            return;
+        }
+        if (format == ReplyFormat.Plaintext)
+        {
+            var eb = new EmbedBuilder()
+                .Description($"Showing servername for member {target.Reference(ctx)}");
+            await ctx.Reply(memberGuildConfig.DisplayName, embed: eb.Build());
             return;
         }
 
@@ -494,6 +550,11 @@ public class MemberEdit
     public async Task KeepProxy(Context ctx, PKMember target)
     {
         ctx.CheckSystem().CheckOwnMember(target);
+        MemberGuildSettings? memberGuildConfig = null;
+        if (ctx.Guild != null)
+        {
+            memberGuildConfig = await ctx.Repository.GetMemberGuild(ctx.Guild.Id, target.Id);
+        }
 
         bool newValue;
         if (ctx.Match("on", "enabled", "true", "yes"))
@@ -510,12 +571,19 @@ public class MemberEdit
         }
         else
         {
+            string keepProxyStatusMessage = "";
+
             if (target.KeepProxy)
-                await ctx.Reply(
-                    "This member has keepproxy **enabled**, which means proxy tags will be **included** in the resulting message when proxying.");
+                keepProxyStatusMessage += "This member has keepproxy **enabled**. Proxy tags will be **included** in the resulting message when proxying.";
             else
-                await ctx.Reply(
-                    "This member has keepproxy **disabled**, which means proxy tags will **not** be included in the resulting message when proxying.");
+                keepProxyStatusMessage += "This member has keepproxy **disabled**. Proxy tags will **not** be included in the resulting message when proxying.";
+
+            if (memberGuildConfig != null && memberGuildConfig.KeepProxy.HasValue && memberGuildConfig.KeepProxy.Value)
+                keepProxyStatusMessage += $"\n{Emojis.Warn} This member has keepproxy **enabled in this server**, which means proxy tags will **always** be included when proxying in this server, regardless of the global keepproxy. To clear this setting in this server, type `pk;m <member> serverkeepproxy clear`.";
+            else if (memberGuildConfig != null && memberGuildConfig.KeepProxy.HasValue && !memberGuildConfig.KeepProxy.Value)
+                keepProxyStatusMessage += $"\n{Emojis.Warn} This member has keepproxy **disabled in this server**, which means proxy tags will **never** be included when proxying in this server, regardless of the global keepproxy. To clear this setting in this server, type `pk;m <member> serverkeepproxy clear`.";
+
+            await ctx.Reply(keepProxyStatusMessage);
             return;
         }
 
@@ -524,12 +592,129 @@ public class MemberEdit
         var patch = new MemberPatch { KeepProxy = Partial<bool>.Present(newValue) };
         await ctx.Repository.UpdateMember(target.Id, patch);
 
+        string keepProxyUpdateMessage = "";
+
+        if (newValue)
+            keepProxyUpdateMessage += $"{Emojis.Success} this member now has keepproxy **enabled**. Member proxy tags will be **included** in the resulting message when proxying.";
+        else
+            keepProxyUpdateMessage += $"{Emojis.Success} this member now has keepproxy **disabled**. Member proxy tags will **not** be included in the resulting message when proxying.";
+
+        if (memberGuildConfig != null && memberGuildConfig.KeepProxy.HasValue && memberGuildConfig.KeepProxy.Value)
+            keepProxyUpdateMessage += $"\n{Emojis.Warn} This member has keepproxy **enabled in this server**, which means proxy tags will **always** be included when proxying in this server, regardless of the global keepproxy. To clear this setting in this server, type `pk;m <member> serverkeepproxy clear`.";
+        else if (memberGuildConfig != null && memberGuildConfig.KeepProxy.HasValue && !memberGuildConfig.KeepProxy.Value)
+            keepProxyUpdateMessage += $"\n{Emojis.Warn} This member has keepproxy **disabled in this server**, which means proxy tags will **never** be included when proxying in this server, regardless of the global keepproxy. To clear this setting in this server, type `pk;m <member> serverkeepproxy clear`.";
+
+        await ctx.Reply(keepProxyUpdateMessage);
+    }
+
+    public async Task ServerKeepProxy(Context ctx, PKMember target)
+    {
+        ctx.CheckGuildContext();
+        ctx.CheckSystem().CheckOwnMember(target);
+
+        var memberGuildConfig = await ctx.Repository.GetMemberGuild(ctx.Guild.Id, target.Id);
+
+        bool? newValue;
+        if (ctx.Match("on", "enabled", "true", "yes"))
+        {
+            newValue = true;
+        }
+        else if (ctx.Match("off", "disabled", "false", "no"))
+        {
+            newValue = false;
+        }
+        else if (ctx.MatchClear())
+        {
+            newValue = null;
+        }
+        else if (ctx.HasNext())
+        {
+            throw new PKSyntaxError("You must pass either \"on\", \"off\" or \"clear\".");
+        }
+        else
+        {
+            if (memberGuildConfig.KeepProxy.HasValue)
+                if (memberGuildConfig.KeepProxy.Value)
+                    await ctx.Reply(
+                        "This member has keepproxy **enabled** in the current server, which means proxy tags will be **included** in the resulting message when proxying. To clear this setting in this server, type `pk;m <member> serverkeepproxy clear`.");
+                else
+                    await ctx.Reply(
+                        "This member has keepproxy **disabled** in the current server, which means proxy tags will **not** be included in the resulting message when proxying. To clear this setting in this server, type `pk;m <member> serverkeepproxy clear`.");
+            else
+            {
+                var noServerKeepProxySetMessage = "This member does not have a server keepproxy override set.";
+                if (target.KeepProxy)
+                    noServerKeepProxySetMessage += " The global keepproxy is **enabled**, which means proxy tags will be **included** when proxying.";
+                else
+                    noServerKeepProxySetMessage += " The global keepproxy is **disabled**, which means proxy tags will **not** be included when proxying.";
+
+                await ctx.Reply(noServerKeepProxySetMessage);
+            }
+            return;
+        }
+
+        var patch = new MemberGuildPatch { KeepProxy = Partial<bool?>.Present(newValue) };
+        await ctx.Repository.UpdateMemberGuild(target.Id, ctx.Guild.Id, patch);
+
+        if (newValue.HasValue)
+            if (newValue.Value)
+                await ctx.Reply(
+                    $"{Emojis.Success} Member proxy tags will now be **included** in the resulting message when proxying **in the current server**. To clear this setting in this server, type `pk;m <member> serverkeepproxy clear`.");
+            else
+                await ctx.Reply(
+                    $"{Emojis.Success} Member proxy tags will now **not** be included in the resulting message when proxying **in the current server**. To clear this setting in this server, type `pk;m <member> serverkeepproxy clear`.");
+        else
+        {
+            var serverKeepProxyClearedMessage = $"{Emojis.Success} Cleared server keepproxy settings for this member.";
+
+            if (target.KeepProxy)
+                serverKeepProxyClearedMessage += " Member proxy tags will now be **included** in the resulting message when proxying.";
+            else
+                serverKeepProxyClearedMessage += " Member proxy tags will now **not** be included in the resulting message when proxying.";
+
+            await ctx.Reply(serverKeepProxyClearedMessage);
+        }
+    }
+
+    public async Task Tts(Context ctx, PKMember target)
+    {
+        ctx.CheckSystem().CheckOwnMember(target);
+
+        bool newValue;
+        if (ctx.Match("on", "enabled", "true", "yes"))
+        {
+            newValue = true;
+        }
+        else if (ctx.Match("off", "disabled", "false", "no"))
+        {
+            newValue = false;
+        }
+        else if (ctx.HasNext())
+        {
+            throw new PKSyntaxError("You must pass either \"on\" or \"off\".");
+        }
+        else
+        {
+            if (target.Tts)
+                await ctx.Reply(
+                    "This member has text-to-speech **enabled**, which means their messages **will be** sent as text-to-speech messages.");
+            else
+                await ctx.Reply(
+                    "This member has text-to-speech **disabled**, which means their messages **will not** be sent as text-to-speech messages.");
+            return;
+        }
+
+        ;
+
+        var patch = new MemberPatch { Tts = Partial<bool>.Present(newValue) };
+        await ctx.Repository.UpdateMember(target.Id, patch);
+
         if (newValue)
             await ctx.Reply(
-                $"{Emojis.Success} Member proxy tags will now be included in the resulting message when proxying.");
+                $"{Emojis.Success} Member's messages will now be sent as text-to-speech messages.");
         else
             await ctx.Reply(
-                $"{Emojis.Success} Member proxy tags will now not be included in the resulting message when proxying.");
+                $"{Emojis.Success} Member messages will no longer be sent as text-to-speech messages.");
     }
 
     public async Task MemberAutoproxy(Context ctx, PKMember target)
@@ -574,11 +759,12 @@ public class MemberEdit
                 .Field(new Embed.Field("Avatar", target.AvatarPrivacy.Explanation()))
                 .Field(new Embed.Field("Birthday", target.BirthdayPrivacy.Explanation()))
                 .Field(new Embed.Field("Pronouns", target.PronounPrivacy.Explanation()))
+                .Field(new Embed.Field("Proxy Tags", target.ProxyPrivacy.Explanation()))
                 .Field(new Embed.Field("Meta (creation date, message count, last front, last message)",
                     target.MetadataPrivacy.Explanation()))
                 .Field(new Embed.Field("Visibility", target.MemberVisibility.Explanation()))
                 .Description(
-                    "To edit privacy settings, use the command:\n`pk;member <member> privacy <subject> <level>`\n\n- `subject` is one of `name`, `description`, `avatar`, `birthday`, `pronouns`, `metadata`, `visibility`, or `all`\n- `level` is either `public` or `private`.")
+                    "To edit privacy settings, use the command:\n`pk;member <member> privacy <subject> <level>`\n\n- `subject` is one of `name`, `description`, `avatar`, `birthday`, `pronouns`, `proxies`, `metadata`, `visibility`, or `all`\n- `level` is either `public` or `private`.")
                 .Build());
             return;
         }
@@ -611,6 +797,7 @@ public class MemberEdit
                 MemberPrivacySubject.Avatar => "avatar privacy",
                 MemberPrivacySubject.Pronouns => "pronoun privacy",
                 MemberPrivacySubject.Birthday => "birthday privacy",
+                MemberPrivacySubject.Proxy => "proxy tag privacy",
                 MemberPrivacySubject.Metadata => "metadata privacy",
                 MemberPrivacySubject.Visibility => "visibility",
                 _ => throw new ArgumentOutOfRangeException($"Unknown privacy subject {subject}")
@@ -628,6 +815,8 @@ public class MemberEdit
                     "This member's birthday is now hidden from other systems.",
                 (MemberPrivacySubject.Pronouns, PrivacyLevel.Private) =>
                     "This member's pronouns are now hidden from other systems.",
+                (MemberPrivacySubject.Proxy, PrivacyLevel.Private) =>
+                    "This member's proxy tags are now hidden from other systems.",
                 (MemberPrivacySubject.Metadata, PrivacyLevel.Private) =>
                     "This member's metadata (eg. created timestamp, message count, etc) is now hidden from other systems.",
                 (MemberPrivacySubject.Visibility, PrivacyLevel.Private) =>
@@ -642,7 +831,9 @@ public class MemberEdit
                 (MemberPrivacySubject.Birthday, PrivacyLevel.Public) =>
                     "This member's birthday is no longer hidden from other systems.",
                 (MemberPrivacySubject.Pronouns, PrivacyLevel.Public) =>
-                    "This member's pronouns are no longer hidden other systems.",
+                    "This member's pronouns are no longer hidden from other systems.",
+                (MemberPrivacySubject.Proxy, PrivacyLevel.Public) =>
+                    "This member's proxy tags are no longer hidden from other systems.",
                 (MemberPrivacySubject.Metadata, PrivacyLevel.Public) =>
                     "This member's metadata (eg. created timestamp, message count, etc) is no longer hidden from other systems.",
                 (MemberPrivacySubject.Visibility, PrivacyLevel.Public) =>
@@ -677,8 +868,8 @@ public class MemberEdit
         ctx.CheckSystem().CheckOwnMember(target);
 
         await ctx.Reply(
-            $"{Emojis.Warn} Are you sure you want to delete \"{target.NameFor(ctx)}\"? If so, reply to this message with the member's ID (`{target.Hid}`). __***This cannot be undone!***__");
-        if (!await ctx.ConfirmWithReply(target.Hid)) throw Errors.MemberDeleteCancelled;
+            $"{Emojis.Warn} Are you sure you want to delete \"{target.NameFor(ctx)}\"? If so, reply to this message with the member's ID (`{target.DisplayHid(ctx.Config)}`). __***This cannot be undone!***__");
+        if (!await ctx.ConfirmWithReply(target.Hid, treatAsHid: true)) throw Errors.MemberDeleteCancelled;
 
         await ctx.Repository.DeleteMember(target.Id);
 

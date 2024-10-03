@@ -15,6 +15,8 @@ public class CoreConfig
     public string LogDir { get; set; }
     public string? ElasticUrl { get; set; }
     public string? SeqLogUrl { get; set; }
+    public string? DispatchProxyUrl { get; set; }
+    public string? DispatchProxyToken { get; set; }
 
     public LogEventLevel ConsoleLogLevel { get; set; } = LogEventLevel.Debug;
     public LogEventLevel ElasticLogLevel { get; set; } = LogEventLevel.Information;

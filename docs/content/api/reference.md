@@ -40,7 +40,17 @@ system's token (as described above) will override these privacy settings and sho
 
 ## Rate Limiting
 
-By default, there is a per-IP limit of 2 requests per second across the API. If you exceed this limit, you will get a 429 response code and will have to try again later.
+To protect against abuse and manage server resources, PluralKit's API limits the amount of queries available. Currently, the following limits are applied:
+
+- **10/second** for any `GET` requests other than the messages endpoint (`generic_get` scope)
+- **10/second** for requests to the [Get Proxied Message Information](/api/endpoints/#get-proxied-message-information) endpoint (`message` scope)
+- **3/second** for any `POST`, `PATCH`, or `DELETE` requests (`generic_update` scope)
+
+We may raise the limits for individual users in a case-by-case basis; please ask [in the support server](https://discord.gg/PczBt78) if you need a higher limit.
+
+::: tip
+If you are looking to query a specific resource in your system repeatedly (polling), please consider using [Dispatch Webhooks](/api/dispatch) instead.
+:::
 
 The following rate limit headers are present on HTTP responses:
 
@@ -49,6 +59,7 @@ The following rate limit headers are present on HTTP responses:
 |X-RateLimit-Limit|The amount of total requests you have available per second.|
 |X-RateLimit-Remaining|The amount of requests you have remaining until the next reset time.|
 |X-RateLimit-Reset|The UNIX time (in milliseconds) when the ratelimit info will reset.|
+|X-RateLimit-Scope|The type of rate limit the current request falls under.|
 
 If you make more requests than you have available, the server will respond with a 429 status code and a JSON error body.
 

@@ -16,7 +16,7 @@ Use this link to add the bot to your server:
 
 [https://discord.com/oauth2/authorize?client_id=466378653216014359&scope=bot&permissions=536995904](https://discord.com/oauth2/authorize?client_id=466378653216014359&scope=bot&permissions=536995904)
 
-Once you go through the wizard, the bot account will automatically join the server you've chosen. Please ensure the bot has the *Read Messages*, *Send Messages*, *Manage Messages*, *Attach Files* and *Manage Webhooks* permission in the channels you want it to work in. 
+Once you go through the wizard, the bot account will automatically join the server you've chosen. Please ensure the bot has the *Read Messages*, *Send Messages*, *Send Messages in Threads*, *Manage Messages*, *Attach Files*, and *Manage Webhooks* permission in the channels you want it to work in.
 
 ## System management
 In order to do most things with the PluralKit bot, you'll need to have a system registered with it. A *system* is a collection of *system members* that may be used by one or more *Discord accounts*.
@@ -40,6 +40,18 @@ To view information about *a different* system, there are a number of ways to do
     pk;system @Craig#5432
     pk;system 466378653216014359
     pk;system abcde
+
+### System renaming
+If you want to change the name of your system, you can use the `pk;system rename` command, like so:
+
+    pk;system rename New System Name
+
+### System server names
+If you'd like to set a name for your system, but only for a specific server, you can set the system's *server display name*. This shows up in replacement of the server name in the server you set it in. For example:
+
+    pk;system servername Name For This Server
+
+To clear your system servername for a server, simply run `pk;system servername clear` in  in the server in question. The servername cannot be run in DMs, it only applies to servers.
     
 ### System description
 If you'd like to add a small blurb to your system information card, you can add a *system description*. To do so, use the `pk;system description` command, as follows:
@@ -51,12 +63,20 @@ There's a 1000 character length limit on your system description - which is quit
 If you'd like to remove your system description, just type `pk;system description` without any further parameters.
 
 ### System avatars
-If you'd like your system to have an associated "system avatar", displayed on your system information card, you can add a system avatar. To do so, use the `pk;system avatar` command. You can either supply it with an direct URL to an image, or attach an image directly. For example.
+If you'd like your system to have an associated "system avatar", displayed on your system information card, you can add a system avatar. Your system avatar will also show up as the avatar on members who do not have their own when proxying. To do so, use the `pk;system avatar` command. You can either supply it with an direct URL to an image, or attach an image directly. For example.
 
     pk;system avatar http://placebeard.it/512.jpg
     pk;system avatar [with attached image]
     
 To clear your avatar, simply type `pk;system avatar` with no attachment or link.
+
+### System server avatars
+If you'd like your system to have an avatar (as above), but only for a specific server, you can set the *system server avatar*. This will override the global system avatar, but only in the server you set it in. For example:
+
+    pk;system serveravatar http://placebeard.it/512.jpg
+    pk;system serveravatar [with attached image]
+
+To clear your system serveravatar for a server, simply type `pk;system serveravatar clear` with no attachment or link in the server in question. The serveravatar command cannot be run in DMs, it only functions in servers.
 
 ### System tags
 Your system tag is a little snippet of text that'll be added to the end of all proxied messages.
@@ -70,7 +90,7 @@ a system tag. Note that emojis *are* supported! To set one, use the `pk;system t
     
 If you want to remove your system tag, just type `pk;system tag` with no extra parameters.
 
-**NB:** When proxying, the *total webhook username* must be 32 characters or below. As such, if you have a long system name, your tag might be enough
+**NB:** When proxying, the *total webhook username* must be 80 characters or below. As such, if you have a long system name, your tag might be enough
 to bump it over that limit. PluralKit will warn you if you have a member name/tag combination that will bring the combined username above the limit.
 You can either make the member name or the system tag shorter to solve this. 
     
@@ -154,7 +174,7 @@ As the one exception to the rule above, if the name consists of multiple words y
 :::
 
 ### Looking up member info
-To view information about a member, there are a couple ways to do it. Either you can address a member by their name (if they're in your own system), by their 5-character *member ID*, or by their *display name*, like so:
+To view information about a member, there are a couple ways to do it. Either you can address a member by their name (if they're in your own system), by their 5 or 6 letter *member ID*, or by their *display name*, like so:
 
     pk;member John
     pk;member qazws
@@ -338,6 +358,13 @@ The practical effect of this is:
 * **Keep proxy tags on:** `[Message goes here]` typed -> `[Message goes here]` displayed
 * **Keep proxy tags off:** `[Message goes here]` typed -> `Message goes here` displayed
 
+### Sending text-to-speech messages
+If you'd like your proxied messages to be sent as text-to-speech messages (read off out loud to anyone who has the channel focused) you can enable the text-to-speech option for a given member, like so:
+
+    pk;member John text-to-speech on
+
+Turning the option off is similar - replace "on" with "off" in the command. The default value for every member is off. If you are not allowed to send text-to-speech messages in a server, this feature will not work.
+
 ### Disabling proxying on a per-server basis
 If you need to disable or re-enable proxying messages for your system entirely in a specific server (for example, if you'd like to
 use a different proxy bot there), you can use the commands:
@@ -454,7 +481,7 @@ Then use the member's proxy tags once to set them as the latched member.
 #### Member mode 
 This autoproxy mode will autoproxy for a specific selected member, irrelevant of past proxies or fronters.
 
-To enable member-mode autoproxying for a given server, use the following command, where `<member>` is a member name (in "quotes" if multiple words) or 5-letter ID:
+To enable member-mode autoproxying for a given server, use the following command, where `<member>` is a member name (in "quotes" if multiple words), or 5 or 6 character ID:
 
     pk;autoproxy <member>
 
@@ -587,7 +614,7 @@ To create a new group, use the `pk;group new` command:
 
     pk;group new MyGroup
     
-This will create a new group. Groups all have a 5-letter ID, similar to systems and members.
+This will create a new group. Groups all have a 5 or 6 letter ID, similar to systems and members.
 
 ### Adding and removing members to groups
 To add a member to a group, use the `pk;group <group> add` command, eg:
@@ -645,6 +672,8 @@ At the moment, there are a few aspects of system privacy that can be configured.
 - Group list
 - Current fronter
 - Front history
+- System name
+- System avatar
 
 Each of these can be set to **public** or **private**. When set to **public**, anyone who queries your system (by account or system ID, or through the API), will see this information. When set to **private**, the information will only be shown when *you yourself* query the information. The cards will still be displayed in the channel the commands are run in, so it's still your responsibility not to pull up information in servers where you don't want it displayed.
 
@@ -659,6 +688,8 @@ To update your system privacy settings, use the following commands:
   * `groups`
   * `fronter`
   * `fronthistory`
+  * `name`
+  * `avatar`
   * `all` (to change all subjects at once)
 
 * `level` is either `public` or `private`
@@ -681,6 +712,7 @@ There are also some options for configuring member privacy:
 - Pronouns
 - Metadata *(message count, creation date, last message timestamp, etc)*
 - Visibility *(whether the member shows up in member lists)*
+- Proxy tags
 
 As with system privacy, each can be set to **public** or **private**. The same rules apply for how they are shown, too. When set to **public**, anyone who queries your system (by account or system ID, or through the API), will see this information. When set to **private**, the information will only be shown when *you yourself* query the information. The cards will still be displayed in the channel the commands are run in, so it's still your responsibility not to pull up information in servers where you don't want it displayed.
 
@@ -700,6 +732,7 @@ To update a member's privacy, you can use the command:
   * `pronouns`
   * `metadata`
   * `visiblity`
+  * `proxy` or `tag` (*not* `proxy tag`)
   * `all` (to change all subjects at once)
 
 * `level` is either `public` or `private`
@@ -712,7 +745,7 @@ For example:
     pk;member Skyler privacy all private
 
 ## Importing and exporting data
-If you're a user of another proxy bot (e.g. Tupperbox), or you want to import a saved system backup, you can use the importing and exporting commands.
+If you're a user of another proxy bot (e.g. Tupperbox), or you want to import a saved system backup, you can use the importing and exporting commands. Note, if you are on a mobile device, using the links is recommended - using the .json file from either bot may not work as Discord tends to break the file on download/upload.
 
 ### Importing from Tupperbox
 If you're a user of the *other proxying bot* Tupperbox, you can import system and member information from there. This is a fairly simple process:

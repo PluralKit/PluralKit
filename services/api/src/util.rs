@@ -1,8 +1,9 @@
+use crate::error::PKError;
 use axum::{
-    body::Body,
-    http::{HeaderValue, Request, Response, StatusCode, Uri},
+    http::{HeaderValue, StatusCode},
     response::IntoResponse,
 };
+use serde_json::{json, to_string, Value};
 use tracing::error;
 
 pub fn header_or_unknown(header: Option<&HeaderValue>) -> &str {
@@ -19,19 +20,39 @@ pub fn header_or_unknown(header: Option<&HeaderValue>) -> &str {
     }
 }
 
-pub async fn rproxy(req: Request<Body>) -> Response<Body> {
-    let uri = Uri::from_static(&libpk::config.api.remote_url).to_string();
-
-    match hyper_reverse_proxy::call("0.0.0.0".parse().unwrap(), &uri[..uri.len() - 1], req).await {
-        Ok(response) => response,
-        Err(error) => {
-            error!("error proxying request: {:?}", error);
-            Response::builder()
-                .status(StatusCode::INTERNAL_SERVER_ERROR)
-                .body(Body::empty())
-                .unwrap()
-        }
+pub fn wrapper<F>(handler: F) -> impl Fn() -> axum::response::Response
+where
+    F: Fn() -> anyhow::Result<Value>,
+{
+    move || match handler() {
+        Ok(v) => (StatusCode::OK, to_string(&v).unwrap()).into_response(),
+        Err(error) => match error.downcast_ref::<PKError>() {
+            Some(pkerror) => json_err(
+                pkerror.response_code,
+                to_string(&json!({ "message": pkerror.message, "code": pkerror.json_code }))
+                    .unwrap(),
+            ),
+            None => {
+                error!(
+                    "error in handler {}: {:#?}",
+                    std::any::type_name::<F>(),
+                    error
+                );
+                json_err(
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    r#"{"message": "500: Internal Server Error", "code": 0}"#.to_string(),
+                )
+            }
+        },
     }
+}
+
+pub fn handle_panic(err: Box<dyn std::any::Any + Send + 'static>) -> axum::response::Response {
+    error!("caught panic from handler: {:#?}", err);
+    json_err(
+        StatusCode::INTERNAL_SERVER_ERROR,
+        r#"{"message": "500: Internal Server Error", "code": 0}"#.to_string(),
+    )
 }
 
 pub fn json_err(code: StatusCode, text: String) -> axum::response::Response {

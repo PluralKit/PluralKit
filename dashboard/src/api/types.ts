@@ -5,6 +5,8 @@ export interface SystemPrivacy {
     front_history_privacy?: string,
     group_list_privacy?: string,
     pronoun_privacy?: string,
+    avatar_privacy?: string,
+    name_privacy?: string
 }
 
 export interface System {
@@ -40,7 +42,8 @@ export interface MemberPrivacy {
     birthday_privacy?: string,
     pronoun_privacy?: string,
     avatar_privacy?: string,
-    metadata_privacy?: string
+    metadata_privacy?: string,
+    proxy_privacy?: string
 }
 
 interface proxytag {
@@ -61,10 +64,11 @@ export interface Member {
     banner?: string;
     description?: string;
     created?: string;
-    keep_proxy?: boolean
+    keep_proxy?: boolean;
+    tts?: boolean;
     system?: string;
     proxy_tags?: Array<proxytag>;
-    privacy?: MemberPrivacy
+    privacy?: MemberPrivacy;
 }
 
 export interface GroupPrivacy {

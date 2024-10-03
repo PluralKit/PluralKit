@@ -44,7 +44,7 @@ public static class ContextListExt
             p.SortProperty = SortProperty.LastSwitch;
         if (ctx.MatchFlag("by-last-message", "blm", "blp")) p.SortProperty = SortProperty.LastMessage;
         if (ctx.MatchFlag("by-birthday", "by-birthdate", "bbd")) p.SortProperty = SortProperty.Birthdate;
-        if (ctx.MatchFlag("random")) p.SortProperty = SortProperty.Random;
+        if (ctx.MatchFlag("random", "rand")) p.SortProperty = SortProperty.Random;
 
         // Sort reverse?
         if (ctx.MatchFlag("r", "rev", "reverse"))
@@ -128,7 +128,7 @@ public static class ContextListExt
             // so run it through a helper that "makes it work" :)
             eb.WithSimpleLineContent(page.Select(m =>
             {
-                var ret = $"[`{m.Hid}`] **{m.NameFor(ctx)}** ";
+                var ret = $"[`{m.DisplayHid(ctx.Config, isList: true)}`] **{m.NameFor(ctx)}** ";
 
                 if (opts.IncludeMessageCount && m.MessageCountFor(lookupCtx) is { } count)
                     ret += $"({count} messages)";
@@ -146,7 +146,7 @@ public static class ContextListExt
                     ret += $"({m.DisplayName})";
                 else if (opts.IncludeBirthday && m.BirthdayFor(lookupCtx) is { } birthday)
                     ret += $"(birthday: {m.BirthdayString})";
-                else if (m.HasProxyTags)
+                else if (m.HasProxyTags && m.ProxyPrivacy.CanAccess(lookupCtx))
                 {
                     var proxyTagsString = m.ProxyTagsString();
                     if (proxyTagsString.Length > 100) // arbitrary threshold for now, tweak?
@@ -162,7 +162,7 @@ public static class ContextListExt
         {
             foreach (var m in page)
             {
-                var profile = new StringBuilder($"**ID**: {m.Hid}");
+                var profile = new StringBuilder($"**ID**: {m.DisplayHid(ctx.Config)}");
 
                 if (m.DisplayName != null && m.NamePrivacy.CanAccess(lookupCtx))
                     profile.Append($"\n**Display name**: {m.DisplayName}");
@@ -173,7 +173,7 @@ public static class ContextListExt
                 if (m.BirthdayFor(lookupCtx) != null)
                     profile.Append($"\n**Birthdate**: {m.BirthdayString}");
 
-                if (m.ProxyTags.Count > 0)
+                if (m.ProxyTags.Count > 0 && m.ProxyPrivacy.CanAccess(lookupCtx))
                     profile.Append($"\n**Proxy tags**: {m.ProxyTagsString()}");
 
                 if ((opts.IncludeMessageCount || opts.SortProperty == SortProperty.MessageCount) &&
@@ -238,7 +238,7 @@ public static class ContextListExt
             // so run it through a helper that "makes it work" :)
             eb.WithSimpleLineContent(page.Select(g =>
             {
-                var ret = $"[`{g.Hid}`] **{g.NameFor(ctx)}** ";
+                var ret = $"[`{g.DisplayHid(ctx.Config, isList: true)}`] **{g.NameFor(ctx)}** ";
 
                 switch (opts.SortProperty)
                 {
@@ -308,7 +308,7 @@ public static class ContextListExt
         {
             foreach (var g in page)
             {
-                var profile = new StringBuilder($"**ID**: {g.Hid}");
+                var profile = new StringBuilder($"**ID**: {g.DisplayHid(ctx.Config)}");
 
                 if (g.DisplayName != null && g.NamePrivacy.CanAccess(lookupCtx))
                     profile.Append($"\n**Display name**: {g.DisplayName}");

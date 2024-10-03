@@ -15,6 +15,8 @@
     import { filterList, getPageAmount, paginateList } from '../../../components/list/functions';
     import PageControl from "../../../components/list/PageControl.svelte";
     import { writable, type Writable } from "svelte/store";
+    import TinyView from "../../../components/list/TinyView.svelte";
+    import TextView from "../../../components/list/TextView.svelte";
 
     // get the state from the navigator so that we know which tab to start on
     let location = useLocation();
@@ -48,7 +50,7 @@
     let groupsStore: Writable<Group[]> = writable([])
     $: members = setContext<Writable<Member[]>>("members", membersStore)
     $: groups = setContext<Writable<Group[]>>("groups", groupsStore)
-    $: member =  $members.filter(m => m.id === $params.id)[0] || {}
+    let member: Member|null = null
 
     let title = isPublic ? "member" : "member (dash)";
 
@@ -56,12 +58,10 @@
         try {
             if (isPublic) {
                 const res: Member = await api().members($params.id).get({auth: !isPublic});
-                $members = [res]
-                member = $members.filter(m => m.id === $params.id)[0]
+                member = res;
             } else {
-                const res: Member[] = await api().systems("@me").members.get({ auth: true});
-                $members = res;
-                member = $members.filter(m => m.id === $params.id)[0]
+                const res: Member = await api().members($params.id).get({auth: !isPublic});
+                member = res
 
                 if (!member.privacy) {
                     notOwnSystem = true;
@@ -84,14 +84,17 @@
 
     async function fetchGroups() {
         try {
-            let memberGroups: Group[] = await api().members($params.id).groups().get({auth: !isPublic });
-            memberGroups.forEach(g => g.members = [])
-            groups.set(memberGroups)
-
             if (!isPublic) {
                 const systemGroups: Group[] = await api().systems("@me").groups.get({ auth: true, query: { with_members: true } });
+                const memberList: Member[] = await api().systems("@me").members.get({ auth: true })
+                members.set(memberList)
                 groups.set(systemGroups)
+            } else {
+            let memberGroups: Group[] = await api().members($params.id).groups().get({auth: !isPublic });
+                if (!isPublic) memberGroups.forEach(g => g.members = [])
+                groups.set(memberGroups)
             }
+
             groupErr = "";
             groupLoading = false;
         } catch (error) {
@@ -113,6 +116,7 @@
 
     function getDefaultItemsPerpage(): number {
         if (listView === 'card') return 24;
+        else if (listView === 'tiny') return 36;
         else if (settings && settings.accessibility && settings.accessibility.expandedcards) 
             return 10;
         else return 25
@@ -133,7 +137,7 @@
         }
     }
 
-    $: memberGroups = $groups.filter(g => g.members.includes(member.uuid));
+    $: memberGroups = !isPublic ? $groups.filter(g => g.members.includes(member.uuid)) : $groups;
     $: processedList = filterList(memberGroups, $groups,listOptions);
     $: currentPage = paginateList(processedList, pageOptions);
     $: pageAmount = getPageAmount(processedList, pageOptions);
@@ -164,7 +168,7 @@
             {:else if member && member.id}
                 <Card class="mb-4">
                     <CardHeader>
-                        <CardsHeader item={member}>
+                        <CardsHeader item={member} avatarUsed="avatar" type="member">
                             <div slot="icon" style="cursor: pointer;" id={`member-copy-${member.id}`} on:click|stopPropagation={() => copyShortLink()} on:keydown={(e) => copyShortLink(e)} tabindex={0} >
                                 <FaAddressCard slot="icon" />
                             </div>
@@ -185,11 +189,16 @@
             <span class="itemcounter">{processedList.length} {pageOptions.type}s ({currentPage.length} shown)</span>
             <ListPagination bind:currentPage={pageOptions.currentPage} {pageAmount} />
                 {#if pageOptions.view === "card"}
-                <CardView {pageOptions} currentList={currentPage} />
+                <CardView {pageOptions} currentList={currentPage} {listOptions} />
+                {:else if pageOptions.view === "tiny"}
+                <TinyView {pageOptions} currentList={currentPage} {listOptions} />
+                {:else if pageOptions.view === "text"}
+                <TextView {pageOptions} currentList={currentPage} {listOptions} />
                 {:else}
-                <ListView {pageOptions} currentList={currentPage} fullListLength={memberGroups.length}/>
+                <ListView {pageOptions} currentList={currentPage} fullListLength={memberGroups.length} options={listOptions} />
                 {/if}
                 <ListPagination bind:currentPage={pageOptions.currentPage} {pageAmount} />
+                <div class="spacer"></div>
             {/if}
             {/if}
         </Col>

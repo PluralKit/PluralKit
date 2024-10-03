@@ -38,6 +38,8 @@ public class LoggerCleanService
     private static readonly Regex _GearBotRegex = new("\\(``(\\d{17,19})``\\) in <#\\d{17,19}> has been removed.");
     private static readonly Regex _GiselleRegex = new("\\*\\*Message ID\\*\\*: `(\\d{17,19})`");
     private static readonly Regex _ProBotRegex = new("\\*\\*Message sent by <@(\\d{17,19})> deleted in <#\\d{17,19}>.\\*\\*");
+    private static readonly Regex _DozerRegex = new("Message ID: (\\d{17,19}) - (\\d{17,19})\nUserID: (\\d{17,19})");
+    private static readonly Regex _SkyraRegex = new("https://discord.com/channels/(\\d{17,19})/(\\d{17,19})/(\\d{17,19})");
 
     private static readonly Regex _VortexRegex =
         new("`\\[(\\d\\d:\\d\\d:\\d\\d)\\]` .* \\(ID:(\\d{17,19})\\).* <#\\d{17,19}>:");
@@ -71,6 +73,8 @@ public class LoggerCleanService
         new LoggerBot("Vortex", 240254129333731328, fuzzyExtractFunc: ExtractVortex),
         new LoggerBot("ProBot", 282859044593598464, fuzzyExtractFunc: ExtractProBot), // webhook
         new LoggerBot("ProBot Prime", 567703512763334685, fuzzyExtractFunc: ExtractProBot), // webhook (?)
+        new LoggerBot("Dozer", 356535250932858885, ExtractDozer),
+        new LoggerBot("Skyra", 266624760782258186, ExtractSkyra),
     }.ToDictionary(b => b.Id);
 
     private static Dictionary<ulong, LoggerBot> _botsByApplicationId
@@ -97,7 +101,7 @@ public class LoggerCleanService
         var channel = await _cache.GetChannel(msg.ChannelId);
 
         if (channel.Type != Channel.ChannelType.GuildText) return;
-        if (!(await _cache.PermissionsIn(channel.Id)).HasFlag(PermissionSet.ManageMessages)) return;
+        if (!(await _cache.BotPermissionsIn(channel.Id)).HasFlag(PermissionSet.ManageMessages)) return;
 
         // If this message is from a *webhook*, check if the application ID matches one of the bots we know
         // If it's from a *bot*, check the bot ID to see if we know it.
@@ -362,6 +366,21 @@ public class LoggerCleanService
                     .Parse(msg.Embeds[0].Timestamp).GetValueOrThrow().ToInstant()
             }
             : null;
+    }
+
+    private static ulong? ExtractDozer(Message msg)
+    {
+        var embed = msg.Embeds?.FirstOrDefault();
+        var match = _DozerRegex.Match(embed?.Footer.Text);
+        return match.Success ? ulong.Parse(match.Groups[2].Value) : null;
+    }
+
+    private static ulong? ExtractSkyra(Message msg)
+    {
+        var embed = msg.Embeds?.FirstOrDefault();
+        if (embed?.Footer?.Text == null || !embed.Footer.Text.StartsWith("Message Deleted")) return null;
+        var match = _SkyraRegex.Match(embed.Author.Url);
+        return match.Success ? ulong.Parse(match.Groups[3].Value) : null;
     }
 
     public class LoggerBot

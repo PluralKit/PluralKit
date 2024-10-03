@@ -25,7 +25,7 @@ This is the data PluralKit does *not* collect:
 
 System and member information (names, member lists, descriptions, etc) are public by default, and can be looked up by anyone given a system/member ID or an account ID. This can be changed using the [privacy settings](/guide#privacy). 
 
-You can export your system information using the `pk;export` command. This does not include message metadata (as the file would be huge). If there's demand for a command to export that, [let me know on GitHub](https://github.com/PluralKit/PluralKit/issues).
+You can export your system information using the `pk;export` command. This does not include message metadata (as the file would be huge). If you wish to request a copy of the message metadata PluralKit has stored for your Discord account, ask a developer [in the support server](https://discord.gg/PczBt78).
 
 You can delete your information using `pk;system delete`. This will delete all system information and associated members, switches, and messages. This will not delete your information from the database backups. Contact me if you want that wiped, too.
 

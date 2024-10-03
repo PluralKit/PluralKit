@@ -28,6 +28,12 @@ public class SystemFront
 
     public async Task SystemFrontHistory(Context ctx, PKSystem system)
     {
+        if (ctx.MatchFlag("clear", "c") || ctx.PeekArgument() == "clear")
+        {
+            await new Switch().SwitchDelete(ctx);
+            return;
+        }
+
         if (system == null) throw Errors.NoSystemError;
         ctx.CheckSystemPrivacy(system.Id, system.FrontHistoryPrivacy);
 
@@ -38,9 +44,16 @@ public class SystemFront
             .Scan(new FrontHistoryEntry(null, null),
                 (lastEntry, newSwitch) => new FrontHistoryEntry(lastEntry.ThisSwitch?.Timestamp, newSwitch));
 
-        var embedTitle = system.Name != null
-            ? $"Front history of {system.Name} (`{system.Hid}`)"
+        var embedTitle = system.NameFor(ctx) != null
+            ? $"Front history of {system.NameFor(ctx)} (`{system.Hid}`)"
             : $"Front history of `{system.Hid}`";
+
+        if (ctx.Guild != null)
+        {
+            var guildSettings = await ctx.Repository.GetSystemGuild(ctx.Guild.Id, system.Id);
+            if (guildSettings.DisplayName != null)
+                embedTitle = $"Front history of {guildSettings.DisplayName} (`{system.Hid}`)";
+        }
 
         var showMemberId = ctx.MatchFlag("with-id", "wid");
 
@@ -63,7 +76,7 @@ public class SystemFront
 
                     var members = await ctx.Database.Execute(c => ctx.Repository.GetSwitchMembers(c, sw.Id)).ToListAsync();
                     var membersStr = members.Any()
-                        ? string.Join(", ", members.Select(m => $"**{m.NameFor(ctx)}**{(showMemberId ? $" (`{m.Hid}`)" : "")}"))
+                        ? string.Join(", ", members.Select(m => $"**{m.NameFor(ctx)}**{(showMemberId ? $" (`{m.DisplayHid(ctx.Config)}`)" : "")}"))
                         : "**no fronter**";
 
                     var switchSince = SystemClock.Instance.GetCurrentInstant() - sw.Timestamp;
@@ -121,12 +134,17 @@ public class SystemFront
         if (rangeStart.Value.ToInstant() > now) throw Errors.FrontPercentTimeInFuture;
 
         var title = new StringBuilder("Frontpercent of ");
+        SystemGuildSettings guildSettings = null;
+        if (ctx.Guild != null)
+            guildSettings = await ctx.Repository.GetSystemGuild(ctx.Guild.Id, system.Id);
         if (group != null)
-            title.Append($"{group.NameFor(ctx)} (`{group.Hid}`)");
-        else if (system.Name != null)
-            title.Append($"{system.Name} (`{system.Hid}`)");
+            title.Append($"{group.NameFor(ctx)} (`{group.DisplayHid(ctx.Config)}`)");
+        else if (ctx.Guild != null && guildSettings.DisplayName != null)
+            title.Append($"{guildSettings.DisplayName} (`{system.DisplayHid(ctx.Config)}`)");
+        else if (system.NameFor(ctx) != null)
+            title.Append($"{system.NameFor(ctx)} (`{system.DisplayHid(ctx.Config)}`)");
         else
-            title.Append($"`{system.Hid}`");
+            title.Append($"`{system.DisplayHid(ctx.Config)}`");
 
         var frontpercent = await ctx.Database.Execute(c => ctx.Repository.GetFrontBreakdown(c, system.Id, group?.Id, rangeStart.Value.ToInstant(), now));
         await ctx.Reply(embed: await _embeds.CreateFrontPercentEmbed(frontpercent, system, group, ctx.Zone,

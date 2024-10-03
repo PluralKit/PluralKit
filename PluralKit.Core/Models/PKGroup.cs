@@ -32,7 +32,13 @@ public readonly struct GroupId: INumericId<GroupId, int>
 public class PKGroup
 {
     public GroupId Id { get; private set; }
-    public string Hid { get; private set; } = null!;
+    private string _hid = null!;
+    public string Hid
+    {
+        private set => _hid = value.Trim();
+        get => _hid;
+    }
+
     public Guid Uuid { get; private set; }
     public SystemId System { get; private set; }
 

@@ -1,4 +1,5 @@
 #nullable enable
+using System;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -38,11 +39,12 @@ public class ProxiedMessage
     private readonly WebhookExecutorService _webhookExecutor;
     private readonly ProxyService _proxy;
     private readonly LastMessageCacheService _lastMessageCache;
+    private readonly RedisService _redisService;
 
     public ProxiedMessage(EmbedService embeds,
                           DiscordApiClient rest, IMetrics metrics, ModelRepository repo, ProxyService proxy,
                           WebhookExecutorService webhookExecutor, LogChannelService logChannel, IDiscordCache cache,
-                          LastMessageCacheService lastMessageCache)
+                          LastMessageCacheService lastMessageCache, RedisService redisService)
     {
         _embeds = embeds;
         _rest = rest;
@@ -53,6 +55,7 @@ public class ProxiedMessage
         _metrics = metrics;
         _proxy = proxy;
         _lastMessageCache = lastMessageCache;
+        _redisService = redisService;
     }
 
     public async Task ReproxyMessage(Context ctx)
@@ -90,7 +93,7 @@ public class ProxiedMessage
         }
     }
 
-    public async Task EditMessage(Context ctx)
+    public async Task EditMessage(Context ctx, bool useRegex)
     {
         var (msg, systemId) = await GetMessageToEdit(ctx, EditTimeout, false);
 
@@ -100,6 +103,9 @@ public class ProxiedMessage
         var originalMsg = await _rest.GetMessageOrNull(msg.Channel, msg.Mid);
         if (originalMsg == null)
             throw new PKError("Could not edit message.");
+
+        // Regex flag
+        useRegex = useRegex || ctx.MatchFlag("regex", "x");
 
         // Check if we should append or prepend
         var mutateSpace = ctx.MatchFlag("nospace", "ns") ? "" : " ";
@@ -118,12 +124,93 @@ public class ProxiedMessage
         if (newContent == null)
             throw new PKSyntaxError("You need to include the message to edit in.");
 
+        // Can't append or prepend a Regex
+        if (useRegex && (append || prepend))
+            throw new PKError("You can't use the append or prepend options with a Regex.");
+
+        // Use the Regex to substitute the message content
+        if (useRegex)
+        {
+            const string regexErrorStr = "Could not parse Regex. The expected formats are s|X|Y or s|X|Y|F, where | is any character, X is a valid Regex to search for matches of, Y is a substitution string, and F is a set of Regex flags.";
+
+            // Smallest valid Regex string is "s||"; 3 chars long
+            if (newContent.Length < 3 || !newContent.StartsWith('s'))
+                throw new PKError(regexErrorStr);
+
+            var separator = newContent[1];
+
+            // s|X|Y   => ["s", "X", "Y"]
+            // s|X|Y|F => ["s", "X", "Y", "F"] ("F" may be empty)
+            var splitString = newContent.Split(separator);
+
+            if (splitString.Length != 3 && splitString.Length != 4)
+                throw new PKError(regexErrorStr);
+
+            var flags = splitString.Length == 4 ? splitString[3] : "";
+
+            var regexOptions = RegexOptions.None;
+            var globalMatch = false;
+
+            // Parse flags
+            foreach (char c in flags)
+            {
+                switch (c)
+                {
+                    case 'g':
+                        globalMatch = true;
+                        break;
+
+                    case 'i':
+                        regexOptions |= RegexOptions.IgnoreCase;
+                        break;
+
+                    case 'm':
+                        regexOptions |= RegexOptions.Multiline;
+                        break;
+
+                    case 'n':
+                        regexOptions |= RegexOptions.ExplicitCapture;
+                        break;
+
+                    case 's':
+                        regexOptions |= RegexOptions.Singleline;
+                        break;
+
+                    case 'x':
+                        regexOptions |= RegexOptions.IgnorePatternWhitespace;
+                        break;
+
+                    default:
+                        throw new PKError($"Invalid Regex flag '{c}'. Valid flags include 'g', 'i', 'm', 'n', 's', and 'x'.");
+                }
+            }
+
+            try
+            {
+                // I would use RegexOptions.NonBacktracking but that's only .NET 7 :(
+                var regex = new Regex(splitString[1], regexOptions, TimeSpan.FromSeconds(0.5));
+                var numMatches = globalMatch ? -1 : 1; // Negative means all matches
+                newContent = regex.Replace(originalContent!, splitString[2], numMatches);
+            }
+            catch (ArgumentException)
+            {
+                throw new PKError(regexErrorStr);
+            }
+            catch (RegexMatchTimeoutException)
+            {
+                throw new PKError("Regex took too long to run.");
+            }
+        }
+
         // Append or prepend the new content to the original message content if needed.
         // If no flag is supplied, the new contents will completly overwrite the old contents
         // If both flags are specified. the message will be prepended AND appended
-        if (append && prepend) newContent = $"{newContent}{mutateSpace}{originalContent}{mutateSpace}{newContent}";
-        else if (append) newContent = $"{originalContent}{mutateSpace}{newContent}";
-        else if (prepend) newContent = $"{newContent}{mutateSpace}{originalContent}";
+        if (append && prepend)
+            newContent = $"{newContent}{mutateSpace}{originalContent}{mutateSpace}{newContent}";
+        else if (append)
+            newContent = $"{originalContent}{mutateSpace}{newContent}";
+        else if (prepend)
+            newContent = $"{newContent}{mutateSpace}{originalContent}";
 
         if (newContent.Length > 2000)
             throw new PKError("PluralKit cannot proxy messages over 2000 characters in length.");
@@ -135,6 +222,8 @@ public class ProxiedMessage
 
             if (ctx.Guild == null)
                 await _rest.CreateReaction(ctx.Channel.Id, ctx.Message.Id, new Emoji { Name = Emojis.Success });
+
+            await _redisService.SetOriginalMid(ctx.Message.Id, editedMsg.Id);
 
             if ((await ctx.BotPermissions).HasFlag(PermissionSet.ManageMessages))
                 await _rest.DeleteMessage(ctx.Channel.Id, ctx.Message.Id);
@@ -263,7 +352,9 @@ public class ProxiedMessage
         else if (!await ctx.CheckPermissionsInGuildChannel(channel, PermissionSet.ViewChannel))
             showContent = false;
 
-        if (ctx.MatchRaw())
+        var format = ctx.MatchFormat();
+
+        if (format != ReplyFormat.Standard)
         {
             var discordMessage = await _rest.GetMessageOrNull(message.Message.Channel, message.Message.Mid);
             if (discordMessage == null || !showContent)
@@ -276,21 +367,32 @@ public class ProxiedMessage
                 return;
             }
 
-            await ctx.Reply($"```{content}```");
-
-            if (Regex.IsMatch(content, "```.*```", RegexOptions.Singleline))
+            if (format == ReplyFormat.Raw)
             {
-                var stream = new MemoryStream(Encoding.UTF8.GetBytes(content));
-                await ctx.Rest.CreateMessage(
-                    ctx.Channel.Id,
-                    new MessageRequest
-                    {
-                        Content = $"{Emojis.Warn} Message contains codeblocks, raw source sent as an attachment."
-                    },
-                    new[] { new MultipartFile("message.txt", stream, null, null, null) });
+                await ctx.Reply($"```{content}```");
+
+                if (Regex.IsMatch(content, "```.*```", RegexOptions.Singleline))
+                {
+                    var stream = new MemoryStream(Encoding.UTF8.GetBytes(content));
+                    await ctx.Rest.CreateMessage(
+                        ctx.Channel.Id,
+                        new MessageRequest
+                        {
+                            Content = $"{Emojis.Warn} Message contains codeblocks, raw source sent as an attachment."
+                        },
+                        new[] { new MultipartFile("message.txt", stream, null, null, null) });
+                }
+                return;
             }
 
-            return;
+            if (format == ReplyFormat.Plaintext)
+            {
+                var eb = new EmbedBuilder()
+                .Description($"Showing contents of message {message.Message.Mid}");
+                await ctx.Reply(content, embed: eb.Build());
+                return;
+            }
+
         }
 
         if (isDelete)

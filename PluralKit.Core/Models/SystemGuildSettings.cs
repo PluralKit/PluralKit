@@ -9,6 +9,8 @@ public class SystemGuildSettings
     public bool ProxyEnabled { get; } = true;
     public string? Tag { get; }
     public bool TagEnabled { get; }
+    public string? AvatarUrl { get; }
+    public string? DisplayName { get; }
 }
 
 public static class SystemGuildExt
@@ -20,6 +22,8 @@ public static class SystemGuildExt
         o.Add("proxying_enabled", settings.ProxyEnabled);
         o.Add("tag", settings.Tag);
         o.Add("tag_enabled", settings.TagEnabled);
+        o.Add("avatar_url", settings.AvatarUrl);
+        o.Add("display_name", settings.DisplayName);
 
         return o;
     }

@@ -183,9 +183,9 @@
       },
       "Npgsql": {
         "type": "Direct",
-        "requested": "[4.1.5, )",
-        "resolved": "4.1.5",
-        "contentHash": "juDlNse+SKfXRP0VSgpJkpdCcaVLZt8m37EHdRX+8hw+GG69Eat1Y0MdEfl+oetdOnf9E133GjIDEjg9AF6HSQ==",
+        "requested": "[4.1.13, )",
+        "resolved": "4.1.13",
+        "contentHash": "p79cObfuRgS8KD5sFmQUqVlINEkJm39bCrzRclicZE1942mKcbLlc0NdoVKhBeZPv//prK/sVTUmRVxdnoPCoA==",
         "dependencies": {
           "System.Runtime.CompilerServices.Unsafe": "4.6.0"
         }

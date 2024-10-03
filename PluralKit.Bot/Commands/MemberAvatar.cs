@@ -9,10 +9,12 @@ namespace PluralKit.Bot;
 public class MemberAvatar
 {
     private readonly HttpClient _client;
+    private readonly AvatarHostingService _avatarHosting;
 
-    public MemberAvatar(HttpClient client)
+    public MemberAvatar(HttpClient client, AvatarHostingService avatarHosting)
     {
         _client = client;
+        _avatarHosting = avatarHosting;
     }
 
     private async Task AvatarClear(MemberAvatarLocation location, Context ctx, PKMember target, MemberGuildSettings? mgs)
@@ -138,8 +140,10 @@ public class MemberAvatar
         }
 
         ctx.CheckSystem().CheckOwnMember(target);
+
+        avatarArg = await _avatarHosting.TryRehostImage(avatarArg.Value, AvatarHostingService.RehostedImageType.Avatar, ctx.Author.Id, ctx.System);
         await AvatarUtils.VerifyAvatarOrThrow(_client, avatarArg.Value.Url);
-        await UpdateAvatar(location, ctx, target, avatarArg.Value.Url);
+        await UpdateAvatar(location, ctx, target, avatarArg.Value.CleanUrl ?? avatarArg.Value.Url);
         await PrintResponse(location, ctx, target, avatarArg.Value, guildData);
     }
 
@@ -150,12 +154,17 @@ public class MemberAvatar
         {
             MemberAvatarLocation.Server =>
                 $" This avatar will now be used when proxying in this server (**{ctx.Guild.Name}**).",
-            MemberAvatarLocation.Member when targetGuildData?.AvatarUrl != null =>
-                $"\n{Emojis.Note} Note that this member *also* has a server-specific avatar set in this server (**{ctx.Guild.Name}**), and thus changing the global avatar will have no effect here.",
             MemberAvatarLocation.MemberWebhook when targetGuildData?.AvatarUrl != null =>
                 $" This avatar will now be used for this member's proxied messages, instead of their main avatar.\n{Emojis.Note} Note that this member *also* has a server-specific avatar set in this server (**{ctx.Guild.Name}**), and thus changing the global avatar will have no effect here.",
             MemberAvatarLocation.MemberWebhook =>
                 $" This avatar will now be used for this member's proxied messages, instead of their main avatar.",
+            MemberAvatarLocation.Member when (targetGuildData?.AvatarUrl != null && target.WebhookAvatarUrl != null) =>
+                $"\n{Emojis.Note} Note that this member *also* has a server-specific avatar set in this server (**{ctx.Guild.Name}**), and thus changing the global avatar will have no effect here." +
+                $"\n{Emojis.Note} Note that this member *also* has a proxy avatar set, and thus the global avatar will also have no effect on proxied messages in servers without server-specific avatars.",
+            MemberAvatarLocation.Member when targetGuildData?.AvatarUrl != null =>
+                $"\n{Emojis.Note} Note that this member *also* has a server-specific avatar set in this server (**{ctx.Guild.Name}**), and thus changing the global avatar will have no effect here.",
+            MemberAvatarLocation.Member when target.WebhookAvatarUrl != null =>
+                $"\n{Emojis.Note} Note that this member *also* has a proxy avatar set, and thus changing the global avatar will have no effect on proxied messages.",
             _ => ""
         };
 
@@ -165,13 +174,15 @@ public class MemberAvatar
                 $"{Emojis.Success} Member {location.Name()} changed to {avatar.SourceUser?.Username}'s avatar!{serverFrag}\n{Emojis.Warn} If {avatar.SourceUser?.Username} changes their avatar, the member's avatar will need to be re-set.",
             AvatarSource.Url =>
                 $"{Emojis.Success} Member {location.Name()} changed to the image at the given URL.{serverFrag}",
+            AvatarSource.HostedCdn =>
+                $"{Emojis.Success} Member {location.Name()} changed to attached image.{serverFrag}",
             AvatarSource.Attachment =>
                 $"{Emojis.Success} Member {location.Name()} changed to attached image.{serverFrag}\n{Emojis.Warn} If you delete the message containing the attachment, the avatar will stop working.",
             _ => throw new ArgumentOutOfRangeException()
         };
 
         // The attachment's already right there, no need to preview it.
-        var hasEmbed = avatar.Source != AvatarSource.Attachment;
+        var hasEmbed = avatar.Source != AvatarSource.Attachment && avatar.Source != AvatarSource.HostedCdn;
         return hasEmbed
             ? ctx.Reply(msg, new EmbedBuilder().Image(new Embed.EmbedImage(avatar.Url)).Build())
             : ctx.Reply(msg);

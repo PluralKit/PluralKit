@@ -61,7 +61,7 @@ If you don't have a link, you can leave that out entirely, and then **attach** t
 Avatars have some restrictions: 
 - The image must be in **.jpg**, **.png**, or **.webp** format
 - The image must be under **1024 KB** in size
-- The image must be below **1024 x 1024 pixels** in resolution (along the smallest axis).
+- The image must be below **1000 x 1000 pixels** in resolution (along the smallest axis).
 - Animated GIFs are **not** supported (even if you have Nitro).
 :::
 

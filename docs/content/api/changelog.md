@@ -5,6 +5,10 @@ permalink: /api/changelog
 
 # Version history
 
+* 2024-08-84
+  * Added ratelimit scopes (separate limits for different sets of endpoints)
+* 2024-05-01
+  * Short IDs (the `id` field in system / member / group models) can now be either 5 or 6 characters.
 * 2022-12-14
   * Added keys to member model: `autoproxy_enabled` (own-system only), `message_count` and `last_message_timestamp` (under metadata privacy)
 * 2022-01-11

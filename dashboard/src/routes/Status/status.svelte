@@ -12,8 +12,8 @@
 
     let foundShard = {
         id: 1,
-        status: 1,
-        ping:"",
+        up: false,
+        latency:"",
         disconnection_count:0,
         last_connection:0,
         last_heartbeat:0,
@@ -27,9 +27,9 @@
     const get = async () => {
         const pkdata = await api().private.meta.get();
         let data = pkdata.shards.sort((x, y) => (x.id > y.id) ? 1 : -1);
-        let pings = 0;
+        let latencies = 0;
         data = data.map(shard => {
-            pings += shard.ping;
+            latencies += shard.latency;
             shard.heartbeat_minutes_ago = heartbeatMinutesAgo(shard);
             shard.last_connection =  new Date(Number(shard.last_connection) * 1000).toUTCString().match(/([0-9][0-9]:[0-9][0-9]:[0-9][0-9])/)?.shift()
             shard.last_heartbeat = new Date(Number(shard.last_heartbeat) * 1000).toUTCString().match(/([0-9][0-9]:[0-9][0-9]:[0-9][0-9])/)?.shift()
@@ -46,7 +46,7 @@
         }
 
         shards = data;
-        pingAverage = Math.trunc(pings / shards.length).toString();
+        pingAverage = Math.trunc(latencies / shards.length).toString();
 
         message = "";
     };
@@ -119,7 +119,7 @@
 
                     <Row>
                         <Col class="mb-2" xs={12} md={6} lg={4} >
-                            <span>{ shards.length } shards ({ shards.filter(x => x.status == "up").length } up)</span>
+                            <span>{ shards.length } shards ({ shards.filter(x => x.up).length } up)</span>
                         </Col>
                         <Col class="mb-2" xs={12} md={6} lg={4}>
                             <span>Average latency: { pingAverage }ms</span>
@@ -148,8 +148,8 @@
 
                         {#if valid}
                             <CardBody>
-                            <span>Status: <b>{ foundShard.status }</b></span><br>
-                            <span>Latency: { foundShard.ping }ms</span><br>
+                            <span>Status: <b>{ foundShard.up ? "up" : "down"}</b></span><br>
+                            <span>Latency: { foundShard.latency }ms</span><br>
                             <span>Disconnection count: { foundShard.disconnection_count }</span><br>
                             <span>Last connection: { foundShard.last_connection } UTC</span><br>
                             <span>Last heartbeat: { foundShard.last_heartbeat } UTC</span><br>

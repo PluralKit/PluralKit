@@ -8,10 +8,10 @@ public partial class ModelRepository
 
     public class Counts
     {
-        public int SystemCount { get; }
-        public int MemberCount { get; }
-        public int GroupCount { get; }
-        public int SwitchCount { get; }
-        public int MessageCount { get; }
+        public long SystemCount { get; }
+        public long MemberCount { get; }
+        public long GroupCount { get; }
+        public long SwitchCount { get; }
+        public long MessageCount { get; }
     }
 }

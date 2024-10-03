@@ -11,7 +11,7 @@ public class Help
     {
         Title = "PluralKit",
         Description = "PluralKit is a bot designed for plural communities on Discord, and is open for anyone to use. It allows you to register systems, maintain system information, set up message proxying, log switches, and more.",
-        Footer = new("By @Ske#6201 | Myriad design by @Layl#8888, art by https://twitter.com/sillyvizion | GitHub: https://github.com/PluralKit/PluralKit/ | Website: https://pluralkit.me/"),
+        Footer = new("By @ske | Myriad design by @layl, art by @tedkalashnikov | GitHub: https://github.com/PluralKit/PluralKit/ | Website: https://pluralkit.me/"),
         Color = DiscordUtils.Blue,
     };
 
@@ -29,8 +29,8 @@ public class Help
                 ),
                 new
                 (
-                    "Why are people's names saying [BOT] next to them?",
-                    "These people are not actually bots, this is just a Discord limitation. See [the documentation](https://pluralkit.me/guide#proxying) for an in-depth explanation."
+                    "Why are people's names saying [APP] or [BOT] next to them?",
+                    "These people are not actually apps or bots, this is just a Discord limitation. See [the documentation](https://pluralkit.me/guide#proxying) for an in-depth explanation."
                 ),
             }
         },
@@ -168,7 +168,7 @@ public class Help
     {
         "> **About PluralKit**\nPluralKit detects messages enclosed in specific tags associated with a profile, then replaces that message under a \"pseudo-account\" of that profile using Discord webhooks.",
         "This is useful for multiple people sharing one body (aka. *systems*), people who wish to role-play as different characters without having multiple Discord accounts, or anyone else who may want to post messages under a different identity from the same Discord account.",
-        "Due to Discord limitations, these messages will show up with the `[BOT]` tag - however, they are not bots."
+        "Due to Discord limitations, these messages will show up with the `[APP]` or `[BOT]` tag - however, they are not apps or bots."
     });
 
     public Task Explain(Context ctx) => ctx.Reply(explanation);

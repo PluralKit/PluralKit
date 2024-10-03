@@ -2,6 +2,8 @@ namespace PluralKit.Core;
 
 public enum SystemPrivacySubject
 {
+    Name,
+    Avatar,
     Description,
     Pronouns,
     MemberList,
@@ -17,6 +19,8 @@ public static class SystemPrivacyUtils
         // what do you mean switch expressions can't be statements >.>
         _ = subject switch
         {
+            SystemPrivacySubject.Name => system.NamePrivacy = level,
+            SystemPrivacySubject.Avatar => system.AvatarPrivacy = level,
             SystemPrivacySubject.Description => system.DescriptionPrivacy = level,
             SystemPrivacySubject.Pronouns => system.PronounPrivacy = level,
             SystemPrivacySubject.Front => system.FrontPrivacy = level,
@@ -40,14 +44,29 @@ public static class SystemPrivacyUtils
     {
         switch (input.ToLowerInvariant())
         {
+            case "name":
+                subject = SystemPrivacySubject.Name;
+                break;
+            case "avatar":
+            case "pfp":
+            case "pic":
+            case "icon":
+                subject = SystemPrivacySubject.Avatar;
+                break;
             case "description":
             case "desc":
-            case "text":
+            case "describe":
+            case "d":
+            case "bio":
             case "info":
+            case "text":
+            case "intro":
                 subject = SystemPrivacySubject.Description;
                 break;
             case "pronouns":
+            case "pronoun":
             case "prns":
+            case "pn":
                 subject = SystemPrivacySubject.Pronouns;
                 break;
             case "members":

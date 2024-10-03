@@ -17,6 +17,8 @@ public class ProxyMember
     public MemberId Id { get; }
     public IReadOnlyCollection<ProxyTag> ProxyTags { get; } = new ProxyTag[0];
     public bool KeepProxy { get; }
+    public bool Tts { get; }
+    public bool? ServerKeepProxy { get; }
 
     public string? ServerName { get; }
     public string? DisplayName { get; }
@@ -42,5 +44,5 @@ public class ProxyMember
         return memberName;
     }
 
-    public string? ProxyAvatar(MessageContext ctx) => ServerAvatar ?? WebhookAvatar ?? Avatar ?? ctx.SystemAvatar;
+    public string? ProxyAvatar(MessageContext ctx) => ServerAvatar ?? WebhookAvatar ?? Avatar ?? ctx.SystemGuildAvatar ?? ctx.SystemAvatar;
 }

@@ -18,7 +18,7 @@ public class Parameters
 
         // Chevrons (normal and "fullwidth" variants)
         { "\u00AB\u300A", "\u00BB\u300B" }, // double chevrons, pointing away (<<text>>)
-        { "\u00BB\u300B", "\u00AA\u300A" }, // double chevrons, pointing together (>>text<<)
+        { "\u00BB\u300B", "\u00AB\u300A" }, // double chevrons, pointing together (>>text<<)
         { "\u2039\u3008", "\u203A\u3009" }, // single chevrons, pointing away (<text>)
         { "\u203A\u3009", "\u2039\u3008" }, // single chevrons, pointing together (>text<)
 

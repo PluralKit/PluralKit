@@ -9,6 +9,8 @@
 
     export let item: any;
     export let searchBy: string = null;
+    export let type: "member"|"group"|"system"
+    export let avatarUsed: "proxy"|"avatar"|"proxy_only"|"avatar_only"
     export let sortBy: string = null;
 
     let htmlNamePromise: Promise<string>;
@@ -24,8 +26,18 @@
         if (nameElement) twemoji.parse(nameElement, { base: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/' });
     }
 
-    $: icon_url = item.avatar_url ? item.avatar_url : item.icon ? item.icon : default_avatar;
-    $: icon_url_resized = resizeMedia(icon_url)
+    let icon_url: string = default_avatar
+    $: if (type === "group") {
+        if (item.icon) icon_url = item.icon
+    } else if (avatarUsed === "proxy" || avatarUsed === "proxy_only") {
+        if (item.webhook_avatar_url) icon_url = item.webhook_avatar_url
+        else if (avatarUsed === "proxy_only") icon_url = default_avatar
+        else icon_url = item.avatar_url || default_avatar
+    } else {
+        if (item.avatar_url) icon_url = item.avatar_url
+        else if (avatarUsed === "avatar_only") icon_url = default_avatar
+        else icon_url = item.webhook_avatar_url ?? default_avatar
+    }
 
     let avatarOpen = false;
     const toggleAvatarModal = () => (avatarOpen = !avatarOpen);
@@ -51,8 +63,8 @@
             <span bind:this={nameElement} style="vertical-align: middle;"><AwaitHtml htmlPromise={htmlNamePromise} /> ({item.id})</span>
         </div>
         <div style="margin-left: auto;">
-        {#if item && (item.avatar_url || item.icon)}
-        <img tabindex={0} on:keydown|stopPropagation={(event) => {if (event.key === "Enter") {avatarOpen = true}}} on:click|stopPropagation={toggleAvatarModal} class="rounded-circle avatar" src={icon_url_resized} alt={altText} />
+        {#if item && (item.avatar_url || item.webhook_avatar_url || item.icon)}
+        <img tabindex={0} on:keydown|stopPropagation={(event) => {if (event.key === "Enter") {avatarOpen = true}}} on:click|stopPropagation={toggleAvatarModal} class="rounded-circle avatar" src={icon_url} alt={altText} />
         {:else}
         <img class="rounded-circle avatar" src={default_avatar} alt="icon (default)" tabindex={0} />
         {/if}

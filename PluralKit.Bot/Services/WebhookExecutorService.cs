@@ -4,6 +4,8 @@ using App.Metrics;
 
 using Humanizer;
 
+using NodaTime.Text;
+
 using Myriad.Cache;
 using Myriad.Extensions;
 using Myriad.Rest;
@@ -35,6 +37,7 @@ public record ProxyRequest
     public ulong GuildId { get; init; }
     public ulong ChannelId { get; init; }
     public ulong? ThreadId { get; init; }
+    public ulong MessageId { get; init; }
     public string Name { get; init; }
     public string? AvatarUrl { get; init; }
     public string? Content { get; init; }
@@ -44,6 +47,8 @@ public record ProxyRequest
     public Sticker[] Stickers { get; init; }
     public bool AllowEveryone { get; init; }
     public Message.MessageFlags? Flags { get; init; }
+    public bool Tts { get; init; }
+    public Message.MessagePoll? Poll { get; init; }
 }
 
 public class WebhookExecutorService
@@ -131,6 +136,7 @@ public class WebhookExecutorService
             Embeds = req.Embeds,
             Stickers = req.Stickers,
             Flags = req.Flags,
+            Tts = req.Tts,
         };
 
         MultipartFile[] files = null;
@@ -150,6 +156,26 @@ public class WebhookExecutorService
                 Waveform = f.Waveform,
                 DurationSecs = f.DurationSecs
             }).ToArray();
+        }
+
+        if (req.Poll is Message.MessagePoll poll)
+        {
+            int? duration = null;
+            if (poll.Expiry is string expiry)
+            {
+                var then = OffsetDateTimePattern.ExtendedIso.Parse(expiry).Value.ToInstant();
+                var now = DiscordUtils.SnowflakeToInstant(req.MessageId);
+                // in theory .TotalHours should be exact, but just in case
+                duration = (int)Math.Round((then - now).TotalMinutes / 60.0);
+            }
+            webhookReq.Poll = new ExecuteWebhookRequest.WebhookPoll
+            {
+                Question = poll.Question,
+                Answers = poll.Answers,
+                Duration = duration,
+                AllowMultiselect = poll.AllowMultiselect,
+                LayoutType = poll.LayoutType
+            };
         }
 
         Message webhookMessage;

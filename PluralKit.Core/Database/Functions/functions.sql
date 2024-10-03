@@ -1,4 +1,4 @@
-create function message_context(account_id bigint, guild_id bigint, channel_id bigint, thread_id bigint)
+﻿create function message_context(account_id bigint, guild_id bigint, channel_id bigint, thread_id bigint)
     returns table (
         system_id int,
         log_channel bigint,
@@ -13,6 +13,7 @@ create function message_context(account_id bigint, guild_id bigint, channel_id b
         system_guild_tag text,
         tag_enabled bool,
         system_avatar text,
+        system_guild_avatar text,
         allow_autoproxy bool,
         latch_timeout integer,
         case_sensitive_proxy_tags bool,
@@ -22,6 +23,7 @@ as $$
     -- CTEs to query "static" (accessible only through args) data
     with
         system as (select systems.*, system_config.latch_timeout, system_guild.tag as guild_tag, system_guild.tag_enabled as tag_enabled, 
+                          system_guild.avatar_url as guild_avatar,
                           allow_autoproxy as account_autoproxy, system_config.case_sensitive_proxy_tags, system_config.proxy_error_message_enabled from accounts
             left join systems on systems.id = accounts.system
             left join system_config on system_config.system = accounts.system
@@ -44,6 +46,7 @@ as $$
         system.guild_tag                             as system_guild_tag,
         coalesce(system.tag_enabled, true)           as tag_enabled,
         system.avatar_url                            as system_avatar,
+        system.guild_avatar                          as system_guild_avatar,
         system.account_autoproxy                     as allow_autoproxy,
         system.latch_timeout                         as latch_timeout,
         system.case_sensitive_proxy_tags             as case_sensitive_proxy_tags,
@@ -65,6 +68,8 @@ create function proxy_members(account_id bigint, guild_id bigint)
         id int,
         proxy_tags proxy_tag[],
         keep_proxy bool,
+        tts bool,
+        server_keep_proxy bool,
 
         server_name text,
         display_name text,
@@ -84,6 +89,8 @@ as $$
         members.id                   as id,
         members.proxy_tags           as proxy_tags,
         members.keep_proxy           as keep_proxy,
+        members.tts                  as tts,
+        member_guild.keep_proxy      as server_keep_proxy,
 
         -- Name info
         member_guild.display_name    as server_name,
@@ -115,13 +122,13 @@ begin
 end
 $$ language plpgsql;
 
-create function generate_hid() returns char(5) as $$
-    select string_agg(substr('abcdefghijklmnopqrstuvwxyz', ceil(random() * 26)::integer, 1), '') from generate_series(1, 5)
+create function generate_hid() returns char(6) as $$
+    select string_agg(substr('abcefghjknoprstuvwxyz', ceil(random() * 21)::integer, 1), '') from generate_series(1, 6)
 $$ language sql volatile;
 
 
-create function find_free_system_hid() returns char(5) as $$
-declare new_hid char(5);
+create function find_free_system_hid() returns char(6) as $$
+declare new_hid char(6);
 begin
     loop
         new_hid := generate_hid();
@@ -131,8 +138,8 @@ end
 $$ language plpgsql volatile;
 
 
-create function find_free_member_hid() returns char(5) as $$
-declare new_hid char(5);
+create function find_free_member_hid() returns char(6) as $$
+declare new_hid char(6);
 begin
     loop
         new_hid := generate_hid();
@@ -141,8 +148,9 @@ begin
 end
 $$ language plpgsql volatile;
 
-create function find_free_group_hid() returns char(5) as $$
-declare new_hid char(5);
+
+create function find_free_group_hid() returns char(6) as $$
+declare new_hid char(6);
 begin
     loop
         new_hid := generate_hid();

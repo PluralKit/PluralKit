@@ -12,6 +12,9 @@ public static class ModelUtils
     public static string NameFor(this PKGroup group, Context ctx) =>
         group.NameFor(ctx.LookupContextFor(group.System));
 
+    public static string NameFor(this PKSystem system, Context ctx) =>
+        system.NameFor(ctx.LookupContextFor(system.Id));
+
     public static string AvatarFor(this PKMember member, Context ctx) =>
         member.AvatarFor(ctx.LookupContextFor(member.System)).TryGetCleanCdnUrl();
 
@@ -21,8 +24,20 @@ public static class ModelUtils
     public static string DisplayName(this PKMember member) =>
         member.DisplayName ?? member.Name;
 
-    public static string Reference(this PKMember member, Context ctx) => EntityReference(member.Hid, member.NameFor(ctx));
-    public static string Reference(this PKGroup group, Context ctx) => EntityReference(group.Hid, group.NameFor(ctx));
+    public static string Reference(this PKMember member, Context ctx) => EntityReference(member.DisplayHid(ctx.Config), member.NameFor(ctx));
+    public static string Reference(this PKGroup group, Context ctx) => EntityReference(group.DisplayHid(ctx.Config), group.NameFor(ctx));
+
+
+    public static string DisplayHid(this PKSystem system, SystemConfig? cfg = null, bool isList = false) => HidTransform(system.Hid, cfg, isList);
+    public static string DisplayHid(this PKGroup group, SystemConfig? cfg = null, bool isList = false) => HidTransform(group.Hid, cfg, isList);
+    public static string DisplayHid(this PKMember member, SystemConfig? cfg = null, bool isList = false) => HidTransform(member.Hid, cfg, isList);
+    private static string HidTransform(string hid, SystemConfig? cfg = null, bool isList = false) =>
+        HidUtils.HidTransform(
+            hid,
+            cfg != null && cfg.HidDisplaySplit,
+            cfg != null && cfg.HidDisplayCaps,
+            isList ? (cfg?.HidListPadding ?? SystemConfig.HidPadFormat.None) : SystemConfig.HidPadFormat.None // padding only on lists
+        );
 
     private static string EntityReference(string hid, string name)
     {

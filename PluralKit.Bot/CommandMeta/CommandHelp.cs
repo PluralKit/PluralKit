@@ -5,12 +5,14 @@ public partial class CommandTree
     public static Command SystemInfo = new Command("system", "system [system]", "Looks up information about a system");
     public static Command SystemNew = new Command("system new", "system new [name]", "Creates a new system");
     public static Command SystemRename = new Command("system name", "system [system] rename [name]", "Renames your system");
+    public static Command SystemServerName = new Command("system servername", "system [system] servername [name]", "Changes your system displayname for this server");
     public static Command SystemDesc = new Command("system description", "system [system] description [description]", "Changes your system's description");
     public static Command SystemColor = new Command("system color", "system [system] color [color]", "Changes your system's color");
     public static Command SystemTag = new Command("system tag", "system [system] tag [tag]", "Changes your system's tag");
     public static Command SystemPronouns = new Command("system pronouns", "system [system] pronouns [pronouns]", "Changes your system's pronouns");
     public static Command SystemServerTag = new Command("system servertag", "system [system] servertag [tag|enable|disable]", "Changes your system's tag in the current server");
     public static Command SystemAvatar = new Command("system icon", "system [system] icon [url|@mention]", "Changes your system's icon");
+    public static Command SystemServerAvatar = new Command("system serveravatar", "system [system] serveravatar [tag]", "Changes your system's icon in the current server");
     public static Command SystemBannerImage = new Command("system banner", "system [system] banner [url]", "Set the system's banner image");
     public static Command SystemDelete = new Command("system delete", "system [system] delete", "Deletes your system");
     public static Command SystemProxy = new Command("system proxy", "system proxy [server id] [on|off]", "Enables or disables message proxying in a specific server");
@@ -20,7 +22,7 @@ public partial class CommandTree
     public static Command SystemFrontHistory = new Command("system fronthistory", "system [system] fronthistory", "Shows a system's front history");
     public static Command SystemFrontPercent = new Command("system frontpercent", "system [system] frontpercent [timespan]", "Shows a system's front breakdown");
     public static Command SystemId = new Command("system id", "system [system] id", "Prints your system's id.");
-    public static Command SystemPrivacy = new Command("system privacy", "system [system] privacy <description|members|fronter|fronthistory|all> <public|private>", "Changes your system's privacy settings");
+    public static Command SystemPrivacy = new Command("system privacy", "system [system] privacy <name|avatar|description|members|fronter|fronthistory|all> <public|private>", "Changes your system's privacy settings");
     public static Command ConfigTimezone = new Command("config timezone", "config timezone [timezone]", "Changes your system's time zone");
     public static Command ConfigPing = new Command("config ping", "config ping [on|off]", "Changes your system's ping preferences");
     public static Command ConfigAutoproxyAccount = new Command("config autoproxy account", "config autoproxy account [on|off]", "Toggles autoproxy globally for the current account");
@@ -52,9 +54,11 @@ public partial class CommandTree
     public static Command MemberServerName = new Command("member servername", "member <member> servername [server name]", "Changes a member's display name in the current server");
     public static Command MemberAutoproxy = new Command("member autoproxy", "member <member> autoproxy [on|off]", "Sets whether a member will be autoproxied when autoproxy is set to latch or front mode.");
     public static Command MemberKeepProxy = new Command("member keepproxy", "member <member> keepproxy [on|off]", "Sets whether to include a member's proxy tags when proxying");
+    public static Command MemberTts = new Command("member text-to-speech", "member <member> text-to-speech [on|off]", "Sets whether to send a member's messages as text-to-speech messages.");
+    public static Command MemberServerKeepProxy = new Command("member server keepproxy", "member <member> serverkeepproxy [on|off|clear]", "Sets whether to include a member's proxy tags when proxying in the current server.");
     public static Command MemberRandom = new Command("system random", "system [system] random", "Shows the info card of a randomly selected member in a system.");
     public static Command MemberId = new Command("member id", "member [member] id", "Prints a member's id.");
-    public static Command MemberPrivacy = new Command("member privacy", "member <member> privacy <name|description|birthday|pronouns|metadata|visibility|all> <public|private>", "Changes a members's privacy settings");
+    public static Command MemberPrivacy = new Command("member privacy", "member <member> privacy <name|description|birthday|pronouns|proxy|metadata|visibility|all> <public|private>", "Changes a members's privacy settings");
     public static Command GroupInfo = new Command("group", "group <name>", "Looks up information about a group");
     public static Command GroupNew = new Command("group new", "group new <name>", "Creates a new group");
     public static Command GroupList = new Command("group list", "group list", "Lists all groups in this system");
@@ -78,6 +82,7 @@ public partial class CommandTree
     public static Command SwitchMove = new Command("switch move", "switch move <date/time>", "Moves the latest switch in time");
     public static Command SwitchEdit = new Command("switch edit", "switch edit <member> [member 2] [member 3...]", "Edits the members in the latest switch");
     public static Command SwitchEditOut = new Command("switch edit out", "switch edit out", "Turns the latest switch into a switch-out");
+    public static Command SwitchCopy = new Command("switch copy", "switch copy <member> [member 2] [member 3...]", "Makes a new switch with the listed members added");
     public static Command SwitchDelete = new Command("switch delete", "switch delete", "Deletes the latest switch");
     public static Command SwitchDeleteAll = new Command("switch delete", "switch delete all", "Deletes all logged switches");
     public static Command Link = new Command("link", "link <account>", "Links your system to another account");
@@ -107,14 +112,14 @@ public partial class CommandTree
 
     public static Command[] SystemCommands =
     {
-        SystemInfo, SystemNew, SystemRename, SystemTag, SystemDesc, SystemAvatar, SystemBannerImage, SystemColor,
+        SystemInfo, SystemNew, SystemRename, SystemServerName, SystemTag, SystemDesc, SystemAvatar, SystemServerAvatar, SystemBannerImage, SystemColor,
         SystemDelete, SystemList, SystemFronter, SystemFrontHistory, SystemFrontPercent, SystemPrivacy, SystemProxy
     };
 
     public static Command[] MemberCommands =
     {
         MemberInfo, MemberNew, MemberRename, MemberDisplayName, MemberServerName, MemberDesc, MemberPronouns,
-        MemberColor, MemberBirthday, MemberProxy, MemberAutoproxy, MemberKeepProxy, MemberGroups, MemberGroupAdd,
+        MemberColor, MemberBirthday, MemberProxy, MemberAutoproxy, MemberKeepProxy, MemberTts, MemberGroups, MemberGroupAdd,
         MemberGroupRemove, MemberDelete, MemberAvatar, MemberServerAvatar, MemberBannerImage, MemberPrivacy,
         MemberRandom
     };
@@ -133,7 +138,7 @@ public partial class CommandTree
 
     public static Command[] SwitchCommands =
     {
-        Switch, SwitchOut, SwitchMove, SwitchEdit, SwitchEditOut, SwitchDelete, SwitchDeleteAll
+        Switch, SwitchOut, SwitchMove, SwitchEdit, SwitchEditOut, SwitchDelete, SwitchDeleteAll, SwitchCopy
     };
 
     public static Command[] ConfigCommands =

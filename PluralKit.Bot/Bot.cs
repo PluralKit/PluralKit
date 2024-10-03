@@ -67,8 +67,9 @@ public class Bot
             {
                 new Activity
                 {
-                    Type = ActivityType.Game,
-                    Name = BotStatus
+                    Type = ActivityType.Custom,
+                    Name = BotStatus,
+                    State = BotStatus
                 }
             }
         };
@@ -83,9 +84,16 @@ public class Bot
         // This *probably* doesn't matter in practice but I jut think it's neat, y'know.
         var timeNow = SystemClock.Instance.GetCurrentInstant();
         var timeTillNextWholeMinute = TimeSpan.FromMilliseconds(60000 - timeNow.ToUnixTimeMilliseconds() % 60000 + 250);
-        _periodicTask = new Timer(_ =>
+        _periodicTask = new Timer(async _ =>
         {
-            var __ = UpdatePeriodic();
+            try
+            {
+                await UpdatePeriodic();
+            }
+            catch (Exception e)
+            {
+                _logger.Error(e, "failed to run once-per-minute scheduled task");
+            }
         }, null, timeTillNextWholeMinute, TimeSpan.FromMinutes(1));
     }
 
@@ -134,7 +142,8 @@ public class Bot
                     new Activity
                     {
                         Name = "Restarting... (please wait)",
-                        Type = ActivityType.Game
+                        State = "Restarting... (please wait)",
+                        Type = ActivityType.Custom
                     }
                 },
                 Status = GatewayStatusUpdate.UserStatus.Idle
@@ -242,7 +251,7 @@ public class Bot
                 return;
             }
 
-            var botPerms = await _cache.PermissionsIn(reportChannel.Value);
+            var botPerms = await _cache.BotPermissionsIn(reportChannel.Value);
             if (botPerms.HasFlag(PermissionSet.SendMessages | PermissionSet.EmbedLinks))
                 await _errorMessageService.SendErrorMessage(reportChannel.Value, sentryEvent.EventId.ToString());
         }
@@ -269,7 +278,8 @@ public class Bot
                             new Activity
                             {
                                 Name = BotStatus,
-                                Type = ActivityType.Game
+                                State = BotStatus,
+                                Type = ActivityType.Custom,
                             }
                         },
                         Status = GatewayStatusUpdate.UserStatus.Online

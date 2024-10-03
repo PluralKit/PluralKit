@@ -53,7 +53,7 @@ public class AutoproxyControllerV2: PKControllerBase
 
     private async Task<IActionResult> Patch(PKSystem system, ulong? guildId, ulong? channelId, JObject data, AutoproxySettings oldData)
     {
-        var updateMember = data.ContainsKey("autoproxy_member");
+        var updateMember = data.ContainsKey("autoproxy_member") && data.Value<string>("autoproxy_member") != null;
 
         PKMember? member = null;
         if (updateMember)
@@ -64,15 +64,37 @@ public class AutoproxyControllerV2: PKControllerBase
         }
 
         var patch = AutoproxyPatch.FromJson(data, member?.Id);
-
         patch.AssertIsValid();
+
+        var newAutoproxyMode = patch.AutoproxyMode.IsPresent ? patch.AutoproxyMode : oldData.AutoproxyMode;
+        var newAutoproxyMember = patch.AutoproxyMember.IsPresent ? patch.AutoproxyMember : oldData.AutoproxyMember;
+
         if (updateMember && member == null)
+        {
             patch.Errors.Add(new("autoproxy_member", "Member not found."));
-        if (updateMember && !(
-               (patch.AutoproxyMode.IsPresent && patch.AutoproxyMode.Value == AutoproxyMode.Member)
-            || (!patch.AutoproxyMode.IsPresent && oldData.AutoproxyMode == AutoproxyMode.Member))
-        )
-            patch.Errors.Add(new("autoproxy_member", "Cannot update autoproxy member if autoproxy mode is set to latch"));
+        }
+
+        if (newAutoproxyMode.Value == AutoproxyMode.Member)
+        {
+            if (!updateMember)
+            {
+                patch.Errors.Add(new("autoproxy_member", "An autoproxy member must be supplied for autoproxy mode 'member'"));
+            }
+
+            patch.AutoproxyMode = newAutoproxyMode;
+            patch.AutoproxyMember = newAutoproxyMember;
+        }
+        else
+        {
+            if (updateMember)
+            {
+                patch.Errors.Add(new("autoproxy_member", "Cannot update autoproxy member if autoproxy mode is not set to 'member'"));
+            }
+
+            patch.AutoproxyMode = newAutoproxyMode;
+            patch.AutoproxyMember = null;
+        }
+
         if (patch.Errors.Count > 0)
             throw new ModelParseError(patch.Errors);
 

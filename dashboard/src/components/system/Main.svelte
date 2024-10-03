@@ -32,7 +32,7 @@
 
 <Card class="mb-4">
     <CardHeader>
-        <CardsHeader bind:item={user}>
+        <CardsHeader bind:item={user} type="system" avatarUsed="avatar_only">
             <div slot="icon" style="cursor: pointer;" id={`copy-${user.id}`} on:click|stopPropagation={() => copyShortLink()} on:keydown|stopPropagation={(e) => copyShortLink(e)} tabindex={0} >
                 <FaAddressCard />
             </div>

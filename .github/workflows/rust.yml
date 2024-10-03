@@ -9,8 +9,10 @@ on:
     branches:
       - main
     paths:
-    - 'lib/pklib/**'
+    - 'lib/libpk/**'
     - 'services/api/**'
+    - '.github/workflows/rust.yml'
+    - 'Dockerfile.rust'
 
 jobs:
   deploy:
@@ -37,8 +39,8 @@ jobs:
           context: .
           file: Dockerfile.rust
           push: false 
-          cache-from: type=gha
-          cache-to: type=gha
+          cache-from: type=registry,ref=ghcr.io/pluralkit/docker-cache:rust
+          cache-to: type=registry,ref=ghcr.io/pluralkit/docker-cache:rust,mode=max
           outputs: .docker-bin
 
       # add more binaries here

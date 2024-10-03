@@ -21,9 +21,6 @@ public class GroupControllerV2: PKControllerBase
 
         var ctx = ContextFor(system);
 
-        if (with_members && !system.MemberListPrivacy.CanAccess(ctx))
-            throw Errors.UnauthorizedMemberList;
-
         if (!system.GroupListPrivacy.CanAccess(ContextFor(system)))
             throw Errors.UnauthorizedGroupList;
 
@@ -34,16 +31,13 @@ public class GroupControllerV2: PKControllerBase
             .Select(g => g.ToJson(ctx, needsMembersArray: with_members))
             .ToListAsync();
 
-        if (with_members && !system.MemberListPrivacy.CanAccess(ctx))
-            throw Errors.UnauthorizedMemberList;
-
         if (with_members && j_groups.Count > 0)
         {
             var q = await _repo.GetGroupMemberInfo(await groups
                 .Where(g => g.Visibility.CanAccess(ctx))
+                .Where(g => g.ListPrivacy.CanAccess(ctx))
                 .Select(x => x.Id)
                 .ToListAsync());
-
 
             foreach (var row in q)
                 if (row.MemberVisibility.CanAccess(ctx))

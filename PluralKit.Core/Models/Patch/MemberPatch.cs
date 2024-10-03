@@ -21,6 +21,7 @@ public class MemberPatch: PatchObject
     public Partial<string?> Description { get; set; }
     public Partial<ProxyTag[]> ProxyTags { get; set; }
     public Partial<bool> KeepProxy { get; set; }
+    public Partial<bool> Tts { get; set; }
     public Partial<int> MessageCount { get; set; }
     public Partial<bool> AllowAutoproxy { get; set; }
     public Partial<PrivacyLevel> Visibility { get; set; }
@@ -29,7 +30,9 @@ public class MemberPatch: PatchObject
     public Partial<PrivacyLevel> PronounPrivacy { get; set; }
     public Partial<PrivacyLevel> BirthdayPrivacy { get; set; }
     public Partial<PrivacyLevel> AvatarPrivacy { get; set; }
+    public Partial<PrivacyLevel> ProxyPrivacy { get; set; }
     public Partial<PrivacyLevel> MetadataPrivacy { get; set; }
+
 
     public override Query Apply(Query q) => q.ApplyPatch(wrapper => wrapper
         .With("name", Name)
@@ -44,6 +47,7 @@ public class MemberPatch: PatchObject
         .With("description", Description)
         .With("proxy_tags", ProxyTags)
         .With("keep_proxy", KeepProxy)
+        .With("tts", Tts)
         .With("message_count", MessageCount)
         .With("allow_autoproxy", AllowAutoproxy)
         .With("member_visibility", Visibility)
@@ -52,6 +56,7 @@ public class MemberPatch: PatchObject
         .With("pronoun_privacy", PronounPrivacy)
         .With("birthday_privacy", BirthdayPrivacy)
         .With("avatar_privacy", AvatarPrivacy)
+        .With("proxy_privacy", ProxyPrivacy)
         .With("metadata_privacy", MetadataPrivacy)
     );
 
@@ -123,6 +128,7 @@ public class MemberPatch: PatchObject
         if (o.ContainsKey("pronouns")) patch.Pronouns = o.Value<string>("pronouns").NullIfEmpty();
         if (o.ContainsKey("description")) patch.Description = o.Value<string>("description").NullIfEmpty();
         if (o.ContainsKey("keep_proxy")) patch.KeepProxy = o.Value<bool>("keep_proxy");
+        if (o.ContainsKey("tts")) patch.Tts = o.Value<bool>("tts");
 
         if (isImport)
         {
@@ -140,6 +146,8 @@ public class MemberPatch: PatchObject
                 patch.BirthdayPrivacy = patch.ParsePrivacy(o, "birthday_privacy");
             if (o.ContainsKey("pronoun_privacy"))
                 patch.PronounPrivacy = patch.ParsePrivacy(o, "pronoun_privacy");
+            if (o.ContainsKey("proxy_privacy"))
+                patch.ProxyPrivacy = patch.ParsePrivacy(o, "proxy_privacy");
             if (o.ContainsKey("metadata_privacy"))
                 patch.MetadataPrivacy = patch.ParsePrivacy(o, "metadata_privacy");
         }
@@ -172,6 +180,9 @@ public class MemberPatch: PatchObject
 
             if (privacy.ContainsKey("pronoun_privacy"))
                 patch.PronounPrivacy = patch.ParsePrivacy(privacy, "pronoun_privacy");
+
+            if (privacy.ContainsKey("proxy_privacy"))
+                patch.ProxyPrivacy = patch.ParsePrivacy(privacy, "proxy_privacy");
 
             if (privacy.ContainsKey("metadata_privacy"))
                 patch.MetadataPrivacy = patch.ParsePrivacy(privacy, "metadata_privacy");
@@ -215,6 +226,9 @@ public class MemberPatch: PatchObject
         if (KeepProxy.IsPresent)
             o.Add("keep_proxy", KeepProxy.Value);
 
+        if (Tts.IsPresent)
+            o.Add("tts", Tts.Value);
+
         if (
             Visibility.IsPresent
             || NamePrivacy.IsPresent
@@ -222,6 +236,7 @@ public class MemberPatch: PatchObject
             || PronounPrivacy.IsPresent
             || BirthdayPrivacy.IsPresent
             || AvatarPrivacy.IsPresent
+            || ProxyPrivacy.IsPresent
             || MetadataPrivacy.IsPresent
         )
         {
@@ -244,6 +259,9 @@ public class MemberPatch: PatchObject
 
             if (AvatarPrivacy.IsPresent)
                 p.Add("avatar_privacy", AvatarPrivacy.Value.ToJsonString());
+
+            if (ProxyPrivacy.IsPresent)
+                p.Add("proxy_privacy", ProxyPrivacy.Value.ToJsonString());
 
             if (MetadataPrivacy.IsPresent)
                 p.Add("metadata_privacy", MetadataPrivacy.Value.ToJsonString());

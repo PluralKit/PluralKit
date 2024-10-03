@@ -23,11 +23,11 @@
     }
 
     if (user.name) {
-        htmlNamePromise = parseMarkdown(user.name);
+        htmlNamePromise = parseMarkdown(user.name, { embed: true, parseTimestamps: true });
     }
 
     if (user.pronouns) {
-        htmlPronounsPromise = parseMarkdown(user.pronouns);
+        htmlPronounsPromise = parseMarkdown(user.pronouns, { embed: true, parseTimestamps: true });
     }
 
     let created = moment(user.created).format("MMM D, YYYY");
@@ -99,7 +99,11 @@
 </Row>
 <div class="my-2 description" bind:this={descriptionElement}>
     <b>Description:</b><br />
+    {#if user.description}
     <AwaitHtml htmlPromise={htmlDescriptionPromise} />
+    {:else}
+    <span>(no description)</span>
+    {/if}
 </div>
 {#if (user.banner && ((settings && settings.appearance.banner_bottom) || !settings))}
 <img on:click={toggleBannerModal} src={resizeMedia(user.banner, [1200, 480])} alt="system banner" class="w-100 mb-3 rounded" style="max-height: 13em; object-fit: cover; cursor: pointer;"/>

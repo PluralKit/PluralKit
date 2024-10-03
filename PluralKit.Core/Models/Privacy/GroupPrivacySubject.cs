@@ -45,8 +45,12 @@ public static class GroupPrivacyUtils
                 break;
             case "description":
             case "desc":
-            case "text":
+            case "describe":
+            case "d":
+            case "bio":
             case "info":
+            case "text":
+            case "intro":
                 subject = GroupPrivacySubject.Description;
                 break;
             case "avatar":

@@ -1,14 +1,13 @@
 use std::time::{Duration, SystemTime};
 
 use axum::{
-    extract::State,
-    http::Request,
+    extract::{MatchedPath, Request, State},
+    http::{HeaderValue, Method, StatusCode},
     middleware::{FromFnLayer, Next},
     response::Response,
 };
 use fred::{pool::RedisPool, prelude::LuaInterface, types::ReconnectPolicy, util::sha1_hash};
-use http::{HeaderValue, StatusCode};
-use metrics::increment_counter;
+use metrics::counter;
 use tracing::{debug, error, info, warn};
 
 use crate::util::{header_or_unknown, json_err};
@@ -55,53 +54,106 @@ pub fn ratelimiter<F, T>(f: F) -> FromFnLayer<F, Option<RedisPool>, T> {
     axum::middleware::from_fn_with_state(redis, f)
 }
 
-pub async fn do_request_ratelimited<B>(
+enum RatelimitType {
+    GenericGet,
+    GenericUpdate,
+    Message,
+    TempCustom,
+}
+
+impl RatelimitType {
+    fn key(&self) -> String {
+        match self {
+            RatelimitType::GenericGet => "generic_get",
+            RatelimitType::GenericUpdate => "generic_update",
+            RatelimitType::Message => "message",
+            RatelimitType::TempCustom => "token2", // this should be "app_custom" or something
+        }
+        .to_string()
+    }
+
+    fn rate(&self) -> i32 {
+        match self {
+            RatelimitType::GenericGet => 10,
+            RatelimitType::GenericUpdate => 3,
+            RatelimitType::Message => 10,
+            RatelimitType::TempCustom => 20,
+        }
+    }
+}
+
+pub async fn do_request_ratelimited(
     State(redis): State<Option<RedisPool>>,
-    request: Request<B>,
-    next: Next<B>,
+    request: Request,
+    next: Next,
 ) -> Response {
     if let Some(redis) = redis {
         let headers = request.headers().clone();
         let source_ip = header_or_unknown(headers.get("X-PluralKit-Client-IP"));
+        let authenticated_system_id = header_or_unknown(headers.get("x-pluralkit-systemid"));
 
         // https://github.com/rust-lang/rust/issues/53667
-        let (rl_key, rate) = if let Some(header) = request.headers().clone().get("X-PluralKit-App")
+        let is_temp_token2 = if let Some(header) = request.headers().clone().get("X-PluralKit-App")
         {
             if let Some(token2) = &libpk::config.api.temp_token2 {
                 if header.to_str().unwrap_or("invalid") == token2 {
-                    ("token2", 20)
+                    true
                 } else {
-                    (source_ip, 2)
+                    false
                 }
             } else {
-                (source_ip, 2)
+                false
             }
         } else {
-            (source_ip, 2)
+            false
         };
 
-        let burst = 5;
-        let period = 1; // seconds
+        let endpoint = request
+            .extensions()
+            .get::<MatchedPath>()
+            .cloned()
+            .map(|v| v.as_str().to_string())
+            .unwrap_or("unknown".to_string());
 
-        // todo: make this static
-        // though even if it's not static, it's probably cheaper than sending the entire script to redis every time
-        let scriptsha = sha1_hash(&LUA_SCRIPT);
+        let rlimit = if is_temp_token2 {
+            RatelimitType::TempCustom
+        } else if endpoint == "/v2/messages/:message_id" {
+            RatelimitType::Message
+        } else if request.method() == Method::GET {
+            RatelimitType::GenericGet
+        } else {
+            RatelimitType::GenericUpdate
+        };
+
+        let rl_key = format!(
+            "{}:{}",
+            if authenticated_system_id != "unknown"
+                && matches!(rlimit, RatelimitType::GenericUpdate)
+            {
+                authenticated_system_id
+            } else {
+                source_ip
+            },
+            rlimit.key()
+        );
+
+        let period = 1; // seconds
+        let cost = 1; // todo: update this for group member endpoints
 
         // local rate_limit_key = KEYS[1]
-        // local burst = ARGV[1]
-        // local rate = ARGV[2]
-        // local period = ARGV[3]
+        // local rate = ARGV[1]
+        // local period = ARGV[2]
         // return {remaining, tostring(retry_after), reset_after}
         let resp = redis
-            .evalsha::<(i32, String, u64), String, Vec<&str>, Vec<i32>>(
-                scriptsha,
-                vec![rl_key],
-                vec![burst, rate, period],
+            .evalsha::<(i32, String, u64), String, Vec<String>, Vec<i32>>(
+                LUA_SCRIPT_SHA.to_string(),
+                vec![rl_key.clone()],
+                vec![rlimit.rate(), period, cost],
             )
             .await;
 
         match resp {
-            Ok((mut remaining, retry_after, reset_after)) => {
+            Ok((remaining, retry_after, reset_after)) => {
                 // redis's lua doesn't support returning floats
                 let retry_after: f64 = retry_after
                     .parse()
@@ -111,18 +163,16 @@ pub async fn do_request_ratelimited<B>(
                     next.run(request).await
                 } else {
                     let retry_after = (retry_after * 1_000_f64).ceil() as u64;
-                    debug!("ratelimited request from {rl_key}, retry_after={retry_after}");
-                    increment_counter!("pk_http_requests_ratelimited");
+                    debug!("ratelimited request from {rl_key}, retry_after={retry_after}",);
+                    counter!("pk_http_requests_ratelimited").increment(1);
                     json_err(
                         StatusCode::TOO_MANY_REQUESTS,
                         format!(
-                            r#"{{"message":"429: too many requests","retry_after":{retry_after},"code":0}}"#,
+                            r#"{{"message":"429: too many requests","retry_after":{retry_after},"scope":"{}","code":0}}"#,
+                            rlimit.key(),
                         ),
                     )
                 };
-
-                // the redis script puts burst in remaining for ??? some reason
-                remaining -= burst - rate;
 
                 let reset_time = SystemTime::now()
                     .checked_add(Duration::from_secs(reset_after))
@@ -133,8 +183,12 @@ pub async fn do_request_ratelimited<B>(
 
                 let headers = response.headers_mut();
                 headers.insert(
+                    "X-RateLimit-Scope",
+                    HeaderValue::from_str(rlimit.key().as_str()).expect("invalid header value"),
+                );
+                headers.insert(
                     "X-RateLimit-Limit",
-                    HeaderValue::from_str(format!("{}", rate).as_str())
+                    HeaderValue::from_str(format!("{}", rlimit.rate()).as_str())
                         .expect("invalid header value"),
                 );
                 headers.insert(

@@ -33,8 +33,14 @@ public static class ContextAvatarExt
         // If we have an attachment, use that
         if (ctx.Message.Attachments.FirstOrDefault() is { } attachment)
         {
-            var url = attachment.ProxyUrl;
-            return new ParsedImage { Url = url, Source = AvatarSource.Attachment };
+            // XXX: discord attachment URLs are unable to be validated without their query params
+            // keep both the URL with query (for validation) and the clean URL (for storage) around
+            var uriBuilder = new UriBuilder(attachment.ProxyUrl);
+
+            ParsedImage img = new ParsedImage { Url = uriBuilder.Uri.AbsoluteUri, Source = AvatarSource.Attachment };
+            uriBuilder.Query = "";
+            img.CleanUrl = uriBuilder.Uri.AbsoluteUri;
+            return img;
         }
 
         // We should only get here if there are no arguments (which would get parsed as URL + throw if error)
@@ -46,6 +52,7 @@ public static class ContextAvatarExt
 public struct ParsedImage
 {
     public string Url;
+    public string? CleanUrl;
     public AvatarSource Source;
     public User? SourceUser;
 }
@@ -54,5 +61,6 @@ public enum AvatarSource
 {
     Url,
     User,
-    Attachment
+    Attachment,
+    HostedCdn
 }

@@ -45,13 +45,22 @@ export interface ListOptions {
         avatar_url: "all"|"include"|"exclude",
         icon: "all"|"include"|"exclude",
         color: "all"|"include"|"exclude",
+        banner: "all"|"include"|"exclude",
 
+    }
+    // filter members based on whether an array field has any items or not
+    // used for proxy tags right now
+    filterArray: {
+        proxy_tags: "all"|"include"|"exclude",
     }
     // what it says on the tin
     sort: 'name'|'description'|'birthday'|'pronouns'|'display_name'|'id'|'none'|'created' | 'color',
     order: "ascending"|"descending",
     show: "all"|"private"|"public",
-    // so we can change the key for duplicate members on the randomize page
+    
+    // text only view options
+    extra: keyof Member | keyof Group | null
+    pfp: "proxy"|"avatar"|"proxy_only"|"avatar_only"
 }
 
 export interface PageOptions {
@@ -112,11 +121,16 @@ export const defaultListOptions: ListOptions = {
         avatar_url: 'all',
         icon: 'all',
         color: 'all',
-
+        banner: 'all'
+    },
+    filterArray: {
+        proxy_tags: 'all',
     },
     sort: 'name',
     order: 'ascending',
-    show: 'all'
+    show: 'all',
+    extra: 'display_name',
+    pfp: "proxy"
 }
 
 export const defaultPageOptions: PageOptions = {

@@ -55,7 +55,7 @@ public static class ContextUtils
             .WaitFor(ReactionPredicate, timeout);
     }
 
-    public static async Task<bool> ConfirmWithReply(this Context ctx, string expectedReply)
+    public static async Task<bool> ConfirmWithReply(this Context ctx, string expectedReply, bool treatAsHid = false)
     {
         bool Predicate(MessageCreateEvent e) =>
             e.Author.Id == ctx.Author.Id && e.ChannelId == ctx.Channel.Id;
@@ -63,7 +63,11 @@ public static class ContextUtils
         var msg = await ctx.Services.Resolve<HandlerQueue<MessageCreateEvent>>()
             .WaitFor(Predicate, Duration.FromMinutes(1));
 
-        return string.Equals(msg.Content, expectedReply, StringComparison.InvariantCultureIgnoreCase);
+        var content = msg.Content;
+        if (treatAsHid)
+            content = content.ToLower().Replace("-", null);
+
+        return string.Equals(content, expectedReply, StringComparison.InvariantCultureIgnoreCase);
     }
 
     public static async Task Paginate<T>(this Context ctx, IAsyncEnumerable<T> items, int totalCount,

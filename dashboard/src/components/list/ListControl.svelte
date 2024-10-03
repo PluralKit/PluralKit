@@ -25,6 +25,11 @@ let itemsPerPageSelection = {
 $: { if (pageOptions.view === "card") itemsPerPageSelection = {
         small: 12,
         default: 24,
+        large: 48
+    }
+    else if (pageOptions.view === "tiny") itemsPerPageSelection = {
+        small: 18,
+        default: 36,
         large: 60
     }
     else {
@@ -41,26 +46,11 @@ const dispatch = createEventDispatcher();
 function onViewChange(e: any) {
     resetPage();
     if (e.target?.value === 'card') {
-        switch (pageOptions.itemsPerPage) {
-            case 10: pageOptions.itemsPerPage = 12;
-            break;
-            case 25: pageOptions.itemsPerPage = 24;
-            break;
-            case 50: pageOptions.itemsPerPage = 60;
-            break;
-            default: pageOptions.itemsPerPage = 24;
-            break;
-        }
-    } else if (e.target?.value === 'list') {
-        switch (pageOptions.itemsPerPage) {
-            case 12: pageOptions.itemsPerPage = 10;
-            break;
-            case 24: pageOptions.itemsPerPage = 25;
-            break;
-            case 60: pageOptions.itemsPerPage = 50;
-            break;
-            default: pageOptions.itemsPerPage = 25
-        }
+        pageOptions.itemsPerPage = 24
+    } else if (e.target?.value === 'tiny') {
+        pageOptions.itemsPerPage = 36
+    } else {
+        pageOptions.itemsPerPage = 25
     }
     dispatch("viewChange", e.target.value);
 }
@@ -173,11 +163,41 @@ function resetPage() {
                 <Input bind:value={pageOptions.view} type="select" aria-label="view mode" on:change={(e) => onViewChange(e)} >
                     <option value="list">List</option>
                     <option value="card">Cards</option>
+                    <option value="tiny">Tiny</option>
+                    <option value="text">Text</option>
                 </Input>
             </InputGroup>
         </Col>
         <Col xs={12} md={6} lg={4} class="mb-2">
-            <Link to={getRandomizerUrl()}><Button class="w-100" color="secondary" tabindex={-1} aria-label={`randomize ${pageOptions.type}s`}>Random {capitalizeFirstLetter(pageOptions.type)}</Button></Link>
+            {#if pageOptions.view === "text"}
+                <InputGroup>
+                    <InputGroupText>Extra Info</InputGroupText>
+                    <Input bind:value={options.extra} type="select" aria-label="view mode" on:change={(e) => onViewChange(e)} >
+                        <option value="display_name">Display Name</option>
+                        {#if pageOptions.type === "member"}
+                        <option value="avatar_url">Avatar Url</option>
+                        <option value="webhook_avatar_url">Proxy Avatar Url</option>
+                        <option value="pronouns">Pronouns</option>
+                        <option value="birthday">Birthday</option>
+                        {:else if pageOptions.type === "group"}
+                        <option value="icon">Icon Url</option>
+                        {/if}
+                        <option value="banner">Banner Url</option>
+                        <option value="color">Color</option>
+                        <option value="created">Created</option>
+                    </Input>
+                </InputGroup>
+            {:else if pageOptions.type === "member"}
+                <InputGroup>
+                    <InputGroupText>Avatar Used</InputGroupText>
+                    <Input bind:value={options.pfp} type="select" aria-label="view mode" >
+                        <option value="proxy">Proxy (fall back to main)</option>
+                        <option value="avatar">Main (fall back to proxy)</option>
+                        <option value="proxy_only">Proxy only</option>
+                        <option value="avatar_only">Main only</option>
+                    </Input>
+                </InputGroup>
+            {/if}
         </Col>
     </Row>
     <hr/>
@@ -351,6 +371,16 @@ function resetPage() {
                 {#if pageOptions.type === 'member'}
                 <Col xs={12} md={6} lg={4} class="mb-2">
                     <InputGroup>
+                        <InputGroupText>Proxy tags</InputGroupText>
+                        <Input type="select" bind:value={options.filterArray.proxy_tags} on:change={() => resetPage()}>
+                            <option value="all">All</option>
+                            <option value="include">With proxy tags</option>
+                            <option value="exclude">Without proxy tags</option>
+                        </Input>
+                    </InputGroup>
+                </Col>
+                <Col xs={12} md={6} lg={4} class="mb-2">
+                    <InputGroup>
                         <InputGroupText>Avatar</InputGroupText>
                         <Input type="select" bind:value={options.filter.avatar_url} on:change={() => resetPage()}>
                             <option value="all">All</option>
@@ -393,6 +423,16 @@ function resetPage() {
                 {/if}
                 <Col xs={12} md={6} lg={4} class="mb-2">
                     <InputGroup>
+                        <InputGroupText>Banner</InputGroupText>
+                        <Input type="select" bind:value={options.filter.banner} on:change={() => resetPage()}>
+                            <option value="all">All</option>
+                            <option value="include">With banner</option>
+                            <option value="exclude">Without banner</option>
+                        </Input>
+                    </InputGroup>
+                </Col>
+                <Col xs={12} md={6} lg={4} class="mb-2">
+                    <InputGroup>
                         <InputGroupText>Color</InputGroupText>
                         <Input type="select" bind:value={options.filter.color} on:change={() => resetPage()}>
                             <option value="all">All</option>
@@ -426,5 +466,12 @@ function resetPage() {
                 {/if}
             </Row>
         {/if}
+        <hr/>
+        <Row>
+            <Col></Col>
+            <Col xs={12} md={4} lg={3} class="mb-2">
+                <Link to={getRandomizerUrl()}><Button class="w-100" color="secondary" tabindex={-1} aria-label={`randomize ${pageOptions.type}s`}>Random {capitalizeFirstLetter(pageOptions.type)}</Button></Link>
+            </Col>
+        </Row>
     </CardBody>
 </Card>

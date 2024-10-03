@@ -156,7 +156,7 @@ public class Checks
         if (!await ctx.CheckPermissionsInGuildChannel(channel, PermissionSet.ViewChannel))
             throw new PKError(error);
 
-        var botPermissions = PermissionExtensions.PermissionsFor(guild, channel, _botConfig.ClientId, guildMember);
+        var botPermissions = await _cache.BotPermissionsIn(channel.Id);
 
         // We use a bitfield so we can set individual permission bits
         ulong missingPermissions = 0;
@@ -239,6 +239,12 @@ public class Checks
         // using channel.GuildId here since _rest.GetMessage() doesn't return the GuildId
         var context = await ctx.Repository.GetMessageContext(msg.Author.Id, channel.GuildId.Value, rootChannel.Id, msg.ChannelId);
         var members = (await ctx.Repository.GetProxyMembers(msg.Author.Id, channel.GuildId.Value)).ToList();
+
+        if (await ctx.Repository.GetSystemByAccount(msg.Author.Id) == null)
+        {
+            await ctx.Reply("Your account does not have a system registered.");
+            return;
+        }
 
         // for now this is just server
         var autoproxySettings = await ctx.Repository.GetAutoproxySettings(ctx.System.Id, channel.GuildId.Value, null);

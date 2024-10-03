@@ -34,6 +34,7 @@
 		name_privacy: "Name",
 		pronoun_privacy: "Pronouns",
 		visibility: "Visibility",
+        proxy_privacy: "Proxy Tags"
 	};
 
     async function submit() {
@@ -48,9 +49,8 @@
                 }
                 return m
             })
+            privacyOpen = false;
             members.set(newList)
-
-            success = true;
 		} catch (error) {
 			console.log(error);
 			err = error.message;

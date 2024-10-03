@@ -3,7 +3,7 @@ This stylesheet should be used globally regardless of theming
 
 some specific rules are meant to be overwritten by the individual themes
 */
-@import url('http://fonts.cdnfonts.com/css/open-dyslexic');
+@import "fonts";
 
 // some variables
 $breakpoint-xs: 0px;
@@ -45,7 +45,11 @@ code {
 }
 
 .dyslexic {
-    font-family: 'Open-Dyslexic', sans-serif;
+    font-family: 'OpenDyslexic', sans-serif;
+}
+
+.atkinson {
+    font-family: 'Atkinson Hyperlegible', sans-serif;
 }
 
 // dashboard specific elements
@@ -83,6 +87,10 @@ code {
 
 .description a {
     text-decoration: none;
+}
+
+.spacer {
+    height: 5rem;
 }
 
 // bootstrap elements
@@ -185,6 +193,12 @@ code {
     vertical-align: -0.1125em;
 }
 
+small {
+    display: block;
+    color: #808080;
+    font-size: 0.5rem;
+}
+
 //twemoji
 img.emoji {
     height: 1.125em;
@@ -203,4 +217,25 @@ img.emoji {
     clip: rect(0, 0, 0, 0);
     white-space: nowrap;
     border: 0;
+}
+
+.card-body h1 {
+    font-size: 1.5em;
+    font-weight: bold;
+}
+
+.card-body h2 {
+    font-size: 1.25em;
+    font-weight: bold;
+}
+
+.card-body h3 {
+    font-size: 1.125em;
+    font-weight: bold;
+}
+
+.description {
+    ul, ol {
+        margin: 0;
+    }
 }

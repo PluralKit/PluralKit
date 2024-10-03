@@ -29,9 +29,9 @@ public class Admin
         if (target == null)
             throw new PKError("Unknown system.");
 
-        var newHid = ctx.PopArgument();
-        if (!Regex.IsMatch(newHid, "^[a-z]{5}$"))
-            throw new PKError($"Invalid new system ID `{newHid}`.");
+        var input = ctx.PopArgument();
+        if (!input.TryParseHid(out var newHid))
+            throw new PKError($"Invalid new system ID `{input}`.");
 
         var existingSystem = await ctx.Repository.GetSystemByHid(newHid);
         if (existingSystem != null)
@@ -52,9 +52,9 @@ public class Admin
         if (target == null)
             throw new PKError("Unknown member.");
 
-        var newHid = ctx.PopArgument();
-        if (!Regex.IsMatch(newHid, "^[a-z]{5}$"))
-            throw new PKError($"Invalid new member ID `{newHid}`.");
+        var input = ctx.PopArgument();
+        if (!input.TryParseHid(out var newHid))
+            throw new PKError($"Invalid new member ID `{input}`.");
 
         var existingMember = await ctx.Repository.GetMemberByHid(newHid);
         if (existingMember != null)
@@ -78,9 +78,9 @@ public class Admin
         if (target == null)
             throw new PKError("Unknown group.");
 
-        var newHid = ctx.PopArgument();
-        if (!Regex.IsMatch(newHid, "^[a-z]{5}$"))
-            throw new PKError($"Invalid new group ID `{newHid}`.");
+        var input = ctx.PopArgument();
+        if (!input.TryParseHid(out var newHid))
+            throw new PKError($"Invalid new group ID `{input}`.");
 
         var existingGroup = await ctx.Repository.GetGroupByHid(newHid);
         if (existingGroup != null)
@@ -240,7 +240,7 @@ public class Admin
 
         var existingAccount = await ctx.Repository.GetSystemByAccount(account.Id);
         if (existingAccount != null)
-            throw Errors.AccountInOtherSystem(existingAccount);
+            throw Errors.AccountInOtherSystem(existingAccount, ctx.Config);
 
         var system = await ctx.Repository.GetSystem(systemId.Value!);
 

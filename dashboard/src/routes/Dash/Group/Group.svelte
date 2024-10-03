@@ -15,6 +15,8 @@
     import { filterList, paginateList, getPageAmount } from '../../../components/list/functions';
     import PageControl from "../../../components/list/PageControl.svelte";
     import { writable, type Writable } from "svelte/store";
+    import TinyView from "../../../components/list/TinyView.svelte";
+    import TextView from "../../../components/list/TextView.svelte";
 
     // get the state from the navigator so that we know which tab to start on
     let location = useLocation();
@@ -48,15 +50,13 @@
     let groupsStore: Writable<Group[]> = writable([])
     $: members = setContext<Writable<Member[]>>("members", membersStore)
     $: groups = setContext<Writable<Group[]>>("groups", groupsStore)
-    $: group = $groups.filter(g => g.id === $params.id)[0] || {}
+    let group: Group|null = null
 
     let title = isPublic ? "group" : "group (dash)";
 
     async function fetchGroup() {
         try {
-            const res = await api().groups($params.id).get({auth: !isPublic});
-            $groups = [res]
-            group = $groups.filter(g => g.id === $params.id)[0];
+            group = await api().groups($params.id).get({ auth: !isPublic })
             if (!isPublic && !group.privacy) {
                 notOwnSystem = true;
                 throw new Error("Group is not from own system.");
@@ -83,7 +83,7 @@
                 members.set(groupMembers);
             } else {
                 const systemGroups: Group[] = await api().systems("@me").groups.get({ auth: true, query: { with_members: true } });
-                group.members = systemGroups.filter((g: Group) => g.id === $params.id).map((m: Member) => m.uuid);
+                group.members = systemGroups.find((g: Group) => g.uuid === group.uuid).members
                 groups.set(systemGroups);
 
                 const systemMembers = await api().systems("@me").members.get({ auth: true });
@@ -110,6 +110,7 @@
 
     function getDefaultItemsPerpage(): number {
         if (listView === 'card') return 24;
+        else if (listView === 'tiny') return 36;
         else if (settings && settings.accessibility && settings.accessibility.expandedcards) 
             return 10;
         else return 25;
@@ -162,7 +163,7 @@
             {:else if group && group.id}
                 <Card class="mb-4">
                     <CardHeader>
-                        <CardsHeader item={group}>
+                        <CardsHeader item={group} type="group" avatarUsed="avatar">
                             <div slot="icon" style="cursor: pointer;" id={`group-copy-${group.id}`} on:click|stopPropagation={() => copyShortLink()} on:keydown={(e) => copyShortLink(e)} tabindex={0} >
                                 <FaUsers slot="icon" />
                             </div>
@@ -183,11 +184,16 @@
             <span class="itemcounter">{processedList.length} {pageOptions.type}s ({currentPage.length} shown)</span>
                 <ListPagination bind:currentPage={pageOptions.currentPage} {pageAmount} />
                 {#if pageOptions.view === "card"}
-                <CardView {pageOptions} currentList={currentPage} />
+                <CardView {pageOptions} currentList={currentPage} {listOptions} />
+                {:else if pageOptions.view === "tiny"}
+                <TinyView {pageOptions} currentList={currentPage} {listOptions} />
+                {:else if pageOptions.view === "text"}
+                <TextView {pageOptions} currentList={currentPage} {listOptions} />
                 {:else}
-                <ListView {pageOptions} currentList={currentPage} fullListLength={groupMembers.length}/>
+                <ListView {pageOptions} currentList={currentPage} fullListLength={groupMembers.length} options={listOptions}/>
                 {/if}
                 <ListPagination bind:currentPage={pageOptions.currentPage} {pageAmount} />
+                <div class="spacer"></div>
             {/if}
             {/if}
         </Col>

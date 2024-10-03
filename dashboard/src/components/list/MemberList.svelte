@@ -13,6 +13,8 @@
     import api from '../../api';
     import type { ListOptions, List, PageOptions } from './types';
     import { createShortList, filterList, getPageAmount, paginateList } from './functions';
+    import TinyView from './TinyView.svelte';
+    import TextView from './TextView.svelte';
 
     $: memberList = getContext<Writable<Member[]>>("members")
     $: groupList = getContext<Writable<Group[]>>("groups")
@@ -36,6 +38,7 @@
     // set the default items per page based on settings and view
     // this probably should be moved to it's own function
     if (pageOptions.view === "card") pageOptions.itemsPerPage = 24;
+    else if (pageOptions.view === "tiny") pageOptions.itemsPerPage = 36;
     else if (settings && settings.accessibility && settings.accessibility.expandedcards) pageOptions.itemsPerPage = 10;
     else pageOptions.itemsPerPage = 25;
 
@@ -84,14 +87,17 @@
     <NewMember />
 {/if}
 {#if pageOptions.view === "card"}
-    <CardView {pageOptions} currentList={currentMembers} />
+    <CardView {pageOptions} currentList={currentMembers} listOptions={options} />
 {:else if pageOptions.view === "tiny"}
-    tiny!
+    <TinyView {pageOptions} currentList={currentMembers} listOptions={options} />
+{:else if pageOptions.view === "text"}
+    <TextView {pageOptions} listOptions={options} currentList={currentMembers} />
 {:else}
 <ListView currentList={currentMembers} {pageOptions} {options} fullListLength={members.length} />
 {/if}
 <ListPagination bind:currentPage={pageOptions.currentPage} {pageAmount} />
 {/if}
+<div class="spacer"></div>
 
 <style>
     .itemcounter {

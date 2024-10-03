@@ -20,7 +20,6 @@ public static class DiscordUtils
     public const uint Blue = 0x1f99d8;
     public const uint Green = 0x00cc78;
     public const uint Red = 0xef4b3d;
-    public const uint Gray = 0x979c9f;
 
     private static readonly Regex USER_MENTION = new("<@!?(\\d{17,19})>");
     private static readonly Regex ROLE_MENTION = new("<@&(\\d{17,19})>");
@@ -35,7 +34,7 @@ public static class DiscordUtils
     private static readonly Regex UNBROKEN_LINK_REGEX = new("<?(https?:\\/\\/[^\\s<]+[^<.,:;\"')\\]\\s])>?");
 
     public static string NameAndMention(this User user) =>
-        $"{user.Username}{(user.Discriminator == "0" ? "" : $"#{user.Discriminator}")} ({user.Mention()})";
+        $"{user.Username.EscapeMarkdown()}{(user.Discriminator == "0" ? "" : $"#{user.Discriminator}")} ({user.Mention()})";
 
     public static Instant SnowflakeToInstant(ulong snowflake) =>
         Instant.FromUtc(2015, 1, 1, 0, 0, 0) + Duration.FromMilliseconds(snowflake >> 22);

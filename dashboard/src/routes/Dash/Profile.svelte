@@ -47,7 +47,7 @@
 
     async function getSystem() {
         try {
-            let res: System = await api().systems(systemId).get();
+            let res: System = await api().systems(systemId).get({ auth: false });
             user = res;
             title = user.name ? user.name : "system";
         } catch (error) {
@@ -69,27 +69,31 @@
 
     // fetch both lists, and store them inside a context store
     async function fetchLists() {
+        errs.members = null;
+        errs.groups = null;
         loading.members = true;
         loading.groups = true;
 
         try {
-            const res = await api().systems(systemId).members.get();
+            const res = await api().systems(systemId).members.get({ auth: false });
             memberStore.set(res)
             loading.members = false;
 
         } catch (error) {
             console.error(error);
             errs.members = error.message;
+            loading.members = false;
         }
 
         try {
-            const res = await api().systems(systemId).groups.get();
+            const res = await api().systems(systemId).groups.get({ auth: false });
             groupStore.set(res)
             loading.groups = false;
 
         } catch (error) {
             console.error(error);
             errs.groups = error.message;
+            loading.groups = false;
         }
     }
 
@@ -132,10 +136,10 @@
                     <SystemMain bind:user={user} isPublic={true} />
                 </TabPane>
                 <TabPane tabId="members" tab="Members" active={tabPane === "members"}>
-                    <MemberList on:viewChange={(e) => navigateTo("members", e.detail)} bind:listLoading={loading.members} pageOptions={memberListPageOptions} options={memberListOptions} {systemId} />
+                    <MemberList on:viewChange={(e) => navigateTo("members", e.detail)} bind:listLoading={loading.members} pageOptions={memberListPageOptions} options={memberListOptions} {systemId} err={errs.members} />
                 </TabPane>
                 <TabPane tabId="groups" tab="Groups" active={tabPane === "groups"}>
-                    <GroupList on:viewChange={(e) => navigateTo("groups", e.detail)} bind:listLoading={loading.groups} pageOptions={groupListPageOptions}  options={groupListOptions} {systemId} />
+                    <GroupList on:viewChange={(e) => navigateTo("groups", e.detail)} bind:listLoading={loading.groups} pageOptions={groupListPageOptions}  options={groupListOptions} {systemId} err={errs.groups} />
                 </TabPane> 
             </TabContent>
             {/if}

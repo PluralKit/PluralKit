@@ -102,7 +102,7 @@ public class ProxyService
 
         // Check if the sender account can mention everyone/here + embed links
         // we need to "mirror" these permissions when proxying to prevent exploits
-        var senderPermissions = PermissionExtensions.PermissionsFor(guild, rootChannel, message, isThread: rootChannel.Id != channel.Id);
+        var senderPermissions = PermissionExtensions.PermissionsFor(guild, rootChannel, message.Author.Id, message.Member, isThread: rootChannel.Id != channel.Id);
         var allowEveryone = senderPermissions.HasFlag(PermissionSet.MentionEveryone);
         var allowEmbeds = senderPermissions.HasFlag(PermissionSet.EmbedLinks);
 
@@ -128,6 +128,7 @@ public class ProxyService
             Channel.ChannelType.GuildVoice => true,
             Channel.ChannelType.GuildStageVoice => true,
             Channel.ChannelType.GuildForum => isRootChannel,
+            Channel.ChannelType.GuildMedia => isRootChannel,
             _ => false,
         };
     }
@@ -188,9 +189,9 @@ public class ProxyService
             throw new ProxyChecksFailedException(
                 "Your system has proxying disabled in this server. Type `pk;proxy on` to enable it.");
 
-        // Make sure we have either an attachment or message content
+        // Make sure we have an attachment, message content, or poll
         var isMessageBlank = msg.Content == null || msg.Content.Trim().Length == 0;
-        if (isMessageBlank && msg.Attachments.Length == 0)
+        if (isMessageBlank && msg.Attachments.Length == 0 && msg.Poll == null)
             throw new ProxyChecksFailedException("Message cannot be blank.");
 
         if (msg.Activity != null)
@@ -230,6 +231,11 @@ public class ProxyService
         var rootChannel = await _cache.GetRootChannel(trigger.ChannelId);
         var threadId = messageChannel.IsThread() ? messageChannel.Id : (ulong?)null;
         var guild = await _cache.GetGuild(trigger.GuildId.Value);
+        var guildMember = await _rest.GetGuildMember(trigger.GuildId!.Value, trigger.Author.Id);
+
+        //If the member is a text-to-speech member and the user can send text-to-speech messages in that channel, turn text-to-speech on
+        var senderPermissions = PermissionExtensions.PermissionsFor(guild, messageChannel, trigger.Author.Id, guildMember);
+        var tts = match.Member.Tts && senderPermissions.HasFlag(PermissionSet.SendTtsMessages);
 
         //We suppress notifications so that people don't get double push notifications. Pings and unreads are not suppressed.
         Message.MessageFlags flags = Message.MessageFlags.SuppressNotifications;
@@ -240,6 +246,7 @@ public class ProxyService
             GuildId = trigger.GuildId!.Value,
             ChannelId = rootChannel.Id,
             ThreadId = threadId,
+            MessageId = trigger.Id,
             Name = await FixSameName(messageChannel.Id, ctx, match.Member),
             AvatarUrl = AvatarUtils.TryRewriteCdnUrl(match.Member.ProxyAvatar(ctx)),
             Content = content,
@@ -249,6 +256,8 @@ public class ProxyService
             Stickers = trigger.StickerItems,
             AllowEveryone = allowEveryone,
             Flags = flags,
+            Tts = tts,
+            Poll = trigger.Poll,
         });
         await HandleProxyExecutedActions(ctx, autoproxySettings, trigger, proxyMessage, match);
     }
@@ -295,6 +304,9 @@ public class ProxyService
         if (!senderPermissions.HasFlag(PermissionSet.SendMessages))
             throw new PKError("You don't have permission to send messages in the channel that message is in.");
 
+        //If the member is a text-to-speech member and the user can send text-to-speech messages in that channel, turn text-to-speech on
+        var tts = member.Tts && senderPermissions.HasFlag(PermissionSet.SendTtsMessages);
+
         // Mangle embeds (for reply embed color changing)
         var mangledEmbeds = originalMsg.Embeds!.Select(embed => MangleReproxyEmbed(embed, member)).Where(embed => embed != null).ToArray();
 
@@ -304,6 +316,7 @@ public class ProxyService
             GuildId = guild.Id,
             ChannelId = rootChannel.Id,
             ThreadId = threadId,
+            MessageId = originalMsg.Id,
             Name = match.Member.ProxyName(ctx),
             AvatarUrl = AvatarUtils.TryRewriteCdnUrl(match.Member.ProxyAvatar(ctx)),
             Content = match.ProxyContent!,
@@ -313,6 +326,8 @@ public class ProxyService
             Stickers = originalMsg.StickerItems!,
             AllowEveryone = allowEveryone,
             Flags = originalMsg.Flags.HasFlag(Message.MessageFlags.VoiceMessage) ? Message.MessageFlags.VoiceMessage : null,
+            Tts = tts,
+            Poll = originalMsg.Poll,
         });
 
 

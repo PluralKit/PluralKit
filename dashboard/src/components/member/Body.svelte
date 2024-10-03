@@ -48,6 +48,9 @@
     let bannerOpen = false;
     const toggleBannerModal = () => (bannerOpen = !bannerOpen);
     
+    let avatarOpen = false;
+    const toggleAvatarModal = () => (avatarOpen = !avatarOpen);
+
     let proxyAvatarOpen = false;
     const toggleProxyAvatarModal = () => (proxyAvatarOpen = !proxyAvatarOpen);
     
@@ -134,6 +137,16 @@
             <b>Color:</b> {member.color}
         </Col>
         {/if}
+        {#if member.avatar_url}
+        <Col xs={12} lg={4} class="mb-2">
+            <b>Avatar:</b> <Button size="sm" color="secondary" on:click={toggleAvatarModal} aria-label="view member avatar">View</Button>
+            <Modal isOpen={avatarOpen} toggle={toggleAvatarModal}>
+                <div slot="external" on:click={toggleAvatarModal} style="height: 100%; width: max-content; max-width: 100%; margin-left: auto; margin-right: auto; display: flex;">
+                    <img class="img-thumbnail d-block m-auto" src={member.avatar_url} tabindex={0} alt={`Member ${member.name} avatar (full size)`} use:focus/>
+                </div>
+            </Modal>
+        </Col>
+        {/if}
         {#if member.webhook_avatar_url}
         <Col xs={12} lg={4} class="mb-2">
             <b>Proxy Avatar:</b> <Button size="sm" color="secondary" on:click={toggleProxyAvatarModal} aria-label="view member proxy avatar">View</Button>
@@ -183,7 +196,11 @@
     </Row>
     <div class="my-2 mb-3 description" bind:this={descriptionElement}>
         <b>Description:</b><br />
+        {#if member.description}
         <AwaitHtml htmlPromise={htmlDescriptionPromise} />
+        {:else}
+        <span>(no description)</span>
+        {/if}
     </div>
     {#if (member.banner && ((settings && settings.appearance.banner_bottom) || !settings))}
     <img on:click={toggleBannerModal} src={resizeMedia(member.banner, [1200, 480])} alt="member banner" class="w-100 mb-3 rounded" style="max-height: 13em; object-fit: cover; cursor: pointer"/>
