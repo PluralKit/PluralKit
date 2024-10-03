@@ -460,8 +460,8 @@ public class Groups
     {
         var title = new StringBuilder("Groups of ");
 
-        if (target.Name != null)
-            title.Append($"{target.Name} (`{target.DisplayHid(ctx.Config)}`)");
+        if (target.NameFor(ctx) != null)
+            title.Append($"{target.NameFor(ctx)} (`{target.DisplayHid(ctx.Config)}`)");
         else
             title.Append($"`{target.DisplayHid(ctx.Config)}`");
 
