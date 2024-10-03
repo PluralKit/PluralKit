@@ -132,40 +132,47 @@ public class Groups
 
         // No perms check, display name isn't covered by member privacy
 
-        if (ctx.MatchRaw())
-        {
+        var format = ctx.MatchFormat();
+
+        // if there's nothing next or what's next is "raw"/"plaintext" we're doing a query, so check for null
+        if (!ctx.HasNext(false) || format != ReplyFormat.Standard)
             if (target.DisplayName == null)
+            {
                 await ctx.Reply(noDisplayNameSetMessage);
-            else
-                await ctx.Reply($"```\n{target.DisplayName}\n```");
+                return;
+            }
+
+        if (format == ReplyFormat.Raw)
+        {
+            await ctx.Reply($"```\n{target.DisplayName}\n```");
+            return;
+        }
+        if (format == ReplyFormat.Plaintext)
+        {
+            var eb = new EmbedBuilder()
+                .Description($"Showing displayname for group {target.Reference(ctx)}");
+            await ctx.Reply(target.DisplayName, embed: eb.Build());
             return;
         }
 
         if (!ctx.HasNext(false))
         {
-            if (target.DisplayName == null)
-            {
-                await ctx.Reply(noDisplayNameSetMessage);
-            }
-            else
-            {
-                var eb = new EmbedBuilder()
-                    .Field(new Embed.Field("Name", target.Name))
-                    .Field(new Embed.Field("Display Name", target.DisplayName));
+            var eb = new EmbedBuilder()
+                .Field(new Embed.Field("Name", target.Name))
+                .Field(new Embed.Field("Display Name", target.DisplayName));
 
-                var reference = target.Reference(ctx);
+            var reference = target.Reference(ctx);
 
-                if (ctx.System?.Id == target.System)
-                    eb.Description(
-                        $"To change display name, type `pk;group {reference} displayname <display name>`.\n"
-                        + $"To clear it, type `pk;group {reference} displayname -clear`.\n"
-                        + $"To print the raw display name, type `pk;group {reference} displayname -raw`.");
+            if (ctx.System?.Id == target.System)
+                eb.Description(
+                    $"To change display name, type `pk;group {reference} displayname <display name>`.\n"
+                    + $"To clear it, type `pk;group {reference} displayname -clear`.\n"
+                    + $"To print the raw display name, type `pk;group {reference} displayname -raw`.");
 
-                if (ctx.System?.Id == target.System)
-                    eb.Footer(new Embed.EmbedFooter($"Using {target.DisplayName.Length}/{Limits.MaxGroupNameLength} characters."));
+            if (ctx.System?.Id == target.System)
+                eb.Footer(new Embed.EmbedFooter($"Using {target.DisplayName.Length}/{Limits.MaxGroupNameLength} characters."));
 
-                await ctx.Reply(embed: eb.Build());
-            }
+            await ctx.Reply(embed: eb.Build());
 
             return;
         }
@@ -201,30 +208,41 @@ public class Groups
             noDescriptionSetMessage +=
                 $" To set one, type `pk;group {target.Reference(ctx)} description <description>`.";
 
-        if (ctx.MatchRaw())
-        {
+        var format = ctx.MatchFormat();
+
+        // if there's nothing next or what's next is "raw"/"plaintext" we're doing a query, so check for null
+        if (!ctx.HasNext(false) || format != ReplyFormat.Standard)
             if (target.Description == null)
+            {
                 await ctx.Reply(noDescriptionSetMessage);
-            else
-                await ctx.Reply($"```\n{target.Description}\n```");
+                return;
+            }
+
+        if (format == ReplyFormat.Raw)
+        {
+            await ctx.Reply($"```\n{target.Description}\n```");
+            return;
+        }
+        if (format == ReplyFormat.Plaintext)
+        {
+            var eb = new EmbedBuilder()
+                .Description($"Showing description for group {target.Reference(ctx)}");
+            await ctx.Reply(target.Description, embed: eb.Build());
             return;
         }
 
         if (!ctx.HasNext(false))
         {
-            if (target.Description == null)
-                await ctx.Reply(noDescriptionSetMessage);
-            else
-                await ctx.Reply(embed: new EmbedBuilder()
-                    .Title("Group description")
-                    .Description(target.Description)
-                    .Field(new Embed.Field("\u200B",
-                        $"To print the description with formatting, type `pk;group {target.Reference(ctx)} description -raw`."
-                        + (ctx.System?.Id == target.System
-                            ? $" To clear it, type `pk;group {target.Reference(ctx)} description -clear`."
-                            : "")
-                            + $" Using {target.Description.Length}/{Limits.MaxDescriptionLength} characters."))
-                    .Build());
+            await ctx.Reply(embed: new EmbedBuilder()
+                .Title("Group description")
+                .Description(target.Description)
+                .Field(new Embed.Field("\u200B",
+                    $"To print the description with formatting, type `pk;group {target.Reference(ctx)} description -raw`."
+                    + (ctx.System?.Id == target.System
+                        ? $" To clear it, type `pk;group {target.Reference(ctx)} description -clear`."
+                        : "")
+                        + $" Using {target.Description.Length}/{Limits.MaxDescriptionLength} characters."))
+                .Build());
             return;
         }
 
@@ -385,7 +403,7 @@ public class Groups
     public async Task GroupColor(Context ctx, PKGroup target)
     {
         var isOwnSystem = ctx.System?.Id == target.System;
-        var matchedRaw = ctx.MatchRaw();
+        var matchedFormat = ctx.MatchFormat();
         var matchedClear = ctx.MatchClear();
 
         if (!isOwnSystem || !(ctx.HasNext() || matchedClear))
@@ -393,8 +411,10 @@ public class Groups
             if (target.Color == null)
                 await ctx.Reply(
                     "This group does not have a color set." + (isOwnSystem ? $" To set one, type `pk;group {target.Reference(ctx)} color <color>`." : ""));
-            else if (matchedRaw)
+            else if (matchedFormat == ReplyFormat.Raw)
                 await ctx.Reply("```\n#" + target.Color + "\n```");
+            else if (matchedFormat == ReplyFormat.Plaintext)
+                await ctx.Reply(target.Color);
             else
                 await ctx.Reply(embed: new EmbedBuilder()
                     .Title("Group color")

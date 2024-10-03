@@ -352,7 +352,9 @@ public class ProxiedMessage
         else if (!await ctx.CheckPermissionsInGuildChannel(channel, PermissionSet.ViewChannel))
             showContent = false;
 
-        if (ctx.MatchRaw())
+        var format = ctx.MatchFormat();
+
+        if (format != ReplyFormat.Standard)
         {
             var discordMessage = await _rest.GetMessageOrNull(message.Message.Channel, message.Message.Mid);
             if (discordMessage == null || !showContent)
@@ -365,21 +367,32 @@ public class ProxiedMessage
                 return;
             }
 
-            await ctx.Reply($"```{content}```");
-
-            if (Regex.IsMatch(content, "```.*```", RegexOptions.Singleline))
+            if (format == ReplyFormat.Raw)
             {
-                var stream = new MemoryStream(Encoding.UTF8.GetBytes(content));
-                await ctx.Rest.CreateMessage(
-                    ctx.Channel.Id,
-                    new MessageRequest
-                    {
-                        Content = $"{Emojis.Warn} Message contains codeblocks, raw source sent as an attachment."
-                    },
-                    new[] { new MultipartFile("message.txt", stream, null, null, null) });
+                await ctx.Reply($"```{content}```");
+
+                if (Regex.IsMatch(content, "```.*```", RegexOptions.Singleline))
+                {
+                    var stream = new MemoryStream(Encoding.UTF8.GetBytes(content));
+                    await ctx.Rest.CreateMessage(
+                        ctx.Channel.Id,
+                        new MessageRequest
+                        {
+                            Content = $"{Emojis.Warn} Message contains codeblocks, raw source sent as an attachment."
+                        },
+                        new[] { new MultipartFile("message.txt", stream, null, null, null) });
+                }
+                return;
             }
 
-            return;
+            if (format == ReplyFormat.Plaintext)
+            {
+                var eb = new EmbedBuilder()
+                .Description($"Showing contents of message {message.Message.Mid}");
+                await ctx.Reply(content, embed: eb.Build());
+                return;
+            }
+
         }
 
         if (isDelete)
