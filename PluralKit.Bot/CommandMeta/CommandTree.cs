@@ -544,6 +544,8 @@ public partial class CommandTree
             return ctx.Execute<Config>(null, m => m.HidDisplayCaps(ctx));
         if (ctx.MatchMultiple(new[] { "pad" }, new[] { "id", "ids" }) || ctx.MatchMultiple(new[] { "id" }, new[] { "pad", "padding" }) || ctx.Match("idpad", "padid", "padids"))
             return ctx.Execute<Config>(null, m => m.HidListPadding(ctx));
+        if (ctx.MatchMultiple(new[] { "member", "group" }, new[] { "limit" }) || ctx.Match("limit"))
+            return ctx.Execute<Config>(null, m => m.LimitUpdate(ctx));
 
         // todo: maybe add the list of configuration keys here?
         return ctx.Reply($"{Emojis.Error} Could not find a setting with that name. Please see `pk;commands config` for the list of possible config settings.");
