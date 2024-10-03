@@ -111,33 +111,10 @@ public class ProxyService
         return true;
     }
 
-#pragma warning disable CA1822 // Mark members as static
-    internal bool CanProxyInChannel(Channel ch, bool isRootChannel = false)
-#pragma warning restore CA1822 // Mark members as static
-    {
-        // this is explicitly selecting known channel types so that when Discord add new
-        // ones, users don't get flooded with error codes if that new channel type doesn't
-        // support a feature we need for proxying
-        // Note: If you add new channels to this, also add them to the allowed channel types
-        // for blacklisting
-        return ch.Type switch
-        {
-            Channel.ChannelType.GuildText => true,
-            Channel.ChannelType.GuildPublicThread => true,
-            Channel.ChannelType.GuildPrivateThread => true,
-            Channel.ChannelType.GuildNews => true,
-            Channel.ChannelType.GuildNewsThread => true,
-            Channel.ChannelType.GuildVoice => true,
-            Channel.ChannelType.GuildStageVoice => true,
-            Channel.ChannelType.GuildForum => isRootChannel,
-            Channel.ChannelType.GuildMedia => isRootChannel,
-            _ => false,
-        };
-    }
-
+    // Proxy checks that give user errors
     public async Task<string> CanProxy(Channel channel, Channel rootChannel, Message msg, MessageContext ctx)
     {
-        if (!(CanProxyInChannel(channel) && CanProxyInChannel(rootChannel, true)))
+        if (DiscordUtils.IsValidGuildChannel(channel))
             return $"PluralKit cannot proxy messages in this type of channel.";
 
         // Check if the message does not go over any Discord Nitro limits
@@ -161,6 +138,7 @@ public class ProxyService
         return null;
     }
 
+    // Proxy checks that don't give user errors unless `pk;debug proxy` is used
     public bool ShouldProxy(Channel channel, Channel rootChannel, Message msg, MessageContext ctx)
     {
         // Make sure author has a system
