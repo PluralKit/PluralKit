@@ -204,7 +204,17 @@ public class ServerConfig
         var affectedChannels = new List<Channel>();
         if (ctx.Match("all"))
             affectedChannels = (await _cache.GetGuildChannels(ctx.Guild.Id))
-                .Where(x => x.Type == Channel.ChannelType.GuildText).ToList();
+                // All the channel types you can proxy in. Taken from ProxyService
+                .Where(x => x.Type == Channel.ChannelType.GuildText
+                         || x.Type == Channel.ChannelType.GuildPublicThread
+                         || x.Type == Channel.ChannelType.GuildPrivateThread
+                         || x.Type == Channel.ChannelType.GuildNews
+                         || x.Type == Channel.ChannelType.GuildNewsThread
+                         || x.Type == Channel.ChannelType.GuildVoice
+                         || x.Type == Channel.ChannelType.GuildStageVoice
+                         || x.Type == Channel.ChannelType.GuildForum
+                         || x.Type == Channel.ChannelType.GuildMedia
+                    ).ToList();
         else if (!ctx.HasNext()) throw new PKSyntaxError("You must pass one or more #channels.");
         else
             while (ctx.HasNext())

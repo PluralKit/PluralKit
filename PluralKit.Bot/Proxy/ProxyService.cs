@@ -118,6 +118,8 @@ public class ProxyService
         // this is explicitly selecting known channel types so that when Discord add new
         // ones, users don't get flooded with error codes if that new channel type doesn't
         // support a feature we need for proxying
+        // Note: If you add new channels to this, also add them to the allowed channel types
+        // for blacklisting
         return ch.Type switch
         {
             Channel.ChannelType.GuildText => true,
