@@ -60,7 +60,8 @@ public static class DatabaseViewsExt
             static string Filter(string column) =>
                 $"(position(lower(@filter) in lower(coalesce({column}, ''))) > 0)";
 
-            query.Append($" and ({Filter("name")} or {Filter("display_name")}");
+            var nameColumn = opts.Context == LookupContext.ByOwner ? "name" : "public_name";
+            query.Append($" and ({Filter(nameColumn)} or {Filter("display_name")}");
             if (opts.SearchDescription)
             {
                 // We need to account for the possibility of description privacy when searching

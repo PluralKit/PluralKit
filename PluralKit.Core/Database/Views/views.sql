@@ -30,7 +30,15 @@ select members.*,
            -- Privacy '1' = public; just return description as normal
            when members.description_privacy = 1 then members.description
            -- Any other privacy (rn just '2'), return null description (missing case = null in SQL)
-        end as public_description
+        end as public_description,
+        
+        -- Extract member name as seen by "the public"
+        case
+            -- Privacy '1' = public; just return name as normal
+            when members.name_privacy = 1 then members.name
+            -- Any other privacy (rn just '2'), return display name
+            else members.display_name
+        end as public_name
 from members;
 
 create view group_list as
