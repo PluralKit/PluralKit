@@ -536,4 +536,10 @@ public class Config
         }
         else throw new PKError(badInputError);
     }
+
+    public Task LimitUpdate(Context ctx)
+    {
+        throw new PKError("You cannot update your own member or group limits. If you need a limit update, please join the " +
+        "support server and ask in #bot-support: https://discord.gg/PczBt78");
+    }
 }
