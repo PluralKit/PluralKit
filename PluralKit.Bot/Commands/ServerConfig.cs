@@ -204,7 +204,8 @@ public class ServerConfig
         var affectedChannels = new List<Channel>();
         if (ctx.Match("all"))
             affectedChannels = (await _cache.GetGuildChannels(ctx.Guild.Id))
-                .Where(x => x.Type == Channel.ChannelType.GuildText).ToList();
+                // All the channel types you can proxy in
+                .Where(x => DiscordUtils.IsValidGuildChannel(x)).ToList();
         else if (!ctx.HasNext()) throw new PKSyntaxError("You must pass one or more #channels.");
         else
             while (ctx.HasNext())
