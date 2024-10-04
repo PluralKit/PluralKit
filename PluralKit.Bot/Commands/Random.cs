@@ -67,7 +67,7 @@ public class Random
     {
         ctx.CheckSystemPrivacy(group.System, group.ListPrivacy);
 
-        var opts = ctx.ParseListOptions(ctx.DirectLookupContextFor(group.System));
+        var opts = ctx.ParseListOptions(ctx.DirectLookupContextFor(group.System), ctx.LookupContextFor(group.System));
         opts.GroupFilter = group.Id;
 
         var members = await ctx.Database.Execute(conn => conn.QueryMemberList(group.System, opts.ToQueryOptions()));
