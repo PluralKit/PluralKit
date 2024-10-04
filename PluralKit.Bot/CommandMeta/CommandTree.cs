@@ -106,7 +106,7 @@ public partial class CommandTree
             else
                 return ctx.Execute<Random>(MemberRandom, m => m.Member(ctx, ctx.System));
         if (ctx.Match("dashboard", "dash"))
-            return ctx.Reply("The PluralKit dashboard is at <https://dash.pluralkit.me>");
+            return ctx.Execute<Help>(Dashboard, m => m.Dashboard(ctx));
 
         // remove compiler warning
         return ctx.Reply(

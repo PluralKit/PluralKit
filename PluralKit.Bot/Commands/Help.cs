@@ -172,4 +172,6 @@ public class Help
     });
 
     public Task Explain(Context ctx) => ctx.Reply(explanation);
+
+    public Task Dashboard(Context ctx) => ctx.Reply("The PluralKit dashboard is at <https://dash.pluralkit.me>");
 }

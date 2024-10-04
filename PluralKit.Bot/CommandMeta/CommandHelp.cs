@@ -92,6 +92,7 @@ public partial class CommandTree
     public static Command Export = new Command("export", "export", "Exports system information to a data file");
     public static Command Help = new Command("help", "help", "Shows help information about PluralKit");
     public static Command Explain = new Command("explain", "explain", "Explains the basics of systems and proxying");
+    public static Command Dashboard = new Command("dashboard", "dashboard", "Get a link to the PluralKit dashboard");
     public static Command Message = new Command("message", "message <id|link> [delete|author]", "Looks up a proxied message");
     public static Command MessageEdit = new Command("edit", "edit [link] <text>", "Edit a previously proxied message");
     public static Command MessageReproxy = new Command("reproxy", "reproxy [link] <member>", "Reproxy a previously proxied message using a different member");
