@@ -49,7 +49,7 @@ public class System
                 "If your token is ever compromised run `pk;token refresh` to invalidate the old token and get a new one."))
             .Field(new Embed.Field("Questions?",
                 "Please join the PK server https://discord.gg/PczBt78 if you have any questions, we're happy to help"));
-        await ctx.Reply(embed: eb.Build());
+        await ctx.Reply($"{Emojis.Warn} If you cannot see the rest of this message see [the FAQ](<https://pluralkit.me/faq/#why-do-most-of-pluralkit-s-messages-look-blank-or-empty>)", eb.Build());
 
     }
 
