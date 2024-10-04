@@ -97,3 +97,6 @@ It is not possible to edit messages via ID. Please use the full link, or reply t
 
 ### How do I reply-ping/reply-@ proxied messages?
 You cannot reply-@ a proxied messages due to their nature as webhooks. If you want to "reply-@" a proxied message, you must react to the message with 🔔, 🛎, or 🏓. This will send a message from PluralKit that reads "Psst, MEMBER (@User), you have been pinged by @You", which will ping the Discord account behind the proxied message.
+
+### Why do most of PluralKit's messages look blank or empty?
+A lot of PluralKit's command responses use Discord embeds. If you can't see them, it's likely you have embeds turned off. To change this, go into your discord settings and find the tab "Chat" under "App Settings". Find the setting "Show embeds and preview website links" and turn it on. If it's already on, try turning it off and then on again. 

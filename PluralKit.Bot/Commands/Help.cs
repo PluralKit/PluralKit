@@ -157,6 +157,7 @@ public class Help
     public Task HelpRoot(Context ctx)
         => ctx.Rest.CreateMessage(ctx.Channel.Id, new MessageRequest
         {
+            Content = $"{Emojis.Warn} If you cannot see the rest of this message see [the FAQ](<https://pluralkit.me/faq/#why-do-most-of-pluralkit-s-messages-look-blank-or-empty>)",
             Embeds = new[] { helpEmbed with { Description = helpEmbed.Description,
                                               Fields = helpEmbedPages.GetValueOrDefault("default") } },
             Components = new[] { helpPageButtons(ctx.Author.Id) },
