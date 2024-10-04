@@ -26,6 +26,13 @@ We also track feature requests through [Github Issues](https://github.com/Plural
 ### How can I support the bot's development?
 I (the bot author, [Ske](https://twitter.com/floofstrid)) have a Patreon. The income from there goes towards server hosting, domains, infrastructure, my Monster Energy addiction, et cetera. There are no benefits. There might never be any. But nevertheless, it can be found here: [https://www.patreon.com/floofstrid](https://www.patreon.com/floofstrid)
 
+### Can I recover my system if I lose access to my Discord account?
+Yes, through one of two methods. Both require you to do preparations **before** you lose the account. 
+
+Option 1: If you have an alternate discord account you can link your PluralKit system to that account using `pk;link <@account>`. Then if you use access to your main discord account, you already have access on your alternate account. 
+
+Option 2: The PluralKit staff can help you recover your system if you have your token (gotten using `pk;token`). This is the *only* way you can prove ownership so we can help you recover your system, so store it in a safe place. Make sure to keep your token safe; if other people get access to it they can also use it to access your system. If your token is ever compromised run `pk;token refresh` to invalidate the old token and get a new one.
+
 ## Privacy / safety
 
 ### Who has access to the bot's data?
@@ -90,4 +97,3 @@ It is not possible to edit messages via ID. Please use the full link, or reply t
 
 ### How do I reply-ping/reply-@ proxied messages?
 You cannot reply-@ a proxied messages due to their nature as webhooks. If you want to "reply-@" a proxied message, you must react to the message with 🔔, 🛎, or 🏓. This will send a message from PluralKit that reads "Psst, MEMBER (@User), you have been pinged by @You", which will ping the Discord account behind the proxied message.
-

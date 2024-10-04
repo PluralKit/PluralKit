@@ -18,6 +18,26 @@ public class Help
     private static Dictionary<string, Embed.Field[]> helpEmbedPages = new Dictionary<string, Embed.Field[]>
     {
         {
+            "default",
+            new Embed.Field[]
+            {
+                new
+                (
+                    "System Recovery",
+                    "In the case of your Discord account getting lost or deleted, the PluralKit staff can help you recover your system. "
+                    + "In order to do so, we will need your **PluralKit token**. This is the *only* way you can prove ownership so we can help you recover your system. "
+                    + "To get it, run `pk;token` and then store it in a safe place.\n\n"
+                    + "Keep your token safe, if other people get access to it they can also use it to access your system. "
+                    + "If your token is ever compromised run `pk;token refresh` to invalidate the old token and get a new one."
+                ),
+                new
+                (
+                    "Use the buttons below to see more info!",
+                    ""
+                )
+            }
+        },
+        {
             "basicinfo",
             new Embed.Field[]
             {
@@ -31,7 +51,7 @@ public class Help
                 (
                     "Why are people's names saying [APP] or [BOT] next to them?",
                     "These people are not actually apps or bots, this is just a Discord limitation. See [the documentation](https://pluralkit.me/guide#proxying) for an in-depth explanation."
-                ),
+                )
             }
         },
         {
@@ -137,7 +157,8 @@ public class Help
     public Task HelpRoot(Context ctx)
         => ctx.Rest.CreateMessage(ctx.Channel.Id, new MessageRequest
         {
-            Embeds = new[] { helpEmbed with { Description = helpEmbed.Description + "\n\n**Use the buttons below to see more info!**" } },
+            Embeds = new[] { helpEmbed with { Description = helpEmbed.Description,
+                                              Fields = helpEmbedPages.GetValueOrDefault("default") } },
             Components = new[] { helpPageButtons(ctx.Author.Id) },
         });
 
@@ -151,7 +172,7 @@ public class Help
         if (ctx.Event.Message.Components.First().Components.Where(x => x.CustomId == ctx.CustomId).First().Style == ButtonStyle.Primary)
             return ctx.Respond(InteractionResponse.ResponseType.UpdateMessage, new()
             {
-                Embeds = new[] { helpEmbed with { Description = helpEmbed.Description + "\n\n**Use the buttons below to see more info!**" } },
+                Embeds = new[] { helpEmbed with { Fields = helpEmbedPages.GetValueOrDefault("default") } },
                 Components = new[] { buttons }
             });
 
