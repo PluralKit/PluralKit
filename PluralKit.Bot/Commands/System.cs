@@ -2,6 +2,9 @@ using PluralKit.Core;
 
 namespace PluralKit.Bot;
 
+using Myriad.Builders;
+using Myriad.Types;
+
 public class System
 {
     private readonly EmbedService _embeds;
@@ -29,9 +32,21 @@ public class System
         var system = await ctx.Repository.CreateSystem(systemName);
         await ctx.Repository.AddAccount(system.Id, ctx.Author.Id);
 
-        // TODO: better message, perhaps embed like in groups?
-        await ctx.Reply(
-            $"{Emojis.Success} Your system has been created. Type `pk;system` to view it, and type `pk;system help` for more information about commands you can use now. Now that you have that set up, check out the getting started guide on setting up members and proxies: <https://pluralkit.me/start>");
+        var eb = new EmbedBuilder()
+            .Title(
+                $"{Emojis.Success} Your system has been created.")
+            .Field(new Embed.Field("Getting Started",
+                "New to PK? Check out our Getting Started guide on setting up members and proxies: https://pluralkit.me/start\n" +
+                "Otherwise, type `pk;system` to view your system and `pk;system help` for more information about commands you can use."))
+            .Field(new Embed.Field("System Recovery", "In the case of your Discord account getting lost or deleted, the PluralKit staff can help you recover your system. " +
+                "In order to do so, we will need your **PluralKit token**. This is the *only* way you can prove ownership so we can help you recover your system. " +
+                "To get it, run `pk;token` and then store it in a safe place.\n\n" +
+                "Keep your token safe, if other people get access to it they can also use it to access your system. " +
+                "If your token is ever compromised run `pk;token refresh` to invalidate the old token and get a new one."))
+            .Field(new Embed.Field("Questions?",
+                "Please join the PK server https://discord.gg/PczBt78 if you have any questions, we're happy to help"));
+        await ctx.Reply(embed: eb.Build());
+
     }
 
     public async Task DisplayId(Context ctx, PKSystem target)
