@@ -38,6 +38,10 @@ public class System
             .Field(new Embed.Field("Getting Started",
                 "New to PK? Check out our Getting Started guide on setting up members and proxies: https://pluralkit.me/start\n" +
                 "Otherwise, type `pk;system` to view your system and `pk;system help` for more information about commands you can use."))
+            .Field(new Embed.Field($"{Emojis.Warn} Notice {Emojis.Warn}", "PluralKit is a bot meant to help you share information about your system. " +
+                "Member descriptions are meant to be the equivalent to a Discord About Me. Because of this, any info you put in PK is **public by default**.\n" +
+                "Note that this does **not** include message content, only member fields. For more information, check out " +
+                "[the privacy section of the user guide](https://pluralkit.me/guide/#privacy). "))
             .Field(new Embed.Field("System Recovery", "In the case of your Discord account getting lost or deleted, the PluralKit staff can help you recover your system. " +
                 "In order to do so, we will need your **PluralKit token**. This is the *only* way you can prove ownership so we can help you recover your system. " +
                 "To get it, run `pk;token` and then store it in a safe place.\n\n" +
