@@ -191,6 +191,8 @@ public class Groups
         else
         {
             var newDisplayName = ctx.RemainderOrNull(false).NormalizeLineEndSpacing();
+            if (newDisplayName.Length > Limits.MaxGroupNameLength)
+                throw new PKError($"Group name too long ({newDisplayName.Length}/{Limits.MaxGroupNameLength} characters).");
 
             var patch = new GroupPatch { DisplayName = Partial<string>.Present(newDisplayName) };
             await ctx.Repository.UpdateGroup(target.Id, patch);
