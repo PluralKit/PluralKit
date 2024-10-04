@@ -114,7 +114,7 @@ public class ProxyService
     // Proxy checks that give user errors
     public async Task<string> CanProxy(Channel channel, Channel rootChannel, Message msg, MessageContext ctx)
     {
-        if (DiscordUtils.IsValidGuildChannel(channel))
+        if (!DiscordUtils.IsValidGuildChannel(channel))
             return $"PluralKit cannot proxy messages in this type of channel.";
 
         // Check if the message does not go over any Discord Nitro limits
