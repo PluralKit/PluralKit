@@ -217,10 +217,6 @@ public class ProxyService
         var senderPermissions = PermissionExtensions.PermissionsFor(guild, messageChannel, trigger.Author.Id, guildMember);
         var tts = match.Member.Tts && senderPermissions.HasFlag(PermissionSet.SendTtsMessages);
 
-        //We suppress notifications so that people don't get double push notifications. Pings and unreads are not suppressed.
-        Message.MessageFlags flags = Message.MessageFlags.SuppressNotifications;
-        flags = trigger.Flags.HasFlag(Message.MessageFlags.VoiceMessage) ? flags | Message.MessageFlags.VoiceMessage : flags;
-
         var proxyMessage = await _webhookExecutor.ExecuteWebhook(new ProxyRequest
         {
             GuildId = trigger.GuildId!.Value,
@@ -235,7 +231,7 @@ public class ProxyService
             Embeds = embeds.ToArray(),
             Stickers = trigger.StickerItems,
             AllowEveryone = allowEveryone,
-            Flags = flags,
+            Flags = trigger.Flags.HasFlag(Message.MessageFlags.VoiceMessage) ? Message.MessageFlags.VoiceMessage : null,
             Tts = tts,
             Poll = trigger.Poll,
         });
