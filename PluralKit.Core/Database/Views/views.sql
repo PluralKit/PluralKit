@@ -37,7 +37,7 @@ select members.*,
             -- Privacy '1' = public; just return name as normal
             when members.name_privacy = 1 then members.name
             -- Any other privacy (rn just '2'), return display name
-            else members.display_name
+            else coalesce(members.display_name, members.name)
         end as public_name
 from members;
 
@@ -70,6 +70,6 @@ select groups.*,
         -- Privacy '1' = public; just return name as normal
         when groups.name_privacy = 1 then groups.name
         -- Any other privacy (rn just '2'), return display name
-        else groups.display_name
+        else coalesce(groups.display_name, groups.name)
     end as public_name
 from groups;
