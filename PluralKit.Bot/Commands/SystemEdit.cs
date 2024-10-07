@@ -49,7 +49,7 @@ public class SystemEdit
 
         if (format == ReplyFormat.Raw)
         {
-            await ctx.Reply($"` ``\n{target.Name}\n` ``");
+            await ctx.Reply($"```\n{target.Name}\n```");
             return;
         }
         if (format == ReplyFormat.Plaintext)
@@ -114,7 +114,7 @@ public class SystemEdit
 
         if (format == ReplyFormat.Raw)
         {
-            await ctx.Reply($"` ``\n{settings.DisplayName}\n` ``");
+            await ctx.Reply($"```\n{settings.DisplayName}\n```");
             return;
         }
         if (format == ReplyFormat.Plaintext)
@@ -177,7 +177,7 @@ public class SystemEdit
 
         if (format == ReplyFormat.Raw)
         {
-            await ctx.Reply($"` ``\n{target.Description}\n` ``");
+            await ctx.Reply($"```\n{target.Description}\n```");
             return;
         }
         if (format == ReplyFormat.Plaintext)
