@@ -88,7 +88,7 @@ public class MemberEdit
         if (format == ReplyFormat.Plaintext)
         {
             var eb = new EmbedBuilder()
-                .Description($"Showing description for member {target.Reference(ctx)}");
+                .Description($"Showing description for member {target.NameFor(ctx)} (`{target.DisplayHid(ctx.Config)}`)");
             await ctx.Reply(target.Description, embed: eb.Build());
             return;
         }
@@ -155,7 +155,7 @@ public class MemberEdit
         if (format == ReplyFormat.Plaintext)
         {
             var eb = new EmbedBuilder()
-                .Description($"Showing pronouns for member {target.Reference(ctx)}");
+                .Description($"Showing pronouns for member {target.NameFor(ctx)} (`{target.DisplayHid(ctx.Config)}`)");
             await ctx.Reply(target.Pronouns, embed: eb.Build());
             return;
         }
@@ -430,7 +430,7 @@ public class MemberEdit
         if (format == ReplyFormat.Plaintext)
         {
             var eb = new EmbedBuilder()
-                .Description($"Showing displayname for member {target.Reference(ctx)}");
+                .Description($"Showing displayname for member {target.NameFor(ctx)} (`{target.DisplayHid(ctx.Config)}`)");
             await ctx.Reply(target.DisplayName, embed: eb.Build());
             return;
         }
@@ -506,7 +506,7 @@ public class MemberEdit
         if (format == ReplyFormat.Plaintext)
         {
             var eb = new EmbedBuilder()
-                .Description($"Showing servername for member {target.Reference(ctx)}");
+                .Description($"Showing servername for member {target.NameFor(ctx)} (`{target.DisplayHid(ctx.Config)}`)");
             await ctx.Reply(memberGuildConfig.DisplayName, embed: eb.Build());
             return;
         }
