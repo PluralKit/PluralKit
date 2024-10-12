@@ -49,8 +49,23 @@ public class BotModule: Module
             var botConfig = c.Resolve<BotConfig>();
 
             if (botConfig.HttpCacheUrl != null)
-                return new HttpDiscordCache(c.Resolve<ILogger>(),
+            {
+                var cache = new HttpDiscordCache(c.Resolve<ILogger>(),
                     c.Resolve<HttpClient>(), botConfig.HttpCacheUrl, botConfig.Cluster?.TotalShards ?? 1, botConfig.ClientId);
+
+                var metrics = c.Resolve<IMetrics>();
+
+                cache.OnDebug += (_, ev) =>
+                {
+                    var (remote, key) = ev;
+                    metrics.Measure.Meter.Mark(BotMetrics.CacheDebug, new MetricTags(
+                        new[] { "remote", "key" },
+                        new[] { remote.ToString(), key }
+                    ));
+                };
+
+                return cache;
+            }
 
             return new MemoryDiscordCache(botConfig.ClientId);
         }).AsSelf().SingleInstance();

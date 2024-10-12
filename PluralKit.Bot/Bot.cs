@@ -99,13 +99,9 @@ public class Bot
 
     private async Task OnEventReceived(int shardId, IGatewayEvent evt)
     {
-        if (_cache is MemoryDiscordCache)
-        {
-            // we HandleGatewayEvent **before** getting the own user, because the own user is set in HandleGatewayEvent for ReadyEvent
-            await _cache.HandleGatewayEvent(evt);
-
-            await _cache.TryUpdateSelfMember(_config.ClientId, evt);
-        }
+        // we HandleGatewayEvent **before** getting the own user, because the own user is set in HandleGatewayEvent for ReadyEvent
+        await _cache.HandleGatewayEvent(evt);
+        await _cache.TryUpdateSelfMember(_config.ClientId, evt);
         await OnEventReceivedInner(shardId, evt);
     }
 

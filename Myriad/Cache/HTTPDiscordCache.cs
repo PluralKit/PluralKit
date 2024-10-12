@@ -15,7 +15,11 @@ public class HttpDiscordCache: IDiscordCache
     private readonly int _shardCount;
     private readonly ulong _ownUserId;
 
+    private readonly MemoryDiscordCache _innerCache;
+
     private readonly JsonSerializerOptions _jsonSerializerOptions;
+
+    public EventHandler<(bool?, string)> OnDebug;
 
     public HttpDiscordCache(ILogger logger, HttpClient client, string cacheEndpoint, int shardCount, ulong ownUserId)
     {
@@ -25,18 +29,19 @@ public class HttpDiscordCache: IDiscordCache
         _shardCount = shardCount;
         _ownUserId = ownUserId;
         _jsonSerializerOptions = new JsonSerializerOptions().ConfigureForMyriad();
+        _innerCache = new MemoryDiscordCache(ownUserId);
     }
 
-    public ValueTask SaveGuild(Guild guild) => default;
-    public ValueTask SaveChannel(Channel channel) => default;
+    public ValueTask SaveGuild(Guild guild) => _innerCache.SaveGuild(guild);
+    public ValueTask SaveChannel(Channel channel) => _innerCache.SaveChannel(channel);
     public ValueTask SaveUser(User user) => default;
-    public ValueTask SaveSelfMember(ulong guildId, GuildMemberPartial member) => default;
-    public ValueTask SaveRole(ulong guildId, Myriad.Types.Role role) => default;
-    public ValueTask SaveDmChannelStub(ulong channelId) => default;
-    public ValueTask RemoveGuild(ulong guildId) => default;
-    public ValueTask RemoveChannel(ulong channelId) => default;
-    public ValueTask RemoveUser(ulong userId) => default;
-    public ValueTask RemoveRole(ulong guildId, ulong roleId) => default;
+    public ValueTask SaveSelfMember(ulong guildId, GuildMemberPartial member) => _innerCache.SaveSelfMember(guildId, member);
+    public ValueTask SaveRole(ulong guildId, Myriad.Types.Role role) => _innerCache.SaveRole(guildId, role);
+    public ValueTask SaveDmChannelStub(ulong channelId) => _innerCache.SaveDmChannelStub(channelId);
+    public ValueTask RemoveGuild(ulong guildId) => _innerCache.RemoveGuild(guildId);
+    public ValueTask RemoveChannel(ulong channelId) => _innerCache.RemoveChannel(channelId);
+    public ValueTask RemoveUser(ulong userId) => _innerCache.RemoveUser(userId);
+    public ValueTask RemoveRole(ulong guildId, ulong roleId) => _innerCache.RemoveRole(guildId, roleId);
 
     public ulong GetOwnUser() => _ownUserId;
 
@@ -59,23 +64,120 @@ public class HttpDiscordCache: IDiscordCache
         return JsonSerializer.Deserialize<T>(plaintext, _jsonSerializerOptions);
     }
 
-    public Task<Guild?> TryGetGuild(ulong guildId)
-        => QueryCache<Guild?>($"/guilds/{guildId}", guildId);
+    public async Task<Guild?> TryGetGuild(ulong guildId)
+    {
+        var lres = await _innerCache.TryGetGuild(guildId);
+        var hres = await QueryCache<Guild?>($"/guilds/{guildId}", guildId);
 
-    public Task<Channel?> TryGetChannel(ulong guildId, ulong channelId)
-        => QueryCache<Channel?>($"/guilds/{guildId}/channels/{channelId}", guildId);
+        if (lres == null && hres == null) return null;
+        if (lres == null)
+        {
+            _logger.Warning($"TryGetGuild({guildId}) was only successful on remote cache");
+            OnDebug(null, (true, "guild"));
+            return hres;
+        }
+        if (hres == null)
+        {
+            _logger.Warning($"TryGetGuild({guildId}) was only successful on local cache");
+            OnDebug(null, (false, "guild"));
+            return lres;
+        }
+        return hres;
+    }
+
+    public async Task<Channel?> TryGetChannel(ulong guildId, ulong channelId)
+    {
+        var lres = await _innerCache.TryGetChannel(guildId, channelId);
+        var hres = await QueryCache<Channel?>($"/guilds/{guildId}/channels/{channelId}", guildId);
+        if (lres == null && hres == null) return null;
+        if (lres == null)
+        {
+            _logger.Warning($"TryGetChannel({guildId}, {channelId}) was only successful on remote cache");
+            OnDebug(null, (true, "channel"));
+            return hres;
+        }
+        if (hres == null)
+        {
+            _logger.Warning($"TryGetChannel({guildId}, {channelId}) was only successful on local cache");
+            OnDebug(null, (false, "channel"));
+            return lres;
+        }
+        return hres;
+    }
 
     // this should be a GetUserCached method on nirn-proxy (it's always called as GetOrFetchUser)
     // so just return nothing
     public Task<User?> TryGetUser(ulong userId)
         => Task.FromResult<User?>(null);
 
-    public Task<GuildMemberPartial?> TryGetSelfMember(ulong guildId)
-        => QueryCache<GuildMemberPartial?>($"/guilds/{guildId}/members/@me", guildId);
+    public async Task<GuildMemberPartial?> TryGetSelfMember(ulong guildId)
+    {
+        var lres = await _innerCache.TryGetSelfMember(guildId);
+        var hres = await QueryCache<GuildMemberPartial?>($"/guilds/{guildId}/members/@me", guildId);
+        if (lres == null && hres == null) return null;
+        if (lres == null)
+        {
+            _logger.Warning($"TryGetSelfMember({guildId}) was only successful on remote cache");
+            OnDebug(null, (true, "self_member"));
+            return hres;
+        }
+        if (hres == null)
+        {
+            _logger.Warning($"TryGetSelfMember({guildId}) was only successful on local cache");
+            OnDebug(null, (false, "self_member"));
+            return lres;
+        }
+        return hres;
+    }
 
-    public Task<PermissionSet> BotChannelPermissions(ulong guildId, ulong channelId)
-        => QueryCache<PermissionSet>($"/guilds/{guildId}/channels/{channelId}/permissions/@me", guildId);
+    //    public async Task<PermissionSet> BotChannelPermissions(ulong guildId, ulong channelId)
+    //    {
+    //        // todo: local cache throws rather than returning null
+    //        // we need to throw too, and try/catch local cache here
+    //        var lres = await _innerCache.BotPermissionsIn(guildId, channelId);
+    //        var hres = await QueryCache<PermissionSet?>($"/guilds/{guildId}/channels/{channelId}/permissions/@me", guildId);
+    //        if (lres == null && hres == null) return null;
+    //        if (lres == null)
+    //        {
+    //            _logger.Warning($"TryGetChannel({guildId}, {channelId}) was only successful on remote cache");
+    //           OnDebug(null, (true, "botchannelperms"));
+    //            return hres;
+    //        }
+    //        if (hres == null)
+    //        {
+    //            _logger.Warning($"TryGetChannel({guildId}, {channelId}) was only successful on local cache");
+    //            OnDebug(null, (false, "botchannelperms"));
+    //            return lres;
+    //        }
+    //
+    //        // this one is easy to check, so let's check it
+    //        if ((int)lres != (int)hres)
+    //        {
+    //            // trust local
+    //            _logger.Warning($"got different permissions for {channelId} (local {(int)lres}, remote {(int)hres})");
+    //            OnDebug(null, (null, "botchannelperms"));
+    //            return lres;
+    //        }
+    //        return hres;
+    //    }
 
-    public Task<IEnumerable<Channel>> GetGuildChannels(ulong guildId)
-        => QueryCache<IEnumerable<Channel>>($"/guilds/{guildId}/channels", guildId);
+    public async Task<IEnumerable<Channel>> GetGuildChannels(ulong guildId)
+    {
+        var lres = await _innerCache.GetGuildChannels(guildId);
+        var hres = await QueryCache<IEnumerable<Channel>>($"/guilds/{guildId}/channels", guildId);
+        if (lres == null && hres == null) return null;
+        if (lres == null)
+        {
+            _logger.Warning($"GetGuildChannels({guildId}) was only successful on remote cache");
+            OnDebug(null, (true, "guild_channels"));
+            return hres;
+        }
+        if (hres == null)
+        {
+            _logger.Warning($"GetGuildChannels({guildId}) was only successful on local cache");
+            OnDebug(null, (false, "guild_channels"));
+            return lres;
+        }
+        return hres;
+    }
 }
