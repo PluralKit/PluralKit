@@ -162,9 +162,12 @@ pub async fn run_server(cache: Arc<DiscordCache>) -> anyhow::Result<()> {
         .route("/stats", get(|State(cache): State<Arc<DiscordCache>>| async move {
             let cluster = cluster_config();
             let has_been_up = cache.2.read().await.len() as u32 == if cluster.total_shards > 16 {16} else {cluster.total_shards};
+            let stats = cache.0.stats();
             let stats = json!({
-                "guild_count": cache.0.stats().guilds(),
-                "channel_count": cache.0.stats().channels(),
+                "guild_count": stats.guilds(),
+                "channel_count": stats.channels(),
+                // just put this here until prom stats
+                "unavailable_guild_count": stats.unavailable_guilds(),
                 "up": has_been_up,
             });
             status_code(StatusCode::FOUND, to_string(&stats).unwrap())
