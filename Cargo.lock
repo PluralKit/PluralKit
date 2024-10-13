@@ -3450,11 +3450,11 @@ checksum = "3528ecfd12c466c6f163363caf2d02a71161dd5e1cc6ae7b34207ea2d42d81ed"
 [[package]]
 name = "twilight-cache-inmemory"
 version = "0.16.0-rc.1"
-source = "git+https://github.com/pluralkit/twilight#5027119d689c9c5aff8dac73b676995bb7e0e3b1"
 dependencies = [
  "bitflags 2.5.0",
  "dashmap",
  "serde",
+ "tracing",
  "twilight-model",
  "twilight-util",
 ]
@@ -3462,7 +3462,6 @@ dependencies = [
 [[package]]
 name = "twilight-gateway"
 version = "0.16.0-rc.1"
-source = "git+https://github.com/pluralkit/twilight#5027119d689c9c5aff8dac73b676995bb7e0e3b1"
 dependencies = [
  "bitflags 2.5.0",
  "fastrand",
@@ -3482,7 +3481,6 @@ dependencies = [
 [[package]]
 name = "twilight-gateway-queue"
 version = "0.16.0-rc.1"
-source = "git+https://github.com/pluralkit/twilight#5027119d689c9c5aff8dac73b676995bb7e0e3b1"
 dependencies = [
  "tokio",
  "tracing",
@@ -3491,7 +3489,6 @@ dependencies = [
 [[package]]
 name = "twilight-http"
 version = "0.16.0-rc.1"
-source = "git+https://github.com/pluralkit/twilight#5027119d689c9c5aff8dac73b676995bb7e0e3b1"
 dependencies = [
  "fastrand",
  "http 1.1.0",
@@ -3512,7 +3509,6 @@ dependencies = [
 [[package]]
 name = "twilight-http-ratelimiting"
 version = "0.16.0-rc.1"
-source = "git+https://github.com/pluralkit/twilight#5027119d689c9c5aff8dac73b676995bb7e0e3b1"
 dependencies = [
  "tokio",
  "tracing",
@@ -3521,7 +3517,6 @@ dependencies = [
 [[package]]
 name = "twilight-model"
 version = "0.16.0-rc.1"
-source = "git+https://github.com/pluralkit/twilight#5027119d689c9c5aff8dac73b676995bb7e0e3b1"
 dependencies = [
  "bitflags 2.5.0",
  "serde",
@@ -3533,7 +3528,6 @@ dependencies = [
 [[package]]
 name = "twilight-util"
 version = "0.16.0-rc.1"
-source = "git+https://github.com/pluralkit/twilight#5027119d689c9c5aff8dac73b676995bb7e0e3b1"
 dependencies = [
  "twilight-model",
 ]
@@ -3541,7 +3535,6 @@ dependencies = [
 [[package]]
 name = "twilight-validate"
 version = "0.16.0-rc.1"
-source = "git+https://github.com/pluralkit/twilight#5027119d689c9c5aff8dac73b676995bb7e0e3b1"
 dependencies = [
  "twilight-model",
 ]
