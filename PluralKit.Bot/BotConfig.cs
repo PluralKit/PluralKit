@@ -22,6 +22,7 @@ public class BotConfig
     public bool UseRedisRatelimiter { get; set; } = false;
 
     public string? HttpCacheUrl { get; set; }
+    public bool HttpUseInnerCache { get; set; } = false;
 
     public string? RedisGatewayUrl { get; set; }
 

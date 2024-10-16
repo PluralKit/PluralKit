@@ -21,7 +21,7 @@ public class HttpDiscordCache: IDiscordCache
 
     public EventHandler<(bool?, string)> OnDebug;
 
-    public HttpDiscordCache(ILogger logger, HttpClient client, string cacheEndpoint, int shardCount, ulong ownUserId)
+    public HttpDiscordCache(ILogger logger, HttpClient client, string cacheEndpoint, int shardCount, ulong ownUserId, bool useInnerCache)
     {
         _logger = logger;
         _client = client;
@@ -29,19 +29,19 @@ public class HttpDiscordCache: IDiscordCache
         _shardCount = shardCount;
         _ownUserId = ownUserId;
         _jsonSerializerOptions = new JsonSerializerOptions().ConfigureForMyriad();
-        _innerCache = new MemoryDiscordCache(ownUserId);
+        if (useInnerCache) _innerCache = new MemoryDiscordCache(ownUserId);
     }
 
-    public ValueTask SaveGuild(Guild guild) => _innerCache.SaveGuild(guild);
-    public ValueTask SaveChannel(Channel channel) => _innerCache.SaveChannel(channel);
+    public ValueTask SaveGuild(Guild guild) => _innerCache?.SaveGuild(guild) ?? default;
+    public ValueTask SaveChannel(Channel channel) => _innerCache?.SaveChannel(channel) ?? default;
     public ValueTask SaveUser(User user) => default;
-    public ValueTask SaveSelfMember(ulong guildId, GuildMemberPartial member) => _innerCache.SaveSelfMember(guildId, member);
-    public ValueTask SaveRole(ulong guildId, Myriad.Types.Role role) => _innerCache.SaveRole(guildId, role);
-    public ValueTask SaveDmChannelStub(ulong channelId) => _innerCache.SaveDmChannelStub(channelId);
-    public ValueTask RemoveGuild(ulong guildId) => _innerCache.RemoveGuild(guildId);
-    public ValueTask RemoveChannel(ulong channelId) => _innerCache.RemoveChannel(channelId);
-    public ValueTask RemoveUser(ulong userId) => _innerCache.RemoveUser(userId);
-    public ValueTask RemoveRole(ulong guildId, ulong roleId) => _innerCache.RemoveRole(guildId, roleId);
+    public ValueTask SaveSelfMember(ulong guildId, GuildMemberPartial member) => _innerCache?.SaveSelfMember(guildId, member) ?? default;
+    public ValueTask SaveRole(ulong guildId, Myriad.Types.Role role) => _innerCache?.SaveRole(guildId, role) ?? default;
+    public ValueTask SaveDmChannelStub(ulong channelId) => _innerCache?.SaveDmChannelStub(channelId) ?? default;
+    public ValueTask RemoveGuild(ulong guildId) => _innerCache?.RemoveGuild(guildId) ?? default;
+    public ValueTask RemoveChannel(ulong channelId) => _innerCache?.RemoveChannel(channelId) ?? default;
+    public ValueTask RemoveUser(ulong userId) => _innerCache?.RemoveUser(userId) ?? default;
+    public ValueTask RemoveRole(ulong guildId, ulong roleId) => _innerCache?.RemoveRole(guildId, roleId) ?? default;
 
     public ulong GetOwnUser() => _ownUserId;
 
@@ -66,8 +66,9 @@ public class HttpDiscordCache: IDiscordCache
 
     public async Task<Guild?> TryGetGuild(ulong guildId)
     {
-        var lres = await _innerCache.TryGetGuild(guildId);
         var hres = await QueryCache<Guild?>($"/guilds/{guildId}", guildId);
+        if (_innerCache == null) return hres;
+        var lres = await _innerCache.TryGetGuild(guildId);
 
         if (lres == null && hres == null) return null;
         if (lres == null)
@@ -87,8 +88,9 @@ public class HttpDiscordCache: IDiscordCache
 
     public async Task<Channel?> TryGetChannel(ulong guildId, ulong channelId)
     {
-        var lres = await _innerCache.TryGetChannel(guildId, channelId);
         var hres = await QueryCache<Channel?>($"/guilds/{guildId}/channels/{channelId}", guildId);
+        if (_innerCache == null) return hres;
+        var lres = await _innerCache.TryGetChannel(guildId, channelId);
         if (lres == null && hres == null) return null;
         if (lres == null)
         {
@@ -112,8 +114,9 @@ public class HttpDiscordCache: IDiscordCache
 
     public async Task<GuildMemberPartial?> TryGetSelfMember(ulong guildId)
     {
-        var lres = await _innerCache.TryGetSelfMember(guildId);
         var hres = await QueryCache<GuildMemberPartial?>($"/guilds/{guildId}/members/@me", guildId);
+        if (_innerCache == null) return hres;
+        var lres = await _innerCache.TryGetSelfMember(guildId);
         if (lres == null && hres == null) return null;
         if (lres == null)
         {
@@ -163,8 +166,9 @@ public class HttpDiscordCache: IDiscordCache
 
     public async Task<IEnumerable<Channel>> GetGuildChannels(ulong guildId)
     {
-        var lres = await _innerCache.GetGuildChannels(guildId);
         var hres = await QueryCache<IEnumerable<Channel>>($"/guilds/{guildId}/channels", guildId);
+        if (_innerCache == null) return hres;
+        var lres = await _innerCache.GetGuildChannels(guildId);
         if (lres == null && hres == null) return null;
         if (lres == null)
         {
