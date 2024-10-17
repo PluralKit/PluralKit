@@ -8,6 +8,7 @@ Some moderation bots have official PluralKit support, and properly handle exclud
 - [**Catalogger**](https://catalogger.starshines.xyz/docs)
 - [**Aero**](https://aero.bot/) 
 - [**CoreBot**](https://discord.gg/GAAj6DDrCJ)
+- [**Quark**](https://quark.bot)
 
 If your server uses an in-house bot for logging, you can use [the API](/api) to implement support yourself.
 
