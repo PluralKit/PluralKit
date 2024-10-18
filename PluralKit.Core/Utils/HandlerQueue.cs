@@ -29,7 +29,7 @@ public class HandlerQueue<T>
         {
             var theTask = await Task.WhenAny(timeoutTask, tcs.Task);
             if (theTask == timeoutTask)
-                throw new TimeoutException();
+                throw new TimeoutException("HandlerQueue#WaitFor timed out");
         }
         finally
         {
