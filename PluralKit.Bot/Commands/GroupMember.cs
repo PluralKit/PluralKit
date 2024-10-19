@@ -123,6 +123,9 @@ public class GroupMember
             toAction = members
                 .Where(m => existingMembersInGroup.Contains(m.Value))
                 .ToList();
+
+            if (ctx.MatchFlag("all", "a") && !await ctx.PromptYesNo($"Are you sure you want to remove all members from group {target.Reference(ctx)}?", "Empty Group")) throw Errors.GenericCancelled();
+
             await ctx.Repository.RemoveMembersFromGroup(target.Id, toAction);
         }
         else
