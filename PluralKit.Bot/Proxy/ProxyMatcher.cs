@@ -19,11 +19,11 @@ public class ProxyMatcher
     }
 
     public bool TryMatch(MessageContext ctx, AutoproxySettings settings, IReadOnlyCollection<ProxyMember> members, out ProxyMatch match,
-                         string messageContent,
+                         string messageContent, string prefix,
                          bool hasAttachments, bool allowAutoproxy, bool caseSensitive)
     {
         if (TryMatchTags(members, messageContent, hasAttachments, caseSensitive, out match)) return true;
-        if (allowAutoproxy && TryMatchAutoproxy(ctx, settings, members, messageContent, out match)) return true;
+        if (allowAutoproxy && TryMatchAutoproxy(ctx, settings, members, messageContent, prefix, out match)) return true;
         return false;
     }
 
@@ -38,14 +38,14 @@ public class ProxyMatcher
     }
 
     private bool TryMatchAutoproxy(MessageContext ctx, AutoproxySettings settings, IReadOnlyCollection<ProxyMember> members,
-                                   string messageContent,
+                                   string messageContent, string prefix,
                                    out ProxyMatch match)
     {
         match = default;
 
         if (!ctx.AllowAutoproxy)
             throw new ProxyService.ProxyChecksFailedException(
-                "Autoproxy is disabled for your account. Type `pk;cfg autoproxy account enable` to re-enable it.");
+                $"Autoproxy is disabled for your account. Type `{prefix}cfg autoproxy account enable` to re-enable it.");
 
         // Skip autoproxy match if we hit the escape character
         if (messageContent.StartsWith(AutoproxyEscapeCharacter))
@@ -71,7 +71,7 @@ public class ProxyMatcher
         {
             if (settings.AutoproxyMode == AutoproxyMode.Front)
                 throw new ProxyService.ProxyChecksFailedException(
-                    "You are using autoproxy front, but no members are currently registered as fronting. Please use `pk;switch <member>` to log a new switch.");
+                    $"You are using autoproxy front, but no members are currently registered as fronting. Please use `{prefix}switch <member>` to log a new switch.");
             if (settings.AutoproxyMode == AutoproxyMode.Member)
                 throw new ProxyService.ProxyChecksFailedException(
                     "You are using member-specific autoproxy with an invalid member. Was this member deleted?");
@@ -84,7 +84,7 @@ public class ProxyMatcher
 
         if (settings.AutoproxyMode != AutoproxyMode.Member && !member.AllowAutoproxy)
             throw new ProxyService.ProxyChecksFailedException(
-                "This member has autoproxy disabled. To enable it, use `pk;m <member> autoproxy on`.");
+                $"This member has autoproxy disabled. To enable it, use `{prefix}m <member> autoproxy on`.");
 
         // Moved the IsLatchExpired() check to here, so that an expired latch and a latch without any previous messages throw different errors
         if (settings.AutoproxyMode == AutoproxyMode.Latch && IsLatchExpired(ctx, settings))
