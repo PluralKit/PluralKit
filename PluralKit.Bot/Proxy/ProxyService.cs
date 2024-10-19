@@ -143,7 +143,7 @@ public class ProxyService
     {
         // Make sure author has a system
         if (ctx.SystemId == null)
-            //throw new ProxyChecksFailedException(Errors.NoSystemError.Message);
+            throw new ProxyChecksFailedException(Errors.NoSystemError(prefix).Message);
 
         // Make sure channel is a guild text channel and this is a normal message
         if (!DiscordUtils.IsValidGuildChannel(channel))

@@ -504,7 +504,7 @@ public partial class CommandTree
         // oops, that breaks stuff! PKErrors before ctx.Execute don't actually do anything.
         // so we just emulate checking and throwing an error.
         if (ctx.System == null)
-            //return ctx.Reply($"{Emojis.Error} {Errors.NoSystemError.Message}");
+            return ctx.Reply($"{Emojis.Error} {Errors.NoSystemError(ctx.DefaultPrefix).Message}");
 
         // todo: move this whole block to Autoproxy.cs when these are removed
 
