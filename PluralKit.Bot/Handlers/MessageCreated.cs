@@ -124,7 +124,7 @@ public class MessageCreated: IEventHandler<MessageCreateEvent>
         {
             var system = await _repo.GetSystemByAccount(evt.Author.Id);
             var config = system != null ? await _repo.GetSystemConfig(system.Id) : null;
-            await _tree.ExecuteCommand(new Context(_services, shardId, guild, channel, evt, cmdStart, system, config));
+            await _tree.ExecuteCommand(new Context(_services, shardId, guild, channel, evt, cmdStart, system, config, _config.Prefixes ?? BotConfig.DefaultPrefixes));
         }
         catch (PKError)
         {
@@ -164,7 +164,7 @@ public class MessageCreated: IEventHandler<MessageCreateEvent>
 
         try
         {
-            return await _proxy.HandleIncomingMessage(evt, ctx, guild, channel, true, botPermissions);
+            return await _proxy.HandleIncomingMessage(evt, ctx, guild, channel, true, botPermissions, (_config.Prefixes ?? BotConfig.DefaultPrefixes)[0]);
         }
 
         // Catch any failed proxy checks so they get ignored in the global error handler

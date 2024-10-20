@@ -32,7 +32,7 @@ public class Autoproxy
         else if (ctx.Match("front", "fronter", "switch", "f"))
             await AutoproxyFront(ctx, settings);
         else if (ctx.Match("member"))
-            throw new PKSyntaxError("Member-mode autoproxy must target a specific member. Use the `pk;autoproxy <member>` command, where `member` is the name or ID of a member in your system.");
+            throw new PKSyntaxError($"Member-mode autoproxy must target a specific member. Use the `{ctx.DefaultPrefix}autoproxy <member>` command, where `member` is the name or ID of a member in your system.");
         else if (await ctx.MatchMember() is PKMember member)
             await AutoproxyMember(ctx, member);
         else if (!ctx.HasNext())
@@ -58,7 +58,7 @@ public class Autoproxy
     {
         if (settings.AutoproxyMode == AutoproxyMode.Latch)
         {
-            await ctx.Reply($"{Emojis.Note} Autoproxy is already set to latch mode in this server. If you want to disable autoproxying, use `pk;autoproxy off`.");
+            await ctx.Reply($"{Emojis.Note} Autoproxy is already set to latch mode in this server. If you want to disable autoproxying, use `{ctx.DefaultPrefix}autoproxy off`.");
         }
         else
         {
@@ -71,7 +71,7 @@ public class Autoproxy
     {
         if (settings.AutoproxyMode == AutoproxyMode.Front)
         {
-            await ctx.Reply($"{Emojis.Note} Autoproxy is already set to front mode in this server. If you want to disable autoproxying, use `pk;autoproxy off`.");
+            await ctx.Reply($"{Emojis.Note} Autoproxy is already set to front mode in this server. If you want to disable autoproxying, use `{ctx.DefaultPrefix}autoproxy off`.");
         }
         else
         {
@@ -92,9 +92,9 @@ public class Autoproxy
 
     private async Task<Embed> CreateAutoproxyStatusEmbed(Context ctx, AutoproxySettings settings)
     {
-        var commandList = "**pk;autoproxy latch** - Autoproxies as last-proxied member"
-                        + "\n**pk;autoproxy front** - Autoproxies as current (first) fronter"
-                        + "\n**pk;autoproxy <member>** - Autoproxies as a specific member";
+        var commandList = $"**{ctx.DefaultPrefix}autoproxy latch** - Autoproxies as last-proxied member"
+                        + $"\n**{ctx.DefaultPrefix}autoproxy front** - Autoproxies as current (first) fronter"
+                        + $"\n**{ctx.DefaultPrefix}autoproxy <member>** - Autoproxies as a specific member";
         var eb = new EmbedBuilder()
             .Title($"Current autoproxy status (for {ctx.Guild.Name.EscapeMarkdown()})");
 
@@ -124,13 +124,13 @@ public class Autoproxy
                 {
                     if (fronters.Count == 0)
                     {
-                        eb.Description("Autoproxy is currently set to **front mode** in this server, but there are currently no fronters registered. Use the `pk;switch` command to log a switch.");
+                        eb.Description($"Autoproxy is currently set to **front mode** in this server, but there are currently no fronters registered. Use the `{ctx.DefaultPrefix}switch` command to log a switch.");
                     }
                     else
                     {
                         if (relevantMember == null)
                             throw new ArgumentException("Attempted to print member autoproxy status, but the linked member ID wasn't found in the database. Should be handled appropriately.");
-                        eb.Description($"Autoproxy is currently set to **front mode** in this server. The current (first) fronter is **{relevantMember.NameFor(ctx).EscapeMarkdown()}** (`{relevantMember.DisplayHid(ctx.Config)}`). To disable, type `pk;autoproxy off`.");
+                        eb.Description($"Autoproxy is currently set to **front mode** in this server. The current (first) fronter is **{relevantMember.NameFor(ctx).EscapeMarkdown()}** (`{relevantMember.DisplayHid(ctx.Config)}`). To disable, type `{ctx.DefaultPrefix}autoproxy off`.");
                     }
 
                     break;
@@ -142,15 +142,15 @@ public class Autoproxy
                         // ideally we would set it to off in the database though...
                         eb.Description($"Autoproxy is currently **off** in this server. To enable it, use one of the following commands:\n{commandList}");
                     else
-                        eb.Description($"Autoproxy is active for member **{relevantMember.NameFor(ctx)}** (`{relevantMember.DisplayHid(ctx.Config)}`) in this server. To disable, type `pk;autoproxy off`.");
+                        eb.Description($"Autoproxy is active for member **{relevantMember.NameFor(ctx)}** (`{relevantMember.DisplayHid(ctx.Config)}`) in this server. To disable, type `{ctx.DefaultPrefix}autoproxy off`.");
 
                     break;
                 }
             case AutoproxyMode.Latch:
                 if (relevantMember == null)
-                    eb.Description("Autoproxy is currently set to **latch mode**, meaning the *last-proxied member* will be autoproxied. **No member is currently latched.** To disable, type `pk;autoproxy off`.");
+                    eb.Description($"Autoproxy is currently set to **latch mode**, meaning the *last-proxied member* will be autoproxied. **No member is currently latched.** To disable, type `{ctx.DefaultPrefix}autoproxy off`.");
                 else
-                    eb.Description($"Autoproxy is currently set to **latch mode**, meaning the *last-proxied member* will be autoproxied. The currently latched member is **{relevantMember.NameFor(ctx)}** (`{relevantMember.DisplayHid(ctx.Config)}`). To disable, type `pk;autoproxy off`.");
+                    eb.Description($"Autoproxy is currently set to **latch mode**, meaning the *last-proxied member* will be autoproxied. The currently latched member is **{relevantMember.NameFor(ctx)}** (`{relevantMember.DisplayHid(ctx.Config)}`). To disable, type `{ctx.DefaultPrefix}autoproxy off`.");
 
                 break;
 
@@ -159,7 +159,7 @@ public class Autoproxy
 
         var allowAutoproxy = await ctx.Repository.GetAutoproxyEnabled(ctx.Author.Id);
         if (!allowAutoproxy)
-            eb.Field(new Embed.Field("\u200b", $"{Emojis.Note} Autoproxy is currently **disabled** for your account (<@{ctx.Author.Id}>). To enable it, use `pk;autoproxy account enable`."));
+            eb.Field(new Embed.Field("\u200b", $"{Emojis.Note} Autoproxy is currently **disabled** for your account (<@{ctx.Author.Id}>). To enable it, use `{ctx.DefaultPrefix}autoproxy account enable`."));
 
         return eb.Build();
     }

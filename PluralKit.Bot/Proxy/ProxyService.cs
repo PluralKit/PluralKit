@@ -57,11 +57,11 @@ public class ProxyService
     }
 
     public async Task<bool> HandleIncomingMessage(MessageCreateEvent message, MessageContext ctx,
-                                Guild guild, Channel channel, bool allowAutoproxy, PermissionSet botPermissions)
+                                Guild guild, Channel channel, bool allowAutoproxy, PermissionSet botPermissions, string prefix)
     {
         var rootChannel = await _cache.GetRootChannel(message.GuildId!.Value, message.ChannelId);
 
-        if (!ShouldProxy(channel, rootChannel, message, ctx))
+        if (!ShouldProxy(channel, rootChannel, message, ctx, prefix))
             return false;
 
         var autoproxySettings = await _repo.GetAutoproxySettings(ctx.SystemId.Value, guild.Id, null);
@@ -81,7 +81,7 @@ public class ProxyService
         using (_metrics.Measure.Timer.Time(BotMetrics.ProxyMembersQueryTime))
             members = (await _repo.GetProxyMembers(message.Author.Id, message.GuildId!.Value)).ToList();
 
-        if (!_matcher.TryMatch(ctx, autoproxySettings, members, out var match, message.Content, message.Attachments.Length > 0,
+        if (!_matcher.TryMatch(ctx, autoproxySettings, members, out var match, message.Content, prefix, message.Attachments.Length > 0,
                 allowAutoproxy, ctx.CaseSensitiveProxyTags)) return false;
 
         var canProxy = await CanProxy(channel, rootChannel, message, ctx);
@@ -139,11 +139,11 @@ public class ProxyService
     }
 
     // Proxy checks that don't give user errors unless `pk;debug proxy` is used
-    public bool ShouldProxy(Channel channel, Channel rootChannel, Message msg, MessageContext ctx)
+    public bool ShouldProxy(Channel channel, Channel rootChannel, Message msg, MessageContext ctx, string prefix)
     {
         // Make sure author has a system
         if (ctx.SystemId == null)
-            throw new ProxyChecksFailedException(Errors.NoSystemError.Message);
+            throw new ProxyChecksFailedException(Errors.NoSystemError(prefix).Message);
 
         // Make sure channel is a guild text channel and this is a normal message
         if (!DiscordUtils.IsValidGuildChannel(channel))
@@ -167,7 +167,7 @@ public class ProxyService
         // Make sure the system has proxying enabled in the server
         if (!ctx.ProxyEnabled)
             throw new ProxyChecksFailedException(
-                "Your system has proxying disabled in this server. Type `pk;proxy on` to enable it.");
+                $"Your system has proxying disabled in this server. Type `{prefix}proxy on` to enable it.");
 
         // Make sure we have an attachment, message content, or poll
         var isMessageBlank = msg.Content == null || msg.Content.Trim().Length == 0;
@@ -238,7 +238,7 @@ public class ProxyService
         await HandleProxyExecutedActions(ctx, autoproxySettings, trigger, proxyMessage, match);
     }
 
-    public async Task ExecuteReproxy(Message trigger, PKMessage msg, List<ProxyMember> members, ProxyMember member)
+    public async Task ExecuteReproxy(Message trigger, PKMessage msg, List<ProxyMember> members, ProxyMember member, string prefix)
     {
         var originalMsg = await _rest.GetMessageOrNull(msg.Channel, msg.Mid);
         if (originalMsg == null)
@@ -258,7 +258,7 @@ public class ProxyService
 
         var autoproxySettings = await _repo.GetAutoproxySettings(ctx.SystemId.Value, msg.Guild!.Value, null);
         var config = await _repo.GetSystemConfig(ctx.SystemId.Value);
-        var prevMatched = _matcher.TryMatch(ctx, autoproxySettings, members, out var prevMatch, originalMsg.Content,
+        var prevMatched = _matcher.TryMatch(ctx, autoproxySettings, members, out var prevMatch, originalMsg.Content, prefix,
                                             originalMsg.Attachments.Length > 0, false, ctx.CaseSensitiveProxyTags);
 
         var match = new ProxyMatch
