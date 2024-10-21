@@ -10,6 +10,7 @@ on:
     - 'lib/libpk/**'
     - 'services/api/**'
     - 'services/gateway/**'
+    - 'services/avatars/**'
     - '.github/workflows/rust.yml'
     - 'Dockerfile.rust'
     - 'Dockerfile.bin'
@@ -47,7 +48,7 @@ jobs:
 
       # add more binaries here
       - run: |
-          for binary in "api" "gateway"; do
+          for binary in "api" "gateway" "avatars"; do
             for tag in latest ${{ env.BRANCH_NAME }} ${{ github.sha }}; do
               cat Dockerfile.bin | sed "s/__BINARY__/$binary/g" | docker build -t ghcr.io/pluralkit/$binary:$tag -f - .
             done

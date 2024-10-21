@@ -63,7 +63,7 @@ async fn main() -> anyhow::Result<()> {
     let db = libpk::db::init_data_db().await?;
     let redis = libpk::db::init_redis().await?;
 
-    let rproxy_uri = Uri::from_static(&libpk::config.api.remote_url).to_string();
+    let rproxy_uri = Uri::from_static(&libpk::config.api.as_ref().expect("missing api config").remote_url).to_string();
     let rproxy_client = hyper_util::client::legacy::Client::<(), ()>::builder(TokioExecutor::new())
             .build(HttpConnector::new());
 
@@ -145,7 +145,7 @@ async fn main() -> anyhow::Result<()> {
 
         .route("/", get(|| async { axum::response::Redirect::to("https://pluralkit.me/api") }));
 
-    let addr: &str = libpk::config.api.addr.as_ref();
+    let addr: &str = libpk::config.api.as_ref().expect("missing api config").addr.as_ref();
     let listener = tokio::net::TcpListener::bind(addr).await?;
     info!("listening on {}", addr);
     axum::serve(listener, app).await?;
