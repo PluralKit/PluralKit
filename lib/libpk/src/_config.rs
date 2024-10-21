@@ -20,6 +20,9 @@ pub struct DiscordConfig {
     pub max_concurrency: u32,
     pub cluster: Option<ClusterSettings>,
     pub api_base_url: Option<String>,
+
+    #[serde(default = "_default_api_addr")]
+    pub cache_api_addr: String,
 }
 
 #[derive(Deserialize, Debug)]
@@ -36,7 +39,7 @@ fn _default_api_addr() -> String {
     "0.0.0.0:5000".to_string()
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct ApiConfig {
     #[serde(default = "_default_api_addr")]
     pub addr: String,
@@ -50,6 +53,23 @@ pub struct ApiConfig {
     pub temp_token2: Option<String>,
 }
 
+#[derive(Deserialize, Clone, Debug)]
+pub struct AvatarsConfig {
+    pub s3: S3Config,
+    pub cdn_url: String,
+
+    #[serde(default)]
+    pub migrate_worker_count: u32,
+}
+
+#[derive(Deserialize, Clone, Debug)]
+pub struct S3Config {
+    pub bucket: String,
+    pub application_id: String,
+    pub application_key: String,
+    pub endpoint: String,
+}
+
 fn _metrics_default() -> bool {
     false
 }
@@ -61,14 +81,25 @@ fn _json_log_default() -> bool {
 pub struct PKConfig {
     pub db: DatabaseConfig,
 
-    pub discord: DiscordConfig,
-    pub api: ApiConfig,
+    pub discord: Option<DiscordConfig>,
+    pub api: Option<ApiConfig>,
+    pub avatars: Option<AvatarsConfig>,
 
     #[serde(default = "_metrics_default")]
     pub run_metrics_server: bool,
 
     #[serde(default = "_json_log_default")]
     pub(crate) json_log: bool,
+}
+
+impl PKConfig {
+    pub fn api(self) -> ApiConfig {
+        self.api.expect("missing api config")
+    }
+
+    pub fn discord_config(self) -> DiscordConfig {
+        self.discord.expect("missing discord config")
+    }
 }
 
 lazy_static! {

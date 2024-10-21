@@ -17,6 +17,8 @@ use super::{cache::DiscordCache, shard_state::ShardStateManager};
 pub fn cluster_config() -> ClusterSettings {
     libpk::config
         .discord
+        .as_ref()
+        .expect("missing discord config")
         .cluster
         .clone()
         .unwrap_or(libpk::_config::ClusterSettings {
@@ -51,10 +53,18 @@ pub fn create_shards(redis: fred::pool::RedisPool) -> anyhow::Result<Vec<Shard<R
     let shards = create_iterator(
         start_shard..end_shard + 1,
         cluster_settings.total_shards,
-        ConfigBuilder::new(libpk::config.discord.bot_token.to_owned(), intents)
-            .presence(presence("pk;help", false))
-            .queue(queue.clone())
-            .build(),
+        ConfigBuilder::new(
+            libpk::config
+                .discord
+                .as_ref()
+                .expect("missing discord config")
+                .bot_token
+                .to_owned(),
+            intents,
+        )
+        .presence(presence("pk;help", false))
+        .queue(queue.clone())
+        .build(),
         |_, builder| builder.build(),
     );
 

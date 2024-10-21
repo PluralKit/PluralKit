@@ -1,5 +1,5 @@
 use metrics_exporter_prometheus::PrometheusBuilder;
-use tracing_subscriber::{EnvFilter, Registry};
+use tracing_subscriber::EnvFilter;
 
 pub mod db;
 pub mod proto;

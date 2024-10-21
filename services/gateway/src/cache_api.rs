@@ -36,7 +36,7 @@ pub async fn run_server(cache: Arc<DiscordCache>) -> anyhow::Result<()> {
         .route(
             "/guilds/:guild_id/members/@me",
             get(|State(cache): State<Arc<DiscordCache>>, Path(guild_id): Path<u64>| async move {
-                match cache.0.member(Id::new(guild_id), libpk::config.discord.client_id) {
+                match cache.0.member(Id::new(guild_id), libpk::config.discord.as_ref().expect("missing discord config").client_id) {
                     Some(member) => status_code(StatusCode::FOUND, to_string(member.value()).unwrap()),
                     None => status_code(StatusCode::NOT_FOUND, "".to_string()),
                 }
@@ -45,7 +45,7 @@ pub async fn run_server(cache: Arc<DiscordCache>) -> anyhow::Result<()> {
         .route(
             "/guilds/:guild_id/permissions/@me",
             get(|State(cache): State<Arc<DiscordCache>>, Path(guild_id): Path<u64>| async move {
-                match cache.guild_permissions(Id::new(guild_id), libpk::config.discord.client_id).await {
+                match cache.guild_permissions(Id::new(guild_id), libpk::config.discord.as_ref().expect("missing discord config").client_id).await {
                     Ok(val) => {
                         println!("hh {}", Permissions::all().bits());
                         status_code(StatusCode::FOUND, to_string(&val.bits()).unwrap())
@@ -114,7 +114,7 @@ pub async fn run_server(cache: Arc<DiscordCache>) -> anyhow::Result<()> {
                 if guild_id == 0 {
                     return status_code(StatusCode::FOUND, to_string(&*DM_PERMISSIONS).unwrap());
                 }
-                match cache.channel_permissions(Id::new(channel_id), libpk::config.discord.client_id).await {
+                match cache.channel_permissions(Id::new(channel_id), libpk::config.discord.as_ref().expect("missing discord config").client_id).await {
                     Ok(val) => status_code(StatusCode::FOUND, to_string(&val).unwrap()),
                     Err(err) => {
                         error!(?err, ?channel_id, ?guild_id, "failed to get own channelpermissions");
@@ -176,7 +176,7 @@ pub async fn run_server(cache: Arc<DiscordCache>) -> anyhow::Result<()> {
         .layer(axum::middleware::from_fn(crate::logger::logger))
         .with_state(cache);
 
-    let addr: &str = libpk::config.api.addr.as_ref();
+    let addr: &str = libpk::config.discord.as_ref().expect("missing discord config").cache_api_addr.as_ref();
     let listener = tokio::net::TcpListener::bind(addr).await?;
     info!("listening on {}", addr);
     axum::serve(listener, app).await?;

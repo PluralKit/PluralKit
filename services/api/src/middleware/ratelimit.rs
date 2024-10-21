@@ -20,32 +20,38 @@ lazy_static::lazy_static! {
 
 // this is awful but it works
 pub fn ratelimiter<F, T>(f: F) -> FromFnLayer<F, Option<RedisPool>, T> {
-    let redis = libpk::config.api.ratelimit_redis_addr.as_ref().map(|val| {
-        let r = fred::pool::RedisPool::new(
-            fred::types::RedisConfig::from_url_centralized(val.as_ref())
-                .expect("redis url is invalid"),
-            10,
-        )
-        .expect("failed to connect to redis");
+    let redis = libpk::config
+        .api
+        .as_ref()
+        .expect("missing api config")
+        .ratelimit_redis_addr
+        .as_ref()
+        .map(|val| {
+            let r = fred::pool::RedisPool::new(
+                fred::types::RedisConfig::from_url_centralized(val.as_ref())
+                    .expect("redis url is invalid"),
+                10,
+            )
+            .expect("failed to connect to redis");
 
-        let handle = r.connect(Some(ReconnectPolicy::default()));
+            let handle = r.connect(Some(ReconnectPolicy::default()));
 
-        tokio::spawn(async move { handle });
+            tokio::spawn(async move { handle });
 
-        let rscript = r.clone();
-        tokio::spawn(async move {
-            if let Ok(()) = rscript.wait_for_connect().await {
-                match rscript.script_load(LUA_SCRIPT).await {
-                    Ok(_) => info!("connected to redis for request rate limiting"),
-                    Err(err) => error!("could not load redis script: {}", err),
+            let rscript = r.clone();
+            tokio::spawn(async move {
+                if let Ok(()) = rscript.wait_for_connect().await {
+                    match rscript.script_load(LUA_SCRIPT).await {
+                        Ok(_) => info!("connected to redis for request rate limiting"),
+                        Err(err) => error!("could not load redis script: {}", err),
+                    }
+                } else {
+                    error!("could not wait for connection to load redis script!");
                 }
-            } else {
-                error!("could not wait for connection to load redis script!");
-            }
-        });
+            });
 
-        r
-    });
+            r
+        });
 
     if redis.is_none() {
         warn!("running without request rate limiting!");
@@ -95,7 +101,12 @@ pub async fn do_request_ratelimited(
         // https://github.com/rust-lang/rust/issues/53667
         let is_temp_token2 = if let Some(header) = request.headers().clone().get("X-PluralKit-App")
         {
-            if let Some(token2) = &libpk::config.api.temp_token2 {
+            if let Some(token2) = &libpk::config
+                .api
+                .as_ref()
+                .expect("missing api config")
+                .temp_token2
+            {
                 if header.to_str().unwrap_or("invalid") == token2 {
                     true
                 } else {

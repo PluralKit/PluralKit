@@ -13,11 +13,13 @@ metrics = { workspace = true }
 metrics-exporter-prometheus = { version = "0.15.3", default-features = false, features = ["tokio", "http-listener", "tracing"] }
 serde = { workspace = true }
 sqlx = { workspace = true }
+time = { workspace = true }
 tokio = { workspace = true }
 tracing = { workspace = true }
 tracing-gelf = "0.7.1"
 tracing-subscriber = { workspace = true}
 twilight-model = { workspace = true }
+uuid = { workspace = true }
 
 prost = { workspace = true }
 prost-types = { workspace = true }
