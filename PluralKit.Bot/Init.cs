@@ -42,7 +42,7 @@ public class Init
 
             using var _ = SentrySdk.Init(opts =>
             {
-                opts.Dsn = services.Resolve<CoreConfig>().SentryUrl;
+                opts.Dsn = services.Resolve<CoreConfig>().SentryUrl ?? "";
                 opts.Release = BuildInfoService.FullVersion;
                 opts.AutoSessionTracking = true;
                 //                opts.DisableTaskUnobservedTaskExceptionCapture();
