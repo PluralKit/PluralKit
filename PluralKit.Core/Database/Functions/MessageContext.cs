@@ -25,6 +25,7 @@ public class MessageContext
     public string? SystemTag { get; }
     public string? SystemGuildTag { get; }
     public bool TagEnabled { get; }
+    public string? NameFormat { get; }
     public string? SystemAvatar { get; }
     public string? SystemGuildAvatar { get; }
     public bool AllowAutoproxy { get; }
