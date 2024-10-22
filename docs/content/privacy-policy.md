@@ -1,32 +1,51 @@
 ---
 title: Privacy Policy
-description: I'm not a lawyer. I don't want to write a 50 page document no one wants to (or can) read. It's short, I promise.
+description: This page outlines PluralKit’s privacy policy - how PluralKit collects and uses your data - in plain language.
 permalink: /privacy
 ---
 
 # Privacy Policy
 
-I'm not a lawyer. I don't want to write a 50 page document no one wants to (or can) read. In short:
+This page outlines PluralKit’s privacy policy - **how PluralKit collects and uses your data** - in plain language.
+I'm not a lawyer, and having a 50-page document here filled with legal jargon means no one will read it - so we're keeping things as simple as we can.
 
-This is the data PluralKit collects indefinitely:
-* Information *you give the bot* (eg. system/member profiles, switch history, linked accounts, etc)
-* Metadata about proxied messages (sender account ID, sender system/member, timestamp)
-* Aggregate anonymous usage metrics (eg. gateway events received/second, messages proxied/second, commands executed/second)
-  * This is visible on [https://stats.pluralkit.me/](https://stats.pluralkit.me/)
-* Nightly database backups of the above information
-* High-level logs of actions taken on the bot (eg. systems created or deleted, switches logged, etc)
+This version of the policy is effective from November 11th, 2024. Previous versions of this policy [can be viewed on GitHub](<https://github.com/PluralKit/PluralKit/commits/main/docs/content/privacy-policy.md>).
 
-This is the data PluralKit does *not* collect:
-* Anything not listed above, including...
-* Proxied message *contents* (they are fetched on-demand from the original message object when queried)
-* Metadata about deleted messages, members, switches or systems
-* Information added *and deleted* between nightly backups
-* Information about messages that *aren't* proxied through PluralKit
+If you have any questions or concerns regarding this policy, please join [the support server](<https://discord.gg/PczBt78>) (preferred), or email [legal@pluralkit.me](mailto:legal@pluralkit.me).
 
-System and member information (names, member lists, descriptions, etc) are public by default, and can be looked up by anyone given a system/member ID or an account ID. This can be changed using the [privacy settings](/guide#privacy). 
+## Data provided by you
 
-You can export your system information using the `pk;export` command. This does not include message metadata (as the file would be huge). If you wish to request a copy of the message metadata PluralKit has stored for your Discord account, ask a developer [in the support server](https://discord.gg/PczBt78).
+Any information **explicitly provided by you** (eg. system/member profiles, switch history, linked accounts, etc) is collected indefinitely, and deleted immediately when you choose to remove it.
 
-You can delete your information using `pk;system delete`. This will delete all system information and associated members, switches, and messages. This will not delete your information from the database backups. Contact me if you want that wiped, too.
+For technical reasons, there may be a short delay before images (avatars and banners) uploaded to the PluralKit CDN are fully removed.
 
-The bot is [open-source](https://github.com/PluralKit/PluralKit). While I can't *prove* this is the code that's running on the production server... it is, promise.
+System and member information (names, member lists, descriptions, etc) is **public by default**, and can be looked up by anyone given a system/member ID or an account ID. This can be changed using [the privacy settings](/guide/#privacy).
+
+You can export your system information using the `pk;export` command. This does not include message metadata (as the file would be huge). If you wish to request a copy of the message metadata PluralKit has stored for your Discord account, ask a developer in the support server.
+
+You can delete your information using `pk;system delete`. This will delete all system information, including any associated members, groups, and other information. This will not delete message metadata, which is required for moderation purposes - see below for details.
+
+## Data required for moderation
+
+PluralKit stores **metadata for all proxied messages**, to allow for moderation. This includes:
+
+- Message link
+- ID of original message
+- ID of Discord account from which the message was sent
+- ID of PluralKit member associated with the message
+
+Metadata, by definition, does not include the content of messages proxied with the bot. PluralKit discards the content of proxied messages (and any attachments to proxied messages) after the message has been proxied.
+
+This data is stored indefinitely, and deleted when the proxied message is deleted.
+
+## Other
+
+PluralKit stores other miscellaneous data, to aid in fixing any issues that may occur, and to help us know how many people are using the service. This includes:
+
+- Aggregate **anonymous** usage metrics (eg. gateway events received/second, messages proxied/second, commands executed/second)
+- High-level logs of actions taken on the bot (eg. systems created or deleted, switches logged, etc)
+- High-level logs of requests to the API
+
+PluralKit **does not collect** any data other than the above.
+Any data collected by PluralKit is accessed only when **explicitly requested** by a user, or by the staff team for **abuse handling and moderation purposes**.
+No data is shared with third parties by the staff team except when **required by law**.
