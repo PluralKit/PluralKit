@@ -4,7 +4,7 @@ WORKDIR /build
 
 RUN apk add rustup build-base protoc
 # todo: arm64 target
-RUN rustup-init --default-host x86_64-unknown-linux-musl --default-toolchain stable --profile default -y
+RUN rustup-init --default-host x86_64-unknown-linux-musl --default-toolchain nightly-2024-08-20 --profile default -y
 
 ENV PATH=/root/.cargo/bin:$PATH
 ENV RUSTFLAGS='-C link-arg=-s'

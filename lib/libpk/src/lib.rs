@@ -1,3 +1,4 @@
+#![feature(let_chains)]
 use metrics_exporter_prometheus::PrometheusBuilder;
 use tracing_subscriber::EnvFilter;
 

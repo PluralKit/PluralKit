@@ -18,6 +18,7 @@ pub struct DiscordConfig {
     pub bot_token: String,
     pub client_secret: String,
     pub max_concurrency: u32,
+    #[serde(default)]
     pub cluster: Option<ClusterSettings>,
     pub api_base_url: Option<String>,
 
@@ -81,8 +82,11 @@ fn _json_log_default() -> bool {
 pub struct PKConfig {
     pub db: DatabaseConfig,
 
+    #[serde(default)]
     pub discord: Option<DiscordConfig>,
+    #[serde(default)]
     pub api: Option<ApiConfig>,
+    #[serde(default)]
     pub avatars: Option<AvatarsConfig>,
 
     #[serde(default = "_metrics_default")]
@@ -105,7 +109,8 @@ impl PKConfig {
 lazy_static! {
     #[derive(Debug)]
     pub static ref CONFIG: Arc<PKConfig> = {
-        if let Ok(var) = std::env::var("NOMAD_ALLOC_INDEX") {
+        if let Ok(var) = std::env::var("NOMAD_ALLOC_INDEX")
+            && std::env::var("pluralkit__discord__cluster__total_nodes").is_ok() {
             std::env::set_var("pluralkit__discord__cluster__node_id", var);
         }
 
