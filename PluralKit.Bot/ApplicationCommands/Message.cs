@@ -101,6 +101,14 @@ public class ApplicationCommandProxiedMessage
 
     public async Task PingMessageAuthor(InteractionContext ctx)
     {
+        // if the command message was sent by a user account with bot usage disallowed, ignore it
+        var abuse_log = await _repo.GetAbuseLogByAccount(ctx.User.Id);
+        if (abuse_log != null && abuse_log.DenyBotUsage)
+        {
+            await ctx.Defer();
+            return;
+        }
+
         var messageId = ctx.Event.Data!.TargetId!.Value;
         var msg = await ctx.Repository.GetFullMessage(messageId);
         if (msg == null)

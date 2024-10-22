@@ -113,6 +113,48 @@ public partial class CommandTree
             $"{Emojis.Error} Unknown command {ctx.PeekArgument().AsCode()}. For a list of possible commands, see <https://pluralkit.me/commands>.");
     }
 
+    private async Task HandleAdminAbuseLogCommand(Context ctx)
+    {
+        ctx.AssertBotAdmin();
+
+        if (ctx.Match("n", "new", "create"))
+            await ctx.Execute<Admin>(Admin, a => a.AbuseLogCreate(ctx));
+        else
+        {
+            AbuseLog? abuseLog = null!;
+            var account = await ctx.MatchUser();
+            if (account != null)
+            {
+                abuseLog = await ctx.Repository.GetAbuseLogByAccount(account.Id);
+            }
+            else
+            {
+                abuseLog = await ctx.Repository.GetAbuseLogByGuid(new Guid(ctx.PopArgument()));
+            }
+
+            if (abuseLog == null)
+            {
+                await ctx.Reply($"{Emojis.Error} Could not find an existing abuse log entry for that query.");
+                return;
+            }
+
+            if (!ctx.HasNext())
+                await ctx.Execute<Admin>(Admin, a => a.AbuseLogShow(ctx, abuseLog));
+            else if (ctx.Match("au", "adduser"))
+                await ctx.Execute<Admin>(Admin, a => a.AbuseLogAddUser(ctx, abuseLog));
+            else if (ctx.Match("ru", "removeuser"))
+                await ctx.Execute<Admin>(Admin, a => a.AbuseLogRemoveUser(ctx, abuseLog));
+            else if (ctx.Match("desc", "description"))
+                await ctx.Execute<Admin>(Admin, a => a.AbuseLogDescription(ctx, abuseLog));
+            else if (ctx.Match("deny", "deny-bot-usage"))
+                await ctx.Execute<Admin>(Admin, a => a.AbuseLogFlagDeny(ctx, abuseLog));
+            else if (ctx.Match("yeet", "remove", "delete"))
+                await ctx.Execute<Admin>(Admin, a => a.AbuseLogDelete(ctx, abuseLog));
+            else
+                await ctx.Reply($"{Emojis.Error} Unknown subcommand {ctx.PeekArgument().AsCode()}.");
+        }
+    }
+
     private async Task HandleAdminCommand(Context ctx)
     {
         if (ctx.Match("usid", "updatesystemid"))
@@ -133,6 +175,10 @@ public partial class CommandTree
             await ctx.Execute<Admin>(Admin, a => a.SystemGroupLimit(ctx));
         else if (ctx.Match("sr", "systemrecover"))
             await ctx.Execute<Admin>(Admin, a => a.SystemRecover(ctx));
+        else if (ctx.Match("sd", "systemdelete"))
+            await ctx.Execute<Admin>(Admin, a => a.SystemDelete(ctx));
+        else if (ctx.Match("al", "abuselog"))
+            await HandleAdminAbuseLogCommand(ctx);
         else
             await ctx.Reply($"{Emojis.Error} Unknown command.");
     }

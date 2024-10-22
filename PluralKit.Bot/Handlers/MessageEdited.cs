@@ -69,6 +69,8 @@ public class MessageEdited: IEventHandler<MessageUpdateEvent>
         MessageContext ctx;
         using (_metrics.Measure.Timer.Time(BotMetrics.MessageContextQueryTime))
             ctx = await _repo.GetMessageContext(evt.Author.Value!.Id, channel.GuildId!.Value, rootChannel.Id, evt.ChannelId);
+        if (ctx.DenyBotUsage)
+            return;
 
         var equivalentEvt = await GetMessageCreateEvent(evt, lastMessage, channel);
         var botPermissions = await _cache.BotPermissionsIn(guildIdMaybe, channel.Id);

@@ -14,7 +14,11 @@ public static class ContextEntityArgumentsExt
     {
         var text = ctx.PeekArgument();
         if (text.TryParseMention(out var id))
-            return await ctx.Cache.GetOrFetchUser(ctx.Rest, id);
+        {
+            var user = await ctx.Cache.GetOrFetchUser(ctx.Rest, id);
+            if (user != null) ctx.PopArgument();
+            return user;
+        }
 
         return null;
     }

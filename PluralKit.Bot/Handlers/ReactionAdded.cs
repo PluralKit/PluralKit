@@ -85,6 +85,7 @@ public class ReactionAdded: IEventHandler<MessageReactionAddEvent>
 
         // Proxied messages only exist in guild text channels, so skip checking if we're elsewhere
         if (!DiscordUtils.IsValidGuildChannel(channel)) return;
+        var abuse_log = await _repo.GetAbuseLogByAccount(evt.Member!.User!.Id);
 
         switch (evt.Emoji.Name.Split("\U0000fe0f", 2)[0])
         {
@@ -113,6 +114,7 @@ public class ReactionAdded: IEventHandler<MessageReactionAddEvent>
             case "\u23F0": // Alarm clock
             case "\u2757": // Exclamation mark
                 {
+                    if (abuse_log != null && abuse_log.DenyBotUsage) break;
                     var msg = await _repo.GetFullMessage(evt.MessageId);
                     if (msg != null)
                         await HandlePingReaction(evt, msg);

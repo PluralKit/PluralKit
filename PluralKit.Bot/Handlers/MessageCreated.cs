@@ -114,6 +114,11 @@ public class MessageCreated: IEventHandler<MessageCreateEvent>
         if (!HasCommandPrefix(content, _config.ClientId, out var cmdStart) || cmdStart == content.Length)
             return false;
 
+        // if the command message was sent by a user account with bot usage disallowed, ignore it
+        var abuse_log = await _repo.GetAbuseLogByAccount(evt.Author.Id);
+        if (abuse_log != null && abuse_log.DenyBotUsage)
+            return false;
+
         // Trim leading whitespace from command without actually modifying the string
         // This just moves the argPos pointer by however much whitespace is at the start of the post-argPos string
         var trimStartLengthDiff =
@@ -161,6 +166,9 @@ public class MessageCreated: IEventHandler<MessageCreateEvent>
         MessageContext ctx;
         using (_metrics.Measure.Timer.Time(BotMetrics.MessageContextQueryTime))
             ctx = await _repo.GetMessageContext(evt.Author.Id, evt.GuildId ?? default, rootChannel, channel.Id != rootChannel ? channel.Id : default);
+
+        if (ctx.DenyBotUsage)
+            return false;
 
         try
         {

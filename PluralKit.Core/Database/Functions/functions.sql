@@ -17,7 +17,8 @@
         allow_autoproxy bool,
         latch_timeout integer,
         case_sensitive_proxy_tags bool,
-        proxy_error_message_enabled bool
+        proxy_error_message_enabled bool,
+        deny_bot_usage bool
     )
 as $$
     -- CTEs to query "static" (accessible only through args) data
@@ -28,6 +29,7 @@ as $$
             left join systems on systems.id = accounts.system
             left join system_config on system_config.system = accounts.system
             left join system_guild on system_guild.system = accounts.system and system_guild.guild = guild_id
+            left join abuse_logs on abuse_logs.id = accounts.abuse_log
             where accounts.uid = account_id),
         guild as (select * from servers where id = guild_id)
     select
@@ -50,14 +52,17 @@ as $$
         system.account_autoproxy                     as allow_autoproxy,
         system.latch_timeout                         as latch_timeout,
         system.case_sensitive_proxy_tags             as case_sensitive_proxy_tags,
-        system.proxy_error_message_enabled           as proxy_error_message_enabled
+        system.proxy_error_message_enabled           as proxy_error_message_enabled,
+        coalesce(abuse_logs.deny_bot_usage, false)   as deny_bot_usage
     -- We need a "from" clause, so we just use some bogus data that's always present
     -- This ensure we always have exactly one row going forward, so we can left join afterwards and still get data
     from (select 1) as _placeholder
         left join system on true
         left join guild on true
+        left join accounts on true
         left join system_last_switch on system_last_switch.system = system.id
         left join system_guild on system_guild.system = system.id and system_guild.guild = guild_id
+        left join abuse_logs on abuse_logs.id = accounts.abuse_log
 $$ language sql stable rows 1;
 
 
