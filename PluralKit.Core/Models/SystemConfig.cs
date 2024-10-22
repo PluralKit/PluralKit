@@ -25,6 +25,7 @@ public class SystemConfig
     public bool HidDisplayCaps { get; }
     public HidPadFormat HidListPadding { get; }
     public bool ProxySwitch { get; }
+    public string NameFormat { get; }
 
     public enum HidPadFormat
     {
@@ -54,6 +55,7 @@ public static class SystemConfigExt
         o.Add("hid_display_caps", cfg.HidDisplayCaps);
         o.Add("hid_list_padding", cfg.HidListPadding.ToUserString());
         o.Add("proxy_switch", cfg.ProxySwitch);
+        o.Add("name_format", cfg.NameFormat);
 
         o.Add("description_templates", JArray.FromObject(cfg.DescriptionTemplates));
 

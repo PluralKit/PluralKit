@@ -21,6 +21,7 @@ public class SystemConfigPatch: PatchObject
     public Partial<bool> ProxyErrorMessageEnabled { get; set; }
     public Partial<bool> HidDisplaySplit { get; set; }
     public Partial<bool> HidDisplayCaps { get; set; }
+    public Partial<string?> NameFormat { get; set; }
     public Partial<SystemConfig.HidPadFormat> HidListPadding { get; set; }
     public Partial<bool> ProxySwitch { get; set; }
 
@@ -40,6 +41,7 @@ public class SystemConfigPatch: PatchObject
         .With("hid_display_caps", HidDisplayCaps)
         .With("hid_list_padding", HidListPadding)
         .With("proxy_switch", ProxySwitch)
+        .With("name_format", NameFormat)
     );
 
     public new void AssertIsValid()
@@ -107,6 +109,9 @@ public class SystemConfigPatch: PatchObject
         if (ProxySwitch.IsPresent)
             o.Add("proxy_switch", ProxySwitch.Value);
 
+        if (NameFormat.IsPresent)
+            o.Add("name_format", NameFormat.Value);
+
         return o;
     }
 
@@ -146,6 +151,9 @@ public class SystemConfigPatch: PatchObject
 
         if (o.ContainsKey("proxy_switch"))
             patch.ProxySwitch = o.Value<bool>("proxy_switch");
+
+        if (o.ContainsKey("name_format"))
+            patch.NameFormat = o.Value<string>("name_format");
 
         return patch;
     }

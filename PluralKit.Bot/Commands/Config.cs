@@ -130,6 +130,13 @@ public class Config
             "disabled"
         ));
 
+        items.Add(new(
+            "Name Format",
+            "Format string used to display a member's name https://pluralkit.me/guide/#setting-a-custom-name-format",
+            ctx.Config.NameFormat,
+            ProxyMember.DefaultFormat
+        ));
+
         await ctx.Paginate<PaginatedConfigItem>(
             items.ToAsyncEnumerable(),
             items.Count,
@@ -556,6 +563,19 @@ public class Config
         var newVal = ctx.MatchToggle(false);
         await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { ProxySwitch = newVal });
         await ctx.Reply($"Logging a switch every time a proxy tag is used is now {EnabledDisabled(newVal)}.");
+    }
+
+    public async Task NameFormat(Context ctx)
+    {
+        if (!ctx.HasNext())
+        {
+            await ctx.Reply($"Member names are currently formatted as `{ctx.Config.NameFormat ?? ProxyMember.DefaultFormat}`");
+            return;
+        }
+
+        var formatString = ctx.RemainderOrNull();
+        await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { NameFormat = formatString });
+        await ctx.Reply($"Member names are now formatted as `{formatString}`");
     }
 
     public Task LimitUpdate(Context ctx)

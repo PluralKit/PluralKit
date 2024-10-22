@@ -387,6 +387,14 @@ Now, oth of the following will work without needing to add multiple versions of 
     John: Hello!
     JOHN: Hello!
 
+### Setting a custom name format
+
+The default proxy username formatting is "{name} {tag}", but you can customize this value in config:
+
+    pk;config nameformat {tag} {name}
+    pk;config nameformat {name}@{tag}
+
+
 ## Interacting with proxied messages
 
 ### Your own messages

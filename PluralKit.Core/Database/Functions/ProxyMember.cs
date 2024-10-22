@@ -31,17 +31,23 @@ public class ProxyMember
     public bool AllowAutoproxy { get; }
     public string? Color { get; }
 
+    // If not set, this formatting will be applied to the proxy name
+    public static string DefaultFormat = "{name} {tag}";
+
+    public static string FormatTag(string template, string tag, string name) => StringUtils.SafeFormat(template, new[] {
+            ("{tag}", tag),
+            ("{name}", name)
+        });
+
     public string ProxyName(MessageContext ctx)
     {
+        // TODO: if tag is null it should still format but only if it appears in the formatting.
         var memberName = ServerName ?? DisplayName ?? Name;
-        if (!ctx.TagEnabled)
+        var tag = ctx.SystemGuildTag ?? ctx.SystemTag;
+        if (!ctx.TagEnabled || tag == null)
             return memberName;
 
-        if (ctx.SystemGuildTag != null)
-            return $"{memberName} {ctx.SystemGuildTag}";
-        if (ctx.SystemTag != null)
-            return $"{memberName} {ctx.SystemTag}";
-        return memberName;
+        return FormatTag(ctx.NameFormat ?? DefaultFormat, tag, memberName);
     }
 
     public string? ProxyAvatar(MessageContext ctx) => ServerAvatar ?? WebhookAvatar ?? Avatar ?? ctx.SystemGuildAvatar ?? ctx.SystemAvatar;

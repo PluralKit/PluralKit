@@ -6,6 +6,7 @@ pkgs.mkShellNoCC {
     gcc
     protobuf
     dotnet-sdk_6
+    omnisharp-roslyn
     go
     nodejs yarn
   ];

@@ -739,8 +739,8 @@
       },
       "Sentry": {
         "type": "Transitive",
-        "resolved": "3.11.1",
-        "contentHash": "T/NLfs6MMkUSYsPEDajB9ad0124T18I0uUod5MNOev3iwjvcnIEQBrStEX2olbIxzqfvGXzQ/QFqTfA2ElLPlA=="
+        "resolved": "4.12.1",
+        "contentHash": "OLf7885OKHWLaTLTyw884mwOT4XKCWj2Hz5Wuz/TJemJqXwCIdIljkJBIoeHviRUPvtB7ulDgeYXf/Z7ScToSA=="
       },
       "Serilog": {
         "type": "Transitive",
@@ -1809,7 +1809,7 @@
           "Humanizer.Core": "[2.8.26, )",
           "Myriad": "[1.0.0, )",
           "PluralKit.Core": "[1.0.0, )",
-          "Sentry": "[3.11.1, )",
+          "Sentry": "[4.12.1, )",
           "SixLabors.ImageSharp": "[3.1.5, )"
         }
       },
