@@ -383,7 +383,7 @@ public partial class CommandTree
             else if (ctx.Match("add", "a"))
                 await ctx.Execute<GroupMember>(GroupAdd,
                     g => g.AddRemoveMembers(ctx, target, Groups.AddRemoveOperation.Add));
-            else if (ctx.Match("remove", "rem")
+            else if (ctx.Match("remove", "rem"))
                 await ctx.Execute<GroupMember>(GroupRemove,
                     g => g.AddRemoveMembers(ctx, target, Groups.AddRemoveOperation.Remove));
             else if (ctx.Match("members", "list", "ms", "l", "ls"))
