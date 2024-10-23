@@ -323,7 +323,7 @@ public partial class CommandTree
             if (ctx.Match("add", "a"))
                 await ctx.Execute<GroupMember>(MemberGroupAdd,
                     m => m.AddRemoveGroups(ctx, target, Groups.AddRemoveOperation.Add));
-            else if (ctx.Match("remove", "rem", "r"))
+            else if (ctx.Match("remove", "rem"))
                 await ctx.Execute<GroupMember>(MemberGroupRemove,
                     m => m.AddRemoveGroups(ctx, target, Groups.AddRemoveOperation.Remove));
             else
@@ -383,12 +383,12 @@ public partial class CommandTree
             else if (ctx.Match("add", "a"))
                 await ctx.Execute<GroupMember>(GroupAdd,
                     g => g.AddRemoveMembers(ctx, target, Groups.AddRemoveOperation.Add));
-            else if (ctx.Match("remove", "rem", "r"))
+            else if (ctx.Match("remove", "rem")
                 await ctx.Execute<GroupMember>(GroupRemove,
                     g => g.AddRemoveMembers(ctx, target, Groups.AddRemoveOperation.Remove));
             else if (ctx.Match("members", "list", "ms", "l", "ls"))
                 await ctx.Execute<GroupMember>(GroupMemberList, g => g.ListGroupMembers(ctx, target));
-            else if (ctx.Match("random", "rand"))
+            else if (ctx.Match("random", "rand", "r"))
                 await ctx.Execute<Random>(GroupMemberRandom, r => r.GroupMember(ctx, target));
             else if (ctx.Match("privacy"))
                 await ctx.Execute<Groups>(GroupPrivacy, g => g.GroupPrivacy(ctx, target, null));
