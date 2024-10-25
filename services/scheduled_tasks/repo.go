@@ -142,6 +142,9 @@ func run_data_stats_query() map[string]interface{} {
 
 	for rows.Next() {
 		for i, column := range descs {
+			if string(column.Name) == "message_count" {
+				continue
+			}
 			values, err := rows.Values()
 			if err != nil {
 				panic(err)

@@ -30,8 +30,13 @@ func main() {
 
 	log.Println("starting scheduled tasks runner")
 	wait_until_next_minute()
+
+	go doforever(time.Minute, withtime("stats updater", update_db_meta))
 	go doforever(time.Minute*10, withtime("message stats updater", update_db_message_meta))
-	doforever(time.Minute, withtime("scheduled tasks", task_main))
+	go doforever(time.Minute, withtime("discord stats updater", update_discord_stats))
+
+	// block main thread
+	select{}
 }
 
 func wait_until_next_minute() {
@@ -49,6 +54,7 @@ func get_env_var(key string) string {
 
 func withtime(name string, todo func()) func() {
 	return func() {
+		log.Println("running", name)
 		timeBefore := time.Now()
 		todo()
 		timeAfter := time.Now()
