@@ -22,3 +22,5 @@ create table if not exists image_queue (itemid serial primary key, url text not 
 
 alter table images add column if not exists uploaded_by_system uuid;
 alter table images add column if not exists content_type text default 'image/webp';
+
+create table image_cleanup_jobs(id text references images(id) on delete cascade);

@@ -61,6 +61,11 @@ pub struct AvatarsConfig {
 
     #[serde(default)]
     pub migrate_worker_count: u32,
+
+    #[serde(default)]
+    pub cloudflare_zone_id: Option<String>,
+    #[serde(default)]
+    pub cloudflare_token: Option<String>,
 }
 
 #[derive(Deserialize, Clone, Debug)]

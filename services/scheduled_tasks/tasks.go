@@ -18,6 +18,11 @@ func plural(key string) string {
 	return key + "s"
 }
 
+func update_prom() {
+	count := get_image_cleanup_queue_length()
+	cleanupQueueLength.Set(float64(count))
+}
+
 func update_db_meta() {
 	for _, key := range table_stat_keys {
 		q := fmt.Sprintf("update info set %s_count = (select count(*) from %s)", key, plural(key))
@@ -68,6 +73,31 @@ func update_discord_stats() {
 
 	cmd := rdb.Set(context.Background(), "pluralkit:botstatus", "in "+s+" servers", 0)
 	if err := cmd.Err(); err != nil {
+		panic(err)
+	}
+}
+
+// MUST add new image columns here
+var deletedImageCleanupQuery = `
+insert into image_cleanup_jobs
+select id from images where
+        not exists (select from image_cleanup_jobs j where j.id = images.id)
+    and not exists (select from systems where avatar_url = images.url)
+    and not exists (select from systems where banner_image = images.url)
+    and not exists (select from system_guild where avatar_url = images.url)
+
+    and not exists (select from members where avatar_url = images.url)
+    and not exists (select from members where banner_image = images.url)
+    and not exists (select from members where webhook_avatar_url = images.url)
+    and not exists (select from member_guild where avatar_url = images.url)
+
+    and not exists (select from groups where icon = images.url)
+    and not exists (select from groups where banner_image = images.url);
+	`
+
+func queue_deleted_image_cleanup() {
+	_, err := data_db.Exec(context.Background(), deletedImageCleanupQuery)
+	if err != nil {
 		panic(err)
 	}
 }
