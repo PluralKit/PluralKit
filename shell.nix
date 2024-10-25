@@ -9,4 +9,6 @@ pkgs.mkShellNoCC {
     go
     nodejs yarn
   ];
+
+  NODE_OPTIONS = "--openssl-legacy-provider";
 }
