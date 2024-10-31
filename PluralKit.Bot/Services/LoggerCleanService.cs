@@ -239,7 +239,7 @@ public class LoggerCleanService
     {
         // Embed, Message Author Name field: "Message Deleted", footer is "Message ID: [id]"
         var embed = msg.Embeds?.FirstOrDefault();
-        if (embed.Author?.Name == null || embed?.Footer == null || !embed.Author.Name.StartsWith("Message Deleted")) return null;
+        if (embed?.Author?.Name == null || embed?.Footer == null || (!embed?.Author?.Name.StartsWith("Message Deleted") ?? false)) return null;
         var match = _makiRegex.Match(embed.Footer.Text ?? "");
         return match.Success ? ulong.Parse(match.Groups[1].Value) : null;
     }
