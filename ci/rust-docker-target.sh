@@ -38,5 +38,6 @@ EOF
 
 # add rust binaries here to build
 build api
+build dispatch
 build gateway
 build avatars "COPY .docker-bin/avatar_cleanup /bin/avatar_cleanup"
