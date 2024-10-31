@@ -1,5 +1,5 @@
 use chrono::Timelike;
-use fred::{interfaces::*, pool::RedisPool};
+use fred::{interfaces::*, clients::RedisPool};
 use signal_hook::{
     consts::{SIGINT, SIGTERM},
     iterator::Signals,

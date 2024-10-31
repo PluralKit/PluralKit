@@ -5,24 +5,22 @@ edition = "2021"
 
 [dependencies]
 anyhow = { workspace = true } 
-config = "0.14.0"
 fred = { workspace = true }
-gethostname = "0.4.1"
 lazy_static = { workspace = true }
 metrics = { workspace = true }
-metrics-exporter-prometheus = { version = "0.15.3", default-features = false, features = ["tokio", "http-listener", "tracing"] }
+prost = { workspace = true }
+prost-types = { workspace = true }
 serde = { workspace = true }
 sqlx = { workspace = true }
 time = { workspace = true }
 tokio = { workspace = true }
 tracing = { workspace = true }
-tracing-gelf = "0.7.1"
 tracing-subscriber = { workspace = true}
 twilight-model = { workspace = true }
 uuid = { workspace = true }
 
-prost = { workspace = true }
-prost-types = { workspace = true }
+config = "0.14.0"
+metrics-exporter-prometheus = { version = "0.15.3", default-features = false, features = ["tokio", "http-listener", "tracing"] }
 
 [build-dependencies]
 prost-build = { workspace = true }

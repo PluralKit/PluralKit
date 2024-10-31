@@ -28,7 +28,7 @@ pub fn cluster_config() -> ClusterSettings {
         })
 }
 
-pub fn create_shards(redis: fred::pool::RedisPool) -> anyhow::Result<Vec<Shard<RedisQueue>>> {
+pub fn create_shards(redis: fred::clients::RedisPool) -> anyhow::Result<Vec<Shard<RedisQueue>>> {
     let intents = Intents::GUILDS
         | Intents::DIRECT_MESSAGES
         | Intents::DIRECT_MESSAGE_REACTIONS

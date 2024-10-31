@@ -6,7 +6,7 @@ use axum::{
     middleware::{FromFnLayer, Next},
     response::Response,
 };
-use fred::{pool::RedisPool, prelude::LuaInterface, types::ReconnectPolicy, util::sha1_hash};
+use fred::{clients::RedisPool, prelude::LuaInterface, util::sha1_hash, interfaces::ClientLike};
 use metrics::counter;
 use tracing::{debug, error, info, warn};
 
@@ -27,21 +27,25 @@ pub fn ratelimiter<F, T>(f: F) -> FromFnLayer<F, Option<RedisPool>, T> {
         .ratelimit_redis_addr
         .as_ref()
         .map(|val| {
-            let r = fred::pool::RedisPool::new(
+            // todo: this should probably use the global pool
+            let r = RedisPool::new(
                 fred::types::RedisConfig::from_url_centralized(val.as_ref())
                     .expect("redis url is invalid"),
+                None,
+                None,
+                Some(Default::default()),
                 10,
             )
             .expect("failed to connect to redis");
 
-            let handle = r.connect(Some(ReconnectPolicy::default()));
+            let handle = r.connect();
 
             tokio::spawn(async move { handle });
 
             let rscript = r.clone();
             tokio::spawn(async move {
                 if let Ok(()) = rscript.wait_for_connect().await {
-                    match rscript.script_load(LUA_SCRIPT).await {
+                    match rscript.script_load::<String, String>(LUA_SCRIPT.to_string()).await {
                         Ok(_) => info!("connected to redis for request rate limiting"),
                         Err(err) => error!("could not load redis script: {}", err),
                     }
@@ -155,6 +159,8 @@ pub async fn do_request_ratelimited(
         // local rate = ARGV[1]
         // local period = ARGV[2]
         // return {remaining, tostring(retry_after), reset_after}
+
+        // todo: check if error is script not found and reload script
         let resp = redis
             .evalsha::<(i32, String, u64), String, Vec<String>, Vec<i32>>(
                 LUA_SCRIPT_SHA.to_string(),

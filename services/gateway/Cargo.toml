@@ -12,6 +12,7 @@ fred = { workspace = true }
 futures = { workspace = true }
 lazy_static = { workspace = true }
 libpk = { path = "../../lib/libpk" }
+metrics = { workspace = true }
 prost = { workspace = true }
 serde_json = { workspace = true }
 signal-hook = { workspace = true }

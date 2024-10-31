@@ -111,6 +111,8 @@ impl PKConfig {
     }
 }
 
+// todo: consider passing this down instead of making it global
+// especially since we have optional discord/api/avatars/etc config
 lazy_static! {
     #[derive(Debug)]
     pub static ref CONFIG: Arc<PKConfig> = {
