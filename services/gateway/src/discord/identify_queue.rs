@@ -1,7 +1,7 @@
 use fred::{
+    clients::RedisPool,
     error::RedisError,
     interfaces::KeysInterface,
-    clients::RedisPool,
     types::{Expiration, SetOptions},
 };
 use std::fmt::Debug;

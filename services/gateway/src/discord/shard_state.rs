@@ -1,5 +1,5 @@
 use bytes::Bytes;
-use fred::{interfaces::HashesInterface, clients::RedisPool};
+use fred::{clients::RedisPool, interfaces::HashesInterface};
 use prost::Message;
 use tracing::info;
 use twilight_gateway::Event;

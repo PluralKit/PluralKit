@@ -6,7 +6,7 @@ use axum::{
     middleware::{FromFnLayer, Next},
     response::Response,
 };
-use fred::{clients::RedisPool, prelude::LuaInterface, util::sha1_hash, interfaces::ClientLike};
+use fred::{clients::RedisPool, interfaces::ClientLike, prelude::LuaInterface, util::sha1_hash};
 use metrics::counter;
 use tracing::{debug, error, info, warn};
 
@@ -45,7 +45,10 @@ pub fn ratelimiter<F, T>(f: F) -> FromFnLayer<F, Option<RedisPool>, T> {
             let rscript = r.clone();
             tokio::spawn(async move {
                 if let Ok(()) = rscript.wait_for_connect().await {
-                    match rscript.script_load::<String, String>(LUA_SCRIPT.to_string()).await {
+                    match rscript
+                        .script_load::<String, String>(LUA_SCRIPT.to_string())
+                        .await
+                    {
                         Ok(_) => info!("connected to redis for request rate limiting"),
                         Err(err) => error!("could not load redis script: {}", err),
                     }
