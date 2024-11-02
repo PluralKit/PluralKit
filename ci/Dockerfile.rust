@@ -33,9 +33,11 @@ COPY services/avatars/ /build/services/avatars
 RUN cargo build --bin api --release --target x86_64-unknown-linux-musl
 RUN cargo build --bin gateway --release --target x86_64-unknown-linux-musl
 RUN cargo build --bin avatars --release --target x86_64-unknown-linux-musl
+RUN cargo build --bin avatar_cleanup --release --target x86_64-unknown-linux-musl
 
-FROM scratch 
+FROM scratch
 
 COPY --from=binary-builder /build/target/x86_64-unknown-linux-musl/release/api /api
 COPY --from=binary-builder /build/target/x86_64-unknown-linux-musl/release/gateway /gateway
 COPY --from=binary-builder /build/target/x86_64-unknown-linux-musl/release/avatars /avatars
+COPY --from=binary-builder /build/target/x86_64-unknown-linux-musl/release/avatar_cleanup /avatar_cleanup

@@ -2,6 +2,13 @@ use sqlx::{PgPool, Postgres, Transaction};
 
 use crate::db::types::avatars::*;
 
+pub async fn get_by_id(pool: &PgPool, id: String) -> anyhow::Result<Option<ImageMeta>> {
+    Ok(sqlx::query_as("select * from images where id = $1")
+        .bind(id)
+        .fetch_optional(pool)
+        .await?)
+}
+
 pub async fn get_by_original_url(
     pool: &PgPool,
     original_url: &str,

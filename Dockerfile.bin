@@ -1,5 +1,0 @@
-FROM alpine:latest
-
-COPY /.docker-bin/__BINARY__ /bin/__BINARY__
-
-CMD ["/bin/__BINARY__"]

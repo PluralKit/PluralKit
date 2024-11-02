@@ -131,6 +131,15 @@ func get_message_count() int {
 	return count
 }
 
+func get_image_cleanup_queue_length() int {
+	var count int
+	row := data_db.QueryRow(context.Background(), "select count(*) as count from image_cleanup_jobs")
+	if err := row.Scan(&count); err != nil {
+		panic(err)
+	}
+	return count
+}
+
 func run_data_stats_query() map[string]interface{} {
 	s := map[string]interface{}{}
 
@@ -142,6 +151,9 @@ func run_data_stats_query() map[string]interface{} {
 
 	for rows.Next() {
 		for i, column := range descs {
+			if string(column.Name) == "message_count" {
+				continue
+			}
 			values, err := rows.Values()
 			if err != nil {
 				panic(err)

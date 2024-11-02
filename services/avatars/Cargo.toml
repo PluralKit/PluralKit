@@ -3,6 +3,10 @@ name = "avatars"
 version = "0.1.0"
 edition = "2021"
 
+[[bin]]
+name = "avatar_cleanup"
+path = "src/cleanup.rs"
+
 [dependencies]
 libpk = { path = "../../lib/libpk" }
 anyhow = { workspace = true }
