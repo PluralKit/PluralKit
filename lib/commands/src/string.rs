@@ -3,6 +3,7 @@ use std::collections::HashMap;
 lazy_static::lazy_static! {
     // Dictionary of (left, right) quote pairs
     // Each char in the string is an individual quote, multi-char strings imply "one of the following chars"
+    // Certain languages can have quote patterns that have a different character for open and close
     pub static ref QUOTE_PAIRS: HashMap<String, String> = {
         let mut pairs = HashMap::new();
 

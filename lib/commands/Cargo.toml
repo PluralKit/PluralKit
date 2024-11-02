@@ -8,7 +8,6 @@ crate-type = ["cdylib"]
 
 [dependencies]
 lazy_static = { workspace = true }
-command_system_macros = { path = "../command_system_macros" }
 
 uniffi = { version = "0.25" }
 

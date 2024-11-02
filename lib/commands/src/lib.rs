@@ -9,8 +9,6 @@ mod string;
 mod token;
 use token::*;
 
-use command_system_macros::commands;
-
 // todo!: move all this stuff into a different file
 // lib.rs should just have exported symbols and command definitions
 
@@ -69,23 +67,105 @@ impl TreeBranch {
     }
 }
 
+#[derive(Clone)]
 struct Command {
     tokens: Vec<Token>,
     help: String,
     cb: String,
 }
 
-// todo: aliases
-// todo: categories
-commands! {
-    command(help, help, "Shows the help command");
+fn command(tokens: &[&Token], help: &str, cb: &str) -> Command {
+    Command {
+        tokens: tokens.iter().map(|&x| x.clone()).collect(),
+        help: help.to_string(),
+        cb: cb.to_string(),
+    }
+}
 
-    command(member new, member_new, "Creates a new system member");
-    command(member @MemberRef, member_show, "Shows information about a member");
-    command(member @MemberRef description, member_desc_show, "Shows a member's description");
-    command(member @MemberRef description @FullString, member_desc_update, "Changes a member's description");
-    command(member @MemberRef privacy, member_privacy_show, "Displays a member's current privacy settings");
-    command(member @MemberRef privacy @MemberPrivacyTarget @PrivacyLevel, member_privacy_update, "Changes a member's privacy settings");
+mod commands {
+    use super::Token;
+
+    use super::command;
+    use super::Token::*;
+
+    fn cmd(value: &str) -> Token {
+        Token::Value(vec![value.to_string()])
+    }
+
+    pub fn cmd_with_alias(value: &[&str]) -> Token {
+        Token::Value(value.iter().map(|x| x.to_string()).collect())
+    }
+
+    // todo: this needs to have less ampersands -alyssa
+    pub fn happy() -> Vec<super::Command> {
+        let system = &cmd_with_alias(&["system", "s"]);
+        let member = &cmd_with_alias(&["member", "m"]);
+        let description = &cmd_with_alias(&["description", "desc"]);
+        let privacy = &cmd_with_alias(&["privacy", "priv"]);
+        vec![
+            command(&[&cmd("help")], "help", "Shows the help command"),
+            command(
+                &[system],
+                "system_show",
+                "Shows information about your system",
+            ),
+            command(&[system, &cmd("new")], "system_new", "Creates a new system"),
+            command(
+                &[member, &cmd_with_alias(&["new", "n"])],
+                "member_new",
+                "Creates a new system member",
+            ),
+            command(
+                &[member, &MemberRef],
+                "member_show",
+                "Shows information about a member",
+            ),
+            command(
+                &[member, &MemberRef, description],
+                "member_desc_show",
+                "Shows a member's description",
+            ),
+            command(
+                &[member, &MemberRef, description, &FullString],
+                "member_desc_update",
+                "Changes a member's description",
+            ),
+            command(
+                &[member, &MemberRef, privacy],
+                "member_privacy_show",
+                "Displays a member's current privacy settings",
+            ),
+            command(
+                &[
+                    member,
+                    &MemberRef,
+                    privacy,
+                    &MemberPrivacyTarget,
+                    &PrivacyLevel,
+                ],
+                "member_privacy_update",
+                "Changes a member's privacy settings",
+            ),
+        ]
+    }
+}
+
+lazy_static::lazy_static! {
+    static ref COMMAND_TREE: TreeBranch = {
+        let mut tree = TreeBranch {
+            current_command_key: None,
+            possible_tokens: vec![],
+            branches: HashMap::new(),
+        };
+
+        commands::happy().iter().for_each(|x| tree.register_command(x.clone()));
+
+        tree.sort_tokens();
+
+        // println!("{{tree:#?}}");
+
+        tree
+    };
 }
 
 pub enum CommandResult {
