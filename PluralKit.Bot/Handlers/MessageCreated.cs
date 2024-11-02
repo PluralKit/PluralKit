@@ -52,7 +52,7 @@ public class MessageCreated: IEventHandler<MessageCreateEvent>
         _dmCache = dmCache;
     }
 
-    public ulong? ErrorChannelFor(MessageCreateEvent evt, ulong userId) => evt.ChannelId;
+    public (ulong?, ulong?) ErrorChannelFor(MessageCreateEvent evt, ulong userId) => (evt.GuildId, evt.ChannelId);
     private bool IsDuplicateMessage(Message msg) =>
         // We consider a message duplicate if it has the same ID as the previous message that hit the gateway
         _lastMessageCache.GetLastMessage(msg.ChannelId)?.Current.Id == msg.Id;
@@ -63,7 +63,7 @@ public class MessageCreated: IEventHandler<MessageCreateEvent>
         if (evt.Type != Message.MessageType.Default && evt.Type != Message.MessageType.Reply) return;
         if (IsDuplicateMessage(evt)) return;
 
-        var botPermissions = await _cache.BotPermissionsIn(evt.ChannelId);
+        var botPermissions = await _cache.BotPermissionsIn(evt.GuildId ?? 0, evt.ChannelId);
         if (!botPermissions.HasFlag(PermissionSet.SendMessages)) return;
 
         // spawn off saving the private channel into another thread
@@ -71,8 +71,8 @@ public class MessageCreated: IEventHandler<MessageCreateEvent>
         _ = _dmCache.TrySavePrivateChannel(evt);
 
         var guild = evt.GuildId != null ? await _cache.GetGuild(evt.GuildId.Value) : null;
-        var channel = await _cache.GetChannel(evt.ChannelId);
-        var rootChannel = await _cache.GetRootChannel(evt.ChannelId);
+        var channel = await _cache.GetChannel(evt.GuildId ?? 0, evt.ChannelId);
+        var rootChannel = await _cache.GetRootChannel(evt.GuildId ?? 0, evt.ChannelId);
 
         // Log metrics and message info
         _metrics.Measure.Meter.Mark(BotMetrics.MessagesReceived);
@@ -90,7 +90,8 @@ public class MessageCreated: IEventHandler<MessageCreateEvent>
         if (await TryHandleCommand(shardId, evt, guild, channel))
             return;
 
-        await TryHandleProxy(evt, guild, channel, rootChannel.Id, botPermissions);
+        if (evt.GuildId != null)
+            await TryHandleProxy(evt, guild, channel, rootChannel.Id, botPermissions);
     }
 
     private async Task TryHandleLogClean(Channel channel, MessageCreateEvent evt)

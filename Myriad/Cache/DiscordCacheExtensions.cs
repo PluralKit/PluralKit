@@ -100,15 +100,19 @@ public static class DiscordCacheExtensions
             await cache.SaveChannel(thread);
     }
 
-    public static async Task<PermissionSet> BotPermissionsIn(this IDiscordCache cache, ulong channelId)
+    public static async Task<PermissionSet> BotPermissionsIn(this IDiscordCache cache, ulong guildId, ulong channelId)
     {
-        var channel = await cache.GetRootChannel(channelId);
+        // disable this for now
+        //if (cache is HttpDiscordCache)
+        //    return await ((HttpDiscordCache)cache).BotChannelPermissions(guildId, channelId);
+
+        var channel = await cache.GetRootChannel(guildId, channelId);
 
         if (channel.GuildId != null)
         {
             var userId = cache.GetOwnUser();
             var member = await cache.TryGetSelfMember(channel.GuildId.Value);
-            return await cache.PermissionsFor2(channelId, userId, member);
+            return await cache.PermissionsFor2(guildId, channelId, userId, member);
         }
 
         return PermissionSet.Dm;

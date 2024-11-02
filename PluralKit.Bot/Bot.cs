@@ -101,9 +101,7 @@ public class Bot
     {
         // we HandleGatewayEvent **before** getting the own user, because the own user is set in HandleGatewayEvent for ReadyEvent
         await _cache.HandleGatewayEvent(evt);
-
         await _cache.TryUpdateSelfMember(_config.ClientId, evt);
-
         await OnEventReceivedInner(shardId, evt);
     }
 
@@ -175,7 +173,16 @@ public class Bot
             }
 
             using var _ = LogContext.PushProperty("EventId", Guid.NewGuid());
-            using var __ = LogContext.Push(await serviceScope.Resolve<SerilogGatewayEnricherFactory>().GetEnricher(shardId, evt));
+            // this fails when cache lookup fails, so put it in a try-catch
+            try
+            {
+                using var __ = LogContext.Push(await serviceScope.Resolve<SerilogGatewayEnricherFactory>().GetEnricher(shardId, evt));
+            }
+            catch (Exception exc)
+            {
+
+                await HandleError(handler, evt, serviceScope, exc);
+            }
             _logger.Verbose("Received gateway event: {@Event}", evt);
 
             try
@@ -243,7 +250,7 @@ public class Bot
             if (!exc.ShowToUser()) return;
 
             // Once we've sent it to Sentry, report it to the user (if we have permission to)
-            var reportChannel = handler.ErrorChannelFor(evt, _config.ClientId);
+            var (guildId, reportChannel) = handler.ErrorChannelFor(evt, _config.ClientId);
             if (reportChannel == null)
             {
                 if (evt is InteractionCreateEvent ice && ice.Type == Interaction.InteractionType.ApplicationCommand)
@@ -251,7 +258,7 @@ public class Bot
                 return;
             }
 
-            var botPerms = await _cache.BotPermissionsIn(reportChannel.Value);
+            var botPerms = await _cache.BotPermissionsIn(guildId ?? 0, reportChannel.Value);
             if (botPerms.HasFlag(PermissionSet.SendMessages | PermissionSet.EmbedLinks))
                 await _errorMessageService.SendErrorMessage(reportChannel.Value, sentryEvent.EventId.ToString());
         }

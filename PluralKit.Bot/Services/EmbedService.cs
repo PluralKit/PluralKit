@@ -263,7 +263,7 @@ public class EmbedService
         else if (system.NameFor(ctx) != null)
             nameField = $"{nameField} ({system.NameFor(ctx)})";
         else
-            nameField = $"{nameField} ({system.Name})";
+            nameField = $"{nameField}";
 
         var eb = new EmbedBuilder()
             .Author(new Embed.EmbedAuthor(nameField, IconUrl: target.IconFor(pctx), Url: $"https://dash.pluralkit.me/profile/g/{target.Hid}"))
@@ -336,7 +336,7 @@ public class EmbedService
 
     public async Task<Embed> CreateMessageInfoEmbed(FullMessage msg, bool showContent, SystemConfig? ccfg = null)
     {
-        var channel = await _cache.GetOrFetchChannel(_rest, msg.Message.Channel);
+        var channel = await _cache.GetOrFetchChannel(_rest, msg.Message.Guild ?? 0, msg.Message.Channel);
         var ctx = LookupContext.ByNonOwner;
 
         var serverMsg = await _rest.GetMessageOrNull(msg.Message.Channel, msg.Message.Mid);
@@ -403,14 +403,15 @@ public class EmbedService
         var roles = memberInfo?.Roles?.ToList();
         if (roles != null && roles.Count > 0 && showContent)
         {
-            var rolesString = string.Join(", ", (await Task.WhenAll(roles
-                    .Select(async id =>
+            var guild = await _cache.GetGuild(channel.GuildId!.Value);
+            var rolesString = string.Join(", ", (roles
+                    .Select(id =>
                     {
-                        var role = await _cache.TryGetRole(id);
+                        var role = Array.Find(guild.Roles, r => r.Id == id);
                         if (role != null)
                             return role;
                         return new Role { Name = "*(unknown role)*", Position = 0 };
-                    })))
+                    }))
                 .OrderByDescending(role => role.Position)
                 .Select(role => role.Name));
             eb.Field(new Embed.Field($"Account roles ({roles.Count})", rolesString.Truncate(1024)));

@@ -63,14 +63,14 @@ public class ApplicationCommandProxiedMessage
         var messageId = ctx.Event.Data!.TargetId!.Value;
 
         // check for command messages
-        var (authorId, channelId) = await ctx.Services.Resolve<CommandMessageService>().GetCommandMessage(messageId);
-        if (authorId != null)
+        var cmessage = await ctx.Services.Resolve<CommandMessageService>().GetCommandMessage(messageId);
+        if (cmessage != null)
         {
-            if (authorId != ctx.User.Id)
+            if (cmessage.AuthorId != ctx.User.Id)
                 throw new PKError("You can only delete command messages queried by this account.");
 
-            var isDM = (await _repo.GetDmChannel(ctx.User!.Id)) == channelId;
-            await DeleteMessageInner(ctx, channelId!.Value, messageId, isDM);
+            var isDM = (await _repo.GetDmChannel(ctx.User!.Id)) == cmessage.ChannelId;
+            await DeleteMessageInner(ctx, cmessage.GuildId, cmessage.ChannelId, messageId, isDM);
             return;
         }
 
@@ -78,10 +78,10 @@ public class ApplicationCommandProxiedMessage
         var message = await ctx.Repository.GetFullMessage(messageId);
         if (message != null)
         {
-            if (message.System?.Id != ctx.System.Id && message.Message.Sender != ctx.User.Id)
+            if (message.Message.Sender != ctx.User.Id && (ctx.System != null && message.System?.Id != ctx.System.Id))
                 throw new PKError("You can only delete your own messages.");
 
-            await DeleteMessageInner(ctx, message.Message.Channel, message.Message.Mid, false);
+            await DeleteMessageInner(ctx, message.Message.Guild ?? 0, message.Message.Channel, message.Message.Mid, false);
             return;
         }
 
@@ -89,9 +89,9 @@ public class ApplicationCommandProxiedMessage
         throw Errors.MessageNotFound(messageId);
     }
 
-    internal async Task DeleteMessageInner(InteractionContext ctx, ulong channelId, ulong messageId, bool isDM = false)
+    internal async Task DeleteMessageInner(InteractionContext ctx, ulong guildId, ulong channelId, ulong messageId, bool isDM = false)
     {
-        if (!((await _cache.BotPermissionsIn(channelId)).HasFlag(PermissionSet.ManageMessages) || isDM))
+        if (!((await _cache.BotPermissionsIn(guildId, channelId)).HasFlag(PermissionSet.ManageMessages) || isDM))
             throw new PKError("PluralKit does not have the *Manage Messages* permission in this channel, and thus cannot delete the message."
                 + " Please contact a server administrator to remedy this.");
 
@@ -110,7 +110,7 @@ public class ApplicationCommandProxiedMessage
         // (if not, PK shouldn't send messages on their behalf)
         var member = await _rest.GetGuildMember(ctx.GuildId, ctx.User.Id);
         var requiredPerms = PermissionSet.ViewChannel | PermissionSet.SendMessages;
-        if (member == null || !(await _cache.PermissionsForMemberInChannel(ctx.ChannelId, member)).HasFlag(requiredPerms))
+        if (member == null || !(await _cache.PermissionsForMemberInChannel(ctx.GuildId, ctx.ChannelId, member)).HasFlag(requiredPerms))
         {
             throw new PKError("You do not have permission to send messages in this channel.");
         };

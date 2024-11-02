@@ -218,7 +218,7 @@ public class ProxiedMessage
         try
         {
             var editedMsg =
-                await _webhookExecutor.EditWebhookMessage(msg.Channel, msg.Mid, newContent, clearEmbeds);
+                await _webhookExecutor.EditWebhookMessage(msg.Guild ?? 0, msg.Channel, msg.Mid, newContent, clearEmbeds);
 
             if (ctx.Guild == null)
                 await _rest.CreateReaction(ctx.Channel.Id, ctx.Message.Id, new Emoji { Name = Emojis.Success });
@@ -352,7 +352,9 @@ public class ProxiedMessage
         else if (!await ctx.CheckPermissionsInGuildChannel(channel, PermissionSet.ViewChannel))
             showContent = false;
 
-        if (ctx.MatchRaw())
+        var format = ctx.MatchFormat();
+
+        if (format != ReplyFormat.Standard)
         {
             var discordMessage = await _rest.GetMessageOrNull(message.Message.Channel, message.Message.Mid);
             if (discordMessage == null || !showContent)
@@ -365,21 +367,32 @@ public class ProxiedMessage
                 return;
             }
 
-            await ctx.Reply($"```{content}```");
-
-            if (Regex.IsMatch(content, "```.*```", RegexOptions.Singleline))
+            if (format == ReplyFormat.Raw)
             {
-                var stream = new MemoryStream(Encoding.UTF8.GetBytes(content));
-                await ctx.Rest.CreateMessage(
-                    ctx.Channel.Id,
-                    new MessageRequest
-                    {
-                        Content = $"{Emojis.Warn} Message contains codeblocks, raw source sent as an attachment."
-                    },
-                    new[] { new MultipartFile("message.txt", stream, null, null, null) });
+                await ctx.Reply($"```{content}```");
+
+                if (Regex.IsMatch(content, "```.*```", RegexOptions.Singleline))
+                {
+                    var stream = new MemoryStream(Encoding.UTF8.GetBytes(content));
+                    await ctx.Rest.CreateMessage(
+                        ctx.Channel.Id,
+                        new MessageRequest
+                        {
+                            Content = $"{Emojis.Warn} Message contains codeblocks, raw source sent as an attachment."
+                        },
+                        new[] { new MultipartFile("message.txt", stream, null, null, null) });
+                }
+                return;
             }
 
-            return;
+            if (format == ReplyFormat.Plaintext)
+            {
+                var eb = new EmbedBuilder()
+                .Description($"Showing contents of message {message.Message.Mid}");
+                await ctx.Reply(content, embed: eb.Build());
+                return;
+            }
+
         }
 
         if (isDelete)
@@ -387,7 +400,7 @@ public class ProxiedMessage
             if (!showContent)
                 throw new PKError(noShowContentError);
 
-            if (message.System?.Id != ctx.System.Id && message.Message.Sender != ctx.Author.Id)
+            if (message.Message.Sender != ctx.Author.Id && (ctx.System != null && message.System?.Id != ctx.System.Id))
                 throw new PKError("You can only delete your own messages.");
 
             await ctx.Rest.DeleteMessage(message.Message.Channel, message.Message.Mid);
@@ -423,14 +436,14 @@ public class ProxiedMessage
 
     private async Task DeleteCommandMessage(Context ctx, ulong messageId)
     {
-        var (authorId, channelId) = await ctx.Services.Resolve<CommandMessageService>().GetCommandMessage(messageId);
-        if (authorId == null)
+        var cmessage = await ctx.Services.Resolve<CommandMessageService>().GetCommandMessage(messageId);
+        if (cmessage == null)
             throw Errors.MessageNotFound(messageId);
 
-        if (authorId != ctx.Author.Id)
+        if (cmessage!.AuthorId != ctx.Author.Id)
             throw new PKError("You can only delete command messages queried by this account.");
 
-        await ctx.Rest.DeleteMessage(channelId!.Value, messageId);
+        await ctx.Rest.DeleteMessage(cmessage.ChannelId, messageId);
 
         if (ctx.Guild != null)
             await ctx.Rest.DeleteMessage(ctx.Message);

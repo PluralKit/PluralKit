@@ -13,8 +13,8 @@ func task_main() {
 	log.Println("running per-minute scheduled tasks")
 
 	update_db_meta()
-	update_bot_status()
 	update_stats()
+	update_bot_status()
 }
 
 var table_stat_keys = []string{"system", "member", "group", "switch", "message"}
@@ -49,7 +49,7 @@ func update_db_message_meta() {
 }
 
 func get_discord_counts() (int, int) {
-	redisStats := run_redis_query()
+	redisStats := query_http_cache()
 
 	guild_count := 0
 	channel_count := 0
@@ -64,16 +64,16 @@ func get_discord_counts() (int, int) {
 }
 
 func update_stats() {
-	guild_count, channel_count := get_discord_counts()
-
-	do_stats_insert("guilds", int64(guild_count))
-	do_stats_insert("channels", int64(channel_count))
-
 	data_stats := run_data_stats_query()
 	for _, key := range table_stat_keys {
 		val := data_stats[key+"_count"].(int64)
 		do_stats_insert(plural(key), val)
 	}
+	guild_count, channel_count := get_discord_counts()
+
+	do_stats_insert("guilds", int64(guild_count))
+	do_stats_insert("channels", int64(channel_count))
+
 }
 
 func update_bot_status() {

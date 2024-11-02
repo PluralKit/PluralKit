@@ -18,7 +18,7 @@ public partial class CommandTree
             return CommandHelpRoot(ctx);
         if (ctx.Match("ap", "autoproxy", "auto"))
             return HandleAutoproxyCommand(ctx);
-        if (ctx.Match("config", "cfg"))
+        if (ctx.Match("config", "cfg", "configure"))
             return HandleConfigCommand(ctx);
         if (ctx.Match("list", "find", "members", "search", "query", "l", "f", "fd", "ls"))
             return ctx.Execute<SystemList>(SystemList, m => m.MemberList(ctx, ctx.System));
@@ -105,6 +105,8 @@ public partial class CommandTree
                 return ctx.Execute<Random>(GroupRandom, r => r.Group(ctx, ctx.System));
             else
                 return ctx.Execute<Random>(MemberRandom, m => m.Member(ctx, ctx.System));
+        if (ctx.Match("dashboard", "dash"))
+            return ctx.Execute<Help>(Dashboard, m => m.Dashboard(ctx));
 
         // remove compiler warning
         return ctx.Reply(
@@ -430,13 +432,15 @@ public partial class CommandTree
                 await ctx.Execute<Switch>(SwitchEdit, m => m.SwitchEdit(ctx));
         else if (ctx.Match("delete", "remove", "erase", "cancel", "yeet"))
             await ctx.Execute<Switch>(SwitchDelete, m => m.SwitchDelete(ctx));
+        else if (ctx.Match("copy", "add", "duplicate", "dupe"))
+            await ctx.Execute<Switch>(SwitchCopy, m => m.SwitchEdit(ctx, true));
         else if (ctx.Match("commands", "help"))
             await PrintCommandList(ctx, "switching", SwitchCommands);
         else if (ctx.HasNext()) // there are following arguments
             await ctx.Execute<Switch>(Switch, m => m.SwitchDo(ctx));
         else
             await PrintCommandNotFoundError(ctx, Switch, SwitchOut, SwitchMove, SwitchEdit, SwitchEditOut,
-                SwitchDelete, SystemFronter, SystemFrontHistory);
+                SwitchDelete, SwitchCopy, SystemFronter, SystemFrontHistory);
     }
 
     private async Task CommandHelpRoot(Context ctx)
@@ -544,6 +548,8 @@ public partial class CommandTree
             return ctx.Execute<Config>(null, m => m.HidDisplayCaps(ctx));
         if (ctx.MatchMultiple(new[] { "pad" }, new[] { "id", "ids" }) || ctx.MatchMultiple(new[] { "id" }, new[] { "pad", "padding" }) || ctx.Match("idpad", "padid", "padids"))
             return ctx.Execute<Config>(null, m => m.HidListPadding(ctx));
+        if (ctx.MatchMultiple(new[] { "member", "group" }, new[] { "limit" }) || ctx.Match("limit"))
+            return ctx.Execute<Config>(null, m => m.LimitUpdate(ctx));
 
         // todo: maybe add the list of configuration keys here?
         return ctx.Reply($"{Emojis.Error} Could not find a setting with that name. Please see `pk;commands config` for the list of possible config settings.");

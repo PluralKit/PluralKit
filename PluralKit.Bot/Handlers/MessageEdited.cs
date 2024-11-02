@@ -52,10 +52,12 @@ public class MessageEdited: IEventHandler<MessageUpdateEvent>
         if (!evt.Content.HasValue || !evt.Author.HasValue || !evt.Member.HasValue)
             return;
 
-        var channel = await _cache.GetChannel(evt.ChannelId);
+        var guildIdMaybe = evt.GuildId.HasValue ? evt.GuildId.Value ?? 0 : 0;
+
+        var channel = await _cache.GetChannel(guildIdMaybe, evt.ChannelId); // todo: is this correct for message update?
         if (!DiscordUtils.IsValidGuildChannel(channel))
             return;
-        var rootChannel = await _cache.GetRootChannel(channel.Id);
+        var rootChannel = await _cache.GetRootChannel(guildIdMaybe, channel.Id);
         var guild = await _cache.GetGuild(channel.GuildId!.Value);
         var lastMessage = _lastMessageCache.GetLastMessage(evt.ChannelId)?.Current;
 
@@ -69,7 +71,7 @@ public class MessageEdited: IEventHandler<MessageUpdateEvent>
             ctx = await _repo.GetMessageContext(evt.Author.Value!.Id, channel.GuildId!.Value, rootChannel.Id, evt.ChannelId);
 
         var equivalentEvt = await GetMessageCreateEvent(evt, lastMessage, channel);
-        var botPermissions = await _cache.BotPermissionsIn(channel.Id);
+        var botPermissions = await _cache.BotPermissionsIn(guildIdMaybe, channel.Id);
 
         try
         {
@@ -91,7 +93,7 @@ public class MessageEdited: IEventHandler<MessageUpdateEvent>
     private async Task<MessageCreateEvent> GetMessageCreateEvent(MessageUpdateEvent evt, CachedMessage lastMessage,
                                                                  Channel channel)
     {
-        var referencedMessage = await GetReferencedMessage(evt.ChannelId, lastMessage.ReferencedMessage);
+        var referencedMessage = await GetReferencedMessage(evt.GuildId.HasValue ? evt.GuildId.Value ?? 0 : 0, evt.ChannelId, lastMessage.ReferencedMessage);
 
         var messageReference = lastMessage.ReferencedMessage != null
             ? new Message.Reference(channel.GuildId, evt.ChannelId, lastMessage.ReferencedMessage.Value)
@@ -118,12 +120,12 @@ public class MessageEdited: IEventHandler<MessageUpdateEvent>
         return equivalentEvt;
     }
 
-    private async Task<Message?> GetReferencedMessage(ulong channelId, ulong? referencedMessageId)
+    private async Task<Message?> GetReferencedMessage(ulong guildId, ulong channelId, ulong? referencedMessageId)
     {
         if (referencedMessageId == null)
             return null;
 
-        var botPermissions = await _cache.BotPermissionsIn(channelId);
+        var botPermissions = await _cache.BotPermissionsIn(guildId, channelId);
         if (!botPermissions.HasFlag(PermissionSet.ReadMessageHistory))
         {
             _logger.Warning(

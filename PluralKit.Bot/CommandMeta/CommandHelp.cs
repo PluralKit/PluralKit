@@ -82,6 +82,7 @@ public partial class CommandTree
     public static Command SwitchMove = new Command("switch move", "switch move <date/time>", "Moves the latest switch in time");
     public static Command SwitchEdit = new Command("switch edit", "switch edit <member> [member 2] [member 3...]", "Edits the members in the latest switch");
     public static Command SwitchEditOut = new Command("switch edit out", "switch edit out", "Turns the latest switch into a switch-out");
+    public static Command SwitchCopy = new Command("switch copy", "switch copy <member> [member 2] [member 3...]", "Makes a new switch with the listed members added");
     public static Command SwitchDelete = new Command("switch delete", "switch delete", "Deletes the latest switch");
     public static Command SwitchDeleteAll = new Command("switch delete", "switch delete all", "Deletes all logged switches");
     public static Command Link = new Command("link", "link <account>", "Links your system to another account");
@@ -92,6 +93,7 @@ public partial class CommandTree
     public static Command Export = new Command("export", "export", "Exports system information to a data file");
     public static Command Help = new Command("help", "help", "Shows help information about PluralKit");
     public static Command Explain = new Command("explain", "explain", "Explains the basics of systems and proxying");
+    public static Command Dashboard = new Command("dashboard", "dashboard", "Get a link to the PluralKit dashboard");
     public static Command Message = new Command("message", "message <id|link> [delete|author]", "Looks up a proxied message");
     public static Command MessageEdit = new Command("edit", "edit [link] <text>", "Edit a previously proxied message");
     public static Command MessageReproxy = new Command("reproxy", "reproxy [link] <member>", "Reproxy a previously proxied message using a different member");
@@ -137,7 +139,7 @@ public partial class CommandTree
 
     public static Command[] SwitchCommands =
     {
-        Switch, SwitchOut, SwitchMove, SwitchEdit, SwitchEditOut, SwitchDelete, SwitchDeleteAll
+        Switch, SwitchOut, SwitchMove, SwitchEdit, SwitchEditOut, SwitchDelete, SwitchDeleteAll, SwitchCopy
     };
 
     public static Command[] ConfigCommands =

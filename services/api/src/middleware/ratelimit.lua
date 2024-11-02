@@ -2,13 +2,11 @@
 -- redis.replicate_commands()
 
 local rate_limit_key = KEYS[1]
-local burst = ARGV[1]
-local rate = ARGV[2]
-local period = ARGV[3]
+local rate = ARGV[1]
+local period = ARGV[2]
+local cost = tonumber(ARGV[3])
 
--- we're only ever asking for 1 request at a time
--- todo: this is no longer true
-local cost = 1 --local cost = tonumber(ARGV[4])
+local burst = rate
 
 local emission_interval = period / rate
 local increment = emission_interval * cost

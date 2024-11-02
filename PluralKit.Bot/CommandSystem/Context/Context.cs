@@ -72,7 +72,7 @@ public class Context
     public readonly int ShardId;
     public readonly Cluster Cluster;
 
-    public Task<PermissionSet> BotPermissions => Cache.BotPermissionsIn(Channel.Id);
+    public Task<PermissionSet> BotPermissions => Cache.BotPermissionsIn(Guild?.Id ?? 0, Channel.Id);
     public Task<PermissionSet> UserPermissions => Cache.PermissionsForMCE((MessageCreateEvent)Message);
 
 
@@ -110,7 +110,7 @@ public class Context
         // {
         // Sensitive information that might want to be deleted by :x: reaction is typically in an embed format (member cards, for example)
         // but since we can, we just store all sent messages for possible deletion
-        await _commandMessageService.RegisterMessage(msg.Id, msg.ChannelId, Author.Id);
+        await _commandMessageService.RegisterMessage(msg.Id, Guild?.Id ?? 0, msg.ChannelId, Author.Id);
         // }
 
         return msg;

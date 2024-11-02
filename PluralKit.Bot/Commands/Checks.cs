@@ -143,6 +143,7 @@ public class Checks
         var error = "Channel not found or you do not have permissions to access it.";
 
         // todo: this breaks if channel is not in cache and bot does not have View Channel permissions
+        // with new cache it breaks if channel is not in current guild
         var channel = await ctx.MatchChannel();
         if (channel == null || channel.GuildId == null)
             throw new PKError(error);
@@ -156,7 +157,8 @@ public class Checks
         if (!await ctx.CheckPermissionsInGuildChannel(channel, PermissionSet.ViewChannel))
             throw new PKError(error);
 
-        var botPermissions = await _cache.BotPermissionsIn(channel.Id);
+        // todo: permcheck channel outside of guild?
+        var botPermissions = await _cache.BotPermissionsIn(ctx.Guild.Id, channel.Id);
 
         // We use a bitfield so we can set individual permission bits
         ulong missingPermissions = 0;
@@ -231,10 +233,10 @@ public class Checks
         var channel = await _rest.GetChannelOrNull(channelId.Value);
         if (channel == null)
             throw new PKError("Unable to get the channel associated with this message.");
-
-        var rootChannel = await _cache.GetRootChannel(channel.Id);
         if (channel.GuildId == null)
             throw new PKError("PluralKit is not able to proxy messages in DMs.");
+
+        var rootChannel = await _cache.GetRootChannel(channel.GuildId!.Value, channel.Id);
 
         // using channel.GuildId here since _rest.GetMessage() doesn't return the GuildId
         var context = await ctx.Repository.GetMessageContext(msg.Author.Id, channel.GuildId.Value, rootChannel.Id, msg.ChannelId);

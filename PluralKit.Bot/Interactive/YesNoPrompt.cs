@@ -84,20 +84,32 @@ public class YesNoPrompt: BaseInteractive
 
         var queue = _ctx.Services.Resolve<HandlerQueue<MessageCreateEvent>>();
 
-        var messageDispatch = queue.WaitFor(MessagePredicate, Timeout, cts.Token);
+        async Task WaitForMessage()
+        {
+            try
+            {
+                await queue.WaitFor(MessagePredicate, Timeout, cts.Token);
+            }
+            catch (TimeoutException e)
+            {
+                if (e.Message != "HandlerQueue#WaitFor timed out")
+                    throw;
+            }
+        }
 
         await Start();
 
-        cts.Token.Register(() => _tcs.TrySetException(new TimeoutException("Action timed out")));
+        var messageDispatch = WaitForMessage();
+
+        cts.Token.Register(() => _tcs.TrySetException(new TimeoutException("YesNoPrompt timed out")));
 
         try
         {
             var doneTask = await Task.WhenAny(_tcs.Task, messageDispatch);
-            if (doneTask == messageDispatch)
-                await Finish();
         }
         finally
         {
+            await Finish();
             Cleanup();
         }
     }

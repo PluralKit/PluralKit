@@ -136,4 +136,11 @@ public static class BotMetrics
         DurationUnit = TimeUnit.Seconds,
         Context = "Bot"
     };
+
+    public static MeterOptions CacheDebug => new()
+    {
+        Name = "Bad responses to cache lookups",
+        Context = "Bot",
+        MeasurementUnit = Unit.Calls
+    };
 }

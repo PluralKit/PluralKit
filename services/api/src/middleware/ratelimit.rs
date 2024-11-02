@@ -7,7 +7,7 @@ use axum::{
     response::Response,
 };
 use fred::{pool::RedisPool, prelude::LuaInterface, types::ReconnectPolicy, util::sha1_hash};
-use metrics::increment_counter;
+use metrics::counter;
 use tracing::{debug, error, info, warn};
 
 use crate::util::{header_or_unknown, json_err};
@@ -20,32 +20,38 @@ lazy_static::lazy_static! {
 
 // this is awful but it works
 pub fn ratelimiter<F, T>(f: F) -> FromFnLayer<F, Option<RedisPool>, T> {
-    let redis = libpk::config.api.ratelimit_redis_addr.as_ref().map(|val| {
-        let r = fred::pool::RedisPool::new(
-            fred::types::RedisConfig::from_url_centralized(val.as_ref())
-                .expect("redis url is invalid"),
-            10,
-        )
-        .expect("failed to connect to redis");
+    let redis = libpk::config
+        .api
+        .as_ref()
+        .expect("missing api config")
+        .ratelimit_redis_addr
+        .as_ref()
+        .map(|val| {
+            let r = fred::pool::RedisPool::new(
+                fred::types::RedisConfig::from_url_centralized(val.as_ref())
+                    .expect("redis url is invalid"),
+                10,
+            )
+            .expect("failed to connect to redis");
 
-        let handle = r.connect(Some(ReconnectPolicy::default()));
+            let handle = r.connect(Some(ReconnectPolicy::default()));
 
-        tokio::spawn(async move { handle });
+            tokio::spawn(async move { handle });
 
-        let rscript = r.clone();
-        tokio::spawn(async move {
-            if let Ok(()) = rscript.wait_for_connect().await {
-                match rscript.script_load(LUA_SCRIPT).await {
-                    Ok(_) => info!("connected to redis for request rate limiting"),
-                    Err(err) => error!("could not load redis script: {}", err),
+            let rscript = r.clone();
+            tokio::spawn(async move {
+                if let Ok(()) = rscript.wait_for_connect().await {
+                    match rscript.script_load(LUA_SCRIPT).await {
+                        Ok(_) => info!("connected to redis for request rate limiting"),
+                        Err(err) => error!("could not load redis script: {}", err),
+                    }
+                } else {
+                    error!("could not wait for connection to load redis script!");
                 }
-            } else {
-                error!("could not wait for connection to load redis script!");
-            }
-        });
+            });
 
-        r
-    });
+            r
+        });
 
     if redis.is_none() {
         warn!("running without request rate limiting!");
@@ -95,7 +101,12 @@ pub async fn do_request_ratelimited(
         // https://github.com/rust-lang/rust/issues/53667
         let is_temp_token2 = if let Some(header) = request.headers().clone().get("X-PluralKit-App")
         {
-            if let Some(token2) = &libpk::config.api.temp_token2 {
+            if let Some(token2) = &libpk::config
+                .api
+                .as_ref()
+                .expect("missing api config")
+                .temp_token2
+            {
                 if header.to_str().unwrap_or("invalid") == token2 {
                     true
                 } else {
@@ -137,24 +148,23 @@ pub async fn do_request_ratelimited(
             rlimit.key()
         );
 
-        let burst = 5;
         let period = 1; // seconds
+        let cost = 1; // todo: update this for group member endpoints
 
         // local rate_limit_key = KEYS[1]
-        // local burst = ARGV[1]
-        // local rate = ARGV[2]
-        // local period = ARGV[3]
+        // local rate = ARGV[1]
+        // local period = ARGV[2]
         // return {remaining, tostring(retry_after), reset_after}
         let resp = redis
             .evalsha::<(i32, String, u64), String, Vec<String>, Vec<i32>>(
                 LUA_SCRIPT_SHA.to_string(),
                 vec![rl_key.clone()],
-                vec![burst, rlimit.rate(), period],
+                vec![rlimit.rate(), period, cost],
             )
             .await;
 
         match resp {
-            Ok((mut remaining, retry_after, reset_after)) => {
+            Ok((remaining, retry_after, reset_after)) => {
                 // redis's lua doesn't support returning floats
                 let retry_after: f64 = retry_after
                     .parse()
@@ -165,7 +175,7 @@ pub async fn do_request_ratelimited(
                 } else {
                     let retry_after = (retry_after * 1_000_f64).ceil() as u64;
                     debug!("ratelimited request from {rl_key}, retry_after={retry_after}",);
-                    increment_counter!("pk_http_requests_ratelimited");
+                    counter!("pk_http_requests_ratelimited").increment(1);
                     json_err(
                         StatusCode::TOO_MANY_REQUESTS,
                         format!(
@@ -174,9 +184,6 @@ pub async fn do_request_ratelimited(
                         ),
                     )
                 };
-
-                // the redis script puts burst in remaining for ??? some reason
-                remaining -= burst - rlimit.rate();
 
                 let reset_time = SystemTime::now()
                     .checked_add(Duration::from_secs(reset_after))

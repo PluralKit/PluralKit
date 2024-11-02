@@ -77,11 +77,16 @@ You cannot look up private members or groups of another system.
 |pk;system frontpercent|-flat||Show "flat" frontpercent - percentages add up to 100%|
 |pk;group \<group> frontpercent|-fronters-only|-fo|Show a group's frontpercent without the "no fronter" entry|
 |pk;group \<group> frontpercent|-flat||Show "flat" frontpercent - percentages add up to 100%|
+|pk;group \<group> \<add/remove>|-all|-a|Add or remove all members from a group.|
 |pk;edit|-append|-a|Append the new content to the old message instead of overwriting it|
 |pk;edit|-prepend|-p|Prepend the new content to the old message instead of overwriting it|
 |pk;edit|-nospace|-ns|Append/prepend without adding a space|
 |pk;edit|-clear-embed|-ce|Remove embeds from a message|
 |pk;edit|-regex|-x|Edit using a C# Regex formatted like s\|X\|Y or s\|X\|Y\|F, where \| is any character, X is a Regex, Y is a substitution string, and F is a set of Regex flags|
+|pk;switch edit and pk;switch add|-append|-a|Append members to the current switch or make a new switch with members appended|
+|pk;switch edit and pk;switch add|-prepend|-p|Prepend members to the current switch or make a new switch with members prepended|
+|pk;switch edit and pk;switch add|-first|-f|Move member to the front of the current switch or make a new switch with the member at the front|
+|pk;switch edit and pk;switch add|-remove|-r|Remove members from the current switch or make a new switch with members removed|
 |Most commands|-all|-a|Show hidden/private information|
 |Most commands|-raw|-r|Show text with formatting, for easier copy-pasting|
 |All commands|-private|-priv|Show private information|

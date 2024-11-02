@@ -4,6 +4,7 @@ use std::str::FromStr;
 use tracing::info;
 
 pub mod repository;
+pub mod types;
 
 pub async fn init_redis() -> anyhow::Result<RedisPool> {
     info!("connecting to redis");

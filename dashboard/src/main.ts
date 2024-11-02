@@ -7,7 +7,7 @@ if (!String.prototype.replaceAll)
   String.prototype.replaceAll = replaceAll;
 
 Sentry.init({
-  dsn: "https://973beecd91934f9992c72c942770bdd2@sentry.pluralkit.me/3",
+  dsn: "https://79ba4b55fdce475ebc5d37df8b75d72a@gt.pluralkit.me/5",
   integrations: [new Integrations.BrowserTracing()],
 
   enabled: !window.location.origin.includes("localhost"),

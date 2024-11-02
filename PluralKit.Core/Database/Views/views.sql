@@ -30,7 +30,15 @@ select members.*,
            -- Privacy '1' = public; just return description as normal
            when members.description_privacy = 1 then members.description
            -- Any other privacy (rn just '2'), return null description (missing case = null in SQL)
-        end as public_description
+        end as public_description,
+        
+        -- Extract member name as seen by "the public"
+        case
+            -- Privacy '1' = public; just return name as normal
+            when members.name_privacy = 1 then members.name
+            -- Any other privacy (rn just '2'), return display name
+            else coalesce(members.display_name, members.name)
+        end as public_name
 from members;
 
 create view group_list as
@@ -48,5 +56,20 @@ select groups.*,
             inner join members on group_members.member_id = members.id
         where
             group_members.group_id = groups.id
-    ) as total_member_count
+    ) as total_member_count,
+
+    -- Extract group description as seen by "the public"
+    case
+        -- Privacy '1' = public; just return description as normal
+        when groups.description_privacy = 1 then groups.description
+        -- Any other privacy (rn just '2'), return null description (missing case = null in SQL)
+    end as public_description,
+    
+    -- Extract member name as seen by "the public"
+    case
+        -- Privacy '1' = public; just return name as normal
+        when groups.name_privacy = 1 then groups.name
+        -- Any other privacy (rn just '2'), return display name
+        else coalesce(groups.display_name, groups.name)
+    end as public_name
 from groups;

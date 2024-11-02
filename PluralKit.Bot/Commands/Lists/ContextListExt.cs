@@ -11,7 +11,7 @@ namespace PluralKit.Bot;
 
 public static class ContextListExt
 {
-    public static ListOptions ParseListOptions(this Context ctx, LookupContext lookupCtx)
+    public static ListOptions ParseListOptions(this Context ctx, LookupContext directLookupCtx, LookupContext lookupContext)
     {
         var p = new ListOptions();
 
@@ -55,9 +55,12 @@ public static class ContextListExt
         if (ctx.MatchFlag("private-only", "po")) p.PrivacyFilter = PrivacyLevel.Private;
 
         // PERM CHECK: If we're trying to access non-public members of another system, error
-        if (p.PrivacyFilter != PrivacyLevel.Public && lookupCtx != LookupContext.ByOwner)
+        if (p.PrivacyFilter != PrivacyLevel.Public && directLookupCtx != LookupContext.ByOwner)
             // TODO: should this just return null instead of throwing or something? >.>
             throw Errors.NotOwnInfo;
+
+        //this is for searching
+        p.Context = lookupContext;
 
         // Additional fields to include in the search results
         if (ctx.MatchFlag("with-last-switch", "with-last-fronted", "with-last-front", "wls", "wlf"))
@@ -124,11 +127,14 @@ public static class ContextListExt
 
         void ShortRenderer(EmbedBuilder eb, IEnumerable<ListedMember> page)
         {
+            // if there are both 5 and 6 character Hids they should be padded to align correctly.
+            var shouldPad = page.Any(x => x.Hid.Length > 5);
+
             // We may end up over the description character limit
             // so run it through a helper that "makes it work" :)
             eb.WithSimpleLineContent(page.Select(m =>
             {
-                var ret = $"[`{m.DisplayHid(ctx.Config, isList: true)}`] **{m.NameFor(ctx)}** ";
+                var ret = $"[`{m.DisplayHid(ctx.Config, isList: true, shouldPad: shouldPad)}`] **{m.NameFor(ctx)}** ";
 
                 if (opts.IncludeMessageCount && m.MessageCountFor(lookupCtx) is { } count)
                     ret += $"({count} messages)";
@@ -234,11 +240,14 @@ public static class ContextListExt
 
         void ShortRenderer(EmbedBuilder eb, IEnumerable<ListedGroup> page)
         {
+            // if there are both 5 and 6 character Hids they should be padded to align correctly.
+            var shouldPad = page.Any(x => x.Hid.Length > 5);
+
             // We may end up over the description character limit
             // so run it through a helper that "makes it work" :)
             eb.WithSimpleLineContent(page.Select(g =>
             {
-                var ret = $"[`{g.DisplayHid(ctx.Config, isList: true)}`] **{g.NameFor(ctx)}** ";
+                var ret = $"[`{g.DisplayHid(ctx.Config, isList: true, shouldPad: shouldPad)}`] **{g.NameFor(ctx)}** ";
 
                 switch (opts.SortProperty)
                 {

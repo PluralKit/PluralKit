@@ -37,24 +37,35 @@ public class SystemEdit
         if (isOwnSystem)
             noNameSetMessage += " Type `pk;system name <name>` to set one.";
 
-        if (ctx.MatchRaw())
-        {
-            if (target.Name != null)
-                await ctx.Reply($"```\n{target.Name}\n```");
-            else
+        var format = ctx.MatchFormat();
+
+        // if there's nothing next or what's next is "raw"/"plaintext" we're doing a query, so check for null
+        if (!ctx.HasNext(false) || format != ReplyFormat.Standard)
+            if (target.Name == null)
+            {
                 await ctx.Reply(noNameSetMessage);
+                return;
+            }
+
+        if (format == ReplyFormat.Raw)
+        {
+            await ctx.Reply($"` ``\n{target.Name}\n` ``");
+            return;
+        }
+        if (format == ReplyFormat.Plaintext)
+        {
+            var eb = new EmbedBuilder()
+                .Description($"Showing name for system {target.DisplayHid()}");
+            await ctx.Reply(target.Name, embed: eb.Build());
             return;
         }
 
         if (!ctx.HasNext(false))
         {
-            if (target.Name != null)
-                await ctx.Reply(
-                    $"{(isOwnSystem ? "Your" : "This")} system's name is currently **{target.Name}**."
-                    + (isOwnSystem ? " Type `pk;system name -clear` to clear it." : "")
-                    + $" Using {target.Name.Length}/{Limits.MaxSystemNameLength} characters.");
-            else
-                await ctx.Reply(noNameSetMessage);
+            await ctx.Reply(
+                $"{(isOwnSystem ? "Your" : "This")} system's name is currently **{target.Name}**."
+                + (isOwnSystem ? " Type `pk;system name -clear` to clear it." : "")
+                + $" Using {target.Name.Length}/{Limits.MaxSystemNameLength} characters.");
             return;
         }
 
@@ -91,24 +102,35 @@ public class SystemEdit
 
         var settings = await ctx.Repository.GetSystemGuild(ctx.Guild.Id, target.Id);
 
-        if (ctx.MatchRaw())
-        {
-            if (settings.DisplayName != null)
-                await ctx.Reply($"```\n{settings.DisplayName}\n```");
-            else
+        var format = ctx.MatchFormat();
+
+        // if there's nothing next or what's next is "raw"/"plaintext" we're doing a query, so check for null
+        if (!ctx.HasNext(false) || format != ReplyFormat.Standard)
+            if (settings.DisplayName == null)
+            {
                 await ctx.Reply(noNameSetMessage);
+                return;
+            }
+
+        if (format == ReplyFormat.Raw)
+        {
+            await ctx.Reply($"` ``\n{settings.DisplayName}\n` ``");
+            return;
+        }
+        if (format == ReplyFormat.Plaintext)
+        {
+            var eb = new EmbedBuilder()
+                .Description($"Showing servername for system {target.DisplayHid()}");
+            await ctx.Reply(settings.DisplayName, embed: eb.Build());
             return;
         }
 
         if (!ctx.HasNext(false))
         {
-            if (settings.DisplayName != null)
-                await ctx.Reply(
-                    $"{(isOwnSystem ? "Your" : "This")} system's name for this server is currently **{settings.DisplayName}**."
-                    + (isOwnSystem ? " Type `pk;system servername -clear` to clear it." : "")
-                    + $" Using {settings.DisplayName.Length}/{Limits.MaxSystemNameLength} characters.");
-            else
-                await ctx.Reply(noNameSetMessage);
+            await ctx.Reply(
+                $"{(isOwnSystem ? "Your" : "This")} system's name for this server is currently **{settings.DisplayName}**."
+                + (isOwnSystem ? " Type `pk;system servername -clear` to clear it." : "")
+                + $" Using {settings.DisplayName.Length}/{Limits.MaxSystemNameLength} characters.");
             return;
         }
 
@@ -143,28 +165,39 @@ public class SystemEdit
         if (isOwnSystem)
             noDescriptionSetMessage += " To set one, type `pk;s description <description>`.";
 
-        if (ctx.MatchRaw())
-        {
+        var format = ctx.MatchFormat();
+
+        // if there's nothing next or what's next is "raw"/"plaintext" we're doing a query, so check for null
+        if (!ctx.HasNext(false) || format != ReplyFormat.Standard)
             if (target.Description == null)
+            {
                 await ctx.Reply(noDescriptionSetMessage);
-            else
-                await ctx.Reply($"```\n{target.Description}\n```");
+                return;
+            }
+
+        if (format == ReplyFormat.Raw)
+        {
+            await ctx.Reply($"` ``\n{target.Description}\n` ``");
+            return;
+        }
+        if (format == ReplyFormat.Plaintext)
+        {
+            var eb = new EmbedBuilder()
+                .Description($"Showing description for system {target.DisplayHid()}");
+            await ctx.Reply(target.Description, embed: eb.Build());
             return;
         }
 
         if (!ctx.HasNext(false))
         {
-            if (target.Description == null)
-                await ctx.Reply(noDescriptionSetMessage);
-            else
-                await ctx.Reply(embed: new EmbedBuilder()
-                    .Title("System description")
-                    .Description(target.Description)
-                    .Footer(new Embed.EmbedFooter(
-                        "To print the description with formatting, type `pk;s description -raw`."
-                            + (isOwnSystem ? " To clear it, type `pk;s description -clear`. To change it, type `pk;s description <new description>`." : "")
-                            + $" Using {target.Description.Length}/{Limits.MaxDescriptionLength} characters."))
-                    .Build());
+            await ctx.Reply(embed: new EmbedBuilder()
+                .Title("System description")
+                .Description(target.Description)
+                .Footer(new Embed.EmbedFooter(
+                    "To print the description with formatting, type `pk;s description -raw`."
+                        + (isOwnSystem ? " To clear it, type `pk;s description -clear`. To change it, type `pk;s description <new description>`." : "")
+                        + $" Using {target.Description.Length}/{Limits.MaxDescriptionLength} characters."))
+                .Build());
             return;
         }
 
@@ -191,7 +224,7 @@ public class SystemEdit
     public async Task Color(Context ctx, PKSystem target)
     {
         var isOwnSystem = ctx.System?.Id == target.Id;
-        var matchedRaw = ctx.MatchRaw();
+        var matchedFormat = ctx.MatchFormat();
         var matchedClear = ctx.MatchClear();
 
         if (!isOwnSystem || !(ctx.HasNext() || matchedClear))
@@ -199,8 +232,10 @@ public class SystemEdit
             if (target.Color == null)
                 await ctx.Reply(
                     "This system does not have a color set." + (isOwnSystem ? " To set one, type `pk;system color <color>`." : ""));
-            else if (matchedRaw)
+            else if (matchedFormat == ReplyFormat.Raw)
                 await ctx.Reply("```\n#" + target.Color + "\n```");
+            else if (matchedFormat == ReplyFormat.Plaintext)
+                await ctx.Reply(target.Color);
             else
                 await ctx.Reply(embed: new EmbedBuilder()
                     .Title("System color")
@@ -246,22 +281,33 @@ public class SystemEdit
             ? "You currently have no system tag set. To set one, type `pk;s tag <tag>`."
             : "This system currently has no system tag set.";
 
-        if (ctx.MatchRaw())
-        {
+        var format = ctx.MatchFormat();
+
+        // if there's nothing next or what's next is "raw"/"plaintext" we're doing a query, so check for null
+        if (!ctx.HasNext(false) || format != ReplyFormat.Standard)
             if (target.Tag == null)
+            {
                 await ctx.Reply(noTagSetMessage);
-            else
-                await ctx.Reply($"```\n{target.Tag}\n```");
+                return;
+            }
+
+        if (format == ReplyFormat.Raw)
+        {
+            await ctx.Reply($"```\n{target.Tag}\n```");
+            return;
+        }
+        if (format == ReplyFormat.Plaintext)
+        {
+            var eb = new EmbedBuilder()
+                .Description($"Showing tag for system {target.DisplayHid()}");
+            await ctx.Reply(target.Tag, embed: eb.Build());
             return;
         }
 
         if (!ctx.HasNext(false))
         {
-            if (target.Tag == null)
-                await ctx.Reply(noTagSetMessage);
-            else
-                await ctx.Reply($"{(isOwnSystem ? "Your" : "This system's")} current system tag is {target.Tag.AsCode()}."
-                    + (isOwnSystem ? "To change it, type `pk;s tag <tag>`. To clear it, type `pk;s tag -clear`." : ""));
+            await ctx.Reply($"{(isOwnSystem ? "Your" : "This system's")} current system tag is {target.Tag.AsCode()}."
+                + (isOwnSystem ? "To change it, type `pk;s tag <tag>`. To clear it, type `pk;s tag -clear`." : ""));
             return;
         }
 
@@ -296,13 +342,20 @@ public class SystemEdit
 
         var settings = await ctx.Repository.GetSystemGuild(ctx.Guild.Id, target.Id);
 
-        async Task Show(bool raw = false)
+        async Task Show(ReplyFormat format = ReplyFormat.Standard)
         {
             if (settings.Tag != null)
             {
-                if (raw)
+                if (format == ReplyFormat.Raw)
                 {
                     await ctx.Reply($"```{settings.Tag}```");
+                    return;
+                }
+                if (format == ReplyFormat.Plaintext)
+                {
+                    var eb = new EmbedBuilder()
+                        .Description($"Showing servertag for system {target.DisplayHid()}");
+                    await ctx.Reply(settings.Tag, embed: eb.Build());
                     return;
                 }
 
@@ -400,8 +453,8 @@ public class SystemEdit
             await EnableDisable(false);
         else if (ctx.Match("enable") || ctx.MatchFlag("enable"))
             await EnableDisable(true);
-        else if (ctx.MatchRaw())
-            await Show(true);
+        else if (ctx.MatchFormat() != ReplyFormat.Standard)
+            await Show(ctx.MatchFormat());
         else if (!ctx.HasNext(false))
             await Show();
         else
@@ -418,24 +471,35 @@ public class SystemEdit
         if (isOwnSystem)
             noPronounsSetMessage += " To set some, type `pk;system pronouns <pronouns>`";
 
-        if (ctx.MatchRaw())
-        {
+        var format = ctx.MatchFormat();
+
+        // if there's nothing next or what's next is "raw"/"plaintext" we're doing a query, so check for null
+        if (!ctx.HasNext(false) || format != ReplyFormat.Standard)
             if (target.Pronouns == null)
+            {
                 await ctx.Reply(noPronounsSetMessage);
-            else
-                await ctx.Reply($"```\n{target.Pronouns}\n```");
+                return;
+            }
+
+        if (format == ReplyFormat.Raw)
+        {
+            await ctx.Reply($"```\n{target.Pronouns}\n```");
+            return;
+        }
+        if (format == ReplyFormat.Plaintext)
+        {
+            var eb = new EmbedBuilder()
+                .Description($"Showing pronouns for system {target.DisplayHid()}");
+            await ctx.Reply(target.Pronouns, embed: eb.Build());
             return;
         }
 
         if (!ctx.HasNext(false))
         {
-            if (target.Pronouns == null)
-                await ctx.Reply(noPronounsSetMessage);
-            else
-                await ctx.Reply($"{(isOwnSystem ? "Your" : "This system's")} current pronouns are **{target.Pronouns}**.\nTo print the pronouns with formatting, type `pk;system pronouns -raw`."
-                + (isOwnSystem ? " To clear them, type `pk;system pronouns -clear`."
-                : "")
-                + $" Using {target.Pronouns.Length}/{Limits.MaxPronounsLength} characters.");
+            await ctx.Reply($"{(isOwnSystem ? "Your" : "This system's")} current pronouns are **{target.Pronouns}**.\nTo print the pronouns with formatting, type `pk;system pronouns -raw`."
+            + (isOwnSystem ? " To clear them, type `pk;system pronouns -clear`."
+            : "")
+            + $" Using {target.Pronouns.Length}/{Limits.MaxPronounsLength} characters.");
             return;
         }
 
