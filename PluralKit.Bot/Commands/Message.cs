@@ -400,7 +400,8 @@ public class ProxiedMessage
             if (!showContent)
                 throw new PKError(noShowContentError);
 
-            if (message.Message.Sender != ctx.Author.Id && (ctx.System != null && message.System?.Id != ctx.System.Id))
+            // if user has has a system and their system sent the message, or if user sent the message, do not error
+            if (!((ctx.System != null && message.System?.Id == ctx.System.Id) || message.Message.Sender == ctx.Author.Id))
                 throw new PKError("You can only delete your own messages.");
 
             await ctx.Rest.DeleteMessage(message.Message.Channel, message.Message.Mid);
