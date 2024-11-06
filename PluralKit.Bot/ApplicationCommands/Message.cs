@@ -78,7 +78,8 @@ public class ApplicationCommandProxiedMessage
         var message = await ctx.Repository.GetFullMessage(messageId);
         if (message != null)
         {
-            if (message.Message.Sender != ctx.User.Id && (ctx.System != null && message.System?.Id != ctx.System.Id))
+            // if user has has a system and their system sent the message, or if user sent the message, do not error
+            if (!((ctx.System != null && message.System?.Id == ctx.System.Id) || message.Message.Sender == ctx.User.Id))
                 throw new PKError("You can only delete your own messages.");
 
             await DeleteMessageInner(ctx, message.Message.Guild ?? 0, message.Message.Channel, message.Message.Mid, false);
