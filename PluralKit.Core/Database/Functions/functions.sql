@@ -29,7 +29,6 @@ as $$
             left join systems on systems.id = accounts.system
             left join system_config on system_config.system = accounts.system
             left join system_guild on system_guild.system = accounts.system and system_guild.guild = guild_id
-            left join abuse_logs on abuse_logs.id = accounts.abuse_log
             where accounts.uid = account_id),
         guild as (select * from servers where id = guild_id)
     select
@@ -59,7 +58,7 @@ as $$
     from (select 1) as _placeholder
         left join system on true
         left join guild on true
-        left join accounts on true
+        left join accounts on accounts.uid = account_id
         left join system_last_switch on system_last_switch.system = system.id
         left join system_guild on system_guild.system = system.id and system_guild.guild = guild_id
         left join abuse_logs on abuse_logs.id = accounts.abuse_log
