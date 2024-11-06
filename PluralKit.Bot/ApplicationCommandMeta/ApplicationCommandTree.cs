@@ -12,7 +12,7 @@ public partial class ApplicationCommandTree
         else if (ctx.Event.Data!.Name == ProxiedMessageDelete.Name)
             return ctx.Execute<ApplicationCommandProxiedMessage>(ProxiedMessageDelete, m => m.DeleteMessage(ctx));
         else if (ctx.Event.Data!.Name == ProxiedMessagePing.Name)
-            return ctx.Execute<ApplicationCommandProxiedMessage>(ProxiedMessageDelete, m => m.PingMessageAuthor(ctx));
+            return ctx.Execute<ApplicationCommandProxiedMessage>(ProxiedMessagePing, m => m.PingMessageAuthor(ctx));
 
         return null;
     }
