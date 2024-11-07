@@ -89,12 +89,15 @@ public static class MiscUtils
         if (e is NpgsqlException tpe && tpe.InnerException is TimeoutException)
             return false;
 
-        // Ignore thread pool exhaustion errors
-        if (e is NpgsqlException npe && npe.Message.Contains("The connection pool has been exhausted"))
-            return false;
-
-        // ignore "Exception while reading from stream"
-        if (e is NpgsqlException npe2 && npe2.Message.Contains("Exception while reading from stream"))
+        if (e is NpgsqlException npe &&
+            (
+                // Ignore thread pool exhaustion errors
+                npe.Message.Contains("The connection pool has been exhausted")
+             // ignore "Exception while reading from stream"
+             || npe.Message.Contains("Exception while reading from stream")
+             // ignore "Exception while connecting"
+             || npe.Message.Contains("Exception while connecting")
+            ))
             return false;
 
         return true;
