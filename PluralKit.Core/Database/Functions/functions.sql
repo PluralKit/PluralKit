@@ -1,23 +1,29 @@
 ﻿create function message_context(account_id bigint, guild_id bigint, channel_id bigint, thread_id bigint)
     returns table (
+        allow_autoproxy bool,
+
         system_id int,
+        system_tag text,
+        system_avatar text,
+
+        latch_timeout integer,
+        case_sensitive_proxy_tags bool,
+        proxy_error_message_enabled bool,
+
+        tag_enabled bool,
+        proxy_enabled bool,
+        system_guild_tag text,
+        system_guild_avatar text,
+
+        last_switch int,
+        last_switch_members int[],
+        last_switch_timestamp timestamp,
+
         log_channel bigint,
         in_blacklist bool,
         in_log_blacklist bool,
         log_cleanup_enabled bool,
-        proxy_enabled bool,
-        last_switch int,
-        last_switch_members int[],
-        last_switch_timestamp timestamp,
-        system_tag text,
-        system_guild_tag text,
-        tag_enabled bool,
-        system_avatar text,
-        system_guild_avatar text,
-        allow_autoproxy bool,
-        latch_timeout integer,
-        case_sensitive_proxy_tags bool,
-        proxy_error_message_enabled bool,
+
         deny_bot_usage bool
     )
 as $$
