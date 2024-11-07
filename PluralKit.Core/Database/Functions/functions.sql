@@ -33,7 +33,7 @@ as $$
         -- system_config table
         system_config.latch_timeout                    as latch_timeout,
         system_config.case_sensitive_proxy_tags        as case_sensitive_proxy_tags,
-        system_config.proxy_error_message_enabled      as proxy_error_message_enabled
+        system_config.proxy_error_message_enabled      as proxy_error_message_enabled,
 
         -- system_guild table
         coalesce(system_guild.tag_enabled, true)       as tag_enabled,
