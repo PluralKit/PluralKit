@@ -9,6 +9,7 @@
         latch_timeout integer,
         case_sensitive_proxy_tags bool,
         proxy_error_message_enabled bool,
+        proxy_switch bool,
 
         tag_enabled bool,
         proxy_enabled bool,
@@ -40,6 +41,7 @@ as $$
         system_config.latch_timeout                    as latch_timeout,
         system_config.case_sensitive_proxy_tags        as case_sensitive_proxy_tags,
         system_config.proxy_error_message_enabled      as proxy_error_message_enabled,
+        system_config.proxy_switch                     as proxy_switch,
 
         -- system_guild table
         coalesce(system_guild.tag_enabled, true)       as tag_enabled,

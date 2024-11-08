@@ -24,6 +24,7 @@ public class SystemConfig
     public bool HidDisplaySplit { get; }
     public bool HidDisplayCaps { get; }
     public HidPadFormat HidListPadding { get; }
+    public bool ProxySwitch { get; }
 
     public enum HidPadFormat
     {
@@ -52,6 +53,7 @@ public static class SystemConfigExt
         o.Add("hid_display_split", cfg.HidDisplaySplit);
         o.Add("hid_display_caps", cfg.HidDisplayCaps);
         o.Add("hid_list_padding", cfg.HidListPadding.ToUserString());
+        o.Add("proxy_switch", cfg.ProxySwitch);
 
         o.Add("description_templates", JArray.FromObject(cfg.DescriptionTemplates));
 
