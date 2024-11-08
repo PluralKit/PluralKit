@@ -474,7 +474,7 @@ public class Config
             return;
         }
 
-        var newVal = ctx.MatchToggle(true);
+        var newVal = ctx.MatchToggle(false);
         await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { HidDisplaySplit = newVal });
         await ctx.Reply($"Splitting of 6-character IDs with a hyphen is now {EnabledDisabled(newVal)}.");
     }
@@ -488,7 +488,7 @@ public class Config
             return;
         }
 
-        var newVal = ctx.MatchToggle(true);
+        var newVal = ctx.MatchToggle(false);
         await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { HidDisplayCaps = newVal });
         await ctx.Reply($"Displaying IDs as capital letters is now {EnabledDisabled(newVal)}.");
     }
