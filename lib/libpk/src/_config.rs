@@ -37,7 +37,7 @@ pub struct DatabaseConfig {
 }
 
 fn _default_api_addr() -> String {
-    "0.0.0.0:5000".to_string()
+    "[::]:5000".to_string()
 }
 
 #[derive(Deserialize, Clone, Debug)]
