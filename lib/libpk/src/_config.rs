@@ -59,6 +59,9 @@ pub struct AvatarsConfig {
     pub s3: S3Config,
     pub cdn_url: String,
 
+    #[serde(default = "_default_api_addr")]
+    pub bind_addr: String,
+
     #[serde(default)]
     pub migrate_worker_count: u32,
 

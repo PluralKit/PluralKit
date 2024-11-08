@@ -199,7 +199,7 @@ async fn main() -> anyhow::Result<()> {
         .route("/stats", get(stats))
         .with_state(state);
 
-    let host = "0.0.0.0:3000";
+    let host = &config.bind_addr;
     info!("starting server on {}!", host);
     let listener = tokio::net::TcpListener::bind(host).await.unwrap();
     axum::serve(listener, app).await.unwrap();
