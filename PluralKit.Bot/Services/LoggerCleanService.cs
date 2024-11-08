@@ -249,6 +249,7 @@ public class LoggerCleanService
         // Embed, Message title field: "Message deleted", description contains "**Message ID:** [[id]]"
         // Example: "**Message ID:** [1297549791927996598]"
         var embed = msg.Embeds?.FirstOrDefault();
+        if (embed == null) return null;
         if (!(embed.Title?.StartsWith("Message deleted") ?? false)) return null;
         var match = _sapphireRegex.Match(embed.Description);
         return match.Success ? ulong.Parse(match.Groups[1].Value) : null;
