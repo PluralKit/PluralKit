@@ -23,6 +23,7 @@ public class LoggerCleanService
     private static readonly Regex _basicRegex = new("(\\d{17,19})");
     private static readonly Regex _dynoRegex = new("Message ID: (\\d{17,19})");
     private static readonly Regex _carlRegex = new("Message ID: (\\d{17,19})");
+    private static readonly Regex _sapphireRegex = new("\\*\\*Message ID:\\*\\* \\[(\\d{17,19})\\]");
     private static readonly Regex _makiRegex = new("Message ID: (\\d{17,19})");
     private static readonly Regex _circleRegex = new("\\(`(\\d{17,19})`\\)");
     private static readonly Regex _loggerARegex = new("Message = (\\d{17,19})");
@@ -62,6 +63,7 @@ public class LoggerCleanService
         new LoggerBot("Dyno#5714", 470723870270160917, ExtractDyno), // webhook
         new LoggerBot("Dyno#1961", 347378323418251264, ExtractDyno), // webhook
         new LoggerBot("Maki", 563434444321587202, ExtractMaki), // webhook
+        new LoggerBot("Sapphire", 678344927997853742, ExtractSapphire), // webhook
         new LoggerBot("Auttaja", 242730576195354624, ExtractAuttaja), // webhook
         new LoggerBot("GenericBot", 295329346590343168, ExtractGenericBot),
         new LoggerBot("blargbot", 134133271750639616, ExtractBlargBot),
@@ -239,6 +241,17 @@ public class LoggerCleanService
         var embed = msg.Embeds?.FirstOrDefault();
         if (embed.Author?.Name == null || embed?.Footer == null || !embed.Author.Name.StartsWith("Message Deleted")) return null;
         var match = _makiRegex.Match(embed.Footer.Text ?? "");
+        return match.Success ? ulong.Parse(match.Groups[1].Value) : null;
+    }
+
+    private static ulong? ExtractSapphire(Message msg)
+    {
+        // Embed, Message title field: "Message deleted", description contains "**Message ID:** [[id]]"
+        // Example: "**Message ID:** [1297549791927996598]"
+        var embed = msg.Embeds?.FirstOrDefault();
+        if (embed == null) return null;
+        if (!(embed.Title?.StartsWith("Message deleted") ?? false)) return null;
+        var match = _sapphireRegex.Match(embed.Description);
         return match.Success ? ulong.Parse(match.Groups[1].Value) : null;
     }
 
