@@ -672,7 +672,7 @@ public class SystemEdit
 
     public async Task BannerImage(Context ctx, PKSystem target)
     {
-        ctx.CheckSystemPrivacy(target.Id, target.DescriptionPrivacy);
+        ctx.CheckSystemPrivacy(target.Id, target.BannerPrivacy);
 
         var isOwnSystem = target.Id == ctx.System?.Id;
 
@@ -835,6 +835,7 @@ public class SystemEdit
                 .Field(new Embed.Field("Name", target.NamePrivacy.Explanation()))
                 .Field(new Embed.Field("Avatar", target.AvatarPrivacy.Explanation()))
                 .Field(new Embed.Field("Description", target.DescriptionPrivacy.Explanation()))
+                .Field(new Embed.Field("Banner", target.BannerPrivacy.Explanation()))
                 .Field(new Embed.Field("Pronouns", target.PronounPrivacy.Explanation()))
                 .Field(new Embed.Field("Member list", target.MemberListPrivacy.Explanation()))
                 .Field(new Embed.Field("Group list", target.GroupListPrivacy.Explanation()))
@@ -861,6 +862,7 @@ public class SystemEdit
                 SystemPrivacySubject.Name => "name",
                 SystemPrivacySubject.Avatar => "avatar",
                 SystemPrivacySubject.Description => "description",
+                SystemPrivacySubject.Banner => "banner",
                 SystemPrivacySubject.Pronouns => "pronouns",
                 SystemPrivacySubject.Front => "front",
                 SystemPrivacySubject.FrontHistory => "front history",

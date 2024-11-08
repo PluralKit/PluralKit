@@ -27,6 +27,7 @@ public class MemberPatch: PatchObject
     public Partial<PrivacyLevel> Visibility { get; set; }
     public Partial<PrivacyLevel> NamePrivacy { get; set; }
     public Partial<PrivacyLevel> DescriptionPrivacy { get; set; }
+    public Partial<PrivacyLevel> BannerPrivacy { get; set; }
     public Partial<PrivacyLevel> PronounPrivacy { get; set; }
     public Partial<PrivacyLevel> BirthdayPrivacy { get; set; }
     public Partial<PrivacyLevel> AvatarPrivacy { get; set; }
@@ -53,6 +54,7 @@ public class MemberPatch: PatchObject
         .With("member_visibility", Visibility)
         .With("name_privacy", NamePrivacy)
         .With("description_privacy", DescriptionPrivacy)
+        .With("banner_privacy", BannerPrivacy)
         .With("pronoun_privacy", PronounPrivacy)
         .With("birthday_privacy", BirthdayPrivacy)
         .With("avatar_privacy", AvatarPrivacy)
@@ -140,6 +142,8 @@ public class MemberPatch: PatchObject
             if (o.ContainsKey("name_privacy")) patch.NamePrivacy = patch.ParsePrivacy(o, "name_privacy");
             if (o.ContainsKey("description_privacy"))
                 patch.DescriptionPrivacy = patch.ParsePrivacy(o, "description_privacy");
+            if (o.ContainsKey("banner_privacy"))
+                patch.BannerPrivacy = patch.ParsePrivacy(o, "banner_privacy");
             if (o.ContainsKey("avatar_privacy"))
                 patch.AvatarPrivacy = patch.ParsePrivacy(o, "avatar_privacy");
             if (o.ContainsKey("birthday_privacy"))
@@ -171,6 +175,9 @@ public class MemberPatch: PatchObject
 
             if (privacy.ContainsKey("description_privacy"))
                 patch.DescriptionPrivacy = patch.ParsePrivacy(privacy, "description_privacy");
+
+            if (privacy.ContainsKey("banner_privacy"))
+                patch.BannerPrivacy = patch.ParsePrivacy(privacy, "banner_privacy");
 
             if (privacy.ContainsKey("avatar_privacy"))
                 patch.AvatarPrivacy = patch.ParsePrivacy(privacy, "avatar_privacy");
@@ -233,6 +240,7 @@ public class MemberPatch: PatchObject
             Visibility.IsPresent
             || NamePrivacy.IsPresent
             || DescriptionPrivacy.IsPresent
+            || BannerPrivacy.IsPresent
             || PronounPrivacy.IsPresent
             || BirthdayPrivacy.IsPresent
             || AvatarPrivacy.IsPresent
@@ -250,6 +258,9 @@ public class MemberPatch: PatchObject
 
             if (DescriptionPrivacy.IsPresent)
                 p.Add("description_privacy", DescriptionPrivacy.Value.ToJsonString());
+
+            if (BannerPrivacy.IsPresent)
+                p.Add("banner_privacy", BannerPrivacy.Value.ToJsonString());
 
             if (PronounPrivacy.IsPresent)
                 p.Add("pronoun_privacy", PronounPrivacy.Value.ToJsonString());

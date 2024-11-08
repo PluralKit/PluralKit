@@ -756,6 +756,7 @@ public class MemberEdit
                 .Field(new Embed.Field("Name (replaces name with display name if member has one)",
                     target.NamePrivacy.Explanation()))
                 .Field(new Embed.Field("Description", target.DescriptionPrivacy.Explanation()))
+                .Field(new Embed.Field("Banner", target.BannerPrivacy.Explanation()))
                 .Field(new Embed.Field("Avatar", target.AvatarPrivacy.Explanation()))
                 .Field(new Embed.Field("Birthday", target.BirthdayPrivacy.Explanation()))
                 .Field(new Embed.Field("Pronouns", target.PronounPrivacy.Explanation()))
@@ -794,6 +795,7 @@ public class MemberEdit
             {
                 MemberPrivacySubject.Name => "name privacy",
                 MemberPrivacySubject.Description => "description privacy",
+                MemberPrivacySubject.Banner => "banner privacy",
                 MemberPrivacySubject.Avatar => "avatar privacy",
                 MemberPrivacySubject.Pronouns => "pronoun privacy",
                 MemberPrivacySubject.Birthday => "birthday privacy",
@@ -809,6 +811,8 @@ public class MemberEdit
                     "This member's name is now hidden from other systems, and will be replaced by the member's display name.",
                 (MemberPrivacySubject.Description, PrivacyLevel.Private) =>
                     "This member's description is now hidden from other systems.",
+                (MemberPrivacySubject.Banner, PrivacyLevel.Private) =>
+                    "This member's banner is now hidden from other systems.",
                 (MemberPrivacySubject.Avatar, PrivacyLevel.Private) =>
                     "This member's avatar is now hidden from other systems.",
                 (MemberPrivacySubject.Birthday, PrivacyLevel.Private) =>
@@ -826,6 +830,8 @@ public class MemberEdit
                     "This member's name is no longer hidden from other systems.",
                 (MemberPrivacySubject.Description, PrivacyLevel.Public) =>
                     "This member's description is no longer hidden from other systems.",
+                (MemberPrivacySubject.Banner, PrivacyLevel.Public) =>
+                    "This member's banner is no longer hidden from other systems.",
                 (MemberPrivacySubject.Avatar, PrivacyLevel.Public) =>
                     "This member's avatar is no longer hidden from other systems.",
                 (MemberPrivacySubject.Birthday, PrivacyLevel.Public) =>

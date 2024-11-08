@@ -374,7 +374,7 @@ public class Groups
 
         async Task ShowBannerImage()
         {
-            ctx.CheckSystemPrivacy(target.System, target.DescriptionPrivacy);
+            ctx.CheckSystemPrivacy(target.System, target.BannerPrivacy);
 
             if ((target.BannerImage?.Trim() ?? "").Length > 0)
             {
@@ -509,6 +509,7 @@ public class Groups
                 .Title($"Current privacy settings for {target.Name}")
                 .Field(new Embed.Field("Name", target.NamePrivacy.Explanation()))
                 .Field(new Embed.Field("Description", target.DescriptionPrivacy.Explanation()))
+                .Field(new Embed.Field("Description", target.BannerPrivacy.Explanation()))
                 .Field(new Embed.Field("Icon", target.IconPrivacy.Explanation()))
                 .Field(new Embed.Field("Member list", target.ListPrivacy.Explanation()))
                 .Field(new Embed.Field("Metadata (creation date)", target.MetadataPrivacy.Explanation()))
@@ -539,6 +540,7 @@ public class Groups
             {
                 GroupPrivacySubject.Name => "name privacy",
                 GroupPrivacySubject.Description => "description privacy",
+                GroupPrivacySubject.Banner => "banner privacy",
                 GroupPrivacySubject.Icon => "icon privacy",
                 GroupPrivacySubject.List => "member list",
                 GroupPrivacySubject.Metadata => "metadata",
@@ -552,6 +554,8 @@ public class Groups
                     "This group's name is now hidden from other systems, and will be replaced by the group's display name.",
                 (GroupPrivacySubject.Description, PrivacyLevel.Private) =>
                     "This group's description is now hidden from other systems.",
+                (GroupPrivacySubject.Banner, PrivacyLevel.Private) =>
+                    "This group's banner is now hidden from other systems.",
                 (GroupPrivacySubject.Icon, PrivacyLevel.Private) =>
                     "This group's icon is now hidden from other systems.",
                 (GroupPrivacySubject.Visibility, PrivacyLevel.Private) =>
@@ -565,6 +569,8 @@ public class Groups
                     "This group's name is no longer hidden from other systems.",
                 (GroupPrivacySubject.Description, PrivacyLevel.Public) =>
                     "This group's description is no longer hidden from other systems.",
+                (GroupPrivacySubject.Banner, PrivacyLevel.Public) =>
+                    "This group's banner is no longer hidden from other systems.",
                 (GroupPrivacySubject.Icon, PrivacyLevel.Public) =>
                     "This group's icon is no longer hidden from other systems.",
                 (GroupPrivacySubject.Visibility, PrivacyLevel.Public) =>
