@@ -48,7 +48,8 @@ public class HttpDiscordCache: IDiscordCache
     private async Task<T?> QueryCache<T>(string endpoint, ulong guildId)
     {
         var cluster = _cacheEndpoint.Authority;
-        if (cluster.Contains(".service.consul"))
+        // todo: there should not be infra-specific code here
+        if (cluster.Contains(".service.consul") || cluster.Contains("process.pluralkit-gateway.internal"))
             // int(((guild_id >> 22) % shard_count) / 16)
             cluster = $"cluster{(int)(((guildId >> 22) % (ulong)_shardCount) / 16)}.{cluster}";
 
