@@ -432,7 +432,7 @@ public class ProxiedMessage
             return;
         }
 
-        await ctx.Reply(embed: await _embeds.CreateMessageInfoEmbed(message, showContent));
+        await ctx.Reply(embed: await _embeds.CreateMessageInfoEmbed(message, showContent, ctx.Config));
     }
 
     private async Task DeleteCommandMessage(Context ctx, ulong messageId)
