@@ -509,13 +509,13 @@ public class Groups
                 .Title($"Current privacy settings for {target.Name}")
                 .Field(new Embed.Field("Name", target.NamePrivacy.Explanation()))
                 .Field(new Embed.Field("Description", target.DescriptionPrivacy.Explanation()))
-                .Field(new Embed.Field("Description", target.BannerPrivacy.Explanation()))
+                .Field(new Embed.Field("Banner", target.BannerPrivacy.Explanation()))
                 .Field(new Embed.Field("Icon", target.IconPrivacy.Explanation()))
                 .Field(new Embed.Field("Member list", target.ListPrivacy.Explanation()))
                 .Field(new Embed.Field("Metadata (creation date)", target.MetadataPrivacy.Explanation()))
                 .Field(new Embed.Field("Visibility", target.Visibility.Explanation()))
                 .Description(
-                    $"To edit privacy settings, use the command:\n> pk;group **{target.Reference(ctx)}** privacy **<subject>** **<level>**\n\n- `subject` is one of `name`, `description`, `icon`, `members`, `metadata`, `visibility`, or `all`\n- `level` is either `public` or `private`.")
+                    $"To edit privacy settings, use the command:\n> pk;group **{target.Reference(ctx)}** privacy **<subject>** **<level>**\n\n- `subject` is one of `name`, `description`, `banner`, `icon`, `members`, `metadata`, `visibility`, or `all`\n- `level` is either `public` or `private`.")
                 .Build());
             return;
         }

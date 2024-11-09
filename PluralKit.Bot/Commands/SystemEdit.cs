@@ -842,7 +842,7 @@ public class SystemEdit
                 .Field(new Embed.Field("Current fronter(s)", target.FrontPrivacy.Explanation()))
                 .Field(new Embed.Field("Front/switch history", target.FrontHistoryPrivacy.Explanation()))
                 .Description(
-                    "To edit privacy settings, use the command:\n`pk;system privacy <subject> <level>`\n\n- `subject` is one of `name`, `avatar`, `description`, `list`, `front`, `fronthistory`, `groups`, or `all` \n- `level` is either `public` or `private`.");
+                    "To edit privacy settings, use the command:\n`pk;system privacy <subject> <level>`\n\n- `subject` is one of `name`, `avatar`, `description`, `banner`, `list`, `front`, `fronthistory`, `groups`, or `all` \n- `level` is either `public` or `private`.");
             return ctx.Reply(embed: eb.Build());
         }
 
