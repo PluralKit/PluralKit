@@ -123,6 +123,13 @@ public class Config
             "off"
         ));
 
+        items.Add(new(
+            "Proxy Switch",
+            "Whether using a proxy tag logs a switch",
+            EnabledDisabled(ctx.Config.ProxySwitch),
+            "disabled"
+        ));
+
         await ctx.Paginate<PaginatedConfigItem>(
             items.ToAsyncEnumerable(),
             items.Count,
@@ -535,6 +542,20 @@ public class Config
             await ctx.Reply("5-character IDs displayed in lists will now have a padding space added to the end.");
         }
         else throw new PKError(badInputError);
+    }
+
+    public async Task ProxySwitch(Context ctx)
+    {
+        if (!ctx.HasNext())
+        {
+            var msg = $"Logging a switch every time a proxy tag is used is currently **{EnabledDisabled(ctx.Config.ProxySwitch)}**.";
+            await ctx.Reply(msg);
+            return;
+        }
+
+        var newVal = ctx.MatchToggle(false);
+        await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { ProxySwitch = newVal });
+        await ctx.Reply($"Logging a switch every time a proxy tag is used is now {EnabledDisabled(newVal)}.");
     }
 
     public Task LimitUpdate(Context ctx)

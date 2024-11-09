@@ -148,6 +148,7 @@ You can have a space after `pk;`, e.g. `pk;system` and `pk; system` will do the 
 - `pk;config split IDs [on|off]` - Toggles whether to display 6-letter IDs with a hyphen, to ease readability.
 - `pk;config capitalize IDs [on|off]` - Toggles whether to display IDs as capital letters, to ease readability.
 - `pk;config pad IDs [left|right|off]` - Toggles whether to pad (add a space) 5-character IDs in lists.
+- `pk;config proxy switch [on|off]` - Toggles whether to log a switch whenever you proxy as a different member.
 
 ## Server owner commands
 *(all commands here require Manage Server permission)*

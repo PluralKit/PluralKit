@@ -506,6 +506,10 @@ public class ProxyService
 
         Task DispatchWebhook() => _dispatch.Dispatch(ctx.SystemId.Value, sentMessage);
 
+        Task MaybeLogSwitch() => (ctx.ProxySwitch && !Array.Exists(ctx.LastSwitchMembers, element => element == match.Member.Id))
+            ? _db.Execute(conn => _repo.AddSwitch(conn, (SystemId)ctx.SystemId, new[] { match.Member.Id }))
+            : Task.CompletedTask;
+
         async Task DeleteProxyTriggerMessage()
         {
             if (!deletePrevious)
@@ -539,7 +543,8 @@ public class ProxyService
             UpdateMemberForSentMessage(),
             LogMessageToChannel(),
             SaveLatchAutoproxy(),
-            DispatchWebhook()
+            DispatchWebhook(),
+            MaybeLogSwitch()
         );
     }
 
