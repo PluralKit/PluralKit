@@ -48,7 +48,7 @@
         <PackageReference Include="Serilog.Sinks.Seq" Version="5.2.2" />
         <PackageReference Include="SqlKata" Version="2.3.7" />
         <PackageReference Include="SqlKata.Execution" Version="2.3.7" />
-        <PackageReference Include="StackExchange.Redis" Version="2.2.88" />
+        <PackageReference Include="StackExchange.Redis" Version="2.8.16" />
         <PackageReference Include="System.Interactive.Async" Version="5.0.0" />
     </ItemGroup>
 
