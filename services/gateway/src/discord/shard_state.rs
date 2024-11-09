@@ -18,8 +18,8 @@ pub fn new(redis: RedisPool) -> ShardStateManager {
 impl ShardStateManager {
     pub async fn handle_event(&self, shard_id: u32, event: Event) -> anyhow::Result<()> {
         match event {
-            Event::Ready(_) => self.ready_or_resumed(shard_id).await,
-            Event::Resumed => self.ready_or_resumed(shard_id).await,
+            Event::Ready(_) => self.ready_or_resumed(shard_id, false).await,
+            Event::Resumed => self.ready_or_resumed(shard_id, true).await,
             Event::GatewayClose(_) => self.socket_closed(shard_id).await,
             Event::GatewayHeartbeat(_) => self.heartbeated(shard_id).await,
             _ => Ok(()),
@@ -53,8 +53,12 @@ impl ShardStateManager {
         Ok(())
     }
 
-    async fn ready_or_resumed(&self, shard_id: u32) -> anyhow::Result<()> {
-        info!("shard {} ready", shard_id);
+    async fn ready_or_resumed(&self, shard_id: u32, resumed: bool) -> anyhow::Result<()> {
+        info!(
+            "shard {} {}",
+            shard_id,
+            if resumed { "resumed" } else { "ready" }
+        );
         let mut info = self.get_shard(shard_id).await?;
         info.last_connection = chrono::offset::Utc::now().timestamp() as i32;
         info.up = true;
