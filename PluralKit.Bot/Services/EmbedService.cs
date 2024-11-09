@@ -67,7 +67,7 @@ public class EmbedService
         if (avatar != null)
             eb.Thumbnail(new Embed.EmbedThumbnail(avatar));
 
-        if (system.DescriptionPrivacy.CanAccess(ctx))
+        if (system.BannerPrivacy.CanAccess(ctx))
             eb.Image(new Embed.EmbedImage(system.BannerImage));
 
         var latestSwitch = await _repo.GetLatestSwitch(system.Id);
@@ -194,7 +194,7 @@ public class EmbedService
             .Footer(new Embed.EmbedFooter(
                 $"System ID: {system.DisplayHid(ccfg)} | Member ID: {member.DisplayHid(ccfg)} {(member.MetadataPrivacy.CanAccess(ctx) ? $"| Created on {member.Created.FormatZoned(zone)}" : "")}"));
 
-        if (member.DescriptionPrivacy.CanAccess(ctx))
+        if (member.BannerPrivacy.CanAccess(ctx))
             eb.Image(new Embed.EmbedImage(member.BannerImage));
 
         var description = "";
@@ -271,7 +271,7 @@ public class EmbedService
 
         eb.Footer(new Embed.EmbedFooter($"System ID: {system.DisplayHid(ctx.Config)} | Group ID: {target.DisplayHid(ctx.Config)}{(target.MetadataPrivacy.CanAccess(pctx) ? $" | Created on {target.Created.FormatZoned(ctx.Zone)}" : "")}"));
 
-        if (target.DescriptionPrivacy.CanAccess(pctx))
+        if (target.BannerPrivacy.CanAccess(pctx))
             eb.Image(new Embed.EmbedImage(target.BannerImage));
 
         if (target.NamePrivacy.CanAccess(pctx) && target.DisplayName != null)

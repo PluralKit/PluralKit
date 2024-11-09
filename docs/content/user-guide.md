@@ -667,6 +667,7 @@ There are various reasons you may not want information about your system or your
 At the moment, there are a few aspects of system privacy that can be configured.
 
 - System description
+- System banner
 - System pronouns
 - Member list
 - Group list
@@ -683,6 +684,7 @@ To update your system privacy settings, use the following commands:
     
 * `subject` is one of:
   * `description`
+  * `banner`
   * `pronouns`
   * `list`
   * `groups`
@@ -707,6 +709,7 @@ There are also some options for configuring member privacy:
 
 - Name
 - Description
+- Banner
 - Avatar
 - Birthday
 - Pronouns
@@ -727,6 +730,7 @@ To update a member's privacy, you can use the command:
 * `subject` is one of:
   * `name`
   * `description`
+  * `banner`
   * `avatar`
   * `birthday`
   * `pronouns`

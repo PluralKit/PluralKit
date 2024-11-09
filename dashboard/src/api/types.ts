@@ -6,7 +6,8 @@ export interface SystemPrivacy {
     group_list_privacy?: string,
     pronoun_privacy?: string,
     avatar_privacy?: string,
-    name_privacy?: string
+    name_privacy?: string,
+    banner_privacy?: string,
 }
 
 export interface System {
@@ -43,7 +44,8 @@ export interface MemberPrivacy {
     pronoun_privacy?: string,
     avatar_privacy?: string,
     metadata_privacy?: string,
-    proxy_privacy?: string
+    proxy_privacy?: string,
+    banner_privacy?: string,
 }
 
 interface proxytag {
@@ -77,7 +79,8 @@ export interface GroupPrivacy {
     list_privacy?: string,
     visibility?: string,
     name_privacy?: string,
-    metadata_privacy?: string
+    metadata_privacy?: string,
+    banner_privacy?: string,
 }
 
 export interface Group {
