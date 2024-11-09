@@ -23,6 +23,7 @@
 		icon_privacy: "no change",
 		visibility: "no change",
 		metadata_privacy: "no change",
+        banner_privacy: "no change",
 	};
 
 	const privacyNames: { [P in keyof GroupPrivacy]-?: string; } = {
@@ -32,6 +33,7 @@
 		list_privacy: "Member list",
 		metadata_privacy: "Metadata",
 		visibility: "Visibility",
+        banner_privacy: "Banner",
 	};
 
 	async function submit() {
