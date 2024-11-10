@@ -273,6 +273,7 @@ public class Groups
     {
         async Task ClearIcon()
         {
+            await ctx.ConfirmClear("this group's icon");
             ctx.CheckOwnGroup(target);
 
             await ctx.Repository.UpdateGroup(target.Id, new GroupPatch { Icon = null });
@@ -328,7 +329,7 @@ public class Groups
             }
         }
 
-        if (ctx.MatchClear() && await ctx.ConfirmClear("this group's icon"))
+        if (ctx.MatchClear())
             await ClearIcon();
         else if (await ctx.MatchImage() is { } img)
             await SetIcon(img);
@@ -340,6 +341,7 @@ public class Groups
     {
         async Task ClearBannerImage()
         {
+            await ctx.ConfirmClear("this group's banner image");
             ctx.CheckOwnGroup(target);
 
             await ctx.Repository.UpdateGroup(target.Id, new GroupPatch { BannerImage = null });
@@ -394,7 +396,7 @@ public class Groups
             }
         }
 
-        if (ctx.MatchClear() && await ctx.ConfirmClear("this group's banner image"))
+        if (ctx.MatchClear())
             await ClearBannerImage();
         else if (await ctx.MatchImage() is { } img)
             await SetBannerImage(img);

@@ -123,9 +123,10 @@ public class MemberAvatar
                                          MemberGuildSettings? guildData)
     {
         // First, see if we need to *clear*
-        if (ctx.MatchClear() && await ctx.ConfirmClear("this member's " + location.Name()))
+        if (ctx.MatchClear())
         {
             ctx.CheckSystem().CheckOwnMember(target);
+            await ctx.ConfirmClear("this member's " + location.Name());
             await AvatarClear(location, ctx, target, guildData);
             return;
         }
