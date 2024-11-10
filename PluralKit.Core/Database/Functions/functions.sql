@@ -25,6 +25,7 @@ create function message_context(account_id bigint, guild_id bigint, channel_id b
         in_blacklist bool,
         in_log_blacklist bool,
         log_cleanup_enabled bool,
+        require_system_tag bool,
 
         deny_bot_usage bool
     )
@@ -63,6 +64,7 @@ as $$
         ((channel_id = any (servers.log_blacklist))
          or (thread_id = any (servers.log_blacklist)))  as in_log_blacklist,
         coalesce(servers.log_cleanup_enabled, false)    as log_cleanup_enabled,
+        coalesce(servers.require_system_tag, false)     as require_system_tag,
 
         -- abuse_logs table
         coalesce(abuse_logs.deny_bot_usage, false)      as deny_bot_usage

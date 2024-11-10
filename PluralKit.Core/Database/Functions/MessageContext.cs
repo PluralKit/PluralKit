@@ -18,6 +18,7 @@ public class MessageContext
     public bool InBlacklist { get; }
     public bool InLogBlacklist { get; }
     public bool LogCleanupEnabled { get; }
+    public bool RequireSystemTag { get; }
     public bool ProxyEnabled { get; }
     public SwitchId? LastSwitch { get; }
     public MemberId[] LastSwitchMembers { get; } = new MemberId[0];

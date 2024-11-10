@@ -105,10 +105,12 @@ public partial class CommandTree
     public static Command LogEnable = new Command("log enable", "log enable all|<channel> [channel 2] [channel 3...]", "Enables message logging in certain channels");
     public static Command LogDisable = new Command("log disable", "log disable all|<channel> [channel 2] [channel 3...]", "Disables message logging in certain channels");
     public static Command LogShow = new Command("log show", "log show", "Displays the current list of channels where logging is disabled");
-    public static Command LogClean = new Command("logclean", "logclean [on|off]", "Toggles whether to clean up other bots' log channels");
     public static Command BlacklistShow = new Command("blacklist show", "blacklist show", "Displays the current proxy blacklist");
     public static Command BlacklistAdd = new Command("blacklist add", "blacklist add all|<channel> [channel 2] [channel 3...]", "Adds certain channels to the proxy blacklist");
     public static Command BlacklistRemove = new Command("blacklist remove", "blacklist remove all|<channel> [channel 2] [channel 3...]", "Removes certain channels from the proxy blacklist");
+    public static Command ServerConfigLogClean = new Command("serverconfig logclean", "serverconfig logclean [on|off]", "Toggles whether to clean up other bots' log channels");
+    public static Command ServerConfigInvalidCommandResponse = new Command("serverconfig invalidcommanderror", "serverconfig invalidcommanderror [on|off]", "Sets whether to show an error message when an unknown command is sent");
+    public static Command ServerConfigRequireSystemTag = new Command("serverconfig requiretag", "serverconfig requiretag [on|off]", "Sets whether server users are required to have a system tag on proxied messages");
     public static Command Invite = new Command("invite", "invite", "Gets a link to invite PluralKit to other servers");
     public static Command PermCheck = new Command("permcheck", "permcheck <guild>", "Checks whether a server's permission setup is correct");
     public static Command Admin = new Command("admin", "admin", "Super secret admin commands (sshhhh)");
@@ -149,6 +151,11 @@ public partial class CommandTree
         ConfigAutoproxyAccount, ConfigAutoproxyTimeout, ConfigTimezone, ConfigPing,
         ConfigMemberDefaultPrivacy, ConfigGroupDefaultPrivacy, ConfigShowPrivate,
         ConfigProxySwitch, ConfigNameFormat
+    };
+
+    public static Command[] ServerConfigCommands =
+    {
+        ServerConfigLogClean, ServerConfigInvalidCommandResponse, ServerConfigRequireSystemTag
     };
 
     public static Command[] AutoproxyCommands =

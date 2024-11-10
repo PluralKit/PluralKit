@@ -18,6 +18,70 @@ public class ServerConfig
         _cache = cache;
     }
 
+    private record PaginatedConfigItem(string Key, string Description, string? CurrentValue, string DefaultValue);
+    private string EnabledDisabled(bool value) => value ? "enabled" : "disabled";
+
+    public async Task ShowConfig(Context ctx)
+    {
+        await ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
+        var items = new List<PaginatedConfigItem>();
+
+        // TODO: move log channel / blacklist into here
+
+        items.Add(new(
+            "log cleanup",
+            "Whether to clean up other bots' log channels",
+            EnabledDisabled(ctx.GuildConfig!.LogCleanupEnabled),
+            "disabled"
+        ));
+
+        items.Add(new(
+            "invalid command error",
+            "Whether to show an error message when an unknown command is sent",
+            EnabledDisabled(ctx.GuildConfig!.InvalidCommandResponseEnabled),
+            "enabled"
+        ));
+
+        items.Add(new(
+            "require tag",
+            "Whether server users are required to have a system tag on proxied messages",
+            EnabledDisabled(ctx.GuildConfig!.RequireSystemTag),
+            "disabled"
+        ));
+
+        await ctx.Paginate<PaginatedConfigItem>(
+            items.ToAsyncEnumerable(),
+            items.Count,
+            10,
+            "Current settings for this server",
+            null,
+            (eb, l) =>
+            {
+                var description = new StringBuilder();
+
+                foreach (var item in l)
+                {
+                    description.Append(item.Key.AsCode());
+                    description.Append($" **({item.CurrentValue ?? item.DefaultValue})**");
+                    if (item.CurrentValue != null && item.CurrentValue != item.DefaultValue)
+                        description.Append("\ud83d\udd39");
+
+                    description.AppendLine();
+                    description.Append(item.Description);
+                    description.AppendLine();
+                    description.AppendLine();
+                }
+
+                eb.Description(description.ToString());
+
+                // using *large* blue diamond here since it's easier to see in the small footer
+                eb.Footer(new("\U0001f537 means this setting was changed. Type `pk;serverconfig <setting name> clear` to reset it to the default."));
+
+                return Task.CompletedTask;
+            }
+        );
+    }
+
     public async Task SetLogChannel(Context ctx)
     {
         await ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
@@ -246,20 +310,16 @@ public class ServerConfig
         }
 
         await ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
-
-        var guild = await ctx.Repository.GetGuild(ctx.Guild.Id);
-
         bool? newValue = ctx.MatchToggleOrNull();
 
         if (newValue == null)
         {
-            var guildCfg = await ctx.Repository.GetGuild(ctx.Guild.Id);
-            if (guildCfg.LogCleanupEnabled)
+            if (ctx.GuildConfig!.LogCleanupEnabled)
                 eb.Description(
-                    "Log cleanup is currently **on** for this server. To disable it, type `pk;logclean off`.");
+                    "Log cleanup is currently **on** for this server. To disable it, type `pk;serverconfig logclean off`.");
             else
                 eb.Description(
-                    "Log cleanup is currently **off** for this server. To enable it, type `pk;logclean on`.");
+                    "Log cleanup is currently **off** for this server. To enable it, type `pk;serverconfig logclean on`.");
             await ctx.Reply(embed: eb.Build());
             return;
         }
@@ -271,5 +331,37 @@ public class ServerConfig
                 $"{Emojis.Success} Log cleanup has been **enabled** for this server. Messages deleted by PluralKit will now be cleaned up from logging channels managed by the following bots:\n- **{botList}**\n\n{Emojis.Note} Make sure PluralKit has the **Manage Messages** permission in the channels in question.\n{Emojis.Note} Also, make sure to blacklist the logging channel itself from the bots in question to prevent conflicts.");
         else
             await ctx.Reply($"{Emojis.Success} Log cleanup has been **disabled** for this server.");
+    }
+
+    public async Task InvalidCommandResponse(Context ctx)
+    {
+        await ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
+
+        if (!ctx.HasNext())
+        {
+            var msg = $"Error responses for unknown/invalid commands are currently **{EnabledDisabled(ctx.GuildConfig!.InvalidCommandResponseEnabled)}**.";
+            await ctx.Reply(msg);
+            return;
+        }
+
+        var newVal = ctx.MatchToggle(false);
+        await ctx.Repository.UpdateGuild(ctx.Guild.Id, new() { InvalidCommandResponseEnabled = newVal });
+        await ctx.Reply($"Error responses for unknown/invalid commands are now {EnabledDisabled(newVal)}.");
+    }
+
+    public async Task RequireSystemTag(Context ctx)
+    {
+        await ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
+
+        if (!ctx.HasNext())
+        {
+            var msg = $"System tags are currently **{(ctx.GuildConfig!.RequireSystemTag ? "required" : "not required")}** for PluralKit users in this server.";
+            await ctx.Reply(msg);
+            return;
+        }
+
+        var newVal = ctx.MatchToggle(false);
+        await ctx.Repository.UpdateGuild(ctx.Guild.Id, new() { RequireSystemTag = newVal });
+        await ctx.Reply($"System tags are now **{(newVal ? "required" : "not required")}** for PluralKit users in this server.");
     }
 }

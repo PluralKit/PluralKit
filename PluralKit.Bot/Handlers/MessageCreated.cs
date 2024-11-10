@@ -129,7 +129,9 @@ public class MessageCreated: IEventHandler<MessageCreateEvent>
         {
             var system = await _repo.GetSystemByAccount(evt.Author.Id);
             var config = system != null ? await _repo.GetSystemConfig(system.Id) : null;
-            await _tree.ExecuteCommand(new Context(_services, shardId, guild, channel, evt, cmdStart, system, config));
+            var guildConfig = guild != null ? await _repo.GetGuild(guild.Id) : null;
+
+            await _tree.ExecuteCommand(new Context(_services, shardId, guild, channel, evt, cmdStart, system, config, guildConfig));
         }
         catch (PKError)
         {

@@ -20,6 +20,8 @@ public partial class CommandTree
             return HandleAutoproxyCommand(ctx);
         if (ctx.Match("config", "cfg", "configure"))
             return HandleConfigCommand(ctx);
+        if (ctx.Match("serverconfig", "guildconfig", "scfg"))
+            return HandleServerConfigCommand(ctx);
         if (ctx.Match("list", "find", "members", "search", "query", "l", "f", "fd", "ls"))
             return ctx.Execute<SystemList>(SystemList, m => m.MemberList(ctx, ctx.System));
         if (ctx.Match("link"))
@@ -65,7 +67,7 @@ public partial class CommandTree
                 return PrintCommandList(ctx, "message logging", LogCommands);
             else return PrintCommandExpectedError(ctx, LogCommands);
         if (ctx.Match("logclean"))
-            return ctx.Execute<ServerConfig>(LogClean, m => m.SetLogCleanup(ctx));
+            return ctx.Execute<ServerConfig>(ServerConfigLogClean, m => m.SetLogCleanup(ctx), true);
         if (ctx.Match("blacklist", "bl"))
             if (ctx.Match("enable", "on", "add", "deny"))
                 return ctx.Execute<ServerConfig>(BlacklistAdd, m => m.SetBlacklisted(ctx, true));
@@ -107,6 +109,10 @@ public partial class CommandTree
                 return ctx.Execute<Random>(MemberRandom, m => m.Member(ctx, ctx.System));
         if (ctx.Match("dashboard", "dash"))
             return ctx.Execute<Help>(Dashboard, m => m.Dashboard(ctx));
+
+        // don't send an "invalid command" response if the guild has those turned off
+        if (ctx.GuildConfig != null && ctx.GuildConfig!.InvalidCommandResponseEnabled != true)
+            return Task.CompletedTask;
 
         // remove compiler warning
         return ctx.Reply(
@@ -534,6 +540,11 @@ public partial class CommandTree
             case "cfg":
                 await PrintCommandList(ctx, "settings", ConfigCommands);
                 break;
+            case "serverconfig":
+            case "guildconfig":
+            case "scfg":
+                await PrintCommandList(ctx, "server settings", ServerConfigCommands);
+                break;
             case "autoproxy":
             case "ap":
                 await PrintCommandList(ctx, "autoproxy", AutoproxyCommands);
@@ -603,5 +614,21 @@ public partial class CommandTree
 
         // todo: maybe add the list of configuration keys here?
         return ctx.Reply($"{Emojis.Error} Could not find a setting with that name. Please see `pk;commands config` for the list of possible config settings.");
+    }
+
+    private Task HandleServerConfigCommand(Context ctx)
+    {
+        if (!ctx.HasNext())
+            return ctx.Execute<ServerConfig>(null, m => m.ShowConfig(ctx));
+
+        if (ctx.MatchMultiple(new[] { "log" }, new[] { "cleanup", "clean" }) || ctx.Match("logclean"))
+            return ctx.Execute<ServerConfig>(null, m => m.SetLogCleanup(ctx));
+        if (ctx.MatchMultiple(new[] { "invalid", "unknown" }, new[] { "command" }, new[] { "error", "response" }) || ctx.Match("invalidcommanderror", "unknowncommanderror"))
+            return ctx.Execute<ServerConfig>(null, m => m.InvalidCommandResponse(ctx));
+        if (ctx.MatchMultiple(new[] { "require", "enforce" }, new[] { "tag", "systemtag" }) || ctx.Match("requiretag", "enforcetag"))
+            return ctx.Execute<ServerConfig>(null, m => m.RequireSystemTag(ctx));
+
+        // todo: maybe add the list of configuration keys here?
+        return ctx.Reply($"{Emojis.Error} Could not find a setting with that name. Please see `pk;commands serverconfig` for the list of possible config settings.");
     }
 }

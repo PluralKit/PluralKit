@@ -159,9 +159,11 @@ You can have a space after `pk;`, e.g. `pk;system` and `pk; system` will do the 
 - `pk;log disable <#channel> [#channel...]` - Disables logging messages posted in the given channel(s) (useful for staff channels and such).
 - `pk;log enable <#channel> [#channel...]` - Re-enables logging messages posted in the given channel(s).
 - `pk;log show` - Displays the current list of channels where logging is disabled.
-- `pk;logclean <on|off>` - Enables or disables [log cleanup](/staff/compatibility/#log-cleanup).
 - `pk;blacklist add <#channel> [#channel...]` - Adds the given channel(s) to the proxy blacklist (proxying will be disabled here)
 - `pk;blacklist remove <#channel> [#channel...]` - Removes the given channel(s) from the proxy blacklist.
+- `pk;serverconfig logclean [on|off]` - Enables or disables [log cleanup](/staff/compatibility/#log-cleanup).
+- `pk;serverconfig invalidcommanderror [on|off]` - Sets whether to show an error message when an unknown command is sent
+- `pk;serverconfig requiretag [on|off]` - Sets whether server users are required to have a system tag on proxied messages
 
 ## Utility
 - `pk;message <message id|message link|reply>` - Looks up information about a proxied message by its message ID or link.

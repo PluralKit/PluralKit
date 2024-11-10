@@ -123,6 +123,15 @@ public class ProxyService
             return "PluralKit cannot proxy messages over 2000 characters in length.";
         }
 
+        if (ctx.RequireSystemTag)
+        {
+            var tag = ctx.SystemGuildTag ?? ctx.SystemTag;
+            if (tag == null)
+                return "This server requires PluralKit users to have a system tag, but you do not have one set.";
+            if (!ctx.TagEnabled)
+                return "This server requires PluralKit users to have a system tag, but your system tag is disabled in this server.";
+        }
+
         var guild = await _cache.GetGuild(channel.GuildId.Value);
         var fileSizeLimit = guild.FileSizeLimit();
         var bytesThreshold = fileSizeLimit * 1024 * 1024;
