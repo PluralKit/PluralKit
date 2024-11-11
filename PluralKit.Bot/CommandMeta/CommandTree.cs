@@ -215,12 +215,6 @@ public partial class CommandTree
         else if (ctx.Match("commands", "help"))
             await PrintCommandList(ctx, "systems", SystemCommands);
 
-        // these are deprecated (and not accessible by other users anyway), let's leave them out of new parsing
-        else if (ctx.Match("timezone", "tz"))
-            await ctx.Execute<Config>(ConfigTimezone, m => m.SystemTimezone(ctx), true);
-        else if (ctx.Match("ping"))
-            await ctx.Execute<Config>(ConfigPing, m => m.SystemPing(ctx), true);
-
         // todo: these aren't deprecated but also shouldn't be here
         else if (ctx.Match("webhook", "hook"))
             await ctx.Execute<Api>(null, m => m.SystemWebhook(ctx));
@@ -560,13 +554,6 @@ public partial class CommandTree
         // so we just emulate checking and throwing an error.
         if (ctx.System == null)
             return ctx.Reply($"{Emojis.Error} {Errors.NoSystemError.Message}");
-
-        // todo: move this whole block to Autoproxy.cs when these are removed
-
-        if (ctx.Match("account", "ac"))
-            return ctx.Execute<Config>(ConfigAutoproxyAccount, m => m.AutoproxyAccount(ctx), true);
-        if (ctx.Match("timeout", "tm"))
-            return ctx.Execute<Config>(ConfigAutoproxyTimeout, m => m.AutoproxyTimeout(ctx), true);
 
         return ctx.Execute<Autoproxy>(AutoproxySet, m => m.SetAutoproxyMode(ctx));
     }

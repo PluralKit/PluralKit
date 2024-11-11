@@ -115,8 +115,7 @@ public class Context
 
         if (deprecated && commandDef != null)
         {
-            await Reply($"{Emojis.Warn} This command has been removed. please use `pk;{commandDef.Key}` instead.");
-            return;
+            await Reply($"{Emojis.Warn} Server configuration has moved to `pk;serverconfig`. The command you are trying to run is now `pk;{commandDef.Key}`.");
         }
 
         try
