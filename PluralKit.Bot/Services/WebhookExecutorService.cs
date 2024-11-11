@@ -19,7 +19,6 @@ using Newtonsoft.Json.Linq;
 
 using Serilog;
 
-using PluralKit.Core;
 using Myriad.Utils;
 
 namespace PluralKit.Bot;
@@ -87,7 +86,8 @@ public class WebhookExecutorService
         return webhookMessage;
     }
 
-    public async Task<Message> EditWebhookMessage(ulong guildId, ulong channelId, ulong messageId, string newContent, bool clearEmbeds = false)
+    public async Task<Message> EditWebhookMessage(ulong guildId, ulong channelId, ulong messageId, string newContent,
+                                                  bool clearEmbeds = false, bool clearAttachments = false)
     {
         var allowedMentions = newContent.ParseMentions() with
         {
@@ -108,7 +108,10 @@ public class WebhookExecutorService
         {
             Content = newContent,
             AllowedMentions = allowedMentions,
-            Embeds = (clearEmbeds == true ? Optional<Embed[]>.Some(new Embed[] { }) : Optional<Embed[]>.None()),
+            Embeds = (clearEmbeds ? Optional<Embed[]>.Some(new Embed[] { }) : Optional<Embed[]>.None()),
+            Attachments = (clearAttachments
+                ? Optional<Message.Attachment[]>.Some(new Message.Attachment[] { })
+                : Optional<Message.Attachment[]>.None())
         };
 
         return await _rest.EditWebhookMessage(webhook.Id, webhook.Token, messageId, editReq, threadId);
