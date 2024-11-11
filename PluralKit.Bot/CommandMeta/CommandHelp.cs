@@ -100,17 +100,17 @@ public partial class CommandTree
     public static Command MessageEdit = new Command("edit", "edit [link] <text>", "Edit a previously proxied message");
     public static Command MessageReproxy = new Command("reproxy", "reproxy [link] <member>", "Reproxy a previously proxied message using a different member");
     public static Command ProxyCheck = new Command("debug proxy", "debug proxy [link|reply]", "Checks why your message has not been proxied");
-    public static Command LogChannel = new Command("log channel", "log channel <channel>", "Designates a channel to post proxied messages to");
-    public static Command LogChannelClear = new Command("log channel", "log channel -clear", "Clears the currently set log channel");
-    public static Command LogEnable = new Command("log enable", "log enable all|<channel> [channel 2] [channel 3...]", "Enables message logging in certain channels");
-    public static Command LogDisable = new Command("log disable", "log disable all|<channel> [channel 2] [channel 3...]", "Disables message logging in certain channels");
-    public static Command LogShow = new Command("log show", "log show", "Displays the current list of channels where logging is disabled");
-    public static Command BlacklistShow = new Command("blacklist show", "blacklist show", "Displays the current proxy blacklist");
-    public static Command BlacklistAdd = new Command("blacklist add", "blacklist add all|<channel> [channel 2] [channel 3...]", "Adds certain channels to the proxy blacklist");
-    public static Command BlacklistRemove = new Command("blacklist remove", "blacklist remove all|<channel> [channel 2] [channel 3...]", "Removes certain channels from the proxy blacklist");
-    public static Command ServerConfigLogClean = new Command("serverconfig logclean", "serverconfig logclean [on|off]", "Toggles whether to clean up other bots' log channels");
-    public static Command ServerConfigInvalidCommandResponse = new Command("serverconfig invalidcommanderror", "serverconfig invalidcommanderror [on|off]", "Sets whether to show an error message when an unknown command is sent");
-    public static Command ServerConfigRequireSystemTag = new Command("serverconfig requiretag", "serverconfig requiretag [on|off]", "Sets whether server users are required to have a system tag on proxied messages");
+    public static Command LogChannel = new Command("serverconfig log channel", "serverconfig log channel <channel>", "Designates a channel to post proxied messages to");
+    public static Command LogChannelClear = new Command("serverconfig log channel", "serverconfig log channel -clear", "Clears the currently set log channel");
+    public static Command LogEnable = new Command("serverconfig log blacklist remove", "serverconfig log blacklist remove all|<channel> [channel 2] [channel 3...]", "Enables message logging in certain channels");
+    public static Command LogDisable = new Command("serverconfig log blacklist add", "serverconfig log blacklist add all|<channel> [channel 2] [channel 3...]", "Disables message logging in certain channels");
+    public static Command LogShow = new Command("serverconfig log blacklist", "serverconfig log blacklist", "Displays the current list of channels where logging is disabled");
+    public static Command BlacklistShow = new Command("serverconfig proxy blacklist", "serverconfig proxy blacklist", "Displays the current list of channels where message proxying is disabled");
+    public static Command BlacklistAdd = new Command("serverconfig proxy blacklist add", "serverconfig proxy blacklist add all|<channel> [channel 2] [channel 3...]", "Disables message proxying in certain channels");
+    public static Command BlacklistRemove = new Command("serverconfig blacklist remove", "serverconfig blacklist remove all|<channel> [channel 2] [channel 3...]", "Enables message proxying in certain channels");
+    public static Command ServerConfigLogClean = new Command("serverconfig log cleanup", "serverconfig log cleanup [on|off]", "Toggles whether to clean up other bots' log channels");
+    public static Command ServerConfigInvalidCommandResponse = new Command("serverconfig invalid command error", "serverconfig invalid command error [on|off]", "Sets whether to show an error message when an unknown command is sent");
+    public static Command ServerConfigRequireSystemTag = new Command("serverconfig require tag", "serverconfig require tag [on|off]", "Sets whether server users are required to have a system tag on proxied messages");
     public static Command Invite = new Command("invite", "invite", "Gets a link to invite PluralKit to other servers");
     public static Command PermCheck = new Command("permcheck", "permcheck <guild>", "Checks whether a server's permission setup is correct");
     public static Command Admin = new Command("admin", "admin", "Super secret admin commands (sshhhh)");
@@ -155,7 +155,9 @@ public partial class CommandTree
 
     public static Command[] ServerConfigCommands =
     {
-        ServerConfigLogClean, ServerConfigInvalidCommandResponse, ServerConfigRequireSystemTag
+        ServerConfigLogClean, ServerConfigInvalidCommandResponse, ServerConfigRequireSystemTag,
+        LogChannel, LogChannelClear, LogShow, LogDisable, LogEnable,
+        BlacklistShow, BlacklistAdd, BlacklistRemove
     };
 
     public static Command[] AutoproxyCommands =

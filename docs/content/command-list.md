@@ -153,17 +153,17 @@ You can have a space after `pk;`, e.g. `pk;system` and `pk; system` will do the 
 
 ## Server owner commands
 *(all commands here require Manage Server permission)*
-- `pk;log channel` - Shows the currently set log channel
-- `pk;log channel <channel>` - Sets the given channel to log all proxied messages.
-- `pk;log channel -clear` - Clears the currently set log channel.
-- `pk;log disable <#channel> [#channel...]` - Disables logging messages posted in the given channel(s) (useful for staff channels and such).
-- `pk;log enable <#channel> [#channel...]` - Re-enables logging messages posted in the given channel(s).
-- `pk;log show` - Displays the current list of channels where logging is disabled.
-- `pk;blacklist add <#channel> [#channel...]` - Adds the given channel(s) to the proxy blacklist (proxying will be disabled here)
-- `pk;blacklist remove <#channel> [#channel...]` - Removes the given channel(s) from the proxy blacklist.
-- `pk;serverconfig logclean [on|off]` - Enables or disables [log cleanup](/staff/compatibility/#log-cleanup).
-- `pk;serverconfig invalidcommanderror [on|off]` - Sets whether to show an error message when an unknown command is sent
-- `pk;serverconfig requiretag [on|off]` - Sets whether server users are required to have a system tag on proxied messages
+- `pk;serverconfig log cleanup [on|off]` - Toggles whether to clean up other bots' log channels
+- `pk;serverconfig invalid command error [on|off]` - Sets whether to show an error message when an unknown command is sent
+- `pk;serverconfig require tag [on|off]` - Sets whether server users are required to have a system tag on proxied messages
+- `pk;serverconfig log channel <channel>` - Designates a channel to post proxied messages to
+- `pk;serverconfig log channel -clear` - Clears the currently set log channel
+- `pk;serverconfig log blacklist`- Displays the current list of channels where logging is disabled
+- `pk;serverconfig log blacklist add all|<channel> [channel 2] [channel 3...]` - Disables message logging in certain channels
+- `pk;serverconfig log blacklist remove all|<channel> [channel 2] [channel 3...]` - Enables message logging in certain channels
+- `pk;serverconfig proxy blacklist` - Displays the current proxy blacklist
+- `pk;serverconfig proxy blacklist add all|<channel> [channel 2] [channel 3...]` - Adds certain channels to the proxy blacklist
+- `pk;serverconfig blacklist remove all|<channel> [channel 2] [channel 3...]` - Removes certain channels from the proxy blacklist
 
 ## Utility
 - `pk;message <message id|message link|reply>` - Looks up information about a proxied message by its message ID or link.

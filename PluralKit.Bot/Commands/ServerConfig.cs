@@ -49,6 +49,29 @@ public class ServerConfig
             "disabled"
         ));
 
+        items.Add(new(
+            "log channel",
+            "Channel to log proxied messages to",
+            ctx.GuildConfig!.LogChannel != null ? $"<#{ctx.GuildConfig.LogChannel}>" : "none",
+            "none"
+        ));
+
+        string ChannelListMessage(int count, string cmd) => $"{count} channels, use `pk;scfg {cmd}` to view/update";
+
+        items.Add(new(
+            "log blacklist",
+            "Channels whose proxied messages will not be logged",
+            ChannelListMessage(ctx.GuildConfig!.LogBlacklist.Length, "log blacklist"),
+            ChannelListMessage(0, "log blacklist")
+        ));
+
+        items.Add(new(
+            "proxy blacklist",
+            "Channels where message proxying is disabled",
+            ChannelListMessage(ctx.GuildConfig!.Blacklist.Length, "proxy blacklist"),
+            ChannelListMessage(0, "proxy blacklist")
+        ));
+
         await ctx.Paginate<PaginatedConfigItem>(
             items.ToAsyncEnumerable(),
             items.Count,
@@ -123,6 +146,8 @@ public class ServerConfig
         await ctx.Reply($"{Emojis.Success} Proxy logging channel set to <#{channel.Id}>.");
     }
 
+    // legacy behaviour: enable/disable logging for commands
+    // new behaviour is add/remove from log blacklist (see #LogBlacklistNew)
     public async Task SetLogEnabled(Context ctx, bool enable)
     {
         await ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
@@ -160,7 +185,7 @@ public class ServerConfig
                 : ""));
     }
 
-    public async Task ShowBlacklisted(Context ctx)
+    public async Task ShowProxyBlacklisted(Context ctx)
     {
         await ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
 
@@ -175,7 +200,7 @@ public class ServerConfig
 
         if (channels.Count == 0)
         {
-            await ctx.Reply("This server has no blacklisted channels.");
+            await ctx.Reply("This server has no channels where proxying is disabled.");
             return;
         }
 
@@ -262,7 +287,8 @@ public class ServerConfig
     }
 
 
-    public async Task SetBlacklisted(Context ctx, bool shouldAdd)
+
+    public async Task SetProxyBlacklisted(Context ctx, bool shouldAdd)
     {
         await ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
 
@@ -293,6 +319,39 @@ public class ServerConfig
 
         await ctx.Reply(
             $"{Emojis.Success} Channels {(shouldAdd ? "added to" : "removed from")} the proxy blacklist.");
+    }
+
+    public async Task SetLogBlacklisted(Context ctx, bool shouldAdd)
+    {
+        await ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
+
+        var affectedChannels = new List<Channel>();
+        if (ctx.Match("all"))
+            affectedChannels = (await _cache.GetGuildChannels(ctx.Guild.Id))
+                // All the channel types you can proxy in
+                .Where(x => DiscordUtils.IsValidGuildChannel(x)).ToList();
+        else if (!ctx.HasNext()) throw new PKSyntaxError("You must pass one or more #channels.");
+        else
+            while (ctx.HasNext())
+            {
+                var channelString = ctx.PeekArgument();
+                var channel = await ctx.MatchChannel();
+                if (channel == null || channel.GuildId != ctx.Guild.Id) throw Errors.ChannelNotFound(channelString);
+                affectedChannels.Add(channel);
+            }
+
+        var guild = await ctx.Repository.GetGuild(ctx.Guild.Id);
+
+        var blacklist = guild.LogBlacklist.ToHashSet();
+        if (shouldAdd)
+            blacklist.UnionWith(affectedChannels.Select(c => c.Id));
+        else
+            blacklist.ExceptWith(affectedChannels.Select(c => c.Id));
+
+        await ctx.Repository.UpdateGuild(ctx.Guild.Id, new GuildPatch { LogBlacklist = blacklist.ToArray() });
+
+        await ctx.Reply(
+            $"{Emojis.Success} Channels {(shouldAdd ? "added to" : "removed from")} the logging blacklist.");
     }
 
     public async Task SetLogCleanup(Context ctx)

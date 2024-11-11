@@ -56,28 +56,26 @@ public partial class CommandTree
             return ctx.Execute<ProxiedMessage>(MessageReproxy, m => m.ReproxyMessage(ctx));
         if (ctx.Match("log"))
             if (ctx.Match("channel"))
-                return ctx.Execute<ServerConfig>(LogChannel, m => m.SetLogChannel(ctx));
+                return ctx.Execute<ServerConfig>(LogChannel, m => m.SetLogChannel(ctx), true);
             else if (ctx.Match("enable", "on"))
-                return ctx.Execute<ServerConfig>(LogEnable, m => m.SetLogEnabled(ctx, true));
+                return ctx.Execute<ServerConfig>(LogEnable, m => m.SetLogEnabled(ctx, true), true);
             else if (ctx.Match("disable", "off"))
-                return ctx.Execute<ServerConfig>(LogDisable, m => m.SetLogEnabled(ctx, false));
+                return ctx.Execute<ServerConfig>(LogDisable, m => m.SetLogEnabled(ctx, false), true);
             else if (ctx.Match("list", "show"))
-                return ctx.Execute<ServerConfig>(LogShow, m => m.ShowLogDisabledChannels(ctx));
-            else if (ctx.Match("commands"))
-                return PrintCommandList(ctx, "message logging", LogCommands);
-            else return PrintCommandExpectedError(ctx, LogCommands);
+                return ctx.Execute<ServerConfig>(LogShow, m => m.ShowLogDisabledChannels(ctx), true);
+            else
+                return ctx.Reply($"{Emojis.Warn} Message logging commands have moved to `pk;serverconfig`.");
         if (ctx.Match("logclean"))
             return ctx.Execute<ServerConfig>(ServerConfigLogClean, m => m.SetLogCleanup(ctx), true);
         if (ctx.Match("blacklist", "bl"))
             if (ctx.Match("enable", "on", "add", "deny"))
-                return ctx.Execute<ServerConfig>(BlacklistAdd, m => m.SetBlacklisted(ctx, true));
+                return ctx.Execute<ServerConfig>(BlacklistAdd, m => m.SetProxyBlacklisted(ctx, true), true);
             else if (ctx.Match("disable", "off", "remove", "allow"))
-                return ctx.Execute<ServerConfig>(BlacklistRemove, m => m.SetBlacklisted(ctx, false));
+                return ctx.Execute<ServerConfig>(BlacklistRemove, m => m.SetProxyBlacklisted(ctx, false), true);
             else if (ctx.Match("list", "show"))
-                return ctx.Execute<ServerConfig>(BlacklistShow, m => m.ShowBlacklisted(ctx));
-            else if (ctx.Match("commands"))
-                return PrintCommandList(ctx, "channel blacklisting", BlacklistCommands);
-            else return PrintCommandExpectedError(ctx, BlacklistCommands);
+                return ctx.Execute<ServerConfig>(BlacklistShow, m => m.ShowProxyBlacklisted(ctx), true);
+            else
+                return ctx.Reply($"{Emojis.Warn} Blacklist commands have moved to `pk;serverconfig`.");
         if (ctx.Match("proxy"))
             if (ctx.Match("debug"))
                 return ctx.Execute<Checks>(ProxyCheck, m => m.MessageProxyCheck(ctx));
@@ -627,6 +625,26 @@ public partial class CommandTree
             return ctx.Execute<ServerConfig>(null, m => m.InvalidCommandResponse(ctx));
         if (ctx.MatchMultiple(new[] { "require", "enforce" }, new[] { "tag", "systemtag" }) || ctx.Match("requiretag", "enforcetag"))
             return ctx.Execute<ServerConfig>(null, m => m.RequireSystemTag(ctx));
+        if (ctx.MatchMultiple(new[] { "log" }, new[] { "channel" }))
+            return ctx.Execute<ServerConfig>(null, m => m.SetLogChannel(ctx));
+        if (ctx.MatchMultiple(new[] { "log" }, new[] { "blacklist" }))
+        {
+            if (ctx.Match("enable", "on", "add", "deny"))
+                return ctx.Execute<ServerConfig>(null, m => m.SetLogBlacklisted(ctx, true));
+            else if (ctx.Match("disable", "off", "remove", "allow"))
+                return ctx.Execute<ServerConfig>(null, m => m.SetLogBlacklisted(ctx, false));
+            else
+                return ctx.Execute<ServerConfig>(null, m => m.ShowLogDisabledChannels(ctx));
+        }
+        if (ctx.MatchMultiple(new[] { "proxy", "proxying" }, new[] { "blacklist" }))
+        {
+            if (ctx.Match("enable", "on", "add", "deny"))
+                return ctx.Execute<ServerConfig>(null, m => m.SetProxyBlacklisted(ctx, true));
+            else if (ctx.Match("disable", "off", "remove", "allow"))
+                return ctx.Execute<ServerConfig>(null, m => m.SetProxyBlacklisted(ctx, false));
+            else
+                return ctx.Execute<ServerConfig>(null, m => m.ShowProxyBlacklisted(ctx));
+        }
 
         // todo: maybe add the list of configuration keys here?
         return ctx.Reply($"{Emojis.Error} Could not find a setting with that name. Please see `pk;commands serverconfig` for the list of possible config settings.");
