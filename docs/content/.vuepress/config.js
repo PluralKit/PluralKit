@@ -73,7 +73,6 @@ module.exports = {
       },
       ["https://discord.gg/PczBt78", "Join the support server"],
     ],
-    pkBannerContent: "PluralKit's new <a href=\"/terms-of-service/\">Terms of Service</a> and <a href=\"/privacy/\">Privacy Policy</a> will go into effect on November 11th, 2024.",
   },
 
   plugins: [
