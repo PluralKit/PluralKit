@@ -133,7 +133,7 @@ public class MemberEdit
     {
         var noPronounsSetMessage = "This member does not have pronouns set.";
         if (ctx.System?.Id == target.System)
-            noPronounsSetMessage += $"To set some, type `pk;member {target.Reference(ctx)} pronouns <pronouns>`.";
+            noPronounsSetMessage += $" To set some, type `pk;member {target.Reference(ctx)} pronouns <pronouns>`.";
 
         ctx.CheckSystemPrivacy(target.System, target.PronounPrivacy);
 
