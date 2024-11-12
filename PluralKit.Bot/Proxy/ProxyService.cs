@@ -125,11 +125,17 @@ public class ProxyService
 
         if (ctx.RequireSystemTag)
         {
-            var tag = ctx.SystemGuildTag ?? ctx.SystemTag;
-            if (tag == null)
-                return "This server requires PluralKit users to have a system tag, but you do not have one set.";
             if (!ctx.TagEnabled)
-                return "This server requires PluralKit users to have a system tag, but your system tag is disabled in this server.";
+            {
+                return "This server requires PluralKit users to have a system tag, but your system tag is disabled in this server. " +
+                    "Use `pk;s servertag -enable` to enable it for this server.";
+            }
+
+            if (!ctx.HasProxyableTag())
+            {
+                return "This server requires PluralKit users to have a system tag, but you do not have one set. " +
+                    "A system tag can be set for all servers with `pk;s tag`, or for just this server with `pk;s servertag`.";
+            }
         }
 
         var guild = await _cache.GetGuild(channel.GuildId.Value);
