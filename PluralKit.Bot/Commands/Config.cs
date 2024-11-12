@@ -567,13 +567,19 @@ public class Config
 
     public async Task NameFormat(Context ctx)
     {
-        if (!ctx.HasNext())
+        var clearFlag = ctx.MatchClear();
+        if (!ctx.HasNext() && !clearFlag)
         {
             await ctx.Reply($"Member names are currently formatted as `{ctx.Config.NameFormat ?? ProxyMember.DefaultFormat}`");
             return;
         }
 
-        var formatString = ctx.RemainderOrNull();
+        string formatString;
+        if (clearFlag)
+            formatString = ProxyMember.DefaultFormat;
+        else
+            formatString = ctx.RemainderOrNull();
+
         await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { NameFormat = formatString });
         await ctx.Reply($"Member names are now formatted as `{formatString}`");
     }
