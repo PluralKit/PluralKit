@@ -382,7 +382,7 @@ You can now set some proxy tags:
 
     pk;member John proxy John:text
 
-Now, oth of the following will work without needing to add multiple versions of the proxy tag:
+Now, both of the following will work without needing to add multiple versions of the proxy tag:
 
     John: Hello!
     JOHN: Hello!
