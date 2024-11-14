@@ -24,3 +24,5 @@ twilight-cache-inmemory = { workspace = true }
 twilight-util = { workspace = true }
 twilight-model = { workspace = true }
 twilight-http = { workspace = true }
+
+serde_variant = "0.1.3"

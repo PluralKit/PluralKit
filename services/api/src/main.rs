@@ -133,11 +133,11 @@ async fn main() -> anyhow::Result<()> {
         .route("/v2/members/:member_id/oembed.json", get(rproxy))
         .route("/v2/groups/:group_id/oembed.json", get(rproxy))
 
-        .layer(axum::middleware::from_fn(middleware::logger))
         .layer(middleware::ratelimit::ratelimiter(middleware::ratelimit::do_request_ratelimited)) // this sucks
         .layer(axum::middleware::from_fn_with_state(ctx.clone(), middleware::authnz))
         .layer(axum::middleware::from_fn(middleware::ignore_invalid_routes))
         .layer(axum::middleware::from_fn(middleware::cors))
+        .layer(axum::middleware::from_fn(middleware::logger))
 
         .layer(tower_http::catch_panic::CatchPanicLayer::custom(util::handle_panic))
 

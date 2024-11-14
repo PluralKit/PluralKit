@@ -1,4 +1,5 @@
 use libpk::_config::ClusterSettings;
+use metrics::counter;
 use std::sync::{mpsc::Sender, Arc};
 use tracing::{info, warn};
 use twilight_gateway::{
@@ -85,6 +86,12 @@ pub async fn runner(
     while let Some(item) = shard.next_event(EventTypeFlags::all()).await {
         match item {
             Ok(event) => {
+                counter!(
+                    "pluralkit_gateway_events",
+                    "shard_id" => shard.id().number().to_string(),
+                    "event_type" => serde_variant::to_variant_name(&event.kind()).unwrap(),
+                )
+                .increment(1);
                 if let Err(error) = shard_state
                     .handle_event(shard.id().number(), event.clone())
                     .await
