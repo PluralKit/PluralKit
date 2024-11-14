@@ -42,7 +42,7 @@ impl ShardStateManager {
 
     async fn save_shard(&self, shard_id: u32, info: ShardState) -> anyhow::Result<()> {
         self.redis
-            .hset(
+            .hset::<(), &str, (String, Bytes)>(
                 "pluralkit:shardstatus",
                 (
                     shard_id.to_string(),
