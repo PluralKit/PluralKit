@@ -52,13 +52,19 @@ public class MessageEdited: IEventHandler<MessageUpdateEvent>
         if (!evt.Content.HasValue || !evt.Author.HasValue || !evt.Member.HasValue)
             return;
 
-        var guildIdMaybe = evt.GuildId.HasValue ? evt.GuildId.Value ?? 0 : 0;
+        // we only use message edit event for proxying, so ignore messages from DMs
+        if (!evt.GuildId.HasValue || evt.GuildId.Value == null) return;
+        ulong guildId = evt.GuildId!.Value!.Value;
 
-        var channel = await _cache.GetChannel(guildIdMaybe, evt.ChannelId); // todo: is this correct for message update?
+        var channel = await _cache.TryGetChannel(guildId, evt.ChannelId); // todo: is this correct for message update?
+        if (channel == null)
+            throw new Exception("could not find self channel in MessageEdited event");
         if (!DiscordUtils.IsValidGuildChannel(channel))
             return;
-        var rootChannel = await _cache.GetRootChannel(guildIdMaybe, channel.Id);
-        var guild = await _cache.GetGuild(channel.GuildId!.Value);
+        var rootChannel = await _cache.GetRootChannel(guildId, channel.Id);
+        var guild = await _cache.TryGetGuild(channel.GuildId!.Value);
+        if (guild == null)
+            throw new Exception("could not find self guild in MessageEdited event");
         var lastMessage = _lastMessageCache.GetLastMessage(evt.ChannelId)?.Current;
 
         // Only react to the last message in the channel
@@ -73,7 +79,7 @@ public class MessageEdited: IEventHandler<MessageUpdateEvent>
             return;
 
         var equivalentEvt = await GetMessageCreateEvent(evt, lastMessage, channel);
-        var botPermissions = await _cache.BotPermissionsIn(guildIdMaybe, channel.Id);
+        var botPermissions = await _cache.BotPermissionsIn(guildId, channel.Id);
 
         try
         {

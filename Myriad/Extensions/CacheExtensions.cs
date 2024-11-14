@@ -50,7 +50,8 @@ public static class CacheExtensions
         if (!channel.IsThread())
             return channel;
 
-        var parent = await cache.GetChannel(guildId, channel.ParentId!.Value);
+        var parent = await cache.TryGetChannel(guildId, channel.ParentId!.Value);
+        if (parent == null) throw new Exception($"failed to find parent channel for thread {channelOrThread} in cache");
         return parent;
     }
 }
