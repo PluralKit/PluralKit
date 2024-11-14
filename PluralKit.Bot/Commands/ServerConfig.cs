@@ -181,7 +181,7 @@ public class ServerConfig
         await ctx.Reply(
             $"{Emojis.Success} Message logging for the given channels {(enable ? "enabled" : "disabled")}." +
             (logChannel == null
-                ? $"\n{Emojis.Warn} Please note that no logging channel is set, so there is nowhere to log messages to. You can set a logging channel using `pk;log channel #your-log-channel`."
+                ? $"\n{Emojis.Warn} Please note that no logging channel is set, so there is nowhere to log messages to. You can set a logging channel using `pk;serverconfig log channel #your-log-channel`."
                 : ""));
     }
 
@@ -351,7 +351,10 @@ public class ServerConfig
         await ctx.Repository.UpdateGuild(ctx.Guild.Id, new GuildPatch { LogBlacklist = blacklist.ToArray() });
 
         await ctx.Reply(
-            $"{Emojis.Success} Channels {(shouldAdd ? "added to" : "removed from")} the logging blacklist.");
+            $"{Emojis.Success} Channels {(shouldAdd ? "added to" : "removed from")} the logging blacklist." +
+            (guild.LogChannel == null
+                ? $"\n{Emojis.Warn} Please note that no logging channel is set, so there is nowhere to log messages to. You can set a logging channel using `pk;serverconfig log channel #your-log-channel`."
+                : ""));
     }
 
     public async Task SetLogCleanup(Context ctx)
