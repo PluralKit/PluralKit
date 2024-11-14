@@ -1,6 +1,6 @@
 module scheduled_tasks
 
-go 1.18
+go 1.23
 
 require (
 	github.com/getsentry/sentry-go v0.15.0
