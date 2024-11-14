@@ -69,7 +69,7 @@ async fn main() -> anyhow::Result<()> {
 
     let mut signals = Signals::new(&[SIGINT, SIGTERM])?;
 
-    tokio::spawn(async move {
+    set.spawn(tokio::spawn(async move {
         for sig in signals.forever() {
             info!("received signal {:?}", sig);
 
@@ -86,7 +86,7 @@ async fn main() -> anyhow::Result<()> {
             let _ = shutdown_tx.send(());
             break;
         }
-    });
+    }));
 
     let _ = shutdown_rx.recv();
 
