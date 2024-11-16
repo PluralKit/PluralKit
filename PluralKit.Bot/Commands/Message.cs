@@ -118,7 +118,8 @@ public class ProxiedMessage
 
         // Should we clear embeds?
         var clearEmbeds = ctx.MatchFlag("clear-embed", "ce");
-        if (clearEmbeds && newContent == null)
+        var clearAttachments = ctx.MatchFlag("clear-attachments", "ca");
+        if ((clearEmbeds || clearAttachments) && newContent == null)
             newContent = originalMsg.Content!;
 
         if (newContent == null)
@@ -218,7 +219,7 @@ public class ProxiedMessage
         try
         {
             var editedMsg =
-                await _webhookExecutor.EditWebhookMessage(msg.Guild ?? 0, msg.Channel, msg.Mid, newContent, clearEmbeds);
+                await _webhookExecutor.EditWebhookMessage(msg.Guild ?? 0, msg.Channel, msg.Mid, newContent, clearEmbeds, clearAttachments);
 
             if (ctx.Guild == null)
                 await _rest.CreateReaction(ctx.Channel.Id, ctx.Message.Id, new Emoji { Name = Emojis.Success });
