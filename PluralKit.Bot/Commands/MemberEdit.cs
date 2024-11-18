@@ -194,16 +194,18 @@ public class MemberEdit
 
     public async Task BannerImage(Context ctx, PKMember target)
     {
-        ctx.CheckOwnMember(target);
-
         async Task ClearBannerImage()
         {
+            ctx.CheckOwnMember(target);
+            await ctx.ConfirmClear("this member's banner image");
+
             await ctx.Repository.UpdateMember(target.Id, new MemberPatch { BannerImage = null });
             await ctx.Reply($"{Emojis.Success} Member banner image cleared.");
         }
 
         async Task SetBannerImage(ParsedImage img)
         {
+            ctx.CheckOwnMember(target);
             img = await _avatarHosting.TryRehostImage(img, AvatarHostingService.RehostedImageType.Banner, ctx.Author.Id, ctx.System);
             await AvatarUtils.VerifyAvatarOrThrow(_client, img.Url, true);
 
@@ -243,7 +245,7 @@ public class MemberEdit
             }
         }
 
-        if (ctx.MatchClear() && await ctx.ConfirmClear("this member's banner image"))
+        if (ctx.MatchClear())
             await ClearBannerImage();
         else if (await ctx.MatchImage() is { } img)
             await SetBannerImage(img);
