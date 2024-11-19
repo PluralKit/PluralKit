@@ -229,18 +229,28 @@ public class MemberEdit
         async Task ShowBannerImage()
         {
             if ((target.BannerImage?.Trim() ?? "").Length > 0)
-            {
-                var eb = new EmbedBuilder()
-                    .Title($"{target.NameFor(ctx)}'s banner image")
-                    .Image(new Embed.EmbedImage(target.BannerImage))
-                    .Description($"To clear, use `pk;member {target.Reference(ctx)} banner clear`.");
-                await ctx.Reply(embed: eb.Build());
-            }
+                switch (ctx.MatchFormat())
+                {
+                    case ReplyFormat.Raw:
+                        await ctx.Reply($"`{target.BannerImage.TryGetCleanCdnUrl()}`");
+                        break;
+                    case ReplyFormat.Plaintext:
+                        var ebP = new EmbedBuilder()
+                            .Description($"Showing banner for member {target.NameFor(ctx)} (`{target.Id}`)");
+                        await ctx.Reply(text: $"<{target.BannerImage.TryGetCleanCdnUrl()}>", embed: ebP.Build());
+                        break;
+                    default:
+                        var ebS = new EmbedBuilder()
+                            .Title($"{target.NameFor(ctx)}'s banner image")
+                            .Image(new Embed.EmbedImage(target.BannerImage.TryGetCleanCdnUrl()));
+                        if (target.System == ctx.System?.Id)
+                            ebS.Description($"To clear, use `pk;member {target.Reference(ctx)} banner clear`.");
+                        await ctx.Reply(embed: ebS.Build());
+                        break;
+                }
             else
-            {
                 throw new PKSyntaxError(
-                    "This member does not have a banner image set. Set one by attaching an image to this command, or by passing an image URL.");
-            }
+                    "This member does not have a banner image set." + ((target.System == ctx.System?.Id) ? " Set one by attaching an image to this command, or by passing an image URL." : ""));
         }
 
         if (ctx.MatchClear() && await ctx.ConfirmClear("this member's banner image"))
