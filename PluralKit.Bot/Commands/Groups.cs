@@ -312,21 +312,28 @@ public class Groups
             ctx.CheckSystemPrivacy(target.System, target.IconPrivacy);
 
             if ((target.Icon?.Trim() ?? "").Length > 0)
-            {
-                var eb = new EmbedBuilder()
-                    .Title("Group icon")
-                    .Image(new Embed.EmbedImage(target.Icon.TryGetCleanCdnUrl()));
-
-                if (target.System == ctx.System?.Id)
-                    eb.Description($"To clear, use `pk;group {target.Reference(ctx)} icon -clear`.");
-
-                await ctx.Reply(embed: eb.Build());
-            }
+                switch (ctx.MatchFormat())
+                {
+                    case ReplyFormat.Raw:
+                        await ctx.Reply($"`{target.Icon.TryGetCleanCdnUrl()}`");
+                        break;
+                    case ReplyFormat.Plaintext:
+                        var ebP = new EmbedBuilder()
+                            .Description($"Showing avatar for group {target.NameFor(ctx)}");
+                        await ctx.Reply(text: $"<{target.Icon.TryGetCleanCdnUrl()}>", embed: ebP.Build());
+                        break;
+                    default:
+                        var ebS = new EmbedBuilder()
+                            .Title("Group icon")
+                            .Image(new Embed.EmbedImage(target.Icon.TryGetCleanCdnUrl()));
+                        if (target.System == ctx.System?.Id)
+                            ebS.Description($"To clear, use `pk;group {target.Reference(ctx)} icon -clear`.");
+                        await ctx.Reply(embed: ebS.Build());
+                        break;
+                }
             else
-            {
                 throw new PKSyntaxError(
                     "This group does not have an avatar set. Set one by attaching an image to this command, or by passing an image URL or @mention.");
-            }
         }
 
         if (ctx.MatchClear())
