@@ -572,7 +572,7 @@ public class SystemEdit
                         break;
                     case ReplyFormat.Plaintext:
                         var ebP = new EmbedBuilder()
-                            .Description($"Showing icon for system {target.NameFor(ctx)}");
+                            .Description($"Showing icon for system {target.NameFor(ctx)} (`{target.DisplayHid(ctx.Config)}`)");
                         await ctx.Reply(text: $"<{target.AvatarUrl.TryGetCleanCdnUrl()}>", embed: ebP.Build());
                         break;
                     default:
@@ -655,7 +655,7 @@ public class SystemEdit
                         break;
                     case ReplyFormat.Plaintext:
                         var ebP = new EmbedBuilder()
-                            .Description($"Showing icon for system {target.NameFor(ctx)}");
+                            .Description($"Showing icon for system {target.NameFor(ctx)} (`{target.DisplayHid(ctx.Config)}`)");
                         await ctx.Reply(text: $"<{settings.AvatarUrl.TryGetCleanCdnUrl()}>", embed: ebP.Build());
                         break;
                     default:
@@ -704,7 +704,7 @@ public class SystemEdit
                         break;
                     case ReplyFormat.Plaintext:
                         var ebP = new EmbedBuilder()
-                            .Description($"Showing banner for system {target.NameFor(ctx)}");
+                            .Description($"Showing banner for system {target.NameFor(ctx)} (`{target.DisplayHid(ctx.Config)}`)");
                         await ctx.Reply(text: $"<{target.BannerImage.TryGetCleanCdnUrl()}>", embed: ebP.Build());
                         break;
                     default:
