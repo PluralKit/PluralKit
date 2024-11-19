@@ -565,19 +565,28 @@ public class SystemEdit
         async Task ShowIcon()
         {
             if ((target.AvatarUrl?.Trim() ?? "").Length > 0)
-            {
-                var eb = new EmbedBuilder()
-                    .Title("System icon")
-                    .Image(new Embed.EmbedImage(target.AvatarUrl.TryGetCleanCdnUrl()));
-                if (target.Id == ctx.System?.Id)
-                    eb.Description("To clear, use `pk;system icon clear`.");
-                await ctx.Reply(embed: eb.Build());
-            }
+                switch (ctx.MatchFormat())
+                {
+                    case ReplyFormat.Raw:
+                        await ctx.Reply($"`{target.AvatarUrl.TryGetCleanCdnUrl()}`");
+                        break;
+                    case ReplyFormat.Plaintext:
+                        var ebP = new EmbedBuilder()
+                            .Description($"Showing icon for system {target.NameFor(ctx)}");
+                        await ctx.Reply(text: $"<{target.AvatarUrl.TryGetCleanCdnUrl()}>", embed: ebP.Build());
+                        break;
+                    default:
+                        var ebS = new EmbedBuilder()
+                            .Title("System icon")
+                            .Image(new Embed.EmbedImage(target.AvatarUrl.TryGetCleanCdnUrl()));
+                        if (target.Id == ctx.System?.Id)
+                            ebS.Description("To clear, use `pk;system icon clear`.");
+                        await ctx.Reply(embed: ebS.Build());
+                        break;
+                }
             else
-            {
                 throw new PKSyntaxError(
                     "This system does not have an icon set. Set one by attaching an image to this command, or by passing an image URL or @mention.");
-            }
         }
 
         if (target != null && target?.Id != ctx.System?.Id)
