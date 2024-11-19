@@ -236,7 +236,7 @@ public class MemberEdit
                         break;
                     case ReplyFormat.Plaintext:
                         var ebP = new EmbedBuilder()
-                            .Description($"Showing banner for member {target.NameFor(ctx)} (`{target.Id}`)");
+                            .Description($"Showing banner for member {target.NameFor(ctx)} (`{target.DisplayHid(ctx.Config)}`)");
                         await ctx.Reply(text: $"<{target.BannerImage.TryGetCleanCdnUrl()}>", embed: ebP.Build());
                         break;
                     default:

@@ -319,7 +319,7 @@ public class Groups
                         break;
                     case ReplyFormat.Plaintext:
                         var ebP = new EmbedBuilder()
-                            .Description($"Showing avatar for group {target.NameFor(ctx)}");
+                            .Description($"Showing avatar for group {target.NameFor(ctx)} (`{target.DisplayHid(ctx.Config)}`)");
                         await ctx.Reply(text: $"<{target.Icon.TryGetCleanCdnUrl()}>", embed: ebP.Build());
                         break;
                     default:
@@ -393,7 +393,7 @@ public class Groups
                         break;
                     case ReplyFormat.Plaintext:
                         var ebP = new EmbedBuilder()
-                            .Description($"Showing banner for group {target.NameFor(ctx)}");
+                            .Description($"Showing banner for group {target.NameFor(ctx)} (`{target.DisplayHid(ctx.Config)}`)");
                         await ctx.Reply(text: $"<{target.BannerImage.TryGetCleanCdnUrl()}>", embed: ebP.Build());
                         break;
                     default:
