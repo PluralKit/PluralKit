@@ -648,19 +648,28 @@ public class SystemEdit
             var settings = await ctx.Repository.GetSystemGuild(ctx.Guild.Id, target.Id);
 
             if ((settings.AvatarUrl?.Trim() ?? "").Length > 0)
-            {
-                var eb = new EmbedBuilder()
-                    .Title("System server icon")
-                    .Image(new Embed.EmbedImage(settings.AvatarUrl.TryGetCleanCdnUrl()));
-                if (target.Id == ctx.System?.Id)
-                    eb.Description("To clear, use `pk;system servericon clear`.");
-                await ctx.Reply(embed: eb.Build());
-            }
+                switch (ctx.MatchFormat())
+                {
+                    case ReplyFormat.Raw:
+                        await ctx.Reply($"`{settings.AvatarUrl.TryGetCleanCdnUrl()}`");
+                        break;
+                    case ReplyFormat.Plaintext:
+                        var ebP = new EmbedBuilder()
+                            .Description($"Showing icon for system {target.NameFor(ctx)}");
+                        await ctx.Reply(text: $"<{settings.AvatarUrl.TryGetCleanCdnUrl()}>", embed: ebP.Build());
+                        break;
+                    default:
+                        var ebS = new EmbedBuilder()
+                            .Title("System server icon")
+                            .Image(new Embed.EmbedImage(settings.AvatarUrl.TryGetCleanCdnUrl()));
+                        if (target.Id == ctx.System?.Id)
+                            ebS.Description("To clear, use `pk;system servericon clear`.");
+                        await ctx.Reply(embed: ebS.Build());
+                        break;
+                }
             else
-            {
                 throw new PKSyntaxError(
                     "This system does not have a icon specific to this server. Set one by attaching an image to this command, or by passing an image URL or @mention.");
-            }
         }
 
         ctx.CheckGuildContext();
