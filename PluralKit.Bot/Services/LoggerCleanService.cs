@@ -43,7 +43,7 @@ public class LoggerCleanService
     private static readonly Regex _DozerRegex = new("Message ID: (\\d{17,19}) - (\\d{17,19})\nUserID: (\\d{17,19})");
     private static readonly Regex _SkyraRegex = new("https://discord.com/channels/(\\d{17,19})/(\\d{17,19})/(\\d{17,19})");
     private static readonly Regex _AnnabelleRegex = new("```\n(\\d{17,19})\n```");
-    private static readonly Regex _AnnabelleRegexFuzzy = new("A message from \\*\\*[\\w.]{2,32}\\*\\* \\(`(\\d{17,19})`\\) was deleted in <#\\d{17,19}>");
+    private static readonly Regex _AnnabelleRegexFuzzy = new("\\<t:(\\d+)\\> A message from \\*\\*[\\w.]{2,32}\\*\\* \\(`(\\d{17,19})`\\) was deleted in <#\\d{17,19}>");
 
     private static readonly Regex _VortexRegex =
         new("`\\[(\\d\\d:\\d\\d:\\d\\d)\\]` .* \\(ID:(\\d{17,19})\\).* <#\\d{17,19}>:");
@@ -81,7 +81,7 @@ public class LoggerCleanService
         new LoggerBot("ProBot Prime", 567703512763334685, fuzzyExtractFunc: ExtractProBot), // webhook (?)
         new LoggerBot("Dozer", 356535250932858885, ExtractDozer),
         new LoggerBot("Skyra", 266624760782258186, ExtractSkyra),
-        new LoggerBot("Annabelle", 231241068383961088, ExtractAnnabelle, fuzzyExtractFunc: ExtractAnnabelleFuzzy),
+        new LoggerBot("Annabelle", 231241068383961088, fuzzyExtractFunc: ExtractAnnabelleFuzzy),
     }.ToDictionary(b => b.Id);
 
     private static Dictionary<ulong, LoggerBot> _botsByApplicationId
@@ -138,6 +138,7 @@ public class LoggerCleanService
                         bot.Name, msg.Id, fuzzy);
 
                     var exists = await _redis.HasLogCleanup(fuzzy.Value.User, msg.GuildId.Value);
+                    _logger.Debug(exists.ToString());
 
                     // If we didn't find a corresponding message, bail
                     if (!exists) return;
@@ -428,15 +429,14 @@ public class LoggerCleanService
     private static FuzzyExtractResult? ExtractAnnabelleFuzzy(Message msg)
     {
         // matching for annabelle's non-precise non-embed format
-        // it has a discord (unix) timestamp but I (Petalss) can't get that to convert to rfc3339 so
-        // we use the message timestamp
+        // it has a discord (unix) timestamp for the message so we use that
         if (msg.Embeds.Length != 0) return null;
         var match = _AnnabelleRegexFuzzy.Match(msg.Content);
         return match.Success
             ? new FuzzyExtractResult
             {
-                User = ulong.Parse(match.Groups[1].Value),
-                ApproxTimestamp = msg.Timestamp().ToInstant()
+                User = ulong.Parse(match.Groups[2].Value),
+                ApproxTimestamp = DateTimeOffset.FromUnixTimeSeconds(long.Parse(match.Groups[1].Value)).ToInstant()
             }
             : null;
     }
