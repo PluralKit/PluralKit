@@ -97,6 +97,7 @@
 {/if}
 <ListPagination bind:currentPage={pageOptions.currentPage} {pageAmount} />
 {/if}
+<div class="spacer"></div>
 
 <style>
     .itemcounter {

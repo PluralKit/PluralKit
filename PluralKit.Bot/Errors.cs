@@ -120,8 +120,8 @@ public static class Errors
     public static PKError UrlTooLong(string url) =>
         new($"The given URL is too long ({url.Length}/{Limits.MaxUriLength} characters).");
 
-    public static PKError AccountInOtherSystem(PKSystem system) =>
-        new($"The mentioned account is already linked to another system (see `pk;system {system.Hid}`).");
+    public static PKError AccountInOtherSystem(PKSystem system, SystemConfig config) =>
+        new($"The mentioned account is already linked to another system (see `pk;system {system.DisplayHid(config)}`).");
 
     public static PKError SameSwitch(ICollection<PKMember> members, LookupContext ctx)
     {
@@ -162,7 +162,7 @@ public static class Errors
         $"The webhook's name, {name.AsCode()}, is shorter than two characters, and thus cannot be proxied. Please change the member name or use a longer system tag.");
 
     public static PKError ProxyNameTooLong(string name) => new(
-        $"The webhook's name, {name.AsCode()}, is too long ({name.Length} > {Limits.MaxProxyNameLength} characters), and thus cannot be proxied. Please change the member name, display name or server display name, or use a shorter system tag.");
+        $"The webhook's name, {name.AsCode()}, is too long ({name.Length} > {Limits.MaxProxyNameLength} characters), and thus cannot be proxied. Please change the member name, display name, server display name, system tag, or use a shorter name format");
 
     public static PKError ProxyTagAlreadyExists(ProxyTag tagToAdd, PKMember member) => new(
         $"That member already has the proxy tag {tagToAdd.ProxyString.AsCode()}. The member currently has these tags: {member.ProxyTagsString()}");

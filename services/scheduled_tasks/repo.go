@@ -5,7 +5,59 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"io"
+	"os"
+	"net/http"
+	"strconv"
 )
+
+type httpstats struct {
+	Up bool `json:"up"`
+	GuildCount   int `json:"guild_count"`
+	ChannelCount int `json:"channel_count"`
+}
+
+func query_http_cache() []httpstats {
+	var values []httpstats
+
+	http_cache_url := os.Getenv("HTTP_CACHE_URL")
+	if http_cache_url == "" {
+		panic("missing HTTP_CACHE_URL in environment")
+	}
+
+	cluster_count, err := strconv.Atoi(os.Getenv("CLUSTER_COUNT"))
+	if err != nil {
+		panic(fmt.Sprintf("missing or invalid CLUSTER_COUNT in environment"))
+	}
+
+	for i := range cluster_count {
+		log.Printf("querying gateway cluster %v for discord stats\n", i)
+		url := fmt.Sprintf("http://cluster%v.%s:5000/stats", i, http_cache_url)
+		resp, err := http.Get(url)
+		if err != nil {
+			panic(err)
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode != http.StatusFound {
+			panic(fmt.Sprintf("got status %v trying to query %v.%s:5000", resp.Status, i, http_cache_url))
+		}
+		var s httpstats
+		data, err := io.ReadAll(resp.Body)
+		if err != nil {
+			panic(err)
+		}
+		err = json.Unmarshal(data, &s)
+		if err != nil {
+			panic(err)
+		}
+		if s.Up == false {
+			panic("gateway is not up yet, skipping stats collection")
+		}
+		values = append(values, s)
+	}
+
+	return values
+}
 
 type rstatval struct {
 	GuildCount   int `json:"GuildCount"`
@@ -46,6 +98,15 @@ func get_message_count() int {
 	return count
 }
 
+func get_image_cleanup_queue_length() int {
+	var count int
+	row := data_db.QueryRow(context.Background(), "select count(*) as count from image_cleanup_jobs")
+	if err := row.Scan(&count); err != nil {
+		panic(err)
+	}
+	return count
+}
+
 func run_data_stats_query() map[string]interface{} {
 	s := map[string]interface{}{}
 
@@ -57,6 +118,9 @@ func run_data_stats_query() map[string]interface{} {
 
 	for rows.Next() {
 		for i, column := range descs {
+			if string(column.Name) == "message_count" {
+				continue
+			}
 			values, err := rows.Values()
 			if err != nil {
 				panic(err)
@@ -69,7 +133,7 @@ func run_data_stats_query() map[string]interface{} {
 	return s
 }
 
-func do_stats_insert(table string, value int) {
+func do_stats_insert(table string, value int64) {
 	if stats_db == nil {
 		return
 	}

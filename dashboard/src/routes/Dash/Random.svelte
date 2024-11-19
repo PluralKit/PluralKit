@@ -10,6 +10,8 @@
     import { defaultListOptions, type List as Lists, type ListOptions, type PageOptions } from '../../components/list/types';
     import { defaultPageOptions } from '../../components/list/types';
     import CardView from '../../components/list/CardView.svelte';
+    import TinyView from '../../components/list/TinyView.svelte';
+    import TextView from '../../components/list/TextView.svelte';
 
     export let isPublic: boolean = false;
     export let type: string = "member";
@@ -86,7 +88,7 @@
         if (!isPublic && (!usePrivateMembers || usePrivateMembers === "false")) filteredList = (list as Member[]).filter(item => item.privacy && item.privacy.visibility === "public" ? true : false);
 
         let cappedAmount = amount;
-        if (amount > filteredList.length) cappedAmount = filteredList.length;
+        if (amount > filteredList.length && (!allowDoubles || allowDoubles === "false")) cappedAmount = filteredList.length;
 
         if (cappedAmount === 0) err = `No valid ${type}s could be randomized. ${!isPublic ? `If every ${type} is privated, roll again with private ${type}s included.` : ""}`;
 
@@ -103,14 +105,13 @@
     }
 
     function rerollList() {
-        let amount = parseInt(optionAmount);
         let paramArray = [];
         if (amount > 1) paramArray.push(`view=${pageOptions.view}`);
         if (amount > 1) paramArray.push(`amount=${amount}`);
         if (optionAllowDoubles === "true") paramArray.push("doubles=true");
         if (optionUsePrivateItems === "true") paramArray.push("all=true");
         
-        lists.rawList = randomizeList(parseInt(optionAmount), optionUsePrivateItems, optionAllowDoubles);
+        lists.rawList = randomizeList(amount, optionUsePrivateItems, optionAllowDoubles);
         navigate(`${path}${paramArray.length > 0 ? `?${paramArray.join('&')}` : ""}`);
         rollCounter ++;
         pageOptions.currentPage = rollCounter;
@@ -119,8 +120,6 @@
     function capitalizeFirstLetter(string: string) {
         return string.charAt(0).toUpperCase() + string.slice(1);
     }
-    
-    let optionAmount = amount.toString();
     
     let optionUsePrivateItems = "false";
     if (usePrivateItems === true) optionUsePrivateItems = "true";
@@ -148,15 +147,6 @@
         shortGroups: [],
         shortMembers: [],
     }
-
-    let nope: Lists<Member> = {
-        rawList: [],
-        processedList: [],
-        currentPage: [],
-
-        shortGroups: [],
-        shortMembers: [],
-    }
     
     let pageOptions: PageOptions = {...defaultPageOptions,
         isPublic: true,
@@ -169,6 +159,7 @@
 
     let listOptions: ListOptions = {...defaultListOptions,
         sort: 'none',
+        pfp: "proxy"
     };
 
     $: lists.currentPage = lists.rawList;
@@ -188,13 +179,7 @@
                     <Row class="mb-3">
                         <Col xs={12} md={6} lg={4} class="mb-2">
                             <Label>Amount:</Label>
-                            <Input bind:value={optionAmount} type="select" aria-label="amount">
-                                <option>1</option>
-                                <option>2</option>
-                                <option>3</option>
-                                <option>4</option>
-                                <option>5</option>
-                            </Input>
+                            <Input bind:value={amount} type="number" aria-label="amount" min={1} max={100} />
                         </Col>
                         <Col xs={12} md={6} lg={4} class="mb-2">
                             <Label>Allow duplicates:</Label>
@@ -208,6 +193,8 @@
                             <Input bind:value={pageOptions.view} type="select" aria-label="amount">
                                 <option value="list">List</option>
                                 <option value="card">Cards</option>
+                                <option value="tiny">Tiny</option>
+                                <option value="text">Text</option>
                             </Input>
                         </Col>
                         {#if !isPublic}
@@ -236,7 +223,11 @@
                 <Alert color="danger">{err}</Alert>
             {:else}
                 {#if pageOptions.view === 'card'}
-                    <CardView {pageOptions} currentList={lists.currentPage}/>
+                    <CardView {listOptions} {pageOptions} currentList={lists.currentPage} />
+                {:else if pageOptions.view === 'tiny'}
+                    <TinyView {listOptions} {pageOptions} currentList={lists.currentPage} />
+                {:else if pageOptions.view === "text"}
+                    <TextView {listOptions} {pageOptions} currentList={lists.currentPage} />
                 {:else}
                     <ListView {pageOptions} currentList={lists.currentPage} fullListLength={1} />
                 {/if}

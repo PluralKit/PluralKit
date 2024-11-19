@@ -16,13 +16,15 @@ public class Member
     private readonly HttpClient _client;
     private readonly DispatchService _dispatch;
     private readonly EmbedService _embeds;
+    private readonly AvatarHostingService _avatarHosting;
 
     public Member(EmbedService embeds, HttpClient client,
-                  DispatchService dispatch)
+                  DispatchService dispatch, AvatarHostingService avatarHosting)
     {
         _embeds = embeds;
         _client = client;
         _dispatch = dispatch;
+        _avatarHosting = avatarHosting;
     }
 
     public async Task NewMember(Context ctx)
@@ -38,7 +40,7 @@ public class Member
         var existingMember = await ctx.Repository.GetMemberByName(ctx.System.Id, memberName);
         if (existingMember != null)
         {
-            var msg = $"{Emojis.Warn} You already have a member in your system with the name \"{existingMember.NameFor(ctx)}\" (with ID `{existingMember.Hid}`). Do you want to create another member with the same name?";
+            var msg = $"{Emojis.Warn} You already have a member in your system with the name \"{existingMember.NameFor(ctx)}\" (with ID `{existingMember.DisplayHid(ctx.Config)}`). Do you want to create another member with the same name?";
             if (!await ctx.PromptYesNo(msg, "Create")) throw new PKError("Member creation cancelled.");
         }
 
@@ -67,13 +69,24 @@ public class Member
         // Try to match an image attached to the message
         var avatarArg = ctx.Message.Attachments.FirstOrDefault();
         Exception imageMatchError = null;
+        ParsedImage img = new();
         if (avatarArg != null)
             try
             {
-                await AvatarUtils.VerifyAvatarOrThrow(_client, avatarArg.Url);
-                await ctx.Repository.UpdateMember(member.Id, new MemberPatch { AvatarUrl = avatarArg.Url }, conn);
+                // XXX: discord attachment URLs are unable to be validated without their query params
+                // keep both the URL with query (for validation) and the clean URL (for storage) around
+                var uriBuilder = new UriBuilder(avatarArg.ProxyUrl);
+                img = new ParsedImage { Url = uriBuilder.Uri.AbsoluteUri, Source = AvatarSource.Attachment };
 
-                dispatchData.Add("avatar_url", avatarArg.Url);
+                uriBuilder.Query = "";
+                img.CleanUrl = uriBuilder.Uri.AbsoluteUri;
+
+                img = await _avatarHosting.TryRehostImage(img, AvatarHostingService.RehostedImageType.Avatar, ctx.Author.Id, ctx.System);
+
+                await AvatarUtils.VerifyAvatarOrThrow(_client, img.Url);
+                await ctx.Repository.UpdateMember(member.Id, new MemberPatch { AvatarUrl = img.CleanUrl ?? img.Url }, conn);
+
+                dispatchData.Add("avatar_url", img.CleanUrl);
             }
             catch (Exception e)
             {
@@ -88,34 +101,34 @@ public class Member
 
         // Send confirmation and space hint
         await ctx.Reply(
-            $"{Emojis.Success} Member \"{memberName}\" (`{member.Hid}`) registered! Check out the getting started page for how to get a member up and running: https://pluralkit.me/start#create-a-member");
+            $"{Emojis.Success} Member \"{memberName}\" (`{member.DisplayHid(ctx.Config)}`) registered! Check out the getting started page for how to get a member up and running: https://pluralkit.me/start#create-a-member");
         // todo: move this to ModelRepository
         if (await ctx.Database.Execute(conn => conn.QuerySingleAsync<bool>("select has_private_members(@System)",
                 new { System = ctx.System.Id })) && !ctx.Config.MemberDefaultPrivate) //if has private members
             await ctx.Reply(
-                $"{Emojis.Warn} This member is currently **public**. To change this, use `pk;member {member.Hid} private`.");
+                $"{Emojis.Warn} This member is currently **public**. To change this, use `pk;member {member.DisplayHid(ctx.Config)} private`.");
         if (avatarArg != null)
             if (imageMatchError == null)
                 await ctx.Reply(
-                    $"{Emojis.Success} Member avatar set to attached image.\n{Emojis.Warn} If you delete the message containing the attachment, the avatar will stop working.");
+                    $"{Emojis.Success} Member avatar set to attached image." + (img.Source == AvatarSource.Attachment ? $"\n{Emojis.Warn} If you delete the message containing the attachment, the avatar will stop working." : ""));
             else
                 await ctx.Reply($"{Emojis.Error} Couldn't set avatar: {imageMatchError.Message}");
         if (memberName.Contains(" "))
             await ctx.Reply(
-                $"{Emojis.Note} Note that this member's name contains spaces. You will need to surround it with \"double quotes\" when using commands referring to it, or just use the member's 5-character ID (which is `{member.Hid}`).");
+                $"{Emojis.Note} Note that this member's name contains spaces. You will need to surround it with \"double quotes\" when using commands referring to it, or just use the member's short ID (which is `{member.DisplayHid(ctx.Config)}`).");
         if (memberCount >= memberLimit)
             await ctx.Reply(
-                $"{Emojis.Warn} You have reached the per-system member limit ({memberLimit}). You will be unable to create additional members until existing members are deleted.");
+                $"{Emojis.Warn} You have reached the per-system member limit ({memberLimit}). If you need to add more members, you can either delete existing members, or ask for your limit to be raised in the PluralKit support server: <https://discord.gg/PczBt78>");
         else if (memberCount >= Limits.WarnThreshold(memberLimit))
             await ctx.Reply(
-                $"{Emojis.Warn} You are approaching the per-system member limit ({memberCount} / {memberLimit} members). Please review your member list for unused or duplicate members.");
+                $"{Emojis.Warn} You are approaching the per-system member limit ({memberCount} / {memberLimit} members). Once you reach this limit, you will be unable to create new members until existing members are deleted, or you can ask for your limit to be raised in the PluralKit support server: <https://discord.gg/PczBt78>");
     }
 
     public async Task ViewMember(Context ctx, PKMember target)
     {
         var system = await ctx.Repository.GetSystem(target.System);
         await ctx.Reply(
-            embed: await _embeds.CreateMemberEmbed(system, target, ctx.Guild, ctx.LookupContextFor(system.Id), ctx.Zone));
+            embed: await _embeds.CreateMemberEmbed(system, target, ctx.Guild, ctx.Config, ctx.LookupContextFor(system.Id), ctx.Zone));
     }
 
     public async Task Soulscream(Context ctx, PKMember target)
@@ -143,6 +156,6 @@ public class Member
 
     public async Task DisplayId(Context ctx, PKMember target)
     {
-        await ctx.Reply(target.Hid);
+        await ctx.Reply(target.DisplayHid(ctx.Config));
     }
 }

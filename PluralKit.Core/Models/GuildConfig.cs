@@ -7,4 +7,6 @@ public class GuildConfig
     public ulong[] LogBlacklist { get; }
     public ulong[] Blacklist { get; }
     public bool LogCleanupEnabled { get; }
+    public bool InvalidCommandResponseEnabled { get; }
+    public bool RequireSystemTag { get; }
 }

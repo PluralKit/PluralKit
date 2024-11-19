@@ -3,8 +3,8 @@
 
 	export let shard = {
 		id: 1,
-		status: "",
-		ping:0,
+		up:false,
+		latency:0,
 		disconnection_count:0,
 		last_connection:0,
 		last_heartbeat:0,
@@ -14,11 +14,11 @@
 	let color = "background-color: #fff";
 
 	// shard is down
-	if (shard.status != "up" || shard.heartbeat_minutes_ago > 5) color = "background-color: #000;";
+	if (!shard.up || shard.heartbeat_minutes_ago > 5) color = "background-color: #000;";
 	// shard latency is < 250ms: OK!
-	else if (shard.ping < 300) color = "background-color: #00cc00;";
+	else if (shard.latency < 300) color = "background-color: #00cc00;";
 	// shard latency is 250ms < ping < 600ms: slow, but OK
-	else if (shard.ping < 600) color = "background-color: #da9317;";
+	else if (shard.latency < 600) color = "background-color: #da9317;";
 	// shard latency is >600ms, this might be problematic
 	else color = "background-color: #cc0000;"
 </script>
@@ -32,8 +32,8 @@
 		<br>
 		<h3>Shard { shard.id }</h3>
 		<br>
-		<span>Status: <b>{ shard.status }</b></span><br>
-		<span>Latency: { shard.ping }ms</span><br>
+		<span>Status: <b>{ shard.up ? "up" : "down" }</b></span><br>
+		<span>Latency: { shard.latency }ms</span><br>
 		<span>Disconnection count: { shard.disconnection_count }</span><br>
 		<span>Last connection: { shard.last_connection } UTC</span><br>
 		<span>Last heartbeat: { shard.last_heartbeat } UTC</span>

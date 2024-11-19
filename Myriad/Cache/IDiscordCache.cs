@@ -18,11 +18,9 @@ public interface IDiscordCache
 
     internal ulong GetOwnUser();
     public Task<Guild?> TryGetGuild(ulong guildId);
-    public Task<Channel?> TryGetChannel(ulong channelId);
+    public Task<Channel?> TryGetChannel(ulong guildId, ulong channelId);
     public Task<User?> TryGetUser(ulong userId);
     public Task<GuildMemberPartial?> TryGetSelfMember(ulong guildId);
-    public Task<Role?> TryGetRole(ulong roleId);
 
-    public IAsyncEnumerable<Guild> GetAllGuilds();
     public Task<IEnumerable<Channel>> GetGuildChannels(ulong guildId);
 }

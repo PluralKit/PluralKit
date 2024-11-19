@@ -9,10 +9,12 @@ namespace PluralKit.Bot;
 public class MemberAvatar
 {
     private readonly HttpClient _client;
+    private readonly AvatarHostingService _avatarHosting;
 
-    public MemberAvatar(HttpClient client)
+    public MemberAvatar(HttpClient client, AvatarHostingService avatarHosting)
     {
         _client = client;
+        _avatarHosting = avatarHosting;
     }
 
     private async Task AvatarClear(MemberAvatarLocation location, Context ctx, PKMember target, MemberGuildSettings? mgs)
@@ -121,9 +123,10 @@ public class MemberAvatar
                                          MemberGuildSettings? guildData)
     {
         // First, see if we need to *clear*
-        if (ctx.MatchClear() && await ctx.ConfirmClear("this member's " + location.Name()))
+        if (ctx.MatchClear())
         {
             ctx.CheckSystem().CheckOwnMember(target);
+            await ctx.ConfirmClear("this member's " + location.Name());
             await AvatarClear(location, ctx, target, guildData);
             return;
         }
@@ -138,8 +141,10 @@ public class MemberAvatar
         }
 
         ctx.CheckSystem().CheckOwnMember(target);
+
+        avatarArg = await _avatarHosting.TryRehostImage(avatarArg.Value, AvatarHostingService.RehostedImageType.Avatar, ctx.Author.Id, ctx.System);
         await AvatarUtils.VerifyAvatarOrThrow(_client, avatarArg.Value.Url);
-        await UpdateAvatar(location, ctx, target, avatarArg.Value.Url);
+        await UpdateAvatar(location, ctx, target, avatarArg.Value.CleanUrl ?? avatarArg.Value.Url);
         await PrintResponse(location, ctx, target, avatarArg.Value, guildData);
     }
 
@@ -170,13 +175,15 @@ public class MemberAvatar
                 $"{Emojis.Success} Member {location.Name()} changed to {avatar.SourceUser?.Username}'s avatar!{serverFrag}\n{Emojis.Warn} If {avatar.SourceUser?.Username} changes their avatar, the member's avatar will need to be re-set.",
             AvatarSource.Url =>
                 $"{Emojis.Success} Member {location.Name()} changed to the image at the given URL.{serverFrag}",
+            AvatarSource.HostedCdn =>
+                $"{Emojis.Success} Member {location.Name()} changed to attached image.{serverFrag}",
             AvatarSource.Attachment =>
                 $"{Emojis.Success} Member {location.Name()} changed to attached image.{serverFrag}\n{Emojis.Warn} If you delete the message containing the attachment, the avatar will stop working.",
             _ => throw new ArgumentOutOfRangeException()
         };
 
         // The attachment's already right there, no need to preview it.
-        var hasEmbed = avatar.Source != AvatarSource.Attachment;
+        var hasEmbed = avatar.Source != AvatarSource.Attachment && avatar.Source != AvatarSource.HostedCdn;
         return hasEmbed
             ? ctx.Reply(msg, new EmbedBuilder().Image(new Embed.EmbedImage(avatar.Url)).Build())
             : ctx.Reply(msg);

@@ -52,7 +52,7 @@ public class MessageCreated: IEventHandler<MessageCreateEvent>
         _dmCache = dmCache;
     }
 
-    public ulong? ErrorChannelFor(MessageCreateEvent evt, ulong userId) => evt.ChannelId;
+    public (ulong?, ulong?) ErrorChannelFor(MessageCreateEvent evt, ulong userId) => (evt.GuildId, evt.ChannelId);
     private bool IsDuplicateMessage(Message msg) =>
         // We consider a message duplicate if it has the same ID as the previous message that hit the gateway
         _lastMessageCache.GetLastMessage(msg.ChannelId)?.Current.Id == msg.Id;
@@ -63,7 +63,7 @@ public class MessageCreated: IEventHandler<MessageCreateEvent>
         if (evt.Type != Message.MessageType.Default && evt.Type != Message.MessageType.Reply) return;
         if (IsDuplicateMessage(evt)) return;
 
-        var botPermissions = await _cache.PermissionsIn(evt.ChannelId);
+        var botPermissions = await _cache.BotPermissionsIn(evt.GuildId ?? 0, evt.ChannelId);
         if (!botPermissions.HasFlag(PermissionSet.SendMessages)) return;
 
         // spawn off saving the private channel into another thread
@@ -71,8 +71,8 @@ public class MessageCreated: IEventHandler<MessageCreateEvent>
         _ = _dmCache.TrySavePrivateChannel(evt);
 
         var guild = evt.GuildId != null ? await _cache.GetGuild(evt.GuildId.Value) : null;
-        var channel = await _cache.GetChannel(evt.ChannelId);
-        var rootChannel = await _cache.GetRootChannel(evt.ChannelId);
+        var channel = await _cache.GetChannel(evt.GuildId ?? 0, evt.ChannelId);
+        var rootChannel = await _cache.GetRootChannel(evt.GuildId ?? 0, evt.ChannelId);
 
         // Log metrics and message info
         _metrics.Measure.Meter.Mark(BotMetrics.MessagesReceived);
@@ -90,7 +90,8 @@ public class MessageCreated: IEventHandler<MessageCreateEvent>
         if (await TryHandleCommand(shardId, evt, guild, channel))
             return;
 
-        await TryHandleProxy(evt, guild, channel, rootChannel.Id, botPermissions);
+        if (evt.GuildId != null)
+            await TryHandleProxy(evt, guild, channel, rootChannel.Id, botPermissions);
     }
 
     private async Task TryHandleLogClean(Channel channel, MessageCreateEvent evt)
@@ -113,6 +114,11 @@ public class MessageCreated: IEventHandler<MessageCreateEvent>
         if (!HasCommandPrefix(content, _config.ClientId, out var cmdStart) || cmdStart == content.Length)
             return false;
 
+        // if the command message was sent by a user account with bot usage disallowed, ignore it
+        var abuse_log = await _repo.GetAbuseLogByAccount(evt.Author.Id);
+        if (abuse_log != null && abuse_log.DenyBotUsage)
+            return false;
+
         // Trim leading whitespace from command without actually modifying the string
         // This just moves the argPos pointer by however much whitespace is at the start of the post-argPos string
         var trimStartLengthDiff =
@@ -123,7 +129,9 @@ public class MessageCreated: IEventHandler<MessageCreateEvent>
         {
             var system = await _repo.GetSystemByAccount(evt.Author.Id);
             var config = system != null ? await _repo.GetSystemConfig(system.Id) : null;
-            await _tree.ExecuteCommand(new Context(_services, shardId, guild, channel, evt, cmdStart, system, config));
+            var guildConfig = guild != null ? await _repo.GetGuild(guild.Id) : null;
+
+            await _tree.ExecuteCommand(new Context(_services, shardId, guild, channel, evt, cmdStart, system, config, guildConfig));
         }
         catch (PKError)
         {
@@ -160,6 +168,9 @@ public class MessageCreated: IEventHandler<MessageCreateEvent>
         MessageContext ctx;
         using (_metrics.Measure.Timer.Time(BotMetrics.MessageContextQueryTime))
             ctx = await _repo.GetMessageContext(evt.Author.Id, evt.GuildId ?? default, rootChannel, channel.Id != rootChannel ? channel.Id : default);
+
+        if (ctx.DenyBotUsage)
+            return false;
 
         try
         {

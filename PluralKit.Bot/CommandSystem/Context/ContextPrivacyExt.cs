@@ -6,10 +6,10 @@ public static class ContextPrivacyExt
 {
     public static PrivacyLevel PopPrivacyLevel(this Context ctx)
     {
-        if (ctx.Match("public", "show", "shown", "visible"))
+        if (ctx.Match("public", "pub", "show", "shown", "visible", "unhide", "unhidden"))
             return PrivacyLevel.Public;
 
-        if (ctx.Match("private", "hide", "hidden"))
+        if (ctx.Match("private", "priv", "hide", "hidden"))
             return PrivacyLevel.Private;
 
         if (!ctx.HasNext())
@@ -33,7 +33,7 @@ public static class ContextPrivacyExt
     {
         if (!MemberPrivacyUtils.TryParseMemberPrivacy(ctx.PeekArgument(), out var subject))
             throw new PKSyntaxError(
-                $"Invalid privacy subject {ctx.PopArgument().AsCode()} (must be `name`, `description`, `avatar`, `birthday`, `pronouns`, `metadata`, `visibility`, or `all`).");
+                $"Invalid privacy subject {ctx.PopArgument().AsCode()} (must be `name`, `description`, `avatar`, `birthday`, `pronouns`, `proxy`, `metadata`, `visibility`, or `all`).");
 
         ctx.PopArgument();
         return subject;

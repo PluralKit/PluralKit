@@ -50,15 +50,13 @@
     let groupsStore: Writable<Group[]> = writable([])
     $: members = setContext<Writable<Member[]>>("members", membersStore)
     $: groups = setContext<Writable<Group[]>>("groups", groupsStore)
-    $: group = $groups.filter(g => g.id === $params.id)[0] || {}
+    let group: Group|null = null
 
     let title = isPublic ? "group" : "group (dash)";
 
     async function fetchGroup() {
         try {
-            const res = await api().groups($params.id).get({auth: !isPublic});
-            $groups = [res]
-            group = $groups.filter(g => g.id === $params.id)[0];
+            group = await api().groups($params.id).get({ auth: !isPublic })
             if (!isPublic && !group.privacy) {
                 notOwnSystem = true;
                 throw new Error("Group is not from own system.");
@@ -85,7 +83,7 @@
                 members.set(groupMembers);
             } else {
                 const systemGroups: Group[] = await api().systems("@me").groups.get({ auth: true, query: { with_members: true } });
-                group.members = systemGroups.filter((g: Group) => g.id === $params.id).map((m: Member) => m.uuid);
+                group.members = systemGroups.find((g: Group) => g.uuid === group.uuid).members
                 groups.set(systemGroups);
 
                 const systemMembers = await api().systems("@me").members.get({ auth: true });
@@ -195,6 +193,7 @@
                 <ListView {pageOptions} currentList={currentPage} fullListLength={groupMembers.length} options={listOptions}/>
                 {/if}
                 <ListPagination bind:currentPage={pageOptions.currentPage} {pageAmount} />
+                <div class="spacer"></div>
             {/if}
             {/if}
         </Col>

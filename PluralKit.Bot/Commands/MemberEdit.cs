@@ -13,10 +13,12 @@ namespace PluralKit.Bot;
 public class MemberEdit
 {
     private readonly HttpClient _client;
+    private readonly AvatarHostingService _avatarHosting;
 
-    public MemberEdit(HttpClient client)
+    public MemberEdit(HttpClient client, AvatarHostingService avatarHosting)
     {
         _client = client;
+        _avatarHosting = avatarHosting;
     }
 
     public async Task Name(Context ctx, PKMember target)
@@ -34,7 +36,7 @@ public class MemberEdit
         if (existingMember != null && existingMember.Id != target.Id)
         {
             var msg =
-                $"{Emojis.Warn} You already have a member in your system with the name \"{existingMember.NameFor(ctx)}\" (`{existingMember.Hid}`). Do you want to rename this member to that name too?";
+                $"{Emojis.Warn} You already have a member in your system with the name \"{existingMember.NameFor(ctx)}\" (`{existingMember.DisplayHid(ctx.Config)}`). Do you want to rename this member to that name too?";
             if (!await ctx.PromptYesNo(msg, "Rename")) throw new PKError("Member renaming cancelled.");
         }
 
@@ -45,7 +47,7 @@ public class MemberEdit
         await ctx.Reply($"{Emojis.Success} Member renamed (using {newName.Length}/{Limits.MaxMemberNameLength} characters).");
         if (newName.Contains(" "))
             await ctx.Reply(
-                $"{Emojis.Note} Note that this member's name now contains spaces. You will need to surround it with \"double quotes\" when using commands referring to it.");
+                $"{Emojis.Note} Note that this member's name now contains spaces. You will need to surround it with \"double quotes\" when using commands referring to it, or just use the member's short ID (which is `{target.DisplayHid(ctx.Config)}`).");
         if (target.DisplayName != null)
             await ctx.Reply(
                 $"{Emojis.Note} Note that this member has a display name set ({target.DisplayName}), and will be proxied using that name instead.");
@@ -68,30 +70,41 @@ public class MemberEdit
             noDescriptionSetMessage +=
                 $" To set one, type `pk;member {target.Reference(ctx)} description <description>`.";
 
-        if (ctx.MatchRaw())
-        {
+        var format = ctx.MatchFormat();
+
+        // if there's nothing next or what's next is "raw"/"plaintext" we're doing a query, so check for null
+        if (!ctx.HasNext(false) || format != ReplyFormat.Standard)
             if (target.Description == null)
+            {
                 await ctx.Reply(noDescriptionSetMessage);
-            else
-                await ctx.Reply($"```\n{target.Description}\n```");
+                return;
+            }
+
+        if (format == ReplyFormat.Raw)
+        {
+            await ctx.Reply($"```\n{target.Description}\n```");
+            return;
+        }
+        if (format == ReplyFormat.Plaintext)
+        {
+            var eb = new EmbedBuilder()
+                .Description($"Showing description for member {target.NameFor(ctx)} (`{target.DisplayHid(ctx.Config)}`)");
+            await ctx.Reply(target.Description, embed: eb.Build());
             return;
         }
 
         if (!ctx.HasNext(false))
         {
-            if (target.Description == null)
-                await ctx.Reply(noDescriptionSetMessage);
-            else
-                await ctx.Reply(embed: new EmbedBuilder()
-                    .Title("Member description")
-                    .Description(target.Description)
-                    .Field(new Embed.Field("\u200B",
-                        $"To print the description with formatting, type `pk;member {target.Reference(ctx)} description -raw`."
-                        + (ctx.System?.Id == target.System
-                            ? $" To clear it, type `pk;member {target.Reference(ctx)} description -clear`."
-                            : "")
-                        + $" Using {target.Description.Length}/{Limits.MaxDescriptionLength} characters."))
-                    .Build());
+            await ctx.Reply(embed: new EmbedBuilder()
+                .Title("Member description")
+                .Description(target.Description)
+                .Field(new Embed.Field("\u200B",
+                    $"To print the description with formatting, type `pk;member {target.Reference(ctx)} description -raw`."
+                    + (ctx.System?.Id == target.System
+                        ? $" To clear it, type `pk;member {target.Reference(ctx)} description -clear`."
+                        : "")
+                    + $" Using {target.Description.Length}/{Limits.MaxDescriptionLength} characters."))
+                .Build());
             return;
         }
 
@@ -120,30 +133,41 @@ public class MemberEdit
     {
         var noPronounsSetMessage = "This member does not have pronouns set.";
         if (ctx.System?.Id == target.System)
-            noPronounsSetMessage += $"To set some, type `pk;member {target.Reference(ctx)} pronouns <pronouns>`.";
+            noPronounsSetMessage += $" To set some, type `pk;member {target.Reference(ctx)} pronouns <pronouns>`.";
 
         ctx.CheckSystemPrivacy(target.System, target.PronounPrivacy);
 
-        if (ctx.MatchRaw())
-        {
+        var format = ctx.MatchFormat();
+
+        // if there's nothing next or what's next is "raw"/"plaintext" we're doing a query, so check for null
+        if (!ctx.HasNext(false) || format != ReplyFormat.Standard)
             if (target.Pronouns == null)
+            {
                 await ctx.Reply(noPronounsSetMessage);
-            else
-                await ctx.Reply($"```\n{target.Pronouns}\n```");
+                return;
+            }
+
+        if (format == ReplyFormat.Raw)
+        {
+            await ctx.Reply($"```\n{target.Pronouns}\n```");
+            return;
+        }
+        if (format == ReplyFormat.Plaintext)
+        {
+            var eb = new EmbedBuilder()
+                .Description($"Showing pronouns for member {target.NameFor(ctx)} (`{target.DisplayHid(ctx.Config)}`)");
+            await ctx.Reply(target.Pronouns, embed: eb.Build());
             return;
         }
 
         if (!ctx.HasNext(false))
         {
-            if (target.Pronouns == null)
-                await ctx.Reply(noPronounsSetMessage);
-            else
-                await ctx.Reply(
-                    $"**{target.NameFor(ctx)}**'s pronouns are **{target.Pronouns}**.\nTo print the pronouns with formatting, type `pk;member {target.Reference(ctx)} pronouns -raw`."
-                    + (ctx.System?.Id == target.System
-                        ? $" To clear them, type `pk;member {target.Reference(ctx)} pronouns -clear`."
-                        : "")
-                    + $" Using {target.Pronouns.Length}/{Limits.MaxPronounsLength} characters.");
+            await ctx.Reply(
+                $"**{target.NameFor(ctx)}**'s pronouns are **{target.Pronouns}**.\nTo print the pronouns with formatting, type `pk;member {target.Reference(ctx)} pronouns -raw`."
+                + (ctx.System?.Id == target.System
+                    ? $" To clear them, type `pk;member {target.Reference(ctx)} pronouns -clear`."
+                    : "")
+                + $" Using {target.Pronouns.Length}/{Limits.MaxPronounsLength} characters.");
             return;
         }
 
@@ -180,13 +204,15 @@ public class MemberEdit
 
         async Task SetBannerImage(ParsedImage img)
         {
+            img = await _avatarHosting.TryRehostImage(img, AvatarHostingService.RehostedImageType.Banner, ctx.Author.Id, ctx.System);
             await AvatarUtils.VerifyAvatarOrThrow(_client, img.Url, true);
 
-            await ctx.Repository.UpdateMember(target.Id, new MemberPatch { BannerImage = img.Url });
+            await ctx.Repository.UpdateMember(target.Id, new MemberPatch { BannerImage = img.CleanUrl ?? img.Url });
 
             var msg = img.Source switch
             {
                 AvatarSource.Url => $"{Emojis.Success} Member banner image changed to the image at the given URL.",
+                AvatarSource.HostedCdn => $"{Emojis.Success} Member banner image changed to attached image.",
                 AvatarSource.Attachment =>
                     $"{Emojis.Success} Member banner image changed to attached image.\n{Emojis.Warn} If you delete the message containing the attachment, the banner image will stop working.",
                 AvatarSource.User => throw new PKError("Cannot set a banner image to an user's avatar."),
@@ -194,7 +220,7 @@ public class MemberEdit
             };
 
             // The attachment's already right there, no need to preview it.
-            var hasEmbed = img.Source != AvatarSource.Attachment;
+            var hasEmbed = img.Source != AvatarSource.Attachment && img.Source != AvatarSource.HostedCdn;
             await (hasEmbed
                 ? ctx.Reply(msg, new EmbedBuilder().Image(new Embed.EmbedImage(img.Url)).Build())
                 : ctx.Reply(msg));
@@ -207,13 +233,13 @@ public class MemberEdit
                 var eb = new EmbedBuilder()
                     .Title($"{target.NameFor(ctx)}'s banner image")
                     .Image(new Embed.EmbedImage(target.BannerImage))
-                    .Description($"To clear, use `pk;member {target.Hid} banner clear`.");
+                    .Description($"To clear, use `pk;member {target.Reference(ctx)} banner clear`.");
                 await ctx.Reply(embed: eb.Build());
             }
             else
             {
                 throw new PKSyntaxError(
-                    "This member does not have a banner image set. Set one by attaching an image to this command, or by passing an image URL or @mention.");
+                    "This member does not have a banner image set. Set one by attaching an image to this command, or by passing an image URL.");
             }
         }
 
@@ -228,7 +254,7 @@ public class MemberEdit
     public async Task Color(Context ctx, PKMember target)
     {
         var isOwnSystem = ctx.System?.Id == target.System;
-        var matchedRaw = ctx.MatchRaw();
+        var matchedFormat = ctx.MatchFormat();
         var matchedClear = ctx.MatchClear();
 
         if (!isOwnSystem || !(ctx.HasNext() || matchedClear))
@@ -236,8 +262,10 @@ public class MemberEdit
             if (target.Color == null)
                 await ctx.Reply(
                     "This member does not have a color set." + (isOwnSystem ? $" To set one, type `pk;member {target.Reference(ctx)} color <color>`." : ""));
-            else if (matchedRaw)
+            else if (matchedFormat == ReplyFormat.Raw)
                 await ctx.Reply("```\n#" + target.Color + "\n```");
+            else if (matchedFormat == ReplyFormat.Plaintext)
+                await ctx.Reply(target.Color);
             else
                 await ctx.Reply(embed: new EmbedBuilder()
                     .Title("Member color")
@@ -335,7 +363,7 @@ public class MemberEdit
         var eb = new EmbedBuilder()
             .Title("Member names")
             .Footer(new Embed.EmbedFooter(
-                $"Member ID: {target.Hid} | Active name in bold. Server name overrides display name, which overrides base name."
+                $"Member ID: {target.DisplayHid(ctx.Config)} | Active name in bold. Server name overrides display name, which overrides base name."
                 + (target.DisplayName != null && ctx.System?.Id == target.System ? $" Using {target.DisplayName.Length}/{Limits.MaxMemberNameLength} characters for the display name." : "")
                 + (memberGuildConfig?.DisplayName != null ? $" Using {memberGuildConfig?.DisplayName.Length}/{Limits.MaxMemberNameLength} characters for the server name." : "")));
 
@@ -384,12 +412,26 @@ public class MemberEdit
 
         // No perms check, display name isn't covered by member privacy
 
-        if (ctx.MatchRaw())
-        {
+        var format = ctx.MatchFormat();
+
+        // if what's next is "raw"/"plaintext" we need to check for null
+        if (format != ReplyFormat.Standard)
             if (target.DisplayName == null)
+            {
                 await ctx.Reply(noDisplayNameSetMessage);
-            else
-                await ctx.Reply($"```\n{target.DisplayName}\n```");
+                return;
+            }
+
+        if (format == ReplyFormat.Raw)
+        {
+            await ctx.Reply($"```\n{target.DisplayName}\n```");
+            return;
+        }
+        if (format == ReplyFormat.Plaintext)
+        {
+            var eb = new EmbedBuilder()
+                .Description($"Showing displayname for member {target.NameFor(ctx)} (`{target.DisplayHid(ctx.Config)}`)");
+            await ctx.Reply(target.DisplayName, embed: eb.Build());
             return;
         }
 
@@ -446,12 +488,26 @@ public class MemberEdit
         // No perms check, display name isn't covered by member privacy
         var memberGuildConfig = await ctx.Repository.GetMemberGuild(ctx.Guild.Id, target.Id);
 
-        if (ctx.MatchRaw())
-        {
+        var format = ctx.MatchFormat();
+
+        // if what's next is "raw"/"plaintext" we need to check for null
+        if (format != ReplyFormat.Standard)
             if (memberGuildConfig.DisplayName == null)
+            {
                 await ctx.Reply(noServerNameSetMessage);
-            else
-                await ctx.Reply($"```\n{memberGuildConfig.DisplayName}\n```");
+                return;
+            }
+
+        if (format == ReplyFormat.Raw)
+        {
+            await ctx.Reply($"```\n{memberGuildConfig.DisplayName}\n```");
+            return;
+        }
+        if (format == ReplyFormat.Plaintext)
+        {
+            var eb = new EmbedBuilder()
+                .Description($"Showing servername for member {target.NameFor(ctx)} (`{target.DisplayHid(ctx.Config)}`)");
+            await ctx.Reply(memberGuildConfig.DisplayName, embed: eb.Build());
             return;
         }
 
@@ -700,6 +756,7 @@ public class MemberEdit
                 .Field(new Embed.Field("Name (replaces name with display name if member has one)",
                     target.NamePrivacy.Explanation()))
                 .Field(new Embed.Field("Description", target.DescriptionPrivacy.Explanation()))
+                .Field(new Embed.Field("Banner", target.BannerPrivacy.Explanation()))
                 .Field(new Embed.Field("Avatar", target.AvatarPrivacy.Explanation()))
                 .Field(new Embed.Field("Birthday", target.BirthdayPrivacy.Explanation()))
                 .Field(new Embed.Field("Pronouns", target.PronounPrivacy.Explanation()))
@@ -708,7 +765,7 @@ public class MemberEdit
                     target.MetadataPrivacy.Explanation()))
                 .Field(new Embed.Field("Visibility", target.MemberVisibility.Explanation()))
                 .Description(
-                    "To edit privacy settings, use the command:\n`pk;member <member> privacy <subject> <level>`\n\n- `subject` is one of `name`, `description`, `avatar`, `birthday`, `pronouns`, `proxies`, `metadata`, `visibility`, or `all`\n- `level` is either `public` or `private`.")
+                    "To edit privacy settings, use the command:\n`pk;member <member> privacy <subject> <level>`\n\n- `subject` is one of `name`, `description`, `banner`, `avatar`, `birthday`, `pronouns`, `proxies`, `metadata`, `visibility`, or `all`\n- `level` is either `public` or `private`.")
                 .Build());
             return;
         }
@@ -738,6 +795,7 @@ public class MemberEdit
             {
                 MemberPrivacySubject.Name => "name privacy",
                 MemberPrivacySubject.Description => "description privacy",
+                MemberPrivacySubject.Banner => "banner privacy",
                 MemberPrivacySubject.Avatar => "avatar privacy",
                 MemberPrivacySubject.Pronouns => "pronoun privacy",
                 MemberPrivacySubject.Birthday => "birthday privacy",
@@ -753,6 +811,8 @@ public class MemberEdit
                     "This member's name is now hidden from other systems, and will be replaced by the member's display name.",
                 (MemberPrivacySubject.Description, PrivacyLevel.Private) =>
                     "This member's description is now hidden from other systems.",
+                (MemberPrivacySubject.Banner, PrivacyLevel.Private) =>
+                    "This member's banner is now hidden from other systems.",
                 (MemberPrivacySubject.Avatar, PrivacyLevel.Private) =>
                     "This member's avatar is now hidden from other systems.",
                 (MemberPrivacySubject.Birthday, PrivacyLevel.Private) =>
@@ -770,6 +830,8 @@ public class MemberEdit
                     "This member's name is no longer hidden from other systems.",
                 (MemberPrivacySubject.Description, PrivacyLevel.Public) =>
                     "This member's description is no longer hidden from other systems.",
+                (MemberPrivacySubject.Banner, PrivacyLevel.Public) =>
+                    "This member's banner is no longer hidden from other systems.",
                 (MemberPrivacySubject.Avatar, PrivacyLevel.Public) =>
                     "This member's avatar is no longer hidden from other systems.",
                 (MemberPrivacySubject.Birthday, PrivacyLevel.Public) =>
@@ -812,8 +874,8 @@ public class MemberEdit
         ctx.CheckSystem().CheckOwnMember(target);
 
         await ctx.Reply(
-            $"{Emojis.Warn} Are you sure you want to delete \"{target.NameFor(ctx)}\"? If so, reply to this message with the member's ID (`{target.Hid}`). __***This cannot be undone!***__");
-        if (!await ctx.ConfirmWithReply(target.Hid)) throw Errors.MemberDeleteCancelled;
+            $"{Emojis.Warn} Are you sure you want to delete \"{target.NameFor(ctx)}\"? If so, reply to this message with the member's ID (`{target.DisplayHid(ctx.Config)}`). __***This cannot be undone!***__");
+        if (!await ctx.ConfirmWithReply(target.Hid, treatAsHid: true)) throw Errors.MemberDeleteCancelled;
 
         await ctx.Repository.DeleteMember(target.Id);
 

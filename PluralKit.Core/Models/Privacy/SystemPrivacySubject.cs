@@ -5,6 +5,7 @@ public enum SystemPrivacySubject
     Name,
     Avatar,
     Description,
+    Banner,
     Pronouns,
     MemberList,
     GroupList,
@@ -22,6 +23,7 @@ public static class SystemPrivacyUtils
             SystemPrivacySubject.Name => system.NamePrivacy = level,
             SystemPrivacySubject.Avatar => system.AvatarPrivacy = level,
             SystemPrivacySubject.Description => system.DescriptionPrivacy = level,
+            SystemPrivacySubject.Banner => system.BannerPrivacy = level,
             SystemPrivacySubject.Pronouns => system.PronounPrivacy = level,
             SystemPrivacySubject.Front => system.FrontPrivacy = level,
             SystemPrivacySubject.FrontHistory => system.FrontHistoryPrivacy = level,
@@ -55,12 +57,24 @@ public static class SystemPrivacyUtils
                 break;
             case "description":
             case "desc":
-            case "text":
+            case "describe":
+            case "d":
+            case "bio":
             case "info":
+            case "text":
+            case "intro":
                 subject = SystemPrivacySubject.Description;
                 break;
+            case "banner":
+            case "b":
+            case "splash":
+            case "cover":
+                subject = SystemPrivacySubject.Banner;
+                break;
             case "pronouns":
+            case "pronoun":
             case "prns":
+            case "pn":
                 subject = SystemPrivacySubject.Pronouns;
                 break;
             case "members":

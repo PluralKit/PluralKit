@@ -97,9 +97,44 @@ public class Config
 
         items.Add(new(
             "Proxy error",
-            "Whether to send an error message when proxying fails.",
+            "Whether to send an error message when proxying fails",
             EnabledDisabled(ctx.Config.ProxyErrorMessageEnabled),
             "enabled"
+        ));
+
+        items.Add(new(
+            "Split IDs",
+            "Whether to display 6-character IDs split with a hyphen, to ease readability",
+            EnabledDisabled(ctx.Config.HidDisplaySplit),
+            "disabled"
+        ));
+
+        items.Add(new(
+            "Capitalize IDs",
+            "Whether to display IDs as capital letters, to ease readability",
+            EnabledDisabled(ctx.Config.HidDisplayCaps),
+            "disabled"
+        ));
+
+        items.Add(new(
+            "Pad IDs",
+            "Whether to pad 5-character IDs in lists (left/right)",
+            ctx.Config.HidListPadding.ToUserString(),
+            "off"
+        ));
+
+        items.Add(new(
+            "Proxy Switch",
+            "Whether using a proxy tag logs a switch",
+            EnabledDisabled(ctx.Config.ProxySwitch),
+            "disabled"
+        ));
+
+        items.Add(new(
+            "Name Format",
+            "Format string used to display a member's name https://pluralkit.me/guide/#setting-a-custom-name-format",
+            ctx.Config.NameFormat,
+            ProxyMember.DefaultFormat
         ));
 
         await ctx.Paginate<PaginatedConfigItem>(
@@ -442,5 +477,116 @@ public class Config
 
             await ctx.Reply("Proxy error messages are now disabled. Messages that fail to proxy (due to message or attachment size) will not throw an error message.");
         }
+    }
+
+    public async Task HidDisplaySplit(Context ctx)
+    {
+        if (!ctx.HasNext())
+        {
+            var msg = $"Splitting of 6-character IDs with a hyphen is currently **{EnabledDisabled(ctx.Config.HidDisplaySplit)}**.";
+            await ctx.Reply(msg);
+            return;
+        }
+
+        var newVal = ctx.MatchToggle(false);
+        await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { HidDisplaySplit = newVal });
+        await ctx.Reply($"Splitting of 6-character IDs with a hyphen is now {EnabledDisabled(newVal)}.");
+    }
+
+    public async Task HidDisplayCaps(Context ctx)
+    {
+        if (!ctx.HasNext())
+        {
+            var msg = $"Displaying IDs as capital letters is currently **{EnabledDisabled(ctx.Config.HidDisplayCaps)}**.";
+            await ctx.Reply(msg);
+            return;
+        }
+
+        var newVal = ctx.MatchToggle(false);
+        await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { HidDisplayCaps = newVal });
+        await ctx.Reply($"Displaying IDs as capital letters is now {EnabledDisabled(newVal)}.");
+    }
+
+    public async Task HidListPadding(Context ctx)
+    {
+        if (!ctx.HasNext())
+        {
+            string message;
+            switch (ctx.Config.HidListPadding)
+            {
+                case SystemConfig.HidPadFormat.None: message = "Padding 5-character IDs in lists is currently disabled."; break;
+                case SystemConfig.HidPadFormat.Left: message = "5-character IDs displayed in lists will have a padding space added to the beginning."; break;
+                case SystemConfig.HidPadFormat.Right: message = "5-character IDs displayed in lists will have a padding space added to the end."; break;
+                default: throw new Exception("unreachable");
+            }
+            await ctx.Reply(message);
+            return;
+        }
+
+        var badInputError = "Valid padding settings are `left`, `right`, or `off`.";
+
+        var toggleOff = ctx.MatchToggleOrNull(false);
+
+        switch (toggleOff)
+        {
+            case true: throw new PKError(badInputError);
+            case false:
+                {
+                    await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { HidListPadding = SystemConfig.HidPadFormat.None });
+                    await ctx.Reply("Padding 5-character IDs in lists has been disabled.");
+                    return;
+                }
+        }
+
+        if (ctx.Match("left", "l"))
+        {
+            await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { HidListPadding = SystemConfig.HidPadFormat.Left });
+            await ctx.Reply("5-character IDs displayed in lists will now have a padding space added to the beginning.");
+        }
+        else if (ctx.Match("right", "r"))
+        {
+            await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { HidListPadding = SystemConfig.HidPadFormat.Right });
+            await ctx.Reply("5-character IDs displayed in lists will now have a padding space added to the end.");
+        }
+        else throw new PKError(badInputError);
+    }
+
+    public async Task ProxySwitch(Context ctx)
+    {
+        if (!ctx.HasNext())
+        {
+            var msg = $"Logging a switch every time a proxy tag is used is currently **{EnabledDisabled(ctx.Config.ProxySwitch)}**.";
+            await ctx.Reply(msg);
+            return;
+        }
+
+        var newVal = ctx.MatchToggle(false);
+        await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { ProxySwitch = newVal });
+        await ctx.Reply($"Logging a switch every time a proxy tag is used is now {EnabledDisabled(newVal)}.");
+    }
+
+    public async Task NameFormat(Context ctx)
+    {
+        var clearFlag = ctx.MatchClear();
+        if (!ctx.HasNext() && !clearFlag)
+        {
+            await ctx.Reply($"Member names are currently formatted as `{ctx.Config.NameFormat ?? ProxyMember.DefaultFormat}`");
+            return;
+        }
+
+        string formatString;
+        if (clearFlag)
+            formatString = ProxyMember.DefaultFormat;
+        else
+            formatString = ctx.RemainderOrNull();
+
+        await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { NameFormat = formatString });
+        await ctx.Reply($"Member names are now formatted as `{formatString}`");
+    }
+
+    public Task LimitUpdate(Context ctx)
+    {
+        throw new PKError("You cannot update your own member or group limits. If you need a limit update, please join the " +
+        "support server and ask in #bot-support: https://discord.gg/PczBt78");
     }
 }

@@ -150,7 +150,7 @@
                     <CardBody>
                         {#if groupsWithMember && groupsWithMember.length > 0}
                         <p class="mb-0" style="text-align: left;">
-                            {#if finalGroupsList.length <= 5}
+                            {#if groupsWithMember.length <= 5}
                                 <AwaitHtml htmlPromise={parseMarkdown(shortGroupList(groupsWithMember), { embed: true, parseTimestamps: true })} />
                             {:else}
                                 <AwaitHtml htmlPromise={parseMarkdown(longGroupList(groupsWithMember), { embed: true, parseTimestamps: true })} />

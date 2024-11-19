@@ -46,7 +46,7 @@ You can have a space after `pk;`, e.g. `pk;system` and `pk; system` will do the 
 :::
 
 ## System commands
-*To target a specific system, replace `[system]` with that system's 5-character ID, a Discord account ID, or a @mention - note that system names can not be used here. If no system ID is specified, defaults to targeting your own system. For most commands, adding `-clear` will clear/delete the field.*
+*To target a specific system, replace `[system]` with that system's 5 or 6 character ID, a Discord account ID, or a @mention - note that system names can not be used here. If no system ID is specified, defaults to targeting your own system. For most commands, adding `-clear` will clear/delete the field.*
 - `pk;system [system]` - Shows information about a system.
 - `pk;system new [name]` - Creates a new system registered to your account.
 - `pk;system [system] rename [new name]` - Changes the name of your system.
@@ -74,7 +74,7 @@ You can have a space after `pk;`, e.g. `pk;system` and `pk; system` will do the 
 - `pk;system [system] id` - Prints a system's id. 
 
 ## Member commands
-*Replace `<member>` with a member's name, 5-character ID or display name. For most commands, adding `-clear` will clear/delete the field.*
+*Replace `<member>` with a member's name, 5 or 6 character ID, or display name. For most commands, adding `-clear` will clear/delete the field.*
 - `pk;member <member>` - Shows information about a member.
 - `pk;member new <name>` - Creates a new system member.
 - `pk;member <member> rename <new name>` - Changes the name of a member.
@@ -101,7 +101,7 @@ You can have a space after `pk;`, e.g. `pk;system` and `pk; system` will do the 
 - `pk;member <member> id` - Prints a member's id. 
 
 ## Group commands
-*Replace `<group>` with a group's name, 5-character ID or display name. For most commands, adding `-clear` will clear/delete the field.*
+*Replace `<group>` with a group's name, 5 or 6 character ID, or display name. For most commands, adding `-clear` will clear/delete the field.*
 - `pk;group <group>` - Shows information about a group.
 - `pk;group new <name>` - Creates a new group.
 - `pk;group list` - Lists all groups in your system.
@@ -123,7 +123,8 @@ You can have a space after `pk;`, e.g. `pk;system` and `pk; system` will do the 
 ## Switching commands
 - `pk;switch [member...]` - Registers a switch with the given members.
 - `pk;switch out` - Registers a 'switch-out' - a switch with no associated members.
-- `pk;switch edit <member...|out>` - Edits the members in the latest switch. 
+- `pk;switch edit <member...|out>` - Edits the members in the latest switch.
+- `pk;switch add <member...>` - Makes a new switch based off the current switch with the listed members added or removed.
 - `pk;switch move <time>` - Moves the latest switch backwards in time.
 - `pk;switch delete` - Deletes the latest switch.
 - `pk;switch delete all` - Deletes all logged switches.
@@ -143,18 +144,26 @@ You can have a space after `pk;`, e.g. `pk;system` and `pk; system` will do the 
 - `pk;config private member [on|off]` - Toggles whether member privacy is automatically set to private for new members.
 - `pk;config private group [on|off]` - Toggles whether group privacy is automatically set to private for new groups.
 - `pk;config show private [on|off]` - Toggles whether private information is shown to linked accounts by default.
+- `pk;config proxy error [on|off]` - Toggles whether to send an error message when proxying fails.
+- `pk;config split IDs [on|off]` - Toggles whether to display 6-letter IDs with a hyphen, to ease readability.
+- `pk;config capitalize IDs [on|off]` - Toggles whether to display IDs as capital letters, to ease readability.
+- `pk;config pad IDs [left|right|off]` - Toggles whether to pad (add a space) 5-character IDs in lists.
+- `pk;config proxy switch [on|off]` - Toggles whether to log a switch whenever you proxy as a different member.
+- `pk;config name format [format]` - Changes your system's username formatting.
 
 ## Server owner commands
 *(all commands here require Manage Server permission)*
-- `pk;log channel` - Shows the currently set log channel
-- `pk;log channel <channel>` - Sets the given channel to log all proxied messages.
-- `pk;log channel -clear` - Clears the currently set log channel.
-- `pk;log disable <#channel> [#channel...]` - Disables logging messages posted in the given channel(s) (useful for staff channels and such).
-- `pk;log enable <#channel> [#channel...]` - Re-enables logging messages posted in the given channel(s).
-- `pk;log show` - Displays the current list of channels where logging is disabled.
-- `pk;logclean <on|off>` - Enables or disables [log cleanup](/staff/compatibility/#log-cleanup).
-- `pk;blacklist add <#channel> [#channel...]` - Adds the given channel(s) to the proxy blacklist (proxying will be disabled here)
-- `pk;blacklist remove <#channel> [#channel...]` - Removes the given channel(s) from the proxy blacklist.
+- `pk;serverconfig log cleanup [on|off]` - Toggles whether to clean up other bots' log channels
+- `pk;serverconfig invalid command error [on|off]` - Sets whether to show an error message when an unknown command is sent
+- `pk;serverconfig require tag [on|off]` - Sets whether server users are required to have a system tag on proxied messages
+- `pk;serverconfig log channel <channel>` - Designates a channel to post proxied messages to
+- `pk;serverconfig log channel -clear` - Clears the currently set log channel
+- `pk;serverconfig log blacklist`- Displays the current list of channels where logging is disabled
+- `pk;serverconfig log blacklist add all|<channel> [channel 2] [channel 3...]` - Disables message logging in certain channels
+- `pk;serverconfig log blacklist remove all|<channel> [channel 2] [channel 3...]` - Enables message logging in certain channels
+- `pk;serverconfig proxy blacklist` - Displays the current proxy blacklist
+- `pk;serverconfig proxy blacklist add all|<channel> [channel 2] [channel 3...]` - Adds certain channels to the proxy blacklist
+- `pk;serverconfig blacklist remove all|<channel> [channel 2] [channel 3...]` - Removes certain channels from the proxy blacklist
 
 ## Utility
 - `pk;message <message id|message link|reply>` - Looks up information about a proxied message by its message ID or link.
@@ -164,6 +173,7 @@ You can have a space after `pk;`, e.g. `pk;system` and `pk; system` will do the 
 - `pk;debug permissions [server id]` - [Checks the given server's permission setup](/staff/permissions/#permission-checker-command) to check if it's compatible with PluralKit.
 - `pk;debug proxying <message link|reply>` - Checks why your message has not been proxied.
 - `pk;edit [message link|reply] <new content>` - Edits a proxied message. Without an explicit message target, will target the last message proxied by your system in the current channel. **Does not support message IDs!**
+- `pk;edit -regex [message link|reply] <regex>` - Edits a proxied message using a C# regex. The given regex must be formatted like s\|X\|Y or s\|X\|Y\|F, where \| is any character, X is a regex pattern, Y is a substitution string, and F is a set of flags.
 - `pk;reproxy [message link|reply] <member name|ID>` - Reproxies a message using a different member. Without an explicit message target, will target the last message proxied by your system in the current channel. Only works on the last message, or within 1 minute of the proxied message being sent. Doesn't work on a non-proxied message.
 - `pk;link <account>` - Links your system to a different account.
 - `pk;unlink [account]` - Unlinks an account from your system.

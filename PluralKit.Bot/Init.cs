@@ -42,10 +42,10 @@ public class Init
 
             using var _ = SentrySdk.Init(opts =>
             {
-                opts.Dsn = services.Resolve<CoreConfig>().SentryUrl;
+                opts.Dsn = services.Resolve<CoreConfig>().SentryUrl ?? "";
                 opts.Release = BuildInfoService.FullVersion;
                 opts.AutoSessionTracking = true;
-                opts.DisableTaskUnobservedTaskExceptionCapture();
+                //                opts.DisableTaskUnobservedTaskExceptionCapture();
             });
 
             var config = services.Resolve<BotConfig>();
@@ -56,8 +56,6 @@ public class Init
             await redis.InitAsync(coreConfig);
 
             var cache = services.Resolve<IDiscordCache>();
-            if (cache is RedisDiscordCache)
-                await (cache as RedisDiscordCache).InitAsync(coreConfig.RedisAddr);
 
             if (config.Cluster == null)
             {

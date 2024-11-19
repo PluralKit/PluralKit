@@ -63,7 +63,7 @@ public class MemberProxy
             if (!ctx.HasNext(false))
                 throw new PKSyntaxError("You must pass an example proxy to add (eg. `[text]` or `J:text`).");
 
-            var tagToAdd = ParseProxyTags(ctx.RemainderOrNull(false));
+            var tagToAdd = ParseProxyTags(ctx.RemainderOrNull(false).NormalizeLineEndSpacing());
             if (tagToAdd.IsEmpty) throw Errors.EmptyProxyTags(target, ctx);
             if (target.ProxyTags.Contains(tagToAdd))
                 throw Errors.ProxyTagAlreadyExists(tagToAdd, target);
@@ -87,10 +87,17 @@ public class MemberProxy
             if (!ctx.HasNext(false))
                 throw new PKSyntaxError("You must pass a proxy tag to remove (eg. `[text]` or `J:text`).");
 
-            var tagToRemove = ParseProxyTags(ctx.RemainderOrNull(false));
+            var remainder = ctx.RemainderOrNull(false);
+            var tagToRemove = ParseProxyTags(remainder.NormalizeLineEndSpacing());
             if (tagToRemove.IsEmpty) throw Errors.EmptyProxyTags(target, ctx);
             if (!target.ProxyTags.Contains(tagToRemove))
-                throw Errors.ProxyTagDoesNotExist(tagToRemove, target);
+            {
+                // Legacy support for when line endings weren't normalized
+                tagToRemove = ParseProxyTags(remainder);
+                if (!target.ProxyTags.Contains(tagToRemove))
+                    throw Errors.ProxyTagDoesNotExist(tagToRemove, target);
+            }
+
 
             var newTags = target.ProxyTags.ToList();
             newTags.Remove(tagToRemove);
@@ -102,7 +109,7 @@ public class MemberProxy
         // Subcommand: bare proxy tag given
         else
         {
-            var requestedTag = ParseProxyTags(ctx.RemainderOrNull(false));
+            var requestedTag = ParseProxyTags(ctx.RemainderOrNull(false).NormalizeLineEndSpacing());
             if (requestedTag.IsEmpty) throw Errors.EmptyProxyTags(target, ctx);
 
             // This is mostly a legacy command, so it's gonna warn if there's

@@ -91,8 +91,12 @@ public static class ContextArgumentsExt
     public static bool MatchClear(this Context ctx)
         => ctx.Match("clear", "reset", "default") || ctx.MatchFlag("c", "clear");
 
-    public static bool MatchRaw(this Context ctx) =>
-        ctx.Match("r", "raw") || ctx.MatchFlag("r", "raw");
+    public static ReplyFormat MatchFormat(this Context ctx)
+    {
+        if (ctx.Match("r", "raw") || ctx.MatchFlag("r", "raw")) return ReplyFormat.Raw;
+        if (ctx.Match("pt", "plaintext") || ctx.MatchFlag("pt", "plaintext")) return ReplyFormat.Plaintext;
+        return ReplyFormat.Standard;
+    }
 
     public static bool MatchToggle(this Context ctx, bool? defaultValue = null)
     {
@@ -184,4 +188,11 @@ public static class ContextArgumentsExt
 
         return groups;
     }
+}
+
+public enum ReplyFormat
+{
+    Standard,
+    Raw,
+    Plaintext
 }

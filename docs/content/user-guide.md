@@ -16,7 +16,7 @@ Use this link to add the bot to your server:
 
 [https://discord.com/oauth2/authorize?client_id=466378653216014359&scope=bot&permissions=536995904](https://discord.com/oauth2/authorize?client_id=466378653216014359&scope=bot&permissions=536995904)
 
-Once you go through the wizard, the bot account will automatically join the server you've chosen. Please ensure the bot has the *Read Messages*, *Send Messages*, *Manage Messages*, *Attach Files* and *Manage Webhooks* permission in the channels you want it to work in. 
+Once you go through the wizard, the bot account will automatically join the server you've chosen. Please ensure the bot has the *Read Messages*, *Send Messages*, *Send Messages in Threads*, *Manage Messages*, *Attach Files*, and *Manage Webhooks* permission in the channels you want it to work in.
 
 ## System management
 In order to do most things with the PluralKit bot, you'll need to have a system registered with it. A *system* is a collection of *system members* that may be used by one or more *Discord accounts*.
@@ -174,7 +174,7 @@ As the one exception to the rule above, if the name consists of multiple words y
 :::
 
 ### Looking up member info
-To view information about a member, there are a couple ways to do it. Either you can address a member by their name (if they're in your own system), by their 5-character *member ID*, or by their *display name*, like so:
+To view information about a member, there are a couple ways to do it. Either you can address a member by their name (if they're in your own system), by their 5 or 6 letter *member ID*, or by their *display name*, like so:
 
     pk;member John
     pk;member qazws
@@ -382,10 +382,18 @@ You can now set some proxy tags:
 
     pk;member John proxy John:text
 
-Now, oth of the following will work without needing to add multiple versions of the proxy tag:
+Now, both of the following will work without needing to add multiple versions of the proxy tag:
 
     John: Hello!
     JOHN: Hello!
+
+### Setting a custom name format
+
+The default proxy username formatting is "{name} {tag}", but you can customize this value in config:
+
+    pk;config nameformat {tag} {name}
+    pk;config nameformat {name}@{tag}
+
 
 ## Interacting with proxied messages
 
@@ -481,7 +489,7 @@ Then use the member's proxy tags once to set them as the latched member.
 #### Member mode 
 This autoproxy mode will autoproxy for a specific selected member, irrelevant of past proxies or fronters.
 
-To enable member-mode autoproxying for a given server, use the following command, where `<member>` is a member name (in "quotes" if multiple words) or 5-letter ID:
+To enable member-mode autoproxying for a given server, use the following command, where `<member>` is a member name (in "quotes" if multiple words), or 5 or 6 character ID:
 
     pk;autoproxy <member>
 
@@ -614,7 +622,7 @@ To create a new group, use the `pk;group new` command:
 
     pk;group new MyGroup
     
-This will create a new group. Groups all have a 5-letter ID, similar to systems and members.
+This will create a new group. Groups all have a 5 or 6 letter ID, similar to systems and members.
 
 ### Adding and removing members to groups
 To add a member to a group, use the `pk;group <group> add` command, eg:
@@ -667,6 +675,7 @@ There are various reasons you may not want information about your system or your
 At the moment, there are a few aspects of system privacy that can be configured.
 
 - System description
+- System banner
 - System pronouns
 - Member list
 - Group list
@@ -683,6 +692,7 @@ To update your system privacy settings, use the following commands:
     
 * `subject` is one of:
   * `description`
+  * `banner`
   * `pronouns`
   * `list`
   * `groups`
@@ -707,11 +717,13 @@ There are also some options for configuring member privacy:
 
 - Name
 - Description
+- Banner
 - Avatar
 - Birthday
 - Pronouns
 - Metadata *(message count, creation date, last message timestamp, etc)*
 - Visibility *(whether the member shows up in member lists)*
+- Proxy tags
 
 As with system privacy, each can be set to **public** or **private**. The same rules apply for how they are shown, too. When set to **public**, anyone who queries your system (by account or system ID, or through the API), will see this information. When set to **private**, the information will only be shown when *you yourself* query the information. The cards will still be displayed in the channel the commands are run in, so it's still your responsibility not to pull up information in servers where you don't want it displayed.
 
@@ -726,11 +738,13 @@ To update a member's privacy, you can use the command:
 * `subject` is one of:
   * `name`
   * `description`
+  * `banner`
   * `avatar`
   * `birthday`
   * `pronouns`
   * `metadata`
   * `visiblity`
+  * `proxy` or `tag` (*not* `proxy tag`)
   * `all` (to change all subjects at once)
 
 * `level` is either `public` or `private`
@@ -743,7 +757,7 @@ For example:
     pk;member Skyler privacy all private
 
 ## Importing and exporting data
-If you're a user of another proxy bot (e.g. Tupperbox), or you want to import a saved system backup, you can use the importing and exporting commands.
+If you're a user of another proxy bot (e.g. Tupperbox), or you want to import a saved system backup, you can use the importing and exporting commands. Note, if you are on a mobile device, using the links is recommended - using the .json file from either bot may not work as Discord tends to break the file on download/upload.
 
 ### Importing from Tupperbox
 If you're a user of the *other proxying bot* Tupperbox, you can import system and member information from there. This is a fairly simple process:

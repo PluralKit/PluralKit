@@ -14,7 +14,7 @@ Privacy objects (`privacy` key in models) contain values "private" or "public". 
 
 #### Notes on IDs
 
-Every PluralKit entity has two IDs: a short (5-character) ID and a longer UUID. The short ID is unique across the resource (a member can have the same short ID as a system, for example), while the UUID is consistent for the lifetime of the entity and globally unique across the bot.
+Every PluralKit entity has two IDs: a short (5 or 6 character) ID and a longer UUID. The short ID is unique across the resource (a member can have the same short ID as a system, for example), while the UUID is consistent for the lifetime of the entity and globally unique across the bot.
 
 ### System model
 
@@ -40,6 +40,7 @@ Every PluralKit entity has two IDs: a short (5-character) ID and a longer UUID. 
 |---|---|---|
 |id|string||
 |uuid|string||
+|?system|string|id of system this member is registered in (only returned in `/members/:id` endpoint)|
 |name|string|100-character limit|
 |display_name|?string|100-character limit|
 |color|?string|6-character hex code, no `#` at the beginning|
@@ -58,7 +59,7 @@ Every PluralKit entity has two IDs: a short (5-character) ID and a longer UUID. 
 |last_message_timestamp|?datetime||
 |privacy|?member privacy object||
 
-* Member privacy keys: `visibility`, `name_privacy`, `description_privacy`, `birthday_privacy`, `pronoun_privacy`, `avatar_privacy`, `metadata_privacy`
+* Member privacy keys: `visibility`, `name_privacy`, `description_privacy`, `birthday_privacy`, `pronoun_privacy`, `avatar_privacy`, `metadata_privacy`, `proxy_privacy`
 
 #### ProxyTag object
 
@@ -75,6 +76,7 @@ Every PluralKit entity has two IDs: a short (5-character) ID and a longer UUID. 
 |---|---|---|
 |id|string||
 |uuid|string||
+|?system|string|id of system this group is registered in (only returned in `/groups/:id` endpoint)|
 |name|string|100-character limit|
 |display_name|?string|100-character limit|
 |description|?string|1000-character limit|
@@ -134,6 +136,8 @@ Every PluralKit entity has two IDs: a short (5-character) ID and a longer UUID. 
 ### Autoproxy settings model
 |key|type|notes|
 |---|---|---|
+|?guild_id|snowflake|only sent if the guild ID isn't already known (in dispatch payloads)|
+|?channel_id|snowflake|only sent if the channel ID isn't already known (in dispatch payloads)|
 |autoproxy_mode|[autoproxy mode](#autoproxy-mode-enum)||
 |autoproxy_member|?member id|must be `null` if autoproxy_mode is set to `front`|
 |last_latch_timestamp|?datetime|read-only|

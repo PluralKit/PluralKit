@@ -19,7 +19,11 @@ public class SystemConfigPatch: PatchObject
     public Partial<string[]> DescriptionTemplates { get; set; }
     public Partial<bool> CaseSensitiveProxyTags { get; set; }
     public Partial<bool> ProxyErrorMessageEnabled { get; set; }
-
+    public Partial<bool> HidDisplaySplit { get; set; }
+    public Partial<bool> HidDisplayCaps { get; set; }
+    public Partial<string?> NameFormat { get; set; }
+    public Partial<SystemConfig.HidPadFormat> HidListPadding { get; set; }
+    public Partial<bool> ProxySwitch { get; set; }
 
     public override Query Apply(Query q) => q.ApplyPatch(wrapper => wrapper
         .With("ui_tz", UiTz)
@@ -33,6 +37,11 @@ public class SystemConfigPatch: PatchObject
         .With("description_templates", DescriptionTemplates)
         .With("case_sensitive_proxy_tags", CaseSensitiveProxyTags)
         .With("proxy_error_message_enabled", ProxyErrorMessageEnabled)
+        .With("hid_display_split", HidDisplaySplit)
+        .With("hid_display_caps", HidDisplayCaps)
+        .With("hid_list_padding", HidListPadding)
+        .With("proxy_switch", ProxySwitch)
+        .With("name_format", NameFormat)
     );
 
     public new void AssertIsValid()
@@ -88,6 +97,21 @@ public class SystemConfigPatch: PatchObject
         if (ProxyErrorMessageEnabled.IsPresent)
             o.Add("proxy_error_message_enabled", ProxyErrorMessageEnabled.Value);
 
+        if (HidDisplaySplit.IsPresent)
+            o.Add("hid_display_split", HidDisplaySplit.Value);
+
+        if (HidDisplayCaps.IsPresent)
+            o.Add("hid_display_caps", HidDisplayCaps.Value);
+
+        if (HidListPadding.IsPresent)
+            o.Add("hid_list_padding", HidListPadding.Value.ToUserString());
+
+        if (ProxySwitch.IsPresent)
+            o.Add("proxy_switch", ProxySwitch.Value);
+
+        if (NameFormat.IsPresent)
+            o.Add("name_format", NameFormat.Value);
+
         return o;
     }
 
@@ -118,6 +142,18 @@ public class SystemConfigPatch: PatchObject
 
         if (o.ContainsKey("proxy_error_message_enabled"))
             patch.ProxyErrorMessageEnabled = o.Value<bool>("proxy_error_message_enabled");
+
+        if (o.ContainsKey("hid_display_split"))
+            patch.HidDisplaySplit = o.Value<bool>("hid_display_split");
+
+        if (o.ContainsKey("hid_display_caps"))
+            patch.HidDisplayCaps = o.Value<bool>("hid_display_caps");
+
+        if (o.ContainsKey("proxy_switch"))
+            patch.ProxySwitch = o.Value<bool>("proxy_switch");
+
+        if (o.ContainsKey("name_format"))
+            patch.NameFormat = o.Value<string>("name_format");
 
         return patch;
     }

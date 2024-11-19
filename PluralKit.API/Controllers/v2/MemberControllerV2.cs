@@ -28,7 +28,7 @@ public class MemberControllerV2: PKControllerBase
         var members = _repo.GetSystemMembers(system.Id);
         return Ok(await members
             .Where(m => m.MemberVisibility.CanAccess(ctx))
-            .Select(m => m.ToJson(ctx))
+            .Select(m => m.ToJson(ctx, systemStr: system.Hid))
             .ToListAsync());
     }
 
@@ -64,7 +64,7 @@ public class MemberControllerV2: PKControllerBase
 
         await tx.CommitAsync();
 
-        return Ok(newMember.ToJson(LookupContext.ByOwner));
+        return Ok(newMember.ToJson(LookupContext.ByOwner, systemStr: system.Hid));
     }
 
     [HttpGet("members/{memberRef}")]
@@ -111,7 +111,7 @@ public class MemberControllerV2: PKControllerBase
             throw new ModelParseError(patch.Errors);
 
         var newMember = await _repo.UpdateMember(member.Id, patch);
-        return Ok(newMember.ToJson(LookupContext.ByOwner));
+        return Ok(newMember.ToJson(LookupContext.ByOwner, systemStr: system.Hid));
     }
 
     [HttpDelete("members/{memberRef}")]

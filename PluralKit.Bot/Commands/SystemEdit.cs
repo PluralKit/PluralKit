@@ -18,12 +18,14 @@ public class SystemEdit
     private readonly HttpClient _client;
     private readonly DataFileService _dataFiles;
     private readonly PrivateChannelService _dmCache;
+    private readonly AvatarHostingService _avatarHosting;
 
-    public SystemEdit(DataFileService dataFiles, HttpClient client, PrivateChannelService dmCache)
+    public SystemEdit(DataFileService dataFiles, HttpClient client, PrivateChannelService dmCache, AvatarHostingService avatarHosting)
     {
         _dataFiles = dataFiles;
         _client = client;
         _dmCache = dmCache;
+        _avatarHosting = avatarHosting;
     }
 
     public async Task Name(Context ctx, PKSystem target)
@@ -35,24 +37,35 @@ public class SystemEdit
         if (isOwnSystem)
             noNameSetMessage += " Type `pk;system name <name>` to set one.";
 
-        if (ctx.MatchRaw())
-        {
-            if (target.Name != null)
-                await ctx.Reply($"```\n{target.Name}\n```");
-            else
+        var format = ctx.MatchFormat();
+
+        // if there's nothing next or what's next is "raw"/"plaintext" we're doing a query, so check for null
+        if (!ctx.HasNext(false) || format != ReplyFormat.Standard)
+            if (target.Name == null)
+            {
                 await ctx.Reply(noNameSetMessage);
+                return;
+            }
+
+        if (format == ReplyFormat.Raw)
+        {
+            await ctx.Reply($"```\n{target.Name}\n```");
+            return;
+        }
+        if (format == ReplyFormat.Plaintext)
+        {
+            var eb = new EmbedBuilder()
+                .Description($"Showing name for system `{target.DisplayHid(ctx.Config)}`");
+            await ctx.Reply(target.Name, embed: eb.Build());
             return;
         }
 
         if (!ctx.HasNext(false))
         {
-            if (target.Name != null)
-                await ctx.Reply(
-                    $"{(isOwnSystem ? "Your" : "This")} system's name is currently **{target.Name}**."
-                    + (isOwnSystem ? " Type `pk;system name -clear` to clear it." : "")
-                    + $" Using {target.Name.Length}/{Limits.MaxSystemNameLength} characters.");
-            else
-                await ctx.Reply(noNameSetMessage);
+            await ctx.Reply(
+                $"{(isOwnSystem ? "Your" : "This")} system's name is currently **{target.Name}**."
+                + (isOwnSystem ? " Type `pk;system name -clear` to clear it." : "")
+                + $" Using {target.Name.Length}/{Limits.MaxSystemNameLength} characters.");
             return;
         }
 
@@ -89,24 +102,35 @@ public class SystemEdit
 
         var settings = await ctx.Repository.GetSystemGuild(ctx.Guild.Id, target.Id);
 
-        if (ctx.MatchRaw())
-        {
-            if (settings.DisplayName != null)
-                await ctx.Reply($"```\n{settings.DisplayName}\n```");
-            else
+        var format = ctx.MatchFormat();
+
+        // if there's nothing next or what's next is "raw"/"plaintext" we're doing a query, so check for null
+        if (!ctx.HasNext(false) || format != ReplyFormat.Standard)
+            if (settings.DisplayName == null)
+            {
                 await ctx.Reply(noNameSetMessage);
+                return;
+            }
+
+        if (format == ReplyFormat.Raw)
+        {
+            await ctx.Reply($"```\n{settings.DisplayName}\n```");
+            return;
+        }
+        if (format == ReplyFormat.Plaintext)
+        {
+            var eb = new EmbedBuilder()
+                .Description($"Showing servername for system `{target.DisplayHid(ctx.Config)}`");
+            await ctx.Reply(settings.DisplayName, embed: eb.Build());
             return;
         }
 
         if (!ctx.HasNext(false))
         {
-            if (settings.DisplayName != null)
-                await ctx.Reply(
-                    $"{(isOwnSystem ? "Your" : "This")} system's name for this server is currently **{settings.DisplayName}**."
-                    + (isOwnSystem ? " Type `pk;system servername -clear` to clear it." : "")
-                    + $" Using {settings.DisplayName.Length}/{Limits.MaxSystemNameLength} characters.");
-            else
-                await ctx.Reply(noNameSetMessage);
+            await ctx.Reply(
+                $"{(isOwnSystem ? "Your" : "This")} system's name for this server is currently **{settings.DisplayName}**."
+                + (isOwnSystem ? " Type `pk;system servername -clear` to clear it." : "")
+                + $" Using {settings.DisplayName.Length}/{Limits.MaxSystemNameLength} characters.");
             return;
         }
 
@@ -141,28 +165,39 @@ public class SystemEdit
         if (isOwnSystem)
             noDescriptionSetMessage += " To set one, type `pk;s description <description>`.";
 
-        if (ctx.MatchRaw())
-        {
+        var format = ctx.MatchFormat();
+
+        // if there's nothing next or what's next is "raw"/"plaintext" we're doing a query, so check for null
+        if (!ctx.HasNext(false) || format != ReplyFormat.Standard)
             if (target.Description == null)
+            {
                 await ctx.Reply(noDescriptionSetMessage);
-            else
-                await ctx.Reply($"```\n{target.Description}\n```");
+                return;
+            }
+
+        if (format == ReplyFormat.Raw)
+        {
+            await ctx.Reply($"```\n{target.Description}\n```");
+            return;
+        }
+        if (format == ReplyFormat.Plaintext)
+        {
+            var eb = new EmbedBuilder()
+                .Description($"Showing description for system `{target.DisplayHid(ctx.Config)}`");
+            await ctx.Reply(target.Description, embed: eb.Build());
             return;
         }
 
         if (!ctx.HasNext(false))
         {
-            if (target.Description == null)
-                await ctx.Reply(noDescriptionSetMessage);
-            else
-                await ctx.Reply(embed: new EmbedBuilder()
-                    .Title("System description")
-                    .Description(target.Description)
-                    .Footer(new Embed.EmbedFooter(
-                        "To print the description with formatting, type `pk;s description -raw`."
-                            + (isOwnSystem ? " To clear it, type `pk;s description -clear`. To change it, type `pk;s description <new description>`." : "")
-                            + $" Using {target.Description.Length}/{Limits.MaxDescriptionLength} characters."))
-                    .Build());
+            await ctx.Reply(embed: new EmbedBuilder()
+                .Title("System description")
+                .Description(target.Description)
+                .Footer(new Embed.EmbedFooter(
+                    "To print the description with formatting, type `pk;s description -raw`."
+                        + (isOwnSystem ? " To clear it, type `pk;s description -clear`. To change it, type `pk;s description <new description>`." : "")
+                        + $" Using {target.Description.Length}/{Limits.MaxDescriptionLength} characters."))
+                .Build());
             return;
         }
 
@@ -189,7 +224,7 @@ public class SystemEdit
     public async Task Color(Context ctx, PKSystem target)
     {
         var isOwnSystem = ctx.System?.Id == target.Id;
-        var matchedRaw = ctx.MatchRaw();
+        var matchedFormat = ctx.MatchFormat();
         var matchedClear = ctx.MatchClear();
 
         if (!isOwnSystem || !(ctx.HasNext() || matchedClear))
@@ -197,8 +232,10 @@ public class SystemEdit
             if (target.Color == null)
                 await ctx.Reply(
                     "This system does not have a color set." + (isOwnSystem ? " To set one, type `pk;system color <color>`." : ""));
-            else if (matchedRaw)
+            else if (matchedFormat == ReplyFormat.Raw)
                 await ctx.Reply("```\n#" + target.Color + "\n```");
+            else if (matchedFormat == ReplyFormat.Plaintext)
+                await ctx.Reply(target.Color);
             else
                 await ctx.Reply(embed: new EmbedBuilder()
                     .Title("System color")
@@ -244,22 +281,33 @@ public class SystemEdit
             ? "You currently have no system tag set. To set one, type `pk;s tag <tag>`."
             : "This system currently has no system tag set.";
 
-        if (ctx.MatchRaw())
-        {
+        var format = ctx.MatchFormat();
+
+        // if there's nothing next or what's next is "raw"/"plaintext" we're doing a query, so check for null
+        if (!ctx.HasNext(false) || format != ReplyFormat.Standard)
             if (target.Tag == null)
+            {
                 await ctx.Reply(noTagSetMessage);
-            else
-                await ctx.Reply($"```\n{target.Tag}\n```");
+                return;
+            }
+
+        if (format == ReplyFormat.Raw)
+        {
+            await ctx.Reply($"```\n{target.Tag}\n```");
+            return;
+        }
+        if (format == ReplyFormat.Plaintext)
+        {
+            var eb = new EmbedBuilder()
+                .Description($"Showing tag for system `{target.DisplayHid(ctx.Config)}`");
+            await ctx.Reply(target.Tag, embed: eb.Build());
             return;
         }
 
         if (!ctx.HasNext(false))
         {
-            if (target.Tag == null)
-                await ctx.Reply(noTagSetMessage);
-            else
-                await ctx.Reply($"{(isOwnSystem ? "Your" : "This system's")} current system tag is {target.Tag.AsCode()}."
-                    + (isOwnSystem ? "To change it, type `pk;s tag <tag>`. To clear it, type `pk;s tag -clear`." : ""));
+            await ctx.Reply($"{(isOwnSystem ? "Your" : "This system's")} current system tag is {target.Tag.AsCode()}."
+                + (isOwnSystem ? "To change it, type `pk;s tag <tag>`. To clear it, type `pk;s tag -clear`." : ""));
             return;
         }
 
@@ -294,13 +342,20 @@ public class SystemEdit
 
         var settings = await ctx.Repository.GetSystemGuild(ctx.Guild.Id, target.Id);
 
-        async Task Show(bool raw = false)
+        async Task Show(ReplyFormat format = ReplyFormat.Standard)
         {
             if (settings.Tag != null)
             {
-                if (raw)
+                if (format == ReplyFormat.Raw)
                 {
                     await ctx.Reply($"```{settings.Tag}```");
+                    return;
+                }
+                if (format == ReplyFormat.Plaintext)
+                {
+                    var eb = new EmbedBuilder()
+                        .Description($"Showing servertag for system `{target.DisplayHid(ctx.Config)}`");
+                    await ctx.Reply(settings.Tag, embed: eb.Build());
                     return;
                 }
 
@@ -398,8 +453,8 @@ public class SystemEdit
             await EnableDisable(false);
         else if (ctx.Match("enable") || ctx.MatchFlag("enable"))
             await EnableDisable(true);
-        else if (ctx.MatchRaw())
-            await Show(true);
+        else if (ctx.MatchFormat() != ReplyFormat.Standard)
+            await Show(ctx.MatchFormat());
         else if (!ctx.HasNext(false))
             await Show();
         else
@@ -416,24 +471,35 @@ public class SystemEdit
         if (isOwnSystem)
             noPronounsSetMessage += " To set some, type `pk;system pronouns <pronouns>`";
 
-        if (ctx.MatchRaw())
-        {
+        var format = ctx.MatchFormat();
+
+        // if there's nothing next or what's next is "raw"/"plaintext" we're doing a query, so check for null
+        if (!ctx.HasNext(false) || format != ReplyFormat.Standard)
             if (target.Pronouns == null)
+            {
                 await ctx.Reply(noPronounsSetMessage);
-            else
-                await ctx.Reply($"```\n{target.Pronouns}\n```");
+                return;
+            }
+
+        if (format == ReplyFormat.Raw)
+        {
+            await ctx.Reply($"```\n{target.Pronouns}\n```");
+            return;
+        }
+        if (format == ReplyFormat.Plaintext)
+        {
+            var eb = new EmbedBuilder()
+                .Description($"Showing pronouns for system `{target.DisplayHid(ctx.Config)}`");
+            await ctx.Reply(target.Pronouns, embed: eb.Build());
             return;
         }
 
         if (!ctx.HasNext(false))
         {
-            if (target.Pronouns == null)
-                await ctx.Reply(noPronounsSetMessage);
-            else
-                await ctx.Reply($"{(isOwnSystem ? "Your" : "This system's")} current pronouns are **{target.Pronouns}**.\nTo print the pronouns with formatting, type `pk;system pronouns -raw`."
-                + (isOwnSystem ? " To clear them, type `pk;system pronouns -clear`."
-                : "")
-                + $" Using {target.Pronouns.Length}/{Limits.MaxPronounsLength} characters.");
+            await ctx.Reply($"{(isOwnSystem ? "Your" : "This system's")} current pronouns are **{target.Pronouns}**.\nTo print the pronouns with formatting, type `pk;system pronouns -raw`."
+            + (isOwnSystem ? " To clear them, type `pk;system pronouns -clear`."
+            : "")
+            + $" Using {target.Pronouns.Length}/{Limits.MaxPronounsLength} characters.");
             return;
         }
 
@@ -473,22 +539,24 @@ public class SystemEdit
         {
             ctx.CheckOwnSystem(target);
 
+            img = await _avatarHosting.TryRehostImage(img, AvatarHostingService.RehostedImageType.Avatar, ctx.Author.Id, ctx.System);
             await AvatarUtils.VerifyAvatarOrThrow(_client, img.Url);
 
-            await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { AvatarUrl = img.Url });
+            await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { AvatarUrl = img.CleanUrl ?? img.Url });
 
             var msg = img.Source switch
             {
                 AvatarSource.User =>
                     $"{Emojis.Success} System icon changed to {img.SourceUser?.Username}'s avatar!\n{Emojis.Warn} If {img.SourceUser?.Username} changes their avatar, the system icon will need to be re-set.",
                 AvatarSource.Url => $"{Emojis.Success} System icon changed to the image at the given URL.",
+                AvatarSource.HostedCdn => $"{Emojis.Success} System icon changed to attached image.",
                 AvatarSource.Attachment =>
                     $"{Emojis.Success} System icon changed to attached image.\n{Emojis.Warn} If you delete the message containing the attachment, the system icon will stop working.",
                 _ => throw new ArgumentOutOfRangeException()
             };
 
             // The attachment's already right there, no need to preview it.
-            var hasEmbed = img.Source != AvatarSource.Attachment;
+            var hasEmbed = img.Source != AvatarSource.Attachment && img.Source != AvatarSource.HostedCdn;
             await (hasEmbed
                 ? ctx.Reply(msg, new EmbedBuilder().Image(new Embed.EmbedImage(img.Url)).Build())
                 : ctx.Reply(msg));
@@ -541,9 +609,10 @@ public class SystemEdit
         {
             ctx.CheckOwnSystem(target);
 
+            img = await _avatarHosting.TryRehostImage(img, AvatarHostingService.RehostedImageType.Avatar, ctx.Author.Id, ctx.System);
             await AvatarUtils.VerifyAvatarOrThrow(_client, img.Url);
 
-            await ctx.Repository.UpdateSystemGuild(target.Id, ctx.Guild.Id, new SystemGuildPatch { AvatarUrl = img.Url });
+            await ctx.Repository.UpdateSystemGuild(target.Id, ctx.Guild.Id, new SystemGuildPatch { AvatarUrl = img.CleanUrl ?? img.Url });
 
             var msg = img.Source switch
             {
@@ -551,13 +620,14 @@ public class SystemEdit
                     $"{Emojis.Success} System icon for this server changed to {img.SourceUser?.Username}'s avatar! It will now be used for anything that uses system avatar in this server.\n{Emojis.Warn} If {img.SourceUser?.Username} changes their avatar, the system icon for this server will need to be re-set.",
                 AvatarSource.Url =>
                     $"{Emojis.Success} System icon for this server changed to the image at the given URL. It will now be used for anything that uses system avatar in this server.",
+                AvatarSource.HostedCdn => $"{Emojis.Success} System icon for this server changed to attached image.",
                 AvatarSource.Attachment =>
                     $"{Emojis.Success} System icon for this server changed to attached image. It will now be used for anything that uses system avatar in this server.\n{Emojis.Warn} If you delete the message containing the attachment, the system icon for this server will stop working.",
                 _ => throw new ArgumentOutOfRangeException()
             };
 
             // The attachment's already right there, no need to preview it.
-            var hasEmbed = img.Source != AvatarSource.Attachment;
+            var hasEmbed = img.Source != AvatarSource.Attachment && img.Source != AvatarSource.HostedCdn;
             await (hasEmbed
                 ? ctx.Reply(msg, new EmbedBuilder().Image(new Embed.EmbedImage(img.Url)).Build())
                 : ctx.Reply(msg));
@@ -602,7 +672,7 @@ public class SystemEdit
 
     public async Task BannerImage(Context ctx, PKSystem target)
     {
-        ctx.CheckSystemPrivacy(target.Id, target.DescriptionPrivacy);
+        ctx.CheckSystemPrivacy(target.Id, target.BannerPrivacy);
 
         var isOwnSystem = target.Id == ctx.System?.Id;
 
@@ -638,13 +708,15 @@ public class SystemEdit
 
         else if (await ctx.MatchImage() is { } img)
         {
+            img = await _avatarHosting.TryRehostImage(img, AvatarHostingService.RehostedImageType.Banner, ctx.Author.Id, ctx.System);
             await AvatarUtils.VerifyAvatarOrThrow(_client, img.Url, true);
 
-            await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { BannerImage = img.Url });
+            await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { BannerImage = img.CleanUrl ?? img.Url });
 
             var msg = img.Source switch
             {
                 AvatarSource.Url => $"{Emojis.Success} System banner image changed to the image at the given URL.",
+                AvatarSource.HostedCdn => $"{Emojis.Success} System banner image changed to attached image.",
                 AvatarSource.Attachment =>
                     $"{Emojis.Success} System banner image changed to attached image.\n{Emojis.Warn} If you delete the message containing the attachment, the banner image will stop working.",
                 AvatarSource.User => throw new PKError("Cannot set a banner image to an user's avatar."),
@@ -652,7 +724,7 @@ public class SystemEdit
             };
 
             // The attachment's already right there, no need to preview it.
-            var hasEmbed = img.Source != AvatarSource.Attachment;
+            var hasEmbed = img.Source != AvatarSource.Attachment && img.Source != AvatarSource.HostedCdn;
             await (hasEmbed
                 ? ctx.Reply(msg, new EmbedBuilder().Image(new Embed.EmbedImage(img.Url)).Build())
                 : ctx.Reply(msg));
@@ -662,19 +734,20 @@ public class SystemEdit
     public async Task Delete(Context ctx, PKSystem target)
     {
         ctx.CheckSystem().CheckOwnSystem(target);
+        var noExport = ctx.MatchFlag("ne", "no-export");
 
-        await ctx.Reply(
-            $"{Emojis.Warn} Are you sure you want to delete your system? If so, reply to this message with your system's ID (`{target.Hid}`).\n"
-                + $"**Note: this action is permanent,** but you will get a copy of your system's data that can be re-imported into PluralKit at a later date sent to you in DMs."
-                + " If you don't want this to happen, use `pk;s delete -no-export` instead.");
-        if (!await ctx.ConfirmWithReply(target.Hid))
+        var warnMsg = $"{Emojis.Warn} Are you sure you want to delete your system? If so, reply to this message with your system's ID (`{target.DisplayHid(ctx.Config)}`).\n";
+        if (!noExport)
+            warnMsg += "**Note: this action is permanent,** but you will get a copy of your system's data that can be re-imported into PluralKit at a later date sent to you in DMs."
+                + " If you don't want this to happen, use `pk;s delete -no-export` instead.";
+
+        await ctx.Reply(warnMsg);
+        if (!await ctx.ConfirmWithReply(target.Hid, treatAsHid: true))
             throw new PKError(
-                $"System deletion cancelled. Note that you must reply with your system ID (`{target.Hid}`) *verbatim*.");
+                $"System deletion cancelled. Note that you must reply with your system ID (`{target.DisplayHid(ctx.Config)}`) *verbatim*.");
 
         // If the user confirms the deletion, export their system and send them the export file before actually
         // deleting their system, unless they specifically tell us not to do an export.
-
-        var noExport = ctx.MatchFlag("ne", "no-export");
         if (!noExport)
         {
             var json = await ctx.BusyIndicator(async () =>
@@ -762,13 +835,14 @@ public class SystemEdit
                 .Field(new Embed.Field("Name", target.NamePrivacy.Explanation()))
                 .Field(new Embed.Field("Avatar", target.AvatarPrivacy.Explanation()))
                 .Field(new Embed.Field("Description", target.DescriptionPrivacy.Explanation()))
+                .Field(new Embed.Field("Banner", target.BannerPrivacy.Explanation()))
                 .Field(new Embed.Field("Pronouns", target.PronounPrivacy.Explanation()))
                 .Field(new Embed.Field("Member list", target.MemberListPrivacy.Explanation()))
                 .Field(new Embed.Field("Group list", target.GroupListPrivacy.Explanation()))
                 .Field(new Embed.Field("Current fronter(s)", target.FrontPrivacy.Explanation()))
                 .Field(new Embed.Field("Front/switch history", target.FrontHistoryPrivacy.Explanation()))
                 .Description(
-                    "To edit privacy settings, use the command:\n`pk;system privacy <subject> <level>`\n\n- `subject` is one of `name`, `avatar`, `description`, `list`, `front`, `fronthistory`, `groups`, or `all` \n- `level` is either `public` or `private`.");
+                    "To edit privacy settings, use the command:\n`pk;system privacy <subject> <level>`\n\n- `subject` is one of `name`, `avatar`, `description`, `banner`, `list`, `front`, `fronthistory`, `groups`, or `all` \n- `level` is either `public` or `private`.");
             return ctx.Reply(embed: eb.Build());
         }
 
@@ -788,6 +862,7 @@ public class SystemEdit
                 SystemPrivacySubject.Name => "name",
                 SystemPrivacySubject.Avatar => "avatar",
                 SystemPrivacySubject.Description => "description",
+                SystemPrivacySubject.Banner => "banner",
                 SystemPrivacySubject.Pronouns => "pronouns",
                 SystemPrivacySubject.Front => "front",
                 SystemPrivacySubject.FrontHistory => "front history",

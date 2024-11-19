@@ -26,6 +26,13 @@ We also track feature requests through [Github Issues](https://github.com/Plural
 ### How can I support the bot's development?
 I (the bot author, [Ske](https://twitter.com/floofstrid)) have a Patreon. The income from there goes towards server hosting, domains, infrastructure, my Monster Energy addiction, et cetera. There are no benefits. There might never be any. But nevertheless, it can be found here: [https://www.patreon.com/floofstrid](https://www.patreon.com/floofstrid)
 
+### Can I recover my system if I lose access to my Discord account?
+Yes, through one of two methods. Both require you to do preparations **before** you lose the account. 
+
+Option 1: If you have an alternate discord account you can link your PluralKit system to that account using `pk;link <@account>`. Then if you use access to your main discord account, you already have access on your alternate account. 
+
+Option 2: The PluralKit staff can help you recover your system if you have your token (gotten using `pk;token`). This is the *only* way you can prove ownership so we can help you recover your system, so store it in a safe place. Make sure to keep your token safe; if other people get access to it they can also use it to access your system. If your token is ever compromised run `pk;token refresh` to invalidate the old token and get a new one.
+
 ## Privacy / safety
 
 ### Who has access to the bot's data?
@@ -68,8 +75,10 @@ No. This is a limitation in Discord itself, and cannot be changed. The color com
 * Discord sometimes has issues displaying avatars. We can't do anything about that, sorry :(
 
 ### Why can't I use nitro emoji in some channels?
-Webhooks inherit nitro emoji permissions from the `@everyone` role, so `@everyone` must have the "Use External Emoji" permission to be able to use nitro emoji with PluralKit.
-If it still doesn't work, make sure this permission isn't denied in channel overrides (found in channel settings -> permissions).
+* PluralKit must have the "Use External Emoji" permission to be able to use nitro emojis with the bot.
+If it still doesn't work, make sure this permission isn't denied in channel overrides (found in channel settings -> permissions). You can also check if it's a permissions issue with `pk;debug permissions`.
+* PluralKit must be in the server the emojis are from. This is because of a change made by Discord in 2022.
+* Because PluralKit cannot be a Twitch subscriber, it will never be able to use emojis from Twitch integrations.
 
 ### Why can't I invite PluralKit to my server?
 
@@ -86,3 +95,8 @@ You probably set your timezone in PluralKit to a specific timezone, and PluralKi
 ### Why am I not able to edit a message via ID? or, Why is PluralKit editing the wrong message?
 It is not possible to edit messages via ID. Please use the full link, or reply to the message.
 
+### How do I reply-ping/reply-@ proxied messages?
+You cannot reply-@ a proxied messages due to their nature as webhooks. If you want to "reply-@" a proxied message, you must react to the message with 🔔, 🛎, or 🏓. This will send a message from PluralKit that reads "Psst, MEMBER (@User), you have been pinged by @You", which will ping the Discord account behind the proxied message.
+
+### Why do most of PluralKit's messages look blank or empty?
+A lot of PluralKit's command responses use Discord embeds. If you can't see them, it's likely you have embeds turned off. To change this, go into your discord settings and find the tab "Chat" under "App Settings". Find the setting "Show embeds and preview website links" and turn it on. If it's already on, try turning it off and then on again. 

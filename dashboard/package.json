@@ -11,6 +11,7 @@
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^1.0.0-next.30",
     "@tsconfig/svelte": "^3.0.0",
+    "js-base64": "^3.7.7",
     "svelte": "^3.44.0",
     "svelte-check": "^2.2.7",
     "svelte-toggle": "^3.1.0",
@@ -26,7 +27,7 @@
     "bootstrap": "^5.1.3",
     "bootstrap-dark-5": "^1.1.3",
     "core-js-pure": "^3.23.4",
-    "discord-markdown": "https://github.com/Draconizations/discord-markdown#fe852ba7bf2f56744a632207a314d749aa12dd65",
+    "discord-markdown": "github:draconizations/discord-markdown#9d25e45015766779916baea52c37ae0fe12aac73",
     "gh-pages": "^3.2.3",
     "highlight.js": "^11.7.0",
     "import": "^0.0.6",

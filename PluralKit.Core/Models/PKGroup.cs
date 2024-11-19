@@ -32,7 +32,13 @@ public readonly struct GroupId: INumericId<GroupId, int>
 public class PKGroup
 {
     public GroupId Id { get; private set; }
-    public string Hid { get; private set; } = null!;
+    private string _hid = null!;
+    public string Hid
+    {
+        private set => _hid = value.Trim();
+        get => _hid;
+    }
+
     public Guid Uuid { get; private set; }
     public SystemId System { get; private set; }
 
@@ -45,6 +51,7 @@ public class PKGroup
 
     public PrivacyLevel NamePrivacy { get; private set; }
     public PrivacyLevel DescriptionPrivacy { get; private set; }
+    public PrivacyLevel BannerPrivacy { get; private set; }
     public PrivacyLevel IconPrivacy { get; private set; }
     public PrivacyLevel ListPrivacy { get; private set; }
     public PrivacyLevel MetadataPrivacy { get; private set; }
@@ -82,7 +89,7 @@ public static class PKGroupExt
         o.Add("display_name", group.NamePrivacy.CanAccess(ctx) ? group.DisplayName : null);
         o.Add("description", group.DescriptionPrivacy.Get(ctx, group.Description));
         o.Add("icon", group.IconFor(ctx));
-        o.Add("banner", group.DescriptionPrivacy.Get(ctx, group.BannerImage));
+        o.Add("banner", group.BannerPrivacy.Get(ctx, group.BannerImage));
         o.Add("color", group.Color);
 
         o.Add("created", group.CreatedFor(ctx)?.FormatExport());
@@ -96,6 +103,7 @@ public static class PKGroupExt
 
             p.Add("name_privacy", group.NamePrivacy.ToJsonString());
             p.Add("description_privacy", group.DescriptionPrivacy.ToJsonString());
+            p.Add("banner_privacy", group.BannerPrivacy.ToJsonString());
             p.Add("icon_privacy", group.IconPrivacy.ToJsonString());
             p.Add("list_privacy", group.ListPrivacy.ToJsonString());
             p.Add("metadata_privacy", group.MetadataPrivacy.ToJsonString());

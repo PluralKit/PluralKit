@@ -19,8 +19,20 @@ public class SystemConfig
 
     public DateTimeZone Zone => DateTimeZoneProviders.Tzdb.GetZoneOrNull(UiTz);
 
-    public bool CaseSensitiveProxyTags { get; set; }
+    public bool CaseSensitiveProxyTags { get; }
     public bool ProxyErrorMessageEnabled { get; }
+    public bool HidDisplaySplit { get; }
+    public bool HidDisplayCaps { get; }
+    public HidPadFormat HidListPadding { get; }
+    public bool ProxySwitch { get; }
+    public string NameFormat { get; }
+
+    public enum HidPadFormat
+    {
+        None = 0,
+        Left = 1,
+        Right = 2,
+    }
 }
 
 public static class SystemConfigExt
@@ -39,9 +51,20 @@ public static class SystemConfigExt
         o.Add("group_limit", cfg.GroupLimitOverride ?? Limits.MaxGroupCount);
         o.Add("case_sensitive_proxy_tags", cfg.CaseSensitiveProxyTags);
         o.Add("proxy_error_message_enabled", cfg.ProxyErrorMessageEnabled);
+        o.Add("hid_display_split", cfg.HidDisplaySplit);
+        o.Add("hid_display_caps", cfg.HidDisplayCaps);
+        o.Add("hid_list_padding", cfg.HidListPadding.ToUserString());
+        o.Add("proxy_switch", cfg.ProxySwitch);
+        o.Add("name_format", cfg.NameFormat);
 
         o.Add("description_templates", JArray.FromObject(cfg.DescriptionTemplates));
 
         return o;
+    }
+
+    public static string ToUserString(this SystemConfig.HidPadFormat val)
+    {
+        if (val == SystemConfig.HidPadFormat.None) return "off";
+        return val.ToString().ToLower();
     }
 }

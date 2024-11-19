@@ -1,14 +1,45 @@
 [workspace]
 members = [
     "./lib/libpk",
-    "./services/api"
+    "./services/api",
+    "./services/dispatch",
+    "./services/gateway",
+    "./services/avatars"
 ]
 
 [workspace.dependencies]
 anyhow = "1"
-fred = { version = "5.2.0", default-features = false, features = ["tracing", "pool-prefer-active"] }
+axum = "0.7.5"
+axum-macros = "0.4.1"
+bytes = "1.6.0"
+chrono = "0.4"
+fred = { version = "9.3.0", default-features = false, features = ["tracing", "i-keys", "i-hashes", "i-scripts", "sha-1"] }
+futures = "0.3.30"
 lazy_static = "1.4.0"
-metrics = "0.20.1"
-serde = "1.0.152"
-tokio = { version = "1.25.0", features = ["full"] }
-tracing = "0.1.37"
+metrics = "0.23.0"
+reqwest = { version = "0.12.7" , default-features = false, features = ["rustls-tls", "trust-dns"]}
+serde = { version = "1.0.196", features = ["derive"] }
+serde_json = "1.0.117"
+signal-hook = "0.3.17"
+sqlx = { version = "0.8.2", features = ["runtime-tokio", "postgres", "time", "macros", "uuid"] }
+time = "0.3.34"
+tokio = { version = "1.36.0", features = ["full"] }
+tracing = "0.1.40"
+tracing-subscriber = { version = "0.3.16", features = ["env-filter", "json"] }
+uuid = { version = "1.7.0", features = ["serde"] }
+
+twilight-gateway = { git = "https://github.com/pluralkit/twilight" }
+twilight-cache-inmemory = { git = "https://github.com/pluralkit/twilight", features = ["permission-calculator"] }
+twilight-util = { git = "https://github.com/pluralkit/twilight", features = ["permission-calculator"] }
+twilight-model = { git = "https://github.com/pluralkit/twilight" }
+twilight-http = { git = "https://github.com/pluralkit/twilight", default-features = false, features = ["rustls-native-roots"] }
+
+#twilight-gateway = { path = "../twilight/twilight-gateway" }
+#twilight-cache-inmemory = { path = "../twilight/twilight-cache-inmemory", features = ["permission-calculator"] }
+#twilight-util = { path = "../twilight/twilight-util", features = ["permission-calculator"] }
+#twilight-model = { path = "../twilight/twilight-model" }
+#twilight-http = { path = "../twilight/twilight-http", default-features = false, features = ["rustls-native-roots"] }
+
+prost = "0.12"
+prost-types = "0.12"
+prost-build = "0.12"

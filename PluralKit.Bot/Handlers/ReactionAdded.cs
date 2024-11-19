@@ -62,7 +62,7 @@ public class ReactionAdded: IEventHandler<MessageReactionAddEvent>
         // but we aren't able to get DMs from bots anyway, so it's not really needed
         if (evt.GuildId != null && (evt.Member?.User?.Bot ?? false)) return;
 
-        var channel = await _cache.GetChannel(evt.ChannelId);
+        var channel = await _cache.GetChannel(evt.GuildId ?? 0, evt.ChannelId);
 
         // check if it's a command message first
         // since this can happen in DMs as well
@@ -75,16 +75,17 @@ public class ReactionAdded: IEventHandler<MessageReactionAddEvent>
                 return;
             }
 
-            var (authorId, _) = await _commandMessageService.GetCommandMessage(evt.MessageId);
-            if (authorId != null)
+            var cmessage = await _commandMessageService.GetCommandMessage(evt.MessageId);
+            if (cmessage != null)
             {
-                await HandleCommandDeleteReaction(evt, authorId.Value, false);
+                await HandleCommandDeleteReaction(evt, cmessage.AuthorId, false);
                 return;
             }
         }
 
         // Proxied messages only exist in guild text channels, so skip checking if we're elsewhere
         if (!DiscordUtils.IsValidGuildChannel(channel)) return;
+        var abuse_log = await _repo.GetAbuseLogByAccount(evt.Member!.User!.Id);
 
         switch (evt.Emoji.Name.Split("\U0000fe0f", 2)[0])
         {
@@ -113,6 +114,7 @@ public class ReactionAdded: IEventHandler<MessageReactionAddEvent>
             case "\u23F0": // Alarm clock
             case "\u2757": // Exclamation mark
                 {
+                    if (abuse_log != null && abuse_log.DenyBotUsage) break;
                     var msg = await _repo.GetFullMessage(evt.MessageId);
                     if (msg != null)
                         await HandlePingReaction(evt, msg);
@@ -123,7 +125,7 @@ public class ReactionAdded: IEventHandler<MessageReactionAddEvent>
 
     private async ValueTask HandleProxyDeleteReaction(MessageReactionAddEvent evt, PKMessage msg)
     {
-        if (!(await _cache.PermissionsIn(evt.ChannelId)).HasFlag(PermissionSet.ManageMessages))
+        if (!(await _cache.BotPermissionsIn(evt.GuildId ?? 0, evt.ChannelId)).HasFlag(PermissionSet.ManageMessages))
             return;
 
         var isSameSystem = msg.Member != null && await _repo.IsMemberOwnedByAccount(msg.Member.Value, evt.UserId);
@@ -150,7 +152,7 @@ public class ReactionAdded: IEventHandler<MessageReactionAddEvent>
         if (authorId != null && authorId != evt.UserId)
             return;
 
-        if (!((await _cache.PermissionsIn(evt.ChannelId)).HasFlag(PermissionSet.ManageMessages) || isDM))
+        if (!((await _cache.BotPermissionsIn(evt.GuildId ?? 0, evt.ChannelId)).HasFlag(PermissionSet.ManageMessages) || isDM))
             return;
 
         // todo: don't try to delete the user's own messages in DMs
@@ -175,6 +177,8 @@ public class ReactionAdded: IEventHandler<MessageReactionAddEvent>
     private async ValueTask HandleQueryReaction(MessageReactionAddEvent evt, FullMessage msg)
     {
         var guild = await _cache.GetGuild(evt.GuildId!.Value);
+        var system = await _repo.GetSystemByAccount(evt.UserId);
+        var config = system != null ? await _repo.GetSystemConfig(system.Id) : null;
 
         // Try to DM the user info about the message
         try
@@ -188,11 +192,12 @@ public class ReactionAdded: IEventHandler<MessageReactionAddEvent>
                     msg.System,
                     msg.Member,
                     guild,
+                    config,
                     LookupContext.ByNonOwner,
                     DateTimeZone.Utc
                 ));
 
-            embeds.Add(await _embeds.CreateMessageInfoEmbed(msg, true));
+            embeds.Add(await _embeds.CreateMessageInfoEmbed(msg, true, config));
 
             await _rest.CreateMessage(dm, new MessageRequest { Embeds = embeds.ToArray() });
         }
@@ -203,14 +208,14 @@ public class ReactionAdded: IEventHandler<MessageReactionAddEvent>
 
     private async ValueTask HandlePingReaction(MessageReactionAddEvent evt, FullMessage msg)
     {
-        if (!(await _cache.PermissionsIn(evt.ChannelId)).HasFlag(PermissionSet.ManageMessages))
+        if (!(await _cache.BotPermissionsIn(evt.GuildId ?? 0, evt.ChannelId)).HasFlag(PermissionSet.ManageMessages))
             return;
 
         // Check if the "pinger" has permission to send messages in this channel
         // (if not, PK shouldn't send messages on their behalf)
         var member = await _rest.GetGuildMember(evt.GuildId!.Value, evt.UserId);
         var requiredPerms = PermissionSet.ViewChannel | PermissionSet.SendMessages;
-        if (member == null || !(await _cache.PermissionsFor(evt.ChannelId, member)).HasFlag(requiredPerms)) return;
+        if (member == null || !(await _cache.PermissionsForMemberInChannel(evt.GuildId ?? 0, evt.ChannelId, member)).HasFlag(requiredPerms)) return;
 
         if (msg.Member == null) return;
 
@@ -263,7 +268,7 @@ public class ReactionAdded: IEventHandler<MessageReactionAddEvent>
 
     private async Task TryRemoveOriginalReaction(MessageReactionAddEvent evt)
     {
-        if ((await _cache.PermissionsIn(evt.ChannelId)).HasFlag(PermissionSet.ManageMessages))
+        if ((await _cache.BotPermissionsIn(evt.GuildId ?? 0, evt.ChannelId)).HasFlag(PermissionSet.ManageMessages))
             await _rest.DeleteUserReaction(evt.ChannelId, evt.MessageId, evt.Emoji, evt.UserId);
     }
 }

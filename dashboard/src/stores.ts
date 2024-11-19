@@ -18,7 +18,8 @@ export const loggedIn = writable(false);
         member_list_privacy: null,
         front_privacy: null,
         front_history_privacy: null,
-        group_list_privacy: null
+        group_list_privacy: null,
+        banner_privacy: null,
     }
 }); */
 

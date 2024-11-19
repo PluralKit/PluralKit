@@ -13,19 +13,13 @@ public class AuthorizationTokenHandlerMiddleware
         _next = next;
     }
 
-    public async Task Invoke(HttpContext ctx, IDatabase db)
+    public async Task Invoke(HttpContext ctx, IDatabase db, ApiConfig cfg)
     {
-        ctx.Request.Headers.TryGetValue("authorization", out var authHeaders);
-        if (authHeaders.Count > 0)
-        {
-            var systemId = await db.Execute(conn => conn.QuerySingleOrDefaultAsync<SystemId?>(
-                "select id from systems where token = @token",
-                new { token = authHeaders[0] }
-            ));
-
-            if (systemId != null)
-                ctx.Items.Add("SystemId", systemId);
-        }
+        if (cfg.TrustAuth
+            && ctx.Request.Headers.TryGetValue("X-PluralKit-SystemId", out var sidHeaders)
+            && sidHeaders.Count > 0
+            && int.TryParse(sidHeaders[0], out var systemId))
+            ctx.Items.Add("SystemId", new SystemId(systemId));
 
         await _next.Invoke(ctx);
     }

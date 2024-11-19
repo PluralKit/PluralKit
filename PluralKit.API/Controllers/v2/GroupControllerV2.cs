@@ -21,9 +21,6 @@ public class GroupControllerV2: PKControllerBase
 
         var ctx = ContextFor(system);
 
-        if (with_members && !system.MemberListPrivacy.CanAccess(ctx))
-            throw Errors.UnauthorizedMemberList;
-
         if (!system.GroupListPrivacy.CanAccess(ContextFor(system)))
             throw Errors.UnauthorizedGroupList;
 
@@ -31,19 +28,16 @@ public class GroupControllerV2: PKControllerBase
 
         var j_groups = await groups
             .Where(g => g.Visibility.CanAccess(ctx))
-            .Select(g => g.ToJson(ctx, needsMembersArray: with_members))
+            .Select(g => g.ToJson(ctx, needsMembersArray: with_members, systemStr: system.Hid))
             .ToListAsync();
-
-        if (with_members && !system.MemberListPrivacy.CanAccess(ctx))
-            throw Errors.UnauthorizedMemberList;
 
         if (with_members && j_groups.Count > 0)
         {
             var q = await _repo.GetGroupMemberInfo(await groups
                 .Where(g => g.Visibility.CanAccess(ctx))
+                .Where(g => g.ListPrivacy.CanAccess(ctx))
                 .Select(x => x.Id)
                 .ToListAsync());
-
 
             foreach (var row in q)
                 if (row.MemberVisibility.CanAccess(ctx))
@@ -86,7 +80,7 @@ public class GroupControllerV2: PKControllerBase
 
         await tx.CommitAsync();
 
-        return Ok(newGroup.ToJson(LookupContext.ByOwner));
+        return Ok(newGroup.ToJson(LookupContext.ByOwner, system.Hid));
     }
 
     [HttpGet("groups/{groupRef}")]
@@ -133,7 +127,7 @@ public class GroupControllerV2: PKControllerBase
             throw new ModelParseError(patch.Errors);
 
         var newGroup = await _repo.UpdateGroup(group.Id, patch);
-        return Ok(newGroup.ToJson(LookupContext.ByOwner));
+        return Ok(newGroup.ToJson(LookupContext.ByOwner, system.Hid));
     }
 
     [HttpDelete("groups/{groupRef}")]

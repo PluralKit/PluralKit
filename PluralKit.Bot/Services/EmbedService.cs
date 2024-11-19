@@ -56,29 +56,18 @@ public class EmbedService
 
         var memberCount = await _repo.GetSystemMemberCount(system.Id, countctx == LookupContext.ByOwner ? null : PrivacyLevel.Public);
 
-        uint color;
-        try
-        {
-            color = system.Color?.ToDiscordColor() ?? DiscordUtils.Gray;
-        }
-        catch (ArgumentException)
-        {
-            // There's no API for system colors yet, but defaulting to a blank color in advance can't be a bad idea
-            color = DiscordUtils.Gray;
-        }
-
         var eb = new EmbedBuilder()
             .Title(system.NameFor(ctx))
             .Footer(new Embed.EmbedFooter(
-                $"System ID: {system.Hid} | Created on {system.Created.FormatZoned(cctx.Zone)}"))
-            .Color(color)
+                $"System ID: {system.DisplayHid(cctx.Config)} | Created on {system.Created.FormatZoned(cctx.Zone)}"))
+            .Color(system.Color?.ToDiscordColor())
             .Url($"https://dash.pluralkit.me/profile/s/{system.Hid}");
 
         var avatar = system.AvatarFor(ctx);
         if (avatar != null)
             eb.Thumbnail(new Embed.EmbedThumbnail(avatar));
 
-        if (system.DescriptionPrivacy.CanAccess(ctx))
+        if (system.BannerPrivacy.CanAccess(ctx))
             eb.Image(new Embed.EmbedImage(system.BannerImage));
 
         var latestSwitch = await _repo.GetLatestSwitch(system.Id);
@@ -90,7 +79,7 @@ public class EmbedService
             {
                 var memberStr = string.Join(", ", switchMembers.Select(m => m.NameFor(ctx)));
                 if (memberStr.Length > 200)
-                    memberStr = $"[too many to show, see `pk;system {system.Hid} fronters`]";
+                    memberStr = $"[too many to show, see `pk;system {system.DisplayHid(cctx.Config)} fronters`]";
                 eb.Field(new Embed.Field("Fronter".ToQuantity(switchMembers.Count, ShowQuantityAs.None), memberStr));
             }
         }
@@ -137,7 +126,7 @@ public class EmbedService
         {
             if (memberCount > 0)
                 eb.Field(new Embed.Field($"Members ({memberCount})",
-                    $"(see `pk;system {system.Hid} list` or `pk;system {system.Hid} list full`)", true));
+                    $"(see `pk;system {system.DisplayHid(cctx.Config)} list` or `pk;system {system.DisplayHid(cctx.Config)} list full`)", true));
             else
                 eb.Field(new Embed.Field($"Members ({memberCount})", "Add one with `pk;member new`!", true));
         }
@@ -175,7 +164,7 @@ public class EmbedService
         return embed.Build();
     }
 
-    public async Task<Embed> CreateMemberEmbed(PKSystem system, PKMember member, Guild guild, LookupContext ctx, DateTimeZone zone)
+    public async Task<Embed> CreateMemberEmbed(PKSystem system, PKMember member, Guild guild, SystemConfig? ccfg, LookupContext ctx, DateTimeZone zone)
     {
         // string FormatTimestamp(Instant timestamp) => DateTimeFormats.ZonedDateTimeFormat.Format(timestamp.InZone(system.Zone));
 
@@ -187,19 +176,6 @@ public class EmbedService
             name = $"{name} ({system.NameFor(ctx)})";
         else
             name = $"{name}";
-
-        uint color;
-        try
-        {
-            color = member.Color?.ToDiscordColor() ?? DiscordUtils.Gray;
-        }
-        catch (ArgumentException)
-        {
-            // Bad API use can cause an invalid color string
-            // this is now fixed in the API, but might still have some remnants in the database
-            // so we just default to a blank color, yolo
-            color = DiscordUtils.Gray;
-        }
 
         var guildSettings = guild != null ? await _repo.GetMemberGuild(guild.Id, member.Id) : null;
         var guildDisplayName = guildSettings?.DisplayName;
@@ -213,12 +189,12 @@ public class EmbedService
 
         var eb = new EmbedBuilder()
             .Author(new Embed.EmbedAuthor(name, IconUrl: webhook_avatar.TryGetCleanCdnUrl(), Url: $"https://dash.pluralkit.me/profile/m/{member.Hid}"))
-            // .WithColor(member.ColorPrivacy.CanAccess(ctx) ? color : DiscordUtils.Gray)
-            .Color(color)
+            // .WithColor(member.ColorPrivacy.CanAccess(ctx) ? color : null)
+            .Color(member.Color?.ToDiscordColor())
             .Footer(new Embed.EmbedFooter(
-                $"System ID: {system.Hid} | Member ID: {member.Hid} {(member.MetadataPrivacy.CanAccess(ctx) ? $"| Created on {member.Created.FormatZoned(zone)}" : "")}"));
+                $"System ID: {system.DisplayHid(ccfg)} | Member ID: {member.DisplayHid(ccfg)} {(member.MetadataPrivacy.CanAccess(ctx) ? $"| Created on {member.Created.FormatZoned(zone)}" : "")}"));
 
-        if (member.DescriptionPrivacy.CanAccess(ctx))
+        if (member.BannerPrivacy.CanAccess(ctx))
             eb.Image(new Embed.EmbedImage(member.BannerImage));
 
         var description = "";
@@ -255,7 +231,7 @@ public class EmbedService
             // More than 5 groups show in "compact" format without ID
             var content = groups.Count > 5
                 ? string.Join(", ", groups.Select(g => g.DisplayName ?? g.Name))
-                : string.Join("\n", groups.Select(g => $"[`{g.Hid}`] **{g.DisplayName ?? g.Name}**"));
+                : string.Join("\n", groups.Select(g => $"[`{g.DisplayHid(ccfg, isList: true)}`] **{g.DisplayName ?? g.Name}**"));
             eb.Field(new Embed.Field($"Groups ({groups.Count})", content.Truncate(1000)));
         }
 
@@ -287,26 +263,15 @@ public class EmbedService
         else if (system.NameFor(ctx) != null)
             nameField = $"{nameField} ({system.NameFor(ctx)})";
         else
-            nameField = $"{nameField} ({system.Name})";
-
-        uint color;
-        try
-        {
-            color = target.Color?.ToDiscordColor() ?? DiscordUtils.Gray;
-        }
-        catch (ArgumentException)
-        {
-            // There's no API for group colors yet, but defaulting to a blank color regardless
-            color = DiscordUtils.Gray;
-        }
+            nameField = $"{nameField}";
 
         var eb = new EmbedBuilder()
             .Author(new Embed.EmbedAuthor(nameField, IconUrl: target.IconFor(pctx), Url: $"https://dash.pluralkit.me/profile/g/{target.Hid}"))
-            .Color(color);
+            .Color(target.Color?.ToDiscordColor());
 
-        eb.Footer(new Embed.EmbedFooter($"System ID: {system.Hid} | Group ID: {target.Hid}{(target.MetadataPrivacy.CanAccess(pctx) ? $" | Created on {target.Created.FormatZoned(ctx.Zone)}" : "")}"));
+        eb.Footer(new Embed.EmbedFooter($"System ID: {system.DisplayHid(ctx.Config)} | Group ID: {target.DisplayHid(ctx.Config)}{(target.MetadataPrivacy.CanAccess(pctx) ? $" | Created on {target.Created.FormatZoned(ctx.Zone)}" : "")}"));
 
-        if (target.DescriptionPrivacy.CanAccess(pctx))
+        if (target.BannerPrivacy.CanAccess(pctx))
             eb.Image(new Embed.EmbedImage(target.BannerImage));
 
         if (target.NamePrivacy.CanAccess(pctx) && target.DisplayName != null)
@@ -324,7 +289,7 @@ public class EmbedService
             {
                 var name = pctx == LookupContext.ByOwner
                     ? target.Reference(ctx)
-                    : target.Hid;
+                    : target.DisplayHid(ctx.Config);
                 eb.Field(new Embed.Field($"Members ({memberCount})", $"(see `pk;group {name} list`)"));
             }
         }
@@ -362,16 +327,16 @@ public class EmbedService
         }
 
         return new EmbedBuilder()
-            .Color(members.FirstOrDefault()?.Color?.ToDiscordColor() ?? DiscordUtils.Gray)
+            .Color(members.FirstOrDefault()?.Color?.ToDiscordColor())
             .Field(new Embed.Field($"Current {"fronter".ToQuantity(members.Count, ShowQuantityAs.None)}", memberStr))
             .Field(new Embed.Field("Since",
                 $"{sw.Timestamp.FormatZoned(zone)} ({timeSinceSwitch.FormatDuration()} ago)"))
             .Build();
     }
 
-    public async Task<Embed> CreateMessageInfoEmbed(FullMessage msg, bool showContent)
+    public async Task<Embed> CreateMessageInfoEmbed(FullMessage msg, bool showContent, SystemConfig? ccfg = null)
     {
-        var channel = await _cache.GetOrFetchChannel(_rest, msg.Message.Channel);
+        var channel = await _cache.GetOrFetchChannel(_rest, msg.Message.Guild ?? 0, msg.Message.Channel);
         var ctx = LookupContext.ByNonOwner;
 
         var serverMsg = await _rest.GetMessageOrNull(msg.Message.Channel, msg.Message.Mid);
@@ -424,27 +389,29 @@ public class EmbedService
             .Field(new Embed.Field("System",
                 msg.System == null
                     ? "*(deleted or unknown system)*"
-                    : msg.System.NameFor(ctx) != null ? $"{msg.System.NameFor(ctx)} (`{msg.System.Hid}`)" : $"`{msg.System.Hid}`"
+                    : msg.System.NameFor(ctx) != null ? $"{msg.System.NameFor(ctx)} (`{msg.System.DisplayHid(ccfg)}`)" : $"`{msg.System.DisplayHid(ccfg)}`"
             , true))
             .Field(new Embed.Field("Member",
                 msg.Member == null
                     ? "*(deleted member)*"
-                    : $"{msg.Member.NameFor(ctx)} (`{msg.Member.Hid}`)"
+                    : $"{msg.Member.NameFor(ctx)} (`{msg.Member.DisplayHid(ccfg)}`)"
             , true))
             .Field(new Embed.Field("Sent by", userStr, true))
-            .Timestamp(DiscordUtils.SnowflakeToInstant(msg.Message.Mid).ToDateTimeOffset().ToString("O"));
+            .Timestamp(DiscordUtils.SnowflakeToInstant(msg.Message.Mid).ToDateTimeOffset().ToString("O"))
+            .Footer(new Embed.EmbedFooter($"Original Message ID: {msg.Message.OriginalMid}"));
 
         var roles = memberInfo?.Roles?.ToList();
         if (roles != null && roles.Count > 0 && showContent)
         {
-            var rolesString = string.Join(", ", (await Task.WhenAll(roles
-                    .Select(async id =>
+            var guild = await _cache.GetGuild(channel.GuildId!.Value);
+            var rolesString = string.Join(", ", (roles
+                    .Select(id =>
                     {
-                        var role = await _cache.TryGetRole(id);
+                        var role = Array.Find(guild.Roles, r => r.Id == id);
                         if (role != null)
                             return role;
                         return new Role { Name = "*(unknown role)*", Position = 0 };
-                    })))
+                    }))
                 .OrderByDescending(role => role.Position)
                 .Select(role => role.Name));
             eb.Field(new Embed.Field($"Account roles ({roles.Count})", rolesString.Truncate(1024)));
@@ -460,19 +427,9 @@ public class EmbedService
         var color = system.Color;
         if (group != null) color = group.Color;
 
-        uint embedColor;
-        try
-        {
-            embedColor = color?.ToDiscordColor() ?? DiscordUtils.Gray;
-        }
-        catch (ArgumentException)
-        {
-            embedColor = DiscordUtils.Gray;
-        }
-
         var eb = new EmbedBuilder()
             .Title(embedTitle)
-            .Color(embedColor);
+            .Color(color?.ToDiscordColor());
 
         var footer =
             $"Since {breakdown.RangeStart.FormatZoned(tz)} ({(breakdown.RangeEnd - breakdown.RangeStart).FormatDuration()} ago)";

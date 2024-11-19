@@ -53,41 +53,55 @@ public class GroupMember
 
     public async Task ListMemberGroups(Context ctx, PKMember target)
     {
-        var pctx = ctx.DirectLookupContextFor(target.System);
+        var targetSystem = await ctx.Repository.GetSystem(target.System);
+        var opts = ctx.ParseListOptions(ctx.DirectLookupContextFor(target.System), ctx.LookupContextFor(target.System));
+        opts.MemberFilter = target.Id;
 
-        var groups = await ctx.Repository.GetMemberGroups(target.Id)
-            .Where(g => g.Visibility.CanAccess(pctx))
-            .OrderBy(g => (g.DisplayName ?? g.Name), StringComparer.InvariantCultureIgnoreCase)
-            .ToListAsync();
-
-        var description = "";
-        var msg = "";
-
-        if (groups.Count == 0)
-            description = "This member has no groups.";
-        else
-            description = string.Join("\n", groups.Select(g => $"[`{g.Hid}`] **{g.DisplayName ?? g.Name}**"));
-
-        if (pctx == LookupContext.ByOwner)
+        var title = new StringBuilder($"Groups containing {target.Name} (`{target.DisplayHid(ctx.Config)}`) in ");
+        if (ctx.Guild != null)
         {
-            msg +=
-                $"\n\nTo add this member to one or more groups, use `pk;m {target.Reference(ctx)} group add <group> [group 2] [group 3...]`";
-            if (groups.Count > 0)
-                msg +=
-                    $"\nTo remove this member from one or more groups, use `pk;m {target.Reference(ctx)} group remove <group> [group 2] [group 3...]`";
+            var guildSettings = await ctx.Repository.GetSystemGuild(ctx.Guild.Id, targetSystem.Id);
+            if (guildSettings.DisplayName != null)
+                title.Append($"{guildSettings.DisplayName} (`{targetSystem.DisplayHid(ctx.Config)}`)");
+            else if (targetSystem.NameFor(ctx) != null)
+                title.Append($"{targetSystem.NameFor(ctx)} (`{targetSystem.DisplayHid(ctx.Config)}`)");
+            else
+                title.Append($"`{targetSystem.DisplayHid(ctx.Config)}`");
         }
+        else
+        {
+            if (targetSystem.NameFor(ctx) != null)
+                title.Append($"{targetSystem.NameFor(ctx)} (`{targetSystem.DisplayHid(ctx.Config)}`)");
+            else
+                title.Append($"`{targetSystem.DisplayHid(ctx.Config)}`");
+        }
+        if (opts.Search != null)
+            title.Append($" matching **{opts.Search.Truncate(100)}**");
 
-        await ctx.Reply(msg, new EmbedBuilder().Title($"{target.Name}'s groups").Description(description).Build());
+        await ctx.RenderGroupList(ctx.LookupContextFor(target.System), target.System, title.ToString(),
+            target.Color, opts);
     }
 
     public async Task AddRemoveMembers(Context ctx, PKGroup target, Groups.AddRemoveOperation op)
     {
         ctx.CheckOwnGroup(target);
 
-        var members = (await ctx.ParseMemberList(ctx.System.Id))
+        List<MemberId> members;
+        if (ctx.MatchFlag("all", "a"))
+        {
+            members = (await ctx.Database.Execute(conn => conn.QueryMemberList(target.System,
+                    new DatabaseViewsExt.ListQueryOptions { })))
+                .Select(m => m.Id)
+                .Distinct()
+                .ToList();
+        }
+        else
+        {
+            members = (await ctx.ParseMemberList(ctx.System.Id))
             .Select(m => m.Id)
             .Distinct()
             .ToList();
+        }
 
         var existingMembersInGroup = (await ctx.Database.Execute(conn => conn.QueryMemberList(target.System,
                 new DatabaseViewsExt.ListQueryOptions { GroupFilter = target.Id })))
@@ -109,6 +123,9 @@ public class GroupMember
             toAction = members
                 .Where(m => existingMembersInGroup.Contains(m.Value))
                 .ToList();
+
+            if (ctx.MatchFlag("all", "a") && !await ctx.PromptYesNo($"Are you sure you want to remove all members from group {target.Reference(ctx)}?", "Empty Group")) throw Errors.GenericCancelled();
+
             await ctx.Repository.RemoveMembersFromGroup(target.Id, toAction);
         }
         else
@@ -127,26 +144,26 @@ public class GroupMember
         var targetSystem = await GetGroupSystem(ctx, target);
         ctx.CheckSystemPrivacy(targetSystem.Id, target.ListPrivacy);
 
-        var opts = ctx.ParseListOptions(ctx.DirectLookupContextFor(target.System));
+        var opts = ctx.ParseListOptions(ctx.DirectLookupContextFor(target.System), ctx.LookupContextFor(target.System));
         opts.GroupFilter = target.Id;
 
-        var title = new StringBuilder($"Members of {target.DisplayName ?? target.Name} (`{target.Hid}`) in ");
+        var title = new StringBuilder($"Members of {target.DisplayName ?? target.Name} (`{target.DisplayHid(ctx.Config)}`) in ");
         if (ctx.Guild != null)
         {
             var guildSettings = await ctx.Repository.GetSystemGuild(ctx.Guild.Id, targetSystem.Id);
             if (guildSettings.DisplayName != null)
-                title.Append($"{guildSettings.DisplayName} (`{targetSystem.Hid}`)");
+                title.Append($"{guildSettings.DisplayName} (`{targetSystem.DisplayHid(ctx.Config)}`)");
             else if (targetSystem.NameFor(ctx) != null)
-                title.Append($"{targetSystem.NameFor(ctx)} (`{targetSystem.Hid}`)");
+                title.Append($"{targetSystem.NameFor(ctx)} (`{targetSystem.DisplayHid(ctx.Config)}`)");
             else
-                title.Append($"`{targetSystem.Hid}`");
+                title.Append($"`{targetSystem.DisplayHid(ctx.Config)}`");
         }
         else
         {
             if (targetSystem.NameFor(ctx) != null)
-                title.Append($"{targetSystem.NameFor(ctx)} (`{targetSystem.Hid}`)");
+                title.Append($"{targetSystem.NameFor(ctx)} (`{targetSystem.DisplayHid(ctx.Config)}`)");
             else
-                title.Append($"`{targetSystem.Hid}`");
+                title.Append($"`{targetSystem.DisplayHid(ctx.Config)}`");
         }
         if (opts.Search != null)
             title.Append($" matching **{opts.Search.Truncate(100)}**");

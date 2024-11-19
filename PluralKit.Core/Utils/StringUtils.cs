@@ -86,4 +86,10 @@ public static class StringUtils
 
         return output;
     }
+
+    // Lightweight formatting that intentionally is very basic to not have silly things like in-template for loops like other templating engines seem to have
+    // Currently doesn't handle escapes which might cause problems
+    public static string SafeFormat(string template, (string pattern, string arg)[] args) =>
+    args
+        .Aggregate(template, (acc, x) => acc.Replace(x.pattern, x.arg));
 }

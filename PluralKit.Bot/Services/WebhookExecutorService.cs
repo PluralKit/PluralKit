@@ -4,6 +4,8 @@ using App.Metrics;
 
 using Humanizer;
 
+using NodaTime.Text;
+
 using Myriad.Cache;
 using Myriad.Extensions;
 using Myriad.Rest;
@@ -17,7 +19,6 @@ using Newtonsoft.Json.Linq;
 
 using Serilog;
 
-using PluralKit.Core;
 using Myriad.Utils;
 
 namespace PluralKit.Bot;
@@ -35,6 +36,7 @@ public record ProxyRequest
     public ulong GuildId { get; init; }
     public ulong ChannelId { get; init; }
     public ulong? ThreadId { get; init; }
+    public ulong MessageId { get; init; }
     public string Name { get; init; }
     public string? AvatarUrl { get; init; }
     public string? Content { get; init; }
@@ -45,6 +47,7 @@ public record ProxyRequest
     public bool AllowEveryone { get; init; }
     public Message.MessageFlags? Flags { get; init; }
     public bool Tts { get; init; }
+    public Message.MessagePoll? Poll { get; init; }
 }
 
 public class WebhookExecutorService
@@ -83,7 +86,8 @@ public class WebhookExecutorService
         return webhookMessage;
     }
 
-    public async Task<Message> EditWebhookMessage(ulong channelId, ulong messageId, string newContent, bool clearEmbeds = false)
+    public async Task<Message> EditWebhookMessage(ulong guildId, ulong channelId, ulong messageId, string newContent,
+                                                  bool clearEmbeds = false, bool clearAttachments = false)
     {
         var allowedMentions = newContent.ParseMentions() with
         {
@@ -92,7 +96,7 @@ public class WebhookExecutorService
         };
 
         ulong? threadId = null;
-        var channel = await _cache.GetOrFetchChannel(_rest, channelId);
+        var channel = await _cache.GetOrFetchChannel(_rest, guildId, channelId);
         if (channel.IsThread())
         {
             threadId = channelId;
@@ -104,7 +108,10 @@ public class WebhookExecutorService
         {
             Content = newContent,
             AllowedMentions = allowedMentions,
-            Embeds = (clearEmbeds == true ? Optional<Embed[]>.Some(new Embed[] { }) : Optional<Embed[]>.None()),
+            Embeds = (clearEmbeds ? Optional<Embed[]>.Some(new Embed[] { }) : Optional<Embed[]>.None()),
+            Attachments = (clearAttachments
+                ? Optional<Message.Attachment[]>.Some(new Message.Attachment[] { })
+                : Optional<Message.Attachment[]>.None())
         };
 
         return await _rest.EditWebhookMessage(webhook.Id, webhook.Token, messageId, editReq, threadId);
@@ -152,6 +159,26 @@ public class WebhookExecutorService
                 Waveform = f.Waveform,
                 DurationSecs = f.DurationSecs
             }).ToArray();
+        }
+
+        if (req.Poll is Message.MessagePoll poll)
+        {
+            int? duration = null;
+            if (poll.Expiry is string expiry)
+            {
+                var then = OffsetDateTimePattern.ExtendedIso.Parse(expiry).Value.ToInstant();
+                var now = DiscordUtils.SnowflakeToInstant(req.MessageId);
+                // in theory .TotalHours should be exact, but just in case
+                duration = (int)Math.Round((then - now).TotalMinutes / 60.0);
+            }
+            webhookReq.Poll = new ExecuteWebhookRequest.WebhookPoll
+            {
+                Question = poll.Question,
+                Answers = poll.Answers,
+                Duration = duration,
+                AllowMultiselect = poll.AllowMultiselect,
+                LayoutType = poll.LayoutType
+            };
         }
 
         Message webhookMessage;

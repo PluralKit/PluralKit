@@ -30,6 +30,8 @@ public partial class CommandTree
     public static Command ConfigShowPrivate = new Command("config show private", "config show private [on|off]", "Sets whether private information is shown to linked accounts by default");
     public static Command ConfigMemberDefaultPrivacy = new("config private member", "config private member [on|off]", "Sets whether member privacy is automatically set to private when creating a new member");
     public static Command ConfigGroupDefaultPrivacy = new("config private group", "config private group [on|off]", "Sets whether group privacy is automatically set to private when creating a new group");
+    public static Command ConfigProxySwitch = new Command("config proxyswitch", "config proxyswitch [on|off]", "Sets whether to log a switch every time a proxy tag is used");
+    public static Command ConfigNameFormat = new Command("config nameformat", "config nameformat [format]", "Changes your system's username formatting");
     public static Command AutoproxySet = new Command("autoproxy", "autoproxy [off|front|latch|member]", "Sets your system's autoproxy mode for the current server");
     public static Command AutoproxyOff = new Command("autoproxy off", "autoproxy off", "Disables autoproxying for your system in the current server");
     public static Command AutoproxyFront = new Command("autoproxy front", "autoproxy front", "Sets your system's autoproxy in this server to proxy the first member currently registered as front");
@@ -58,7 +60,7 @@ public partial class CommandTree
     public static Command MemberServerKeepProxy = new Command("member server keepproxy", "member <member> serverkeepproxy [on|off|clear]", "Sets whether to include a member's proxy tags when proxying in the current server.");
     public static Command MemberRandom = new Command("system random", "system [system] random", "Shows the info card of a randomly selected member in a system.");
     public static Command MemberId = new Command("member id", "member [member] id", "Prints a member's id.");
-    public static Command MemberPrivacy = new Command("member privacy", "member <member> privacy <name|description|birthday|pronouns|metadata|visibility|all> <public|private>", "Changes a members's privacy settings");
+    public static Command MemberPrivacy = new Command("member privacy", "member <member> privacy <name|description|birthday|pronouns|proxy|metadata|visibility|all> <public|private>", "Changes a members's privacy settings");
     public static Command GroupInfo = new Command("group", "group <name>", "Looks up information about a group");
     public static Command GroupNew = new Command("group new", "group new <name>", "Creates a new group");
     public static Command GroupList = new Command("group list", "group list", "Lists all groups in this system");
@@ -82,6 +84,7 @@ public partial class CommandTree
     public static Command SwitchMove = new Command("switch move", "switch move <date/time>", "Moves the latest switch in time");
     public static Command SwitchEdit = new Command("switch edit", "switch edit <member> [member 2] [member 3...]", "Edits the members in the latest switch");
     public static Command SwitchEditOut = new Command("switch edit out", "switch edit out", "Turns the latest switch into a switch-out");
+    public static Command SwitchCopy = new Command("switch copy", "switch copy <member> [member 2] [member 3...]", "Makes a new switch with the listed members added");
     public static Command SwitchDelete = new Command("switch delete", "switch delete", "Deletes the latest switch");
     public static Command SwitchDeleteAll = new Command("switch delete", "switch delete all", "Deletes all logged switches");
     public static Command Link = new Command("link", "link <account>", "Links your system to another account");
@@ -92,19 +95,22 @@ public partial class CommandTree
     public static Command Export = new Command("export", "export", "Exports system information to a data file");
     public static Command Help = new Command("help", "help", "Shows help information about PluralKit");
     public static Command Explain = new Command("explain", "explain", "Explains the basics of systems and proxying");
+    public static Command Dashboard = new Command("dashboard", "dashboard", "Get a link to the PluralKit dashboard");
     public static Command Message = new Command("message", "message <id|link> [delete|author]", "Looks up a proxied message");
     public static Command MessageEdit = new Command("edit", "edit [link] <text>", "Edit a previously proxied message");
     public static Command MessageReproxy = new Command("reproxy", "reproxy [link] <member>", "Reproxy a previously proxied message using a different member");
     public static Command ProxyCheck = new Command("debug proxy", "debug proxy [link|reply]", "Checks why your message has not been proxied");
-    public static Command LogChannel = new Command("log channel", "log channel <channel>", "Designates a channel to post proxied messages to");
-    public static Command LogChannelClear = new Command("log channel", "log channel -clear", "Clears the currently set log channel");
-    public static Command LogEnable = new Command("log enable", "log enable all|<channel> [channel 2] [channel 3...]", "Enables message logging in certain channels");
-    public static Command LogDisable = new Command("log disable", "log disable all|<channel> [channel 2] [channel 3...]", "Disables message logging in certain channels");
-    public static Command LogShow = new Command("log show", "log show", "Displays the current list of channels where logging is disabled");
-    public static Command LogClean = new Command("logclean", "logclean [on|off]", "Toggles whether to clean up other bots' log channels");
-    public static Command BlacklistShow = new Command("blacklist show", "blacklist show", "Displays the current proxy blacklist");
-    public static Command BlacklistAdd = new Command("blacklist add", "blacklist add all|<channel> [channel 2] [channel 3...]", "Adds certain channels to the proxy blacklist");
-    public static Command BlacklistRemove = new Command("blacklist remove", "blacklist remove all|<channel> [channel 2] [channel 3...]", "Removes certain channels from the proxy blacklist");
+    public static Command LogChannel = new Command("serverconfig log channel", "serverconfig log channel <channel>", "Designates a channel to post proxied messages to");
+    public static Command LogChannelClear = new Command("serverconfig log channel", "serverconfig log channel -clear", "Clears the currently set log channel");
+    public static Command LogEnable = new Command("serverconfig log blacklist remove", "serverconfig log blacklist remove all|<channel> [channel 2] [channel 3...]", "Enables message logging in certain channels");
+    public static Command LogDisable = new Command("serverconfig log blacklist add", "serverconfig log blacklist add all|<channel> [channel 2] [channel 3...]", "Disables message logging in certain channels");
+    public static Command LogShow = new Command("serverconfig log blacklist", "serverconfig log blacklist", "Displays the current list of channels where logging is disabled");
+    public static Command BlacklistShow = new Command("serverconfig proxy blacklist", "serverconfig proxy blacklist", "Displays the current list of channels where message proxying is disabled");
+    public static Command BlacklistAdd = new Command("serverconfig proxy blacklist add", "serverconfig proxy blacklist add all|<channel> [channel 2] [channel 3...]", "Disables message proxying in certain channels");
+    public static Command BlacklistRemove = new Command("serverconfig blacklist remove", "serverconfig blacklist remove all|<channel> [channel 2] [channel 3...]", "Enables message proxying in certain channels");
+    public static Command ServerConfigLogClean = new Command("serverconfig log cleanup", "serverconfig log cleanup [on|off]", "Toggles whether to clean up other bots' log channels");
+    public static Command ServerConfigInvalidCommandResponse = new Command("serverconfig invalid command error", "serverconfig invalid command error [on|off]", "Sets whether to show an error message when an unknown command is sent");
+    public static Command ServerConfigRequireSystemTag = new Command("serverconfig require tag", "serverconfig require tag [on|off]", "Sets whether server users are required to have a system tag on proxied messages");
     public static Command Invite = new Command("invite", "invite", "Gets a link to invite PluralKit to other servers");
     public static Command PermCheck = new Command("permcheck", "permcheck <guild>", "Checks whether a server's permission setup is correct");
     public static Command Admin = new Command("admin", "admin", "Super secret admin commands (sshhhh)");
@@ -137,13 +143,21 @@ public partial class CommandTree
 
     public static Command[] SwitchCommands =
     {
-        Switch, SwitchOut, SwitchMove, SwitchEdit, SwitchEditOut, SwitchDelete, SwitchDeleteAll
+        Switch, SwitchOut, SwitchMove, SwitchEdit, SwitchEditOut, SwitchDelete, SwitchDeleteAll, SwitchCopy
     };
 
     public static Command[] ConfigCommands =
     {
         ConfigAutoproxyAccount, ConfigAutoproxyTimeout, ConfigTimezone, ConfigPing,
-        ConfigMemberDefaultPrivacy, ConfigGroupDefaultPrivacy, ConfigShowPrivate
+        ConfigMemberDefaultPrivacy, ConfigGroupDefaultPrivacy, ConfigShowPrivate,
+        ConfigProxySwitch, ConfigNameFormat
+    };
+
+    public static Command[] ServerConfigCommands =
+    {
+        ServerConfigLogClean, ServerConfigInvalidCommandResponse, ServerConfigRequireSystemTag,
+        LogChannel, LogChannelClear, LogShow, LogDisable, LogEnable,
+        BlacklistShow, BlacklistAdd, BlacklistRemove
     };
 
     public static Command[] AutoproxyCommands =

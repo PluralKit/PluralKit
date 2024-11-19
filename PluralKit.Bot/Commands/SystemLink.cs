@@ -18,7 +18,7 @@ public class SystemLink
 
         var existingAccount = await ctx.Repository.GetSystemByAccount(account.Id);
         if (existingAccount != null)
-            throw Errors.AccountInOtherSystem(existingAccount);
+            throw Errors.AccountInOtherSystem(existingAccount, ctx.Config);
 
         var msg = $"{account.Mention()}, please confirm the link.";
         if (!await ctx.PromptYesNo(msg, "Confirm", account, false)) throw Errors.MemberLinkCancelled;

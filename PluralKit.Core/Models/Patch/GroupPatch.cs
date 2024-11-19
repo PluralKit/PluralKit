@@ -17,6 +17,7 @@ public class GroupPatch: PatchObject
 
     public Partial<PrivacyLevel> NamePrivacy { get; set; }
     public Partial<PrivacyLevel> DescriptionPrivacy { get; set; }
+    public Partial<PrivacyLevel> BannerPrivacy { get; set; }
     public Partial<PrivacyLevel> IconPrivacy { get; set; }
     public Partial<PrivacyLevel> ListPrivacy { get; set; }
     public Partial<PrivacyLevel> MetadataPrivacy { get; set; }
@@ -32,6 +33,7 @@ public class GroupPatch: PatchObject
         .With("color", Color)
         .With("name_privacy", NamePrivacy)
         .With("description_privacy", DescriptionPrivacy)
+        .With("banner_privacy", BannerPrivacy)
         .With("icon_privacy", IconPrivacy)
         .With("list_privacy", ListPrivacy)
         .With("metadata_privacy", MetadataPrivacy)
@@ -84,6 +86,9 @@ public class GroupPatch: PatchObject
             if (privacy.ContainsKey("description_privacy"))
                 patch.DescriptionPrivacy = patch.ParsePrivacy(privacy, "description_privacy");
 
+            if (privacy.ContainsKey("banner_privacy"))
+                patch.BannerPrivacy = patch.ParsePrivacy(privacy, "banner_privacy");
+
             if (privacy.ContainsKey("icon_privacy"))
                 patch.IconPrivacy = patch.ParsePrivacy(privacy, "icon_privacy");
 
@@ -122,6 +127,7 @@ public class GroupPatch: PatchObject
         if (
             NamePrivacy.IsPresent
             || DescriptionPrivacy.IsPresent
+            || BannerPrivacy.IsPresent
             || IconPrivacy.IsPresent
             || ListPrivacy.IsPresent
             || MetadataPrivacy.IsPresent
@@ -135,6 +141,9 @@ public class GroupPatch: PatchObject
 
             if (DescriptionPrivacy.IsPresent)
                 p.Add("description_privacy", DescriptionPrivacy.Value.ToJsonString());
+
+            if (BannerPrivacy.IsPresent)
+                p.Add("banner_privacy", BannerPrivacy.Value.ToJsonString());
 
             if (IconPrivacy.IsPresent)
                 p.Add("icon_privacy", IconPrivacy.Value.ToJsonString());

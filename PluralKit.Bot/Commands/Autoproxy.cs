@@ -130,7 +130,7 @@ public class Autoproxy
                     {
                         if (relevantMember == null)
                             throw new ArgumentException("Attempted to print member autoproxy status, but the linked member ID wasn't found in the database. Should be handled appropriately.");
-                        eb.Description($"Autoproxy is currently set to **front mode** in this server. The current (first) fronter is **{relevantMember.NameFor(ctx).EscapeMarkdown()}** (`{relevantMember.Hid}`). To disable, type `pk;autoproxy off`.");
+                        eb.Description($"Autoproxy is currently set to **front mode** in this server. The current (first) fronter is **{relevantMember.NameFor(ctx).EscapeMarkdown()}** (`{relevantMember.DisplayHid(ctx.Config)}`). To disable, type `pk;autoproxy off`.");
                     }
 
                     break;
@@ -142,7 +142,7 @@ public class Autoproxy
                         // ideally we would set it to off in the database though...
                         eb.Description($"Autoproxy is currently **off** in this server. To enable it, use one of the following commands:\n{commandList}");
                     else
-                        eb.Description($"Autoproxy is active for member **{relevantMember.NameFor(ctx)}** (`{relevantMember.Hid}`) in this server. To disable, type `pk;autoproxy off`.");
+                        eb.Description($"Autoproxy is active for member **{relevantMember.NameFor(ctx)}** (`{relevantMember.DisplayHid(ctx.Config)}`) in this server. To disable, type `pk;autoproxy off`.");
 
                     break;
                 }
@@ -150,7 +150,7 @@ public class Autoproxy
                 if (relevantMember == null)
                     eb.Description("Autoproxy is currently set to **latch mode**, meaning the *last-proxied member* will be autoproxied. **No member is currently latched.** To disable, type `pk;autoproxy off`.");
                 else
-                    eb.Description($"Autoproxy is currently set to **latch mode**, meaning the *last-proxied member* will be autoproxied. The currently latched member is **{relevantMember.NameFor(ctx)}** (`{relevantMember.Hid}`). To disable, type `pk;autoproxy off`.");
+                    eb.Description($"Autoproxy is currently set to **latch mode**, meaning the *last-proxied member* will be autoproxied. The currently latched member is **{relevantMember.NameFor(ctx)}** (`{relevantMember.DisplayHid(ctx.Config)}`). To disable, type `pk;autoproxy off`.");
 
                 break;
 

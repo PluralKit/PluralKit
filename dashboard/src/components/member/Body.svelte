@@ -196,7 +196,11 @@
     </Row>
     <div class="my-2 mb-3 description" bind:this={descriptionElement}>
         <b>Description:</b><br />
+        {#if member.description}
         <AwaitHtml htmlPromise={htmlDescriptionPromise} />
+        {:else}
+        <span>(no description)</span>
+        {/if}
     </div>
     {#if (member.banner && ((settings && settings.appearance.banner_bottom) || !settings))}
     <img on:click={toggleBannerModal} src={resizeMedia(member.banner, [1200, 480])} alt="member banner" class="w-100 mb-3 rounded" style="max-height: 13em; object-fit: cover; cursor: pointer"/>

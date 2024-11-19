@@ -49,17 +49,17 @@ public static class MiscUtils
         if (e is WebhookExecutionErrorOnDiscordsEnd) return false;
 
         // Socket errors are *not our problem*
-        if (e.GetBaseException() is SocketException) return false;
+        // if (e.GetBaseException() is SocketException) return false;
 
         // Tasks being cancelled for whatver reason are, you guessed it, also not our problem.
-        if (e is TaskCanceledException) return false;
+        // if (e is TaskCanceledException) return false;
 
         // Sometimes Discord just times everything out.
-        if (e is TimeoutException) return false;
+        // if (e is TimeoutException) return false;
         if (e is UnknownDiscordRequestException tde && tde.Message == "Request Timeout") return false;
 
         // HTTP/2 streams are complicated and break sometimes.
-        if (e is HttpRequestException) return false;
+        // if (e is HttpRequestException) return false;
 
         // This may expanded at some point.
         return true;
@@ -89,12 +89,15 @@ public static class MiscUtils
         if (e is NpgsqlException tpe && tpe.InnerException is TimeoutException)
             return false;
 
-        // Ignore thread pool exhaustion errors
-        if (e is NpgsqlException npe && npe.Message.Contains("The connection pool has been exhausted"))
-            return false;
-
-        // ignore "Exception while reading from stream"
-        if (e is NpgsqlException npe2 && npe2.Message.Contains("Exception while reading from stream"))
+        if (e is NpgsqlException npe &&
+            (
+                // Ignore thread pool exhaustion errors
+                npe.Message.Contains("The connection pool has been exhausted")
+             // ignore "Exception while reading from stream"
+             || npe.Message.Contains("Exception while reading from stream")
+             // ignore "Exception while connecting"
+             || npe.Message.Contains("Exception while connecting")
+            ))
             return false;
 
         return true;

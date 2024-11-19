@@ -5,6 +5,7 @@ public enum MemberPrivacySubject
     Visibility,
     Name,
     Description,
+    Banner,
     Avatar,
     Birthday,
     Pronouns,
@@ -21,6 +22,7 @@ public static class MemberPrivacyUtils
         {
             MemberPrivacySubject.Name => member.NamePrivacy = level,
             MemberPrivacySubject.Description => member.DescriptionPrivacy = level,
+            MemberPrivacySubject.Banner => member.BannerPrivacy = level,
             MemberPrivacySubject.Avatar => member.AvatarPrivacy = level,
             MemberPrivacySubject.Pronouns => member.PronounPrivacy = level,
             MemberPrivacySubject.Birthday => member.BirthdayPrivacy = level,
@@ -49,9 +51,19 @@ public static class MemberPrivacyUtils
                 break;
             case "description":
             case "desc":
-            case "text":
+            case "describe":
+            case "d":
+            case "bio":
             case "info":
+            case "text":
+            case "intro":
                 subject = MemberPrivacySubject.Description;
+                break;
+            case "banner":
+            case "b":
+            case "splash":
+            case "cover":
+                subject = MemberPrivacySubject.Banner;
                 break;
             case "avatar":
             case "pfp":
@@ -64,10 +76,14 @@ public static class MemberPrivacyUtils
             case "bday":
             case "birthdate":
             case "bdate":
+            case "cakeday":
+            case "bd":
                 subject = MemberPrivacySubject.Birthday;
                 break;
             case "pronouns":
             case "pronoun":
+            case "prns":
+            case "pn":
                 subject = MemberPrivacySubject.Pronouns;
                 break;
             case "meta":

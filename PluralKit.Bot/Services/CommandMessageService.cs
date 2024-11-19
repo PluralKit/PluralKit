@@ -18,7 +18,7 @@ public class CommandMessageService
         _logger = logger.ForContext<CommandMessageService>();
     }
 
-    public async Task RegisterMessage(ulong messageId, ulong channelId, ulong authorId)
+    public async Task RegisterMessage(ulong messageId, ulong guildId, ulong channelId, ulong authorId)
     {
         if (_redis.Connection == null) return;
 
@@ -27,17 +27,19 @@ public class CommandMessageService
             messageId, authorId, channelId
         );
 
-        await _redis.Connection.GetDatabase().StringSetAsync(messageId.ToString(), $"{authorId}-{channelId}", expiry: CommandMessageRetention);
+        await _redis.Connection.GetDatabase().StringSetAsync(messageId.ToString(), $"{authorId}-{channelId}-{guildId}", expiry: CommandMessageRetention);
     }
 
-    public async Task<(ulong?, ulong?)> GetCommandMessage(ulong messageId)
+    public async Task<CommandMessage?> GetCommandMessage(ulong messageId)
     {
         var str = await _redis.Connection.GetDatabase().StringGetAsync(messageId.ToString());
         if (str.HasValue)
         {
             var split = ((string)str).Split("-");
-            return (ulong.Parse(split[0]), ulong.Parse(split[1]));
+            return new CommandMessage(ulong.Parse(split[0]), ulong.Parse(split[1]), ulong.Parse(split[2]));
         }
-        return (null, null);
+        return null;
     }
 }
+
+public record CommandMessage(ulong AuthorId, ulong ChannelId, ulong GuildId);

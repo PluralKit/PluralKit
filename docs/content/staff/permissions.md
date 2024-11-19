@@ -21,13 +21,13 @@ For external emojis to work in proxied messages, the `@everyone` role must have 
 ## Troubleshooting
 
 ### Permission checker command
-To quickly check if PluralKit is missing channel permissions, you can use the `pk;permcheck` command in the server
+To quickly check if PluralKit is missing channel permissions, you can use the `pk;debug permissions` command in the server
 in question. It'll return a list of channels on the server with missing permissions. This may include channels
 you don't want PluralKit to have access to for one reason or another (eg. admin channels).
 
 If you want to check permissions in DMs, you'll need to add a server ID, and run the command with that.
 For example:
 
-    pk;permcheck 466707357099884544
+    pk;debug permissions 466707357099884544
     
 You can find this ID [by enabling Developer Mode and right-clicking (or long-pressing) on the server icon](https://discordia.me/developer-mode).

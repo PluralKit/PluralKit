@@ -29,11 +29,13 @@ public class Context
     private Command? _currentCommand;
 
     public Context(ILifetimeScope provider, int shardId, Guild? guild, Channel channel, MessageCreateEvent message,
-                                                    int commandParseOffset, PKSystem senderSystem, SystemConfig config)
+                                                    int commandParseOffset, PKSystem senderSystem, SystemConfig config,
+                                                    GuildConfig? guildConfig)
     {
         Message = (Message)message;
         ShardId = shardId;
         Guild = guild;
+        GuildConfig = guildConfig;
         Channel = channel;
         System = senderSystem;
         Config = config;
@@ -59,11 +61,12 @@ public class Context
 
     public readonly Message Message;
     public readonly Guild Guild;
+    public readonly GuildConfig? GuildConfig;
     public readonly int ShardId;
     public readonly Cluster Cluster;
 
-    public Task<PermissionSet> BotPermissions => Cache.PermissionsIn(Channel.Id);
-    public Task<PermissionSet> UserPermissions => Cache.PermissionsFor((MessageCreateEvent)Message);
+    public Task<PermissionSet> BotPermissions => Cache.BotPermissionsIn(Guild?.Id ?? 0, Channel.Id);
+    public Task<PermissionSet> UserPermissions => Cache.PermissionsForMCE((MessageCreateEvent)Message);
 
 
     public readonly PKSystem System;
@@ -100,7 +103,7 @@ public class Context
         // {
         // Sensitive information that might want to be deleted by :x: reaction is typically in an embed format (member cards, for example)
         // but since we can, we just store all sent messages for possible deletion
-        await _commandMessageService.RegisterMessage(msg.Id, msg.ChannelId, Author.Id);
+        await _commandMessageService.RegisterMessage(msg.Id, Guild?.Id ?? 0, msg.ChannelId, Author.Id);
         // }
 
         return msg;
@@ -112,8 +115,7 @@ public class Context
 
         if (deprecated && commandDef != null)
         {
-            await Reply($"{Emojis.Warn} This command has been removed. please use `pk;{commandDef.Key}` instead.");
-            return;
+            await Reply($"{Emojis.Warn} Server configuration has moved to `pk;serverconfig`. The command you are trying to run is now `pk;{commandDef.Key}`.");
         }
 
         try

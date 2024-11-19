@@ -52,11 +52,19 @@ public class MessageEdited: IEventHandler<MessageUpdateEvent>
         if (!evt.Content.HasValue || !evt.Author.HasValue || !evt.Member.HasValue)
             return;
 
-        var channel = await _cache.GetChannel(evt.ChannelId);
+        // we only use message edit event for proxying, so ignore messages from DMs
+        if (!evt.GuildId.HasValue || evt.GuildId.Value == null) return;
+        ulong guildId = evt.GuildId!.Value!.Value;
+
+        var channel = await _cache.TryGetChannel(guildId, evt.ChannelId); // todo: is this correct for message update?
+        if (channel == null)
+            throw new Exception("could not find self channel in MessageEdited event");
         if (!DiscordUtils.IsValidGuildChannel(channel))
             return;
-        var rootChannel = await _cache.GetRootChannel(channel.Id);
-        var guild = await _cache.GetGuild(channel.GuildId!.Value);
+        var rootChannel = await _cache.GetRootChannel(guildId, channel.Id);
+        var guild = await _cache.TryGetGuild(channel.GuildId!.Value);
+        if (guild == null)
+            throw new Exception("could not find self guild in MessageEdited event");
         var lastMessage = _lastMessageCache.GetLastMessage(evt.ChannelId)?.Current;
 
         // Only react to the last message in the channel
@@ -67,9 +75,11 @@ public class MessageEdited: IEventHandler<MessageUpdateEvent>
         MessageContext ctx;
         using (_metrics.Measure.Timer.Time(BotMetrics.MessageContextQueryTime))
             ctx = await _repo.GetMessageContext(evt.Author.Value!.Id, channel.GuildId!.Value, rootChannel.Id, evt.ChannelId);
+        if (ctx.DenyBotUsage)
+            return;
 
         var equivalentEvt = await GetMessageCreateEvent(evt, lastMessage, channel);
-        var botPermissions = await _cache.PermissionsIn(channel.Id);
+        var botPermissions = await _cache.BotPermissionsIn(guildId, channel.Id);
 
         try
         {
@@ -91,7 +101,7 @@ public class MessageEdited: IEventHandler<MessageUpdateEvent>
     private async Task<MessageCreateEvent> GetMessageCreateEvent(MessageUpdateEvent evt, CachedMessage lastMessage,
                                                                  Channel channel)
     {
-        var referencedMessage = await GetReferencedMessage(evt.ChannelId, lastMessage.ReferencedMessage);
+        var referencedMessage = await GetReferencedMessage(evt.GuildId.HasValue ? evt.GuildId.Value ?? 0 : 0, evt.ChannelId, lastMessage.ReferencedMessage);
 
         var messageReference = lastMessage.ReferencedMessage != null
             ? new Message.Reference(channel.GuildId, evt.ChannelId, lastMessage.ReferencedMessage.Value)
@@ -118,12 +128,12 @@ public class MessageEdited: IEventHandler<MessageUpdateEvent>
         return equivalentEvt;
     }
 
-    private async Task<Message?> GetReferencedMessage(ulong channelId, ulong? referencedMessageId)
+    private async Task<Message?> GetReferencedMessage(ulong guildId, ulong channelId, ulong? referencedMessageId)
     {
         if (referencedMessageId == null)
             return null;
 
-        var botPermissions = await _cache.PermissionsIn(channelId);
+        var botPermissions = await _cache.BotPermissionsIn(guildId, channelId);
         if (!botPermissions.HasFlag(PermissionSet.ReadMessageHistory))
         {
             _logger.Warning(

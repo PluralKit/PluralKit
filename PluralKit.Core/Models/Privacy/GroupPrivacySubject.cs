@@ -4,6 +4,7 @@ public enum GroupPrivacySubject
 {
     Name,
     Description,
+    Banner,
     Icon,
     List,
     Metadata,
@@ -19,6 +20,7 @@ public static class GroupPrivacyUtils
         {
             GroupPrivacySubject.Name => group.NamePrivacy = level,
             GroupPrivacySubject.Description => group.DescriptionPrivacy = level,
+            GroupPrivacySubject.Banner => group.BannerPrivacy = level,
             GroupPrivacySubject.Icon => group.IconPrivacy = level,
             GroupPrivacySubject.List => group.ListPrivacy = level,
             GroupPrivacySubject.Metadata => group.MetadataPrivacy = level,
@@ -45,9 +47,19 @@ public static class GroupPrivacyUtils
                 break;
             case "description":
             case "desc":
-            case "text":
+            case "describe":
+            case "d":
+            case "bio":
             case "info":
+            case "text":
+            case "intro":
                 subject = GroupPrivacySubject.Description;
+                break;
+            case "banner":
+            case "b":
+            case "splash":
+            case "cover":
+                subject = GroupPrivacySubject.Banner;
                 break;
             case "avatar":
             case "pfp":

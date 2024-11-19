@@ -28,7 +28,8 @@ public enum DispatchEvent
     UPDATE_SWITCH,
     DELETE_SWITCH,
     DELETE_ALL_SWITCHES,
-    SUCCESSFUL_IMPORT
+    SUCCESSFUL_IMPORT,
+    UPDATE_AUTOPROXY,
 }
 
 public struct UpdateDispatchData
@@ -42,7 +43,7 @@ public struct UpdateDispatchData
 
 public static class DispatchExt
 {
-    public static StringContent GetPayloadBody(this UpdateDispatchData data)
+    public static string GetPayloadBody(this UpdateDispatchData data)
     {
         var o = new JObject();
 
@@ -52,7 +53,18 @@ public static class DispatchExt
         o.Add("id", data.EntityId);
         o.Add("data", data.EventData);
 
-        return new StringContent(JsonConvert.SerializeObject(o), Encoding.UTF8, "application/json");
+        return JsonConvert.SerializeObject(o);
+    }
+
+    public static string GetPingBody(string systemId, string token)
+    {
+        var o = new JObject();
+
+        o.Add("type", "PING");
+        o.Add("signing_token", token);
+        o.Add("system_id", systemId);
+
+        return JsonConvert.SerializeObject(o);
     }
 
     private static List<IPNetwork> _privateNetworks = new()
@@ -70,6 +82,7 @@ public static class DispatchExt
         try
         {
             var uri = new Uri(url);
+            if (uri.Scheme != "https") return false;
             host = await Dns.GetHostEntryAsync(uri.DnsSafeHost);
         }
         catch (Exception)
