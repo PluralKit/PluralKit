@@ -694,24 +694,31 @@ public class SystemEdit
 
         var isOwnSystem = target.Id == ctx.System?.Id;
 
-        if (!ctx.HasNext() && ctx.Message.Attachments.Length == 0)
+        if ((!ctx.HasNext() && ctx.Message.Attachments.Length == 0) || ctx.PeekMatchFormat() != ReplyFormat.Standard)
         {
             if ((target.BannerImage?.Trim() ?? "").Length > 0)
-            {
-                var eb = new EmbedBuilder()
-                    .Title("System banner image")
-                    .Image(new Embed.EmbedImage(target.BannerImage));
-
-                if (isOwnSystem)
-                    eb.Description("To clear, use `pk;system banner clear`.");
-
-                await ctx.Reply(embed: eb.Build());
-            }
+                switch (ctx.MatchFormat())
+                {
+                    case ReplyFormat.Raw:
+                        await ctx.Reply($"`{target.BannerImage.TryGetCleanCdnUrl()}`");
+                        break;
+                    case ReplyFormat.Plaintext:
+                        var ebP = new EmbedBuilder()
+                            .Description($"Showing banner for system {target.NameFor(ctx)}");
+                        await ctx.Reply(text: $"<{target.BannerImage.TryGetCleanCdnUrl()}>", embed: ebP.Build());
+                        break;
+                    default:
+                        var ebS = new EmbedBuilder()
+                            .Title("System banner image")
+                            .Image(new Embed.EmbedImage(target.BannerImage.TryGetCleanCdnUrl()));
+                        if (target.Id == ctx.System?.Id)
+                            ebS.Description("To clear, use `pk;system banner clear`.");
+                        await ctx.Reply(embed: ebS.Build());
+                        break;
+                }
             else
-            {
                 throw new PKSyntaxError("This system does not have a banner image set."
                     + (isOwnSystem ? "Set one by attaching an image to this command, or by passing an image URL or @mention." : ""));
-            }
 
             return;
         }
