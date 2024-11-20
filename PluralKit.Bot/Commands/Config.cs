@@ -137,12 +137,24 @@ public class Config
             ProxyMember.DefaultFormat
         ));
 
-        items.Add(new(
-            "Server Name Format",
-            "Format string used to display a member's name in the current server",
-            (await ctx.Repository.GetSystemGuild(ctx.Guild.Id, ctx.System.Id)).NameFormat ?? "none set",
-            "none set"
-        ));
+        if (ctx.Guild == null)
+        {
+            items.Add(new(
+                "Server Name Format",
+                "Format string used to display a member's name in the current server",
+                "only available in servers",
+                "only available in servers"
+            ));
+        }
+        else
+        {
+            items.Add(new(
+                "Server Name Format",
+                "Format string used to display a member's name in the current server",
+                (await ctx.Repository.GetSystemGuild(ctx.Guild.Id, ctx.System.Id)).NameFormat ?? "none set",
+                "none set"
+            ));
+        }
 
         await ctx.Paginate<PaginatedConfigItem>(
             items.ToAsyncEnumerable(),
@@ -593,6 +605,7 @@ public class Config
 
     public async Task ServerNameFormat(Context ctx)
     {
+        ctx.CheckGuildContext();
         var clearFlag = ctx.MatchClear();
         var format = ctx.MatchFormat();
 
