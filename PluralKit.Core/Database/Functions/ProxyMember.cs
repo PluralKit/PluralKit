@@ -45,7 +45,7 @@ public class ProxyMember
         var tag = ctx.SystemGuildTag ?? ctx.SystemTag;
         if (!ctx.TagEnabled) tag = null;
 
-        return FormatTag(ctx.NameFormat ?? DefaultFormat, tag, memberName);
+        return FormatTag(ctx.GuildNameFormat ?? ctx.NameFormat ?? DefaultFormat, tag, memberName);
     }
 
     public string? ProxyAvatar(MessageContext ctx) => ServerAvatar ?? WebhookAvatar ?? Avatar ?? ctx.SystemGuildAvatar ?? ctx.SystemAvatar;
