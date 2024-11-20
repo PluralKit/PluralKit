@@ -32,6 +32,7 @@ public partial class CommandTree
     public static Command ConfigGroupDefaultPrivacy = new("config private group", "config private group [on|off]", "Sets whether group privacy is automatically set to private when creating a new group");
     public static Command ConfigProxySwitch = new Command("config proxyswitch", "config proxyswitch [on|off]", "Sets whether to log a switch every time a proxy tag is used");
     public static Command ConfigNameFormat = new Command("config nameformat", "config nameformat [format]", "Changes your system's username formatting");
+    public static Command ConfigServerNameFormat = new Command("config servernameformat", "config servernameformat [format]", "Changes your system's username formatting in the current server");
     public static Command AutoproxySet = new Command("autoproxy", "autoproxy [off|front|latch|member]", "Sets your system's autoproxy mode for the current server");
     public static Command AutoproxyOff = new Command("autoproxy off", "autoproxy off", "Disables autoproxying for your system in the current server");
     public static Command AutoproxyFront = new Command("autoproxy front", "autoproxy front", "Sets your system's autoproxy in this server to proxy the first member currently registered as front");
@@ -150,7 +151,7 @@ public partial class CommandTree
     {
         ConfigAutoproxyAccount, ConfigAutoproxyTimeout, ConfigTimezone, ConfigPing,
         ConfigMemberDefaultPrivacy, ConfigGroupDefaultPrivacy, ConfigShowPrivate,
-        ConfigProxySwitch, ConfigNameFormat
+        ConfigProxySwitch, ConfigNameFormat, ConfigServerNameFormat
     };
 
     public static Command[] ServerConfigCommands =

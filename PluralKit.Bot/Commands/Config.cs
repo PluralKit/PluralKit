@@ -1,7 +1,7 @@
 using System.Text;
 
 using Humanizer;
-
+using Myriad.Builders;
 using NodaTime;
 using NodaTime.Text;
 using NodaTime.TimeZones;
@@ -135,6 +135,13 @@ public class Config
             "Format string used to display a member's name https://pluralkit.me/guide/#setting-a-custom-name-format",
             ctx.Config.NameFormat,
             ProxyMember.DefaultFormat
+        ));
+
+        items.Add(new(
+            "Server Name Format",
+            "Format string used to display a member's name in the current server",
+            (await ctx.Repository.GetSystemGuild(ctx.Guild.Id, ctx.System.Id)).NameFormat ?? "none set",
+            "none set"
         ));
 
         await ctx.Paginate<PaginatedConfigItem>(
@@ -582,6 +589,47 @@ public class Config
 
         await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { NameFormat = formatString });
         await ctx.Reply($"Member names are now formatted as `{formatString}`");
+    }
+
+    public async Task ServerNameFormat(Context ctx)
+    {
+        var clearFlag = ctx.MatchClear();
+        var format = ctx.MatchFormat();
+
+        // if there's nothing next or what's next is raw/plaintext and we're not clearing, it's a query
+        if ((!ctx.HasNext() || format != ReplyFormat.Standard) && !clearFlag)
+        {
+            var guildCfg = await ctx.Repository.GetSystemGuild(ctx.Guild.Id, ctx.System.Id);
+            if (guildCfg.NameFormat == null)
+                await ctx.Reply("You do not have a specific name format set for this server and member names are formatted with your global name format.");
+            else
+                switch (format)
+                {
+                    case ReplyFormat.Raw:
+                        await ctx.Reply($"`{guildCfg.NameFormat}`");
+                        break;
+                    case ReplyFormat.Plaintext:
+                        var eb = new EmbedBuilder()
+                            .Description($"Showing guild Name Format for system {ctx.System.DisplayHid(ctx.Config)}");
+                        await ctx.Reply(guildCfg.NameFormat, eb.Build());
+                        break;
+                    default:
+                        await ctx.Reply($"Your member names in this server are currently formatted as `{guildCfg.NameFormat}`");
+                        break;
+                }
+            return;
+        }
+
+        string? formatString = null;
+        if (!clearFlag)
+        {
+            formatString = ctx.RemainderOrNull();
+        }
+        await ctx.Repository.UpdateSystemGuild(ctx.System.Id, ctx.Guild.Id, new() { NameFormat = formatString });
+        if (formatString == null)
+            await ctx.Reply($"Member names are now formatted with your global name format in this server.");
+        else
+            await ctx.Reply($"Member names are now formatted as `{formatString}` in this server.");
     }
 
     public Task LimitUpdate(Context ctx)

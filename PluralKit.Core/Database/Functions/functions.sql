@@ -16,6 +16,7 @@ create function message_context(account_id bigint, guild_id bigint, channel_id b
         proxy_enabled bool,
         system_guild_tag text,
         system_guild_avatar text,
+        guild_name_format text,
 
         last_switch int,
         last_switch_members int[],
@@ -51,6 +52,7 @@ as $$
         coalesce(system_guild.proxy_enabled, true)     as proxy_enabled,
         system_guild.tag                               as system_guild_tag,
         system_guild.avatar_url                        as system_guild_avatar,
+        system_guild.name_format                       as guild_name_format,
 
         -- system_last_switch view
         system_last_switch.switch                      as last_switch,
