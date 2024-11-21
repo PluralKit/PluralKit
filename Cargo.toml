@@ -18,6 +18,7 @@ futures = "0.3.30"
 lazy_static = "1.4.0"
 metrics = "0.23.0"
 reqwest = { version = "0.12.7" , default-features = false, features = ["rustls-tls", "trust-dns"]}
+sentry = { version = "0.34.0", default-features = false, features =  ["backtrace", "contexts", "panic", "debug-images", "reqwest", "rustls"] } # replace native-tls with rustls
 serde = { version = "1.0.196", features = ["derive"] }
 serde_json = "1.0.117"
 signal-hook = "0.3.17"

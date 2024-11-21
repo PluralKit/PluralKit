@@ -102,6 +102,9 @@ pub struct PKConfig {
 
     #[serde(default = "_json_log_default")]
     pub(crate) json_log: bool,
+
+    #[serde(default)]
+    pub sentry_url: Option<String>,
 }
 
 impl PKConfig {

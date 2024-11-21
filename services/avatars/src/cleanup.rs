@@ -4,12 +4,8 @@ use sqlx::prelude::FromRow;
 use std::{sync::Arc, time::Duration};
 use tracing::{error, info};
 
-#[tokio::main]
-async fn main() -> anyhow::Result<()> {
-    libpk::init_logging("avatar_cleanup")?;
-    libpk::init_metrics()?;
-    info!("hello world");
-
+libpk::main!("avatar_cleanup");
+async fn real_main() -> anyhow::Result<()> {
     let config = libpk::config
         .avatars
         .as_ref()
@@ -129,7 +125,7 @@ async fn cleanup_job(pool: sqlx::PgPool, bucket: Arc<s3::Bucket>) -> anyhow::Res
             }
             _ => {
                 let status = cf_resp.status();
-                println!("{:#?}", cf_resp.text().await?);
+                tracing::info!("raw response from cloudflare: {:#?}", cf_resp.text().await?);
                 anyhow::bail!("cloudflare returned bad error code {}", status);
             }
         }
