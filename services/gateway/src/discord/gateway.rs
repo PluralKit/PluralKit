@@ -86,10 +86,16 @@ pub async fn runner(
     while let Some(item) = shard.next_event(EventTypeFlags::all()).await {
         match item {
             Ok(event) => {
+                // event_type * shard_id is too many labels and prometheus fails to query it
+                // so we split it into two metrics
                 counter!(
-                    "pluralkit_gateway_events",
-                    "shard_id" => shard.id().number().to_string(),
+                    "pluralkit_gateway_events_type",
                     "event_type" => serde_variant::to_variant_name(&event.kind()).unwrap(),
+                )
+                .increment(1);
+                counter!(
+                    "pluralkit_gateway_events_shard",
+                    "shard_id" => shard.id().number().to_string(),
                 )
                 .increment(1);
                 if let Err(error) = shard_state
