@@ -110,4 +110,27 @@ public partial class ModelRepository
 
         await _db.ExecuteQuery(query);
     }
+
+    public async Task UpdateMemberForDeletedMessage(MemberId id, int msgCount)
+    {
+        if (msgCount <= 0) return;
+
+        var query = new Query("members")
+            .When(msgCount > 1,
+                // when there are plenty of messages
+                q => q.AsUpdate(new
+                {
+                    message_count = new UnsafeLiteral("message_count - 1")
+                }),
+                // when this is the only message (if the db for some reason thinks there are no messages we already returned)
+                q => q.AsUpdate(new
+                {
+                    message_count = new UnsafeLiteral("message_count - 1"),
+                    last_message_timestamp = new UnsafeLiteral("null")
+                })
+            )
+            .Where("id", id);
+
+        await _db.ExecuteQuery(query);
+    }
 }

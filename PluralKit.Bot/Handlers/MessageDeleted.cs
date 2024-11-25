@@ -32,6 +32,16 @@ public class MessageDeleted: IEventHandler<MessageDeleteEvent>, IEventHandler<Me
         async Task Inner()
         {
             await Task.Delay(MessageDeleteDelay);
+
+            var message = await _repo.GetMessage(evt.Id);
+            if (message == null) return;
+
+            if (message.Member.HasValue)
+            {
+                var memberFull = await _repo.GetMember(message.Member.Value);
+                await _repo.UpdateMemberForDeletedMessage(message.Member.Value, memberFull.MessageCount);
+            }
+
             await _repo.DeleteMessage(evt.Id);
         }
 

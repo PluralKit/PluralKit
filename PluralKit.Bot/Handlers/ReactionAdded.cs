@@ -141,8 +141,6 @@ public class ReactionAdded: IEventHandler<MessageReactionAddEvent>
         {
             // Message was deleted by something/someone else before we got to it
         }
-
-        await _repo.DeleteMessage(evt.MessageId);
     }
 
     private async ValueTask HandleCommandDeleteReaction(MessageReactionAddEvent evt, ulong? authorId, bool isDM)
