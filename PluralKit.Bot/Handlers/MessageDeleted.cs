@@ -63,6 +63,27 @@ public class MessageDeleted: IEventHandler<MessageDeleteEvent>, IEventHandler<Me
             _logger.Information("Bulk deleting {Count} messages in channel {Channel}",
                 evt.Ids.Length, evt.ChannelId);
             await _repo.DeleteMessagesBulk(evt.Ids);
+
+            // get all the messages from the database
+            var messages = await _repo.GetMessagesBulk(evt.Ids);
+
+            // make a dictionary of every member id associated with a message and how many messages it's associated with
+            var memberMessageCounts = new Dictionary<MemberId, int>();
+            foreach (PKMessage msg in messages)
+            {
+                if (!msg.Member.HasValue) continue;
+                if (memberMessageCounts.ContainsKey(msg.Member.Value))
+                    memberMessageCounts[msg.Member.Value] = memberMessageCounts[msg.Member.Value] + 1;
+                else
+                    memberMessageCounts[msg.Member.Value] = 1;
+            }
+
+            // go through each member id in dictionary and decrement that member's message count by appropriate amount
+            foreach (MemberId member in memberMessageCounts.Keys)
+            {
+                await _repo.UpdateMemberForDeletedMessage(member, (await _repo.GetMember(member)).MessageCount, memberMessageCounts[member]);
+            }
+
         }
 
         _lastMessage.HandleMessageDeletion(evt.ChannelId, evt.Ids.ToList());
