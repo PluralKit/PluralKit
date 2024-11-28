@@ -1,4 +1,6 @@
 #![feature(let_chains)]
+use std::net::SocketAddr;
+
 use metrics_exporter_prometheus::PrometheusBuilder;
 use sentry::IntoDsn;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
@@ -34,9 +36,9 @@ pub fn init_logging(component: &str) -> anyhow::Result<()> {
 
 pub fn init_metrics() -> anyhow::Result<()> {
     if config.run_metrics_server {
-        // automatically spawns a http listener at :9000
-        let builder = PrometheusBuilder::new();
-        builder.install()?;
+        PrometheusBuilder::new()
+            .with_http_listener("[::]:9000".parse::<SocketAddr>().unwrap())
+            .install()?;
     }
     Ok(())
 }
