@@ -25,5 +25,9 @@ config = "0.14.0"
 json-subscriber = { version = "0.2.2", features = ["env-filter"] }
 metrics-exporter-prometheus = { version = "0.15.3", default-features = false, features = ["tokio", "http-listener", "tracing"] }
 
+lapin = { workspace = true }
+tokio-executor-trait = { version = "2.1.3" }
+tokio-reactor-trait = { version = "1.1.0" }
+
 [build-dependencies]
 prost-build = { workspace = true }

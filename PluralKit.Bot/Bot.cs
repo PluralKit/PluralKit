@@ -74,7 +74,7 @@ public class Bot
             }
         };
 
-        _services.Resolve<RedisGatewayService>().OnEventReceived += (e) => OnEventReceived(e.Item1, e.Item2);
+        _services.Resolve<RabbitGatewayService>().OnEventReceived += (e) => OnEventReceivedInner(e.Item1, e.Item2);
 
         // Init the shard stuff
         _services.Resolve<ShardInfoService>().Init();
@@ -269,7 +269,7 @@ public class Bot
         _logger.Debug("Running once-per-minute scheduled tasks");
 
         // Check from a new custom status from Redis and update Discord accordingly
-        if (_redis.Connection != null && _config.RedisGatewayUrl == null)
+        if (_redis.Connection != null && _config.RabbitUrl == null)
         {
             var newStatus = await _redis.Connection.GetDatabase().StringGetAsync("pluralkit:botstatus");
             if (newStatus != CustomStatusMessage)

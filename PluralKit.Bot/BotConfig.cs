@@ -24,7 +24,8 @@ public class BotConfig
     public string? HttpCacheUrl { get; set; }
     public bool HttpUseInnerCache { get; set; } = false;
 
-    public string? RedisGatewayUrl { get; set; }
+    public string? RabbitUrl { get; set; }
+    public string? RabbitQueue { get; set; }
 
     public string? DiscordBaseUrl { get; set; }
     public string? AvatarServiceUrl { get; set; }

@@ -1,5 +1,9 @@
+#![feature(let_chains)]
+#![feature(if_let_guard)]
+
 use chrono::Timelike;
 use fred::{clients::RedisPool, interfaces::*};
+use prost::Message;
 use signal_hook::{
     consts::{SIGINT, SIGTERM},
     iterator::Signals,
@@ -30,7 +34,9 @@ async fn real_main() -> anyhow::Result<()> {
 
     let shards = discord::gateway::create_shards(redis.clone())?;
 
-    let (event_tx, _event_rx) = channel();
+    let mut rabbit_client = libpk::rabbit::new().await?;
+
+    let (event_tx, event_rx) = channel();
 
     let mut senders = Vec::new();
     let mut signal_senders = Vec::new();
@@ -50,6 +56,23 @@ async fn real_main() -> anyhow::Result<()> {
     set.spawn(tokio::spawn(
         async move { scheduled_task(redis, senders).await },
     ));
+
+    set.spawn(tokio::spawn(async move {
+        while let Ok((_, event)) = event_rx.recv() {
+            info!("got {:?}", event);
+            rabbit_client
+                .lapin_channel()
+                .basic_publish(
+                    "",
+                    "pk-commands",
+                    Default::default(),
+                    event.as_bytes(),
+                    Default::default(),
+                )
+                .await
+                .unwrap();
+        }
+    }));
 
     // todo: probably don't do it this way
     let api_shutdown_tx = shutdown_tx.clone();

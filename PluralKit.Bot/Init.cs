@@ -158,10 +158,16 @@ public class Init
 
     private static async Task StartCluster(IComponentContext services)
     {
+        var config = services.Resolve<BotConfig>();
+        if (config.RabbitUrl != null)
+        {
+            await services.Resolve<RabbitGatewayService>().Start();
+            return;
+        }
+
         var redis = services.Resolve<RedisService>();
 
         var cluster = services.Resolve<Cluster>();
-        var config = services.Resolve<BotConfig>();
 
         if (config.Cluster != null)
         {
@@ -184,15 +190,7 @@ public class Init
             var shardMin = (int)Math.Round(totalShards * (float)nodeIndex / totalNodes);
             var shardMax = (int)Math.Round(totalShards * (float)(nodeIndex + 1) / totalNodes) - 1;
 
-            if (config.RedisGatewayUrl != null)
-            {
-                var shardService = services.Resolve<RedisGatewayService>();
-
-                for (var i = shardMin; i <= shardMax; i++)
-                    await shardService.Start(i);
-            }
-            else
-                await cluster.Start(info.Url, shardMin, shardMax, totalShards, info.SessionStartLimit.MaxConcurrency, redis.Connection);
+            await cluster.Start(info.Url, shardMin, shardMax, totalShards, info.SessionStartLimit.MaxConcurrency, redis.Connection);
         }
         else
         {

@@ -97,6 +97,9 @@ pub struct PKConfig {
     #[serde(default)]
     pub avatars: Option<AvatarsConfig>,
 
+    #[serde(default)]
+    pub rabbit_addr: Option<String>,
+
     #[serde(default = "_metrics_default")]
     pub run_metrics_server: bool,
 

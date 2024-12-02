@@ -1,0 +1,19 @@
+[package]
+name = "test-rabbit"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = { workspace = true } 
+lazy_static = { workspace = true }
+libpk = { path = "../../lib/libpk" }
+metrics = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true }
+tokio-stream = { workspace = true }
+tracing = { workspace = true }
+
+lapin = { version = "2.5.0", default-features = false }
+tokio-executor-trait = { version = "2.1.3" }
+tokio-reactor-trait = { version = "1.1.0" }

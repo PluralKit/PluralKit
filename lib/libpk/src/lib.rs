@@ -7,6 +7,7 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilte
 
 pub mod db;
 pub mod proto;
+pub mod rabbit;
 pub mod util;
 
 pub mod _config;
