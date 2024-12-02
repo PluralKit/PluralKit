@@ -7,7 +7,7 @@ on:
       - 'services/scheduled_tasks/**'
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
     permissions:
       packages: write
