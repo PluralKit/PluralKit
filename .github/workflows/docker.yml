@@ -8,7 +8,7 @@ on:
     - 'PluralKit.Core/**'
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
     permissions:
       packages: write
