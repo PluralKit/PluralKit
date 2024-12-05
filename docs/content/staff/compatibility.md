@@ -21,6 +21,7 @@ This requires you to have the *Manage Server* permission on the server.
 
 ### Supported bots
 At the moment, log cleanup works with the following bots:
+- Annabelle (precise in embed format, fuzzy in inline format)
 - [Auttaja](https://auttaja.io/) (precise)
 - [blargbot](https://blargbot.xyz/) (precise)
 - [Carl-bot](https://carl.gg/) (precise)
@@ -34,6 +35,7 @@ At the moment, log cleanup works with the following bots:
 - [Mantaro](https://mantaro.site/) (precise)
 - [Pancake](https://pancake.gg/) (fuzzy)
 - [SafetyAtLast](https://www.safetyatlast.net/) (fuzzy)
+- [Sapphire](https://sapph.xyz/) (precise, only in default format)
 - [Skyra](https://www.skyra.pw/) (precise)
 - [UnbelievaBoat](https://unbelievaboat.com/) (precise)
 - Vanessa (fuzzy)
