@@ -140,7 +140,7 @@ specifying an exact time zone code is the best way. To get your local time zone 
 You can see the full list [here, on Wikipedia](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) (see the column *TZ database name*).
 You can also search by country code, either by giving the two-character [*ISO-3166-1 alpha-2* country code](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2#Officially_assigned_code_elements) (e.g. `GB` or `DE`), or just by a country flag emoji (e.g. `:flag_gb:` 🇬🇧 or `:flag_de:` 🇩🇪).
 
-To clear a time zone, type `pk;config timezone` without any parameters.
+To clear a time zone, type `pk;config timezone clear`. Note that this does not ask for confirmation!
 
 ### Deleting a system
 If you want to delete your own system, simply use the command:
