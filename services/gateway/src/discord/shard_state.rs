@@ -1,5 +1,6 @@
 use bytes::Bytes;
 use fred::{clients::RedisPool, interfaces::HashesInterface};
+use metrics::{counter, gauge};
 use prost::Message;
 use tracing::info;
 use twilight_gateway::Event;
@@ -42,7 +43,7 @@ impl ShardStateManager {
 
     async fn save_shard(&self, shard_id: u32, info: ShardState) -> anyhow::Result<()> {
         self.redis
-            .hset(
+            .hset::<(), &str, (String, Bytes)>(
                 "pluralkit:shardstatus",
                 (
                     shard_id.to_string(),
@@ -59,6 +60,13 @@ impl ShardStateManager {
             shard_id,
             if resumed { "resumed" } else { "ready" }
         );
+        counter!(
+            "pluralkit_gateway_shard_reconnect",
+            "shard_id" => shard_id.to_string(),
+            "resumed" => resumed.to_string(),
+        )
+        .increment(1);
+        gauge!("pluralkit_gateway_shard_up").increment(1);
         let mut info = self.get_shard(shard_id).await?;
         info.last_connection = chrono::offset::Utc::now().timestamp() as i32;
         info.up = true;
@@ -68,6 +76,7 @@ impl ShardStateManager {
 
     async fn socket_closed(&self, shard_id: u32) -> anyhow::Result<()> {
         info!("shard {} closed", shard_id);
+        gauge!("pluralkit_gateway_shard_up").decrement(1);
         let mut info = self.get_shard(shard_id).await?;
         info.up = false;
         info.disconnection_count += 1;

@@ -596,6 +596,8 @@ public partial class CommandTree
             return ctx.Execute<Config>(null, m => m.LimitUpdate(ctx));
         if (ctx.MatchMultiple(new[] { "proxy" }, new[] { "switch" }) || ctx.Match("proxyswitch", "ps"))
             return ctx.Execute<Config>(null, m => m.ProxySwitch(ctx));
+        if (ctx.MatchMultiple(new[] { "server" }, new[] { "name" }, new[] { "format" }) || ctx.MatchMultiple(new[] { "server", "servername" }, new[] { "format", "nameformat", "nf" }) || ctx.Match("snf", "servernf", "servernameformat", "snameformat"))
+            return ctx.Execute<Config>(null, m => m.ServerNameFormat(ctx));
 
         // todo: maybe add the list of configuration keys here?
         return ctx.Reply($"{Emojis.Error} Could not find a setting with that name. Please see `pk;commands config` for the list of possible config settings.");

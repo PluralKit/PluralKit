@@ -496,10 +496,10 @@ public class ProxyService
         async Task SaveMessageInRedis()
         {
             // logclean info
-            await _redis.SetLogCleanup(triggerMessage.Author.Id, triggerMessage.GuildId.Value);
+            await _redis.SetLogCleanup(triggerMessage.Author.Id, proxyMessage.GuildId!.Value);
 
             // last message info (edit/reproxy)
-            await _redis.SetLastMessage(triggerMessage.Author.Id, triggerMessage.ChannelId, sentMessage.Mid);
+            await _redis.SetLastMessage(triggerMessage.Author.Id, proxyMessage.ChannelId, sentMessage.Mid);
 
             // "by original mid" lookup
             await _redis.SetOriginalMid(triggerMessage.Id, proxyMessage.Id);

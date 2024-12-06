@@ -9,7 +9,7 @@ public static class MessageContextExt
         if (!ctx.TagEnabled || tag == null)
             return false;
 
-        var format = ctx.NameFormat ?? ProxyMember.DefaultFormat;
+        var format = ctx.GuildNameFormat ?? ctx.NameFormat ?? ProxyMember.DefaultFormat;
         if (!format.Contains("{tag}"))
             return false;
 

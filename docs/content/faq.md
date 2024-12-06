@@ -24,7 +24,7 @@ You can suggest features in the [support server](https://discord.gg/PczBt78)'s `
 We also track feature requests through [Github Issues](https://github.com/PluralKit/PluralKit/issues). Feel free to open issue reports or feature requests there as well.
 
 ### How can I support the bot's development?
-I (the bot author, [Ske](https://twitter.com/floofstrid)) have a Patreon. The income from there goes towards server hosting, domains, infrastructure, my Monster Energy addiction, et cetera. There are no benefits. There might never be any. But nevertheless, it can be found here: [https://www.patreon.com/floofstrid](https://www.patreon.com/floofstrid)
+We accept donations on [Patreon](https://patreon.com/pluralkit/) (recurring) and [Buy Me A Coffee](https://buymeacoffee.com/pluralkit/) (one-time). Any funds donated here will be used to pay for server hosting and (if anything is left over) development work.
 
 ### Can I recover my system if I lose access to my Discord account?
 Yes, through one of two methods. Both require you to do preparations **before** you lose the account. 

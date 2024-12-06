@@ -15,6 +15,10 @@ public static class ContextAvatarExt
             return new ParsedImage { Url = url, Source = AvatarSource.User, SourceUser = user };
         }
 
+        // If we have raw or plaintext, don't try to parse as a URL
+        if (ctx.PeekMatchFormat() != ReplyFormat.Standard)
+            return null;
+
         // If we have a positional argument, try to parse it as a URL
         var arg = ctx.RemainderOrNull();
         if (arg != null)

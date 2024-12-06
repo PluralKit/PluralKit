@@ -47,7 +47,6 @@ pub async fn run_server(cache: Arc<DiscordCache>) -> anyhow::Result<()> {
             get(|State(cache): State<Arc<DiscordCache>>, Path(guild_id): Path<u64>| async move {
                 match cache.guild_permissions(Id::new(guild_id), libpk::config.discord.as_ref().expect("missing discord config").client_id).await {
                     Ok(val) => {
-                        println!("hh {}", Permissions::all().bits());
                         status_code(StatusCode::FOUND, to_string(&val.bits()).unwrap())
                     },
                     Err(err) => {

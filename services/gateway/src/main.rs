@@ -18,12 +18,8 @@ mod cache_api;
 mod discord;
 mod logger;
 
-#[tokio::main]
-async fn main() -> anyhow::Result<()> {
-    libpk::init_logging("gateway")?;
-    libpk::init_metrics()?;
-    info!("hello world");
-
+libpk::main!("gateway");
+async fn real_main() -> anyhow::Result<()> {
     let (shutdown_tx, shutdown_rx) = channel::<()>();
     let shutdown_tx = Arc::new(shutdown_tx);
 
@@ -69,7 +65,7 @@ async fn main() -> anyhow::Result<()> {
 
     let mut signals = Signals::new(&[SIGINT, SIGTERM])?;
 
-    tokio::spawn(async move {
+    set.spawn(tokio::spawn(async move {
         for sig in signals.forever() {
             info!("received signal {:?}", sig);
 
@@ -86,7 +82,7 @@ async fn main() -> anyhow::Result<()> {
             let _ = shutdown_tx.send(());
             break;
         }
-    });
+    }));
 
     let _ = shutdown_rx.recv();
 

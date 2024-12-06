@@ -382,7 +382,7 @@ You can now set some proxy tags:
 
     pk;member John proxy John:text
 
-Now, oth of the following will work without needing to add multiple versions of the proxy tag:
+Now, both of the following will work without needing to add multiple versions of the proxy tag:
 
     John: Hello!
     JOHN: Hello!
@@ -394,6 +394,10 @@ The default proxy username formatting is "{name} {tag}", but you can customize t
     pk;config nameformat {tag} {name}
     pk;config nameformat {name}@{tag}
 
+You can also do this on a per-server basis:
+
+    pk;config servernameformat {tag} {name}
+    pk;config servernameformat {name}@{tag}
 
 ## Interacting with proxied messages
 

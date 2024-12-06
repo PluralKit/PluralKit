@@ -133,7 +133,7 @@ public class MemberEdit
     {
         var noPronounsSetMessage = "This member does not have pronouns set.";
         if (ctx.System?.Id == target.System)
-            noPronounsSetMessage += $"To set some, type `pk;member {target.Reference(ctx)} pronouns <pronouns>`.";
+            noPronounsSetMessage += $" To set some, type `pk;member {target.Reference(ctx)} pronouns <pronouns>`.";
 
         ctx.CheckSystemPrivacy(target.System, target.PronounPrivacy);
 
@@ -194,16 +194,18 @@ public class MemberEdit
 
     public async Task BannerImage(Context ctx, PKMember target)
     {
-        ctx.CheckOwnMember(target);
-
         async Task ClearBannerImage()
         {
+            ctx.CheckOwnMember(target);
+            await ctx.ConfirmClear("this member's banner image");
+
             await ctx.Repository.UpdateMember(target.Id, new MemberPatch { BannerImage = null });
             await ctx.Reply($"{Emojis.Success} Member banner image cleared.");
         }
 
         async Task SetBannerImage(ParsedImage img)
         {
+            ctx.CheckOwnMember(target);
             img = await _avatarHosting.TryRehostImage(img, AvatarHostingService.RehostedImageType.Banner, ctx.Author.Id, ctx.System);
             await AvatarUtils.VerifyAvatarOrThrow(_client, img.Url, true);
 
@@ -229,21 +231,31 @@ public class MemberEdit
         async Task ShowBannerImage()
         {
             if ((target.BannerImage?.Trim() ?? "").Length > 0)
-            {
-                var eb = new EmbedBuilder()
-                    .Title($"{target.NameFor(ctx)}'s banner image")
-                    .Image(new Embed.EmbedImage(target.BannerImage))
-                    .Description($"To clear, use `pk;member {target.Reference(ctx)} banner clear`.");
-                await ctx.Reply(embed: eb.Build());
-            }
+                switch (ctx.MatchFormat())
+                {
+                    case ReplyFormat.Raw:
+                        await ctx.Reply($"`{target.BannerImage.TryGetCleanCdnUrl()}`");
+                        break;
+                    case ReplyFormat.Plaintext:
+                        var ebP = new EmbedBuilder()
+                            .Description($"Showing banner for member {target.NameFor(ctx)} (`{target.DisplayHid(ctx.Config)}`)");
+                        await ctx.Reply(text: $"<{target.BannerImage.TryGetCleanCdnUrl()}>", embed: ebP.Build());
+                        break;
+                    default:
+                        var ebS = new EmbedBuilder()
+                            .Title($"{target.NameFor(ctx)}'s banner image")
+                            .Image(new Embed.EmbedImage(target.BannerImage.TryGetCleanCdnUrl()));
+                        if (target.System == ctx.System?.Id)
+                            ebS.Description($"To clear, use `pk;member {target.Reference(ctx)} banner clear`.");
+                        await ctx.Reply(embed: ebS.Build());
+                        break;
+                }
             else
-            {
                 throw new PKSyntaxError(
-                    "This member does not have a banner image set. Set one by attaching an image to this command, or by passing an image URL.");
-            }
+                    "This member does not have a banner image set." + ((target.System == ctx.System?.Id) ? " Set one by attaching an image to this command, or by passing an image URL." : ""));
         }
 
-        if (ctx.MatchClear() && await ctx.ConfirmClear("this member's banner image"))
+        if (ctx.MatchClear())
             await ClearBannerImage();
         else if (await ctx.MatchImage() is { } img)
             await SetBannerImage(img);

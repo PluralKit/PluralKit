@@ -1,6 +1,9 @@
 use std::time::Instant;
 
-use axum::{extract::MatchedPath, extract::Request, middleware::Next, response::Response};
+use axum::{
+    extract::MatchedPath, extract::Request, http::StatusCode, middleware::Next, response::Response,
+};
+use metrics::{counter, histogram};
 use tracing::{info, span, warn, Instrument, Level};
 
 // log any requests that take longer than 2 seconds
@@ -30,13 +33,30 @@ pub async fn logger(request: Request, next: Next) -> Response {
     let response = next.run(request).instrument(request_id_span).await;
     let elapsed = start.elapsed().as_millis();
 
-    info!(
-        "{} handled request for {} {} in {}ms",
-        response.status(),
-        method,
-        uri.path(),
-        elapsed
-    );
+    counter!(
+        "pluralkit_gateway_cache_api_requests",
+        "method" => method.to_string(),
+        "endpoint" => endpoint.clone(),
+        "status" => response.status().to_string(),
+    )
+    .increment(1);
+    histogram!(
+        "pluralkit_gateway_cache_api_requests_bucket",
+        "method" => method.to_string(),
+        "endpoint" => endpoint.clone(),
+        "status" => response.status().to_string(),
+    )
+    .record(elapsed as f64 / 1_000_f64);
+
+    if response.status() != StatusCode::FOUND {
+        info!(
+            "{} handled request for {} {} in {}ms",
+            response.status(),
+            method,
+            uri.path(),
+            elapsed
+        );
+    }
 
     if elapsed > MIN_LOG_TIME {
         warn!(

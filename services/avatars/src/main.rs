@@ -142,12 +142,8 @@ pub struct AppState {
     config: Arc<AvatarsConfig>,
 }
 
-#[tokio::main]
-async fn main() -> anyhow::Result<()> {
-    libpk::init_logging("avatars")?;
-    libpk::init_metrics()?;
-    info!("hello world");
-
+libpk::main!("avatars");
+async fn real_main() -> anyhow::Result<()> {
     let config = libpk::config
         .avatars
         .as_ref()

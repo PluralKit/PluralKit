@@ -116,6 +116,15 @@
           "App.Metrics.Formatters.InfluxDB": "4.1.0"
         }
       },
+      "AppFact.SerilogOpenSearchSink": {
+        "type": "Transitive",
+        "resolved": "0.0.8",
+        "contentHash": "RI3lfmvAwhqrYwy5KPqsBT/tB/opSzeoVH2WUfvGKNBpl6ILCw/5wE8+19L+XMzBFVqgZ5QmkQ2PqTzG9I/ckA==",
+        "dependencies": {
+          "OpenSearch.Client": "1.4.0",
+          "Serilog": "2.12.0"
+        }
+      },
       "Autofac": {
         "type": "Transitive",
         "resolved": "6.0.0",
@@ -464,6 +473,24 @@
           "Npgsql": "4.1.5"
         }
       },
+      "OpenSearch.Client": {
+        "type": "Transitive",
+        "resolved": "1.4.0",
+        "contentHash": "91TXm+I8PzxT0yxkf0q5Quee5stVcIFys56pU8+M3+Kiakx+aiaTAlZJHfA3Oy6dMJndNkVm37IPKYCqN3dS4g==",
+        "dependencies": {
+          "OpenSearch.Net": "1.4.0"
+        }
+      },
+      "OpenSearch.Net": {
+        "type": "Transitive",
+        "resolved": "1.4.0",
+        "contentHash": "xCM6m3aArN9gXIl2DvWXaDlbpjOBbgMeRPsAM7s1eDbWhu8wKNyfPNKSfep4JlYXkZ7N6Oi/+lmi+G3/SpcqlQ==",
+        "dependencies": {
+          "Microsoft.CSharp": "4.7.0",
+          "System.Buffers": "4.5.1",
+          "System.Diagnostics.DiagnosticSource": "6.0.1"
+        }
+      },
       "Pipelines.Sockets.Unofficial": {
         "type": "Transitive",
         "resolved": "2.2.8",
@@ -726,8 +753,8 @@
       },
       "System.Buffers": {
         "type": "Transitive",
-        "resolved": "4.5.0",
-        "contentHash": "pL2ChpaRRWI/p4LXyy4RgeWlYF2sgfj/pnVMvBqwNFr5cXg7CXNnWZWxrOONLg8VGdFB8oB+EG2Qw4MLgTOe+A=="
+        "resolved": "4.5.1",
+        "contentHash": "Rw7ijyl1qqRS0YQD/WycNst8hUUMgrMH4FCn1nNm27M4VxchZ1js3fVjQaANHO5f3sN4isvP4a+Met9Y4YomAg=="
       },
       "System.Collections": {
         "type": "Transitive",
@@ -780,8 +807,11 @@
       },
       "System.Diagnostics.DiagnosticSource": {
         "type": "Transitive",
-        "resolved": "4.7.1",
-        "contentHash": "j81Lovt90PDAq8kLpaJfJKV/rWdWuEk6jfV+MBkee33vzYLEUsy4gXK8laa9V2nZlLM9VM9yA/OOQxxPEJKAMw=="
+        "resolved": "6.0.1",
+        "contentHash": "KiLYDu2k2J82Q9BJpWiuQqCkFjRBWVq4jDzKKWawVi9KWzyD0XG3cmfX0vqTQlL14Wi9EufJrbL0+KCLTbqWiQ==",
+        "dependencies": {
+          "System.Runtime.CompilerServices.Unsafe": "6.0.0"
+        }
       },
       "System.Diagnostics.Tools": {
         "type": "Transitive",
@@ -1123,8 +1153,8 @@
       },
       "System.Runtime.CompilerServices.Unsafe": {
         "type": "Transitive",
-        "resolved": "4.7.1",
-        "contentHash": "zOHkQmzPCn5zm/BH+cxC1XbUS3P4Yoi3xzW7eRgVpDR2tPGSzyMZ17Ig1iRkfJuY0nhxkQQde8pgePNiA7z7TQ=="
+        "resolved": "6.0.0",
+        "contentHash": "/iUeP3tq1S0XdNNoMz5C9twLSrM/TH+qElHkXWaPvuNOt+99G75NrV0OS2EqHx5wMN7popYjpc8oTjC1y16DLg=="
       },
       "System.Runtime.Extensions": {
         "type": "Transitive",
@@ -1459,6 +1489,7 @@
         "dependencies": {
           "App.Metrics": "[4.1.0, )",
           "App.Metrics.Reporting.InfluxDB": "[4.1.0, )",
+          "AppFact.SerilogOpenSearchSink": "[0.0.8, )",
           "Autofac": "[6.0.0, )",
           "Autofac.Extensions.DependencyInjection": "[7.1.0, )",
           "Dapper": "[2.0.35, )",

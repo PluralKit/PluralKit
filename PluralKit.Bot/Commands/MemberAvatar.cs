@@ -86,12 +86,28 @@ public class MemberAvatar
         if (location == MemberAvatarLocation.Server)
             field += $" (for {ctx.Guild.Name})";
 
-        var eb = new EmbedBuilder()
-            .Title($"{target.NameFor(ctx)}'s {field}")
-            .Image(new Embed.EmbedImage(currentValue?.TryGetCleanCdnUrl()));
-        if (target.System == ctx.System?.Id)
-            eb.Description($"To clear, use `pk;member {target.Reference(ctx)} {location.Command()} clear`.");
-        await ctx.Reply(embed: eb.Build());
+        var format = ctx.MatchFormat();
+        if (format == ReplyFormat.Raw)
+        {
+            await ctx.Reply($"`{currentValue?.TryGetCleanCdnUrl()}`");
+        }
+        else if (format == ReplyFormat.Plaintext)
+        {
+            var eb = new EmbedBuilder()
+                .Description($"Showing {field} link for member {target.NameFor(ctx)} (`{target.DisplayHid(ctx.Config)}`)");
+            await ctx.Reply($"<{currentValue?.TryGetCleanCdnUrl()}>", embed: eb.Build());
+            return;
+        }
+        else if (format == ReplyFormat.Standard)
+        {
+            var eb = new EmbedBuilder()
+                .Title($"{target.NameFor(ctx)}'s {field}")
+                .Image(new Embed.EmbedImage(currentValue?.TryGetCleanCdnUrl()));
+            if (target.System == ctx.System?.Id)
+                eb.Description($"To clear, use `pk;member {target.Reference(ctx)} {location.Command()} clear`.");
+            await ctx.Reply(embed: eb.Build());
+        }
+        else throw new PKError("Format Not Recognized");
     }
 
     public async Task ServerAvatar(Context ctx, PKMember target)

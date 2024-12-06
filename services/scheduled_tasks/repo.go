@@ -20,59 +20,26 @@ type httpstats struct {
 func query_http_cache() []httpstats {
 	var values []httpstats
 
-	url := os.Getenv("CONSUL_URL")
-	if url == "" {
-		panic("missing CONSUL_URL in environment")
+	http_cache_url := os.Getenv("HTTP_CACHE_URL")
+	if http_cache_url == "" {
+		panic("missing HTTP_CACHE_URL in environment")
 	}
 
-	expected_gateway_count, err := strconv.Atoi(os.Getenv("EXPECTED_GATEWAY_COUNT"))
+	cluster_count, err := strconv.Atoi(os.Getenv("CLUSTER_COUNT"))
 	if err != nil {
-		panic(fmt.Sprintf("missing or invalid EXPECTED_GATEWAY_COUNT in environment"))
+		panic(fmt.Sprintf("missing or invalid CLUSTER_COUNT in environment"))
 	}
 
-	resp, err := http.Get(fmt.Sprintf("%v/v1/health/service/pluralkit-gateway", url))
-	if err != nil {
-		panic(err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		panic(fmt.Sprintf("got status %v trying to query consul for all_gateway_instances", resp.Status))
-	}
-
-	var ips []string
-
-	data, err := io.ReadAll(resp.Body)
-	if err != nil {
-		panic(err)
-	}
-	var cs []any
-	err = json.Unmarshal(data, &cs)
-	if err != nil {
-		panic(err)
-	}
-
-	if len(cs) != expected_gateway_count {
-		panic(fmt.Sprintf("got unexpected number of gateway instances from consul (expected %v, got %v)", expected_gateway_count, len(cs)))
-	}
-
-	for idx, itm := range cs {
-		if ip, ok := itm.(map[string]any)["Service"].(map[string]any)["Address"].(string); ok {
-				ips = append(ips, ip)
-		} else {
-			panic(fmt.Sprintf("got bad data from consul for all_gateway_instances, at index %v", idx))
-		}
-	}
-
-	log.Printf("querying %v gateway clusters for discord stats\n", len(ips))
-
-	for _, ip := range ips {
-		resp, err := http.Get("http://"+ip+":5000/stats")
+	for i := range cluster_count {
+		log.Printf("querying gateway cluster %v for discord stats\n", i)
+		url := fmt.Sprintf("http://cluster%v.%s:5000/stats", i, http_cache_url)
+		resp, err := http.Get(url)
 		if err != nil {
 			panic(err)
 		}
 		defer resp.Body.Close()
 		if resp.StatusCode != http.StatusFound {
-			panic(fmt.Sprintf("got status %v trying to query %v:5000", resp.Status, ip))
+			panic(fmt.Sprintf("got status %v trying to query %v.%s:5000", resp.Status, i, http_cache_url))
 		}
 		var s httpstats
 		data, err := io.ReadAll(resp.Body)

@@ -19,6 +19,8 @@ use axum::{extract::State, http::Uri, routing::post, Json, Router};
 
 mod logger;
 
+// this package does not currently use libpk
+
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt()

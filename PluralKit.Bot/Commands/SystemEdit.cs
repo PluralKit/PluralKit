@@ -565,19 +565,28 @@ public class SystemEdit
         async Task ShowIcon()
         {
             if ((target.AvatarUrl?.Trim() ?? "").Length > 0)
-            {
-                var eb = new EmbedBuilder()
-                    .Title("System icon")
-                    .Image(new Embed.EmbedImage(target.AvatarUrl.TryGetCleanCdnUrl()));
-                if (target.Id == ctx.System?.Id)
-                    eb.Description("To clear, use `pk;system icon clear`.");
-                await ctx.Reply(embed: eb.Build());
-            }
+                switch (ctx.MatchFormat())
+                {
+                    case ReplyFormat.Raw:
+                        await ctx.Reply($"`{target.AvatarUrl.TryGetCleanCdnUrl()}`");
+                        break;
+                    case ReplyFormat.Plaintext:
+                        var ebP = new EmbedBuilder()
+                            .Description($"Showing icon for system {target.NameFor(ctx)} (`{target.DisplayHid(ctx.Config)}`)");
+                        await ctx.Reply(text: $"<{target.AvatarUrl.TryGetCleanCdnUrl()}>", embed: ebP.Build());
+                        break;
+                    default:
+                        var ebS = new EmbedBuilder()
+                            .Title("System icon")
+                            .Image(new Embed.EmbedImage(target.AvatarUrl.TryGetCleanCdnUrl()));
+                        if (target.Id == ctx.System?.Id)
+                            ebS.Description("To clear, use `pk;system icon clear`.");
+                        await ctx.Reply(embed: ebS.Build());
+                        break;
+                }
             else
-            {
                 throw new PKSyntaxError(
                     "This system does not have an icon set. Set one by attaching an image to this command, or by passing an image URL or @mention.");
-            }
         }
 
         if (target != null && target?.Id != ctx.System?.Id)
@@ -639,19 +648,28 @@ public class SystemEdit
             var settings = await ctx.Repository.GetSystemGuild(ctx.Guild.Id, target.Id);
 
             if ((settings.AvatarUrl?.Trim() ?? "").Length > 0)
-            {
-                var eb = new EmbedBuilder()
-                    .Title("System server icon")
-                    .Image(new Embed.EmbedImage(settings.AvatarUrl.TryGetCleanCdnUrl()));
-                if (target.Id == ctx.System?.Id)
-                    eb.Description("To clear, use `pk;system servericon clear`.");
-                await ctx.Reply(embed: eb.Build());
-            }
+                switch (ctx.MatchFormat())
+                {
+                    case ReplyFormat.Raw:
+                        await ctx.Reply($"`{settings.AvatarUrl.TryGetCleanCdnUrl()}`");
+                        break;
+                    case ReplyFormat.Plaintext:
+                        var ebP = new EmbedBuilder()
+                            .Description($"Showing icon for system {target.NameFor(ctx)} (`{target.DisplayHid(ctx.Config)}`)");
+                        await ctx.Reply(text: $"<{settings.AvatarUrl.TryGetCleanCdnUrl()}>", embed: ebP.Build());
+                        break;
+                    default:
+                        var ebS = new EmbedBuilder()
+                            .Title("System server icon")
+                            .Image(new Embed.EmbedImage(settings.AvatarUrl.TryGetCleanCdnUrl()));
+                        if (target.Id == ctx.System?.Id)
+                            ebS.Description("To clear, use `pk;system servericon clear`.");
+                        await ctx.Reply(embed: ebS.Build());
+                        break;
+                }
             else
-            {
                 throw new PKSyntaxError(
                     "This system does not have a icon specific to this server. Set one by attaching an image to this command, or by passing an image URL or @mention.");
-            }
         }
 
         ctx.CheckGuildContext();
@@ -676,24 +694,31 @@ public class SystemEdit
 
         var isOwnSystem = target.Id == ctx.System?.Id;
 
-        if (!ctx.HasNext() && ctx.Message.Attachments.Length == 0)
+        if ((!ctx.HasNext() && ctx.Message.Attachments.Length == 0) || ctx.PeekMatchFormat() != ReplyFormat.Standard)
         {
             if ((target.BannerImage?.Trim() ?? "").Length > 0)
-            {
-                var eb = new EmbedBuilder()
-                    .Title("System banner image")
-                    .Image(new Embed.EmbedImage(target.BannerImage));
-
-                if (isOwnSystem)
-                    eb.Description("To clear, use `pk;system banner clear`.");
-
-                await ctx.Reply(embed: eb.Build());
-            }
+                switch (ctx.MatchFormat())
+                {
+                    case ReplyFormat.Raw:
+                        await ctx.Reply($"`{target.BannerImage.TryGetCleanCdnUrl()}`");
+                        break;
+                    case ReplyFormat.Plaintext:
+                        var ebP = new EmbedBuilder()
+                            .Description($"Showing banner for system {target.NameFor(ctx)} (`{target.DisplayHid(ctx.Config)}`)");
+                        await ctx.Reply(text: $"<{target.BannerImage.TryGetCleanCdnUrl()}>", embed: ebP.Build());
+                        break;
+                    default:
+                        var ebS = new EmbedBuilder()
+                            .Title("System banner image")
+                            .Image(new Embed.EmbedImage(target.BannerImage.TryGetCleanCdnUrl()));
+                        if (target.Id == ctx.System?.Id)
+                            ebS.Description("To clear, use `pk;system banner clear`.");
+                        await ctx.Reply(embed: ebS.Build());
+                        break;
+                }
             else
-            {
                 throw new PKSyntaxError("This system does not have a banner image set."
                     + (isOwnSystem ? "Set one by attaching an image to this command, or by passing an image URL or @mention." : ""));
-            }
 
             return;
         }
@@ -842,7 +867,7 @@ public class SystemEdit
                 .Field(new Embed.Field("Current fronter(s)", target.FrontPrivacy.Explanation()))
                 .Field(new Embed.Field("Front/switch history", target.FrontHistoryPrivacy.Explanation()))
                 .Description(
-                    "To edit privacy settings, use the command:\n`pk;system privacy <subject> <level>`\n\n- `subject` is one of `name`, `avatar`, `description`, `banner`, `list`, `front`, `fronthistory`, `groups`, or `all` \n- `level` is either `public` or `private`.");
+                    "To edit privacy settings, use the command:\n`pk;system privacy <subject> <level>`\n\n- `subject` is one of `name`, `avatar`, `description`, `banner`, `pronouns`, `list`, `front`, `fronthistory`, `groups`, or `all` \n- `level` is either `public` or `private`.");
             return ctx.Reply(embed: eb.Build());
         }
 

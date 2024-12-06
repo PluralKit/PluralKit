@@ -6,7 +6,7 @@ WORKDIR /build
 
 COPY ./ /build
 
-RUN go build .
+RUN GOTOOLCHAIN=auto go build .
 
 FROM alpine:latest
 
