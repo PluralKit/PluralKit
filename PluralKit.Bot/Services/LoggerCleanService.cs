@@ -125,10 +125,10 @@ public class LoggerCleanService
             // Some bots have different log formats so we check for both types of extract function
             if (bot.FuzzyExtractFunc != null)
             {
-                // Some bots (Carl, Circle, etc) only give us a user ID and a rough timestamp, so we try our best to
+                // Some bots (Carl, Circle, etc) only give us a user ID, so we try our best to
                 // "cross-reference" those with the message DB. We know the deletion event happens *after* the message
                 // was sent, so we're checking for any messages sent in the same guild within 3 seconds before the
-                // delete event timestamp, which is... good enough, I think? Potential for false positives and negatives
+                // delete event log, which is... good enough, I think? Potential for false positives and negatives
                 // either way but shouldn't be too much, given it's constrained by user ID and guild.
                 var fuzzy = bot.FuzzyExtractFunc(msg);
                 if (fuzzy != null)
@@ -267,8 +267,8 @@ public class LoggerCleanService
     private static FuzzyExtractResult? ExtractCircle(Message msg)
     {
         // Like Auttaja, Circle has both embed and compact modes, but the regex works for both.
-        // Compact: "Message from [user] ([id]) deleted in [channel]", no timestamp (use message time)
-        // Embed: Message Author field: "[user] ([id])", then an embed timestamp
+        // Compact: "Message from [user] ([id]) deleted in [channel]"
+        // Embed: Message Author field: "[user] ([id])"
         var stringWithId = msg.Content;
         if (msg.Embeds?.Length > 0)
         {
@@ -285,24 +285,21 @@ public class LoggerCleanService
         return match.Success
             ? new FuzzyExtractResult
             {
-                User = ulong.Parse(match.Groups[1].Value),
-                ApproxTimestamp = msg.Timestamp().ToInstant()
+                User = ulong.Parse(match.Groups[1].Value)
             }
             : null;
     }
 
     private static FuzzyExtractResult? ExtractPancake(Message msg)
     {
-        // Embed, author is "Message Deleted", description includes a mention, timestamp is *message send time* (but no ID)
-        // so we use the message timestamp to get somewhere *after* the message was proxied
+        // Embed, author is "Message Deleted", description includes a mention
         var embed = msg.Embeds?.FirstOrDefault();
         if (embed?.Description == null || embed.Author?.Name != "Message Deleted") return null;
         var match = _pancakeRegex.Match(embed.Description);
         return match.Success
             ? new FuzzyExtractResult
             {
-                User = ulong.Parse(match.Groups[1].Value),
-                ApproxTimestamp = msg.Timestamp().ToInstant()
+                User = ulong.Parse(match.Groups[1].Value)
             }
             : null;
     }
@@ -325,8 +322,7 @@ public class LoggerCleanService
         return match.Success
             ? new FuzzyExtractResult
             {
-                User = ulong.Parse(match.Groups[1].Value),
-                ApproxTimestamp = msg.Timestamp().ToInstant()
+                User = ulong.Parse(match.Groups[1].Value)
             }
             : null;
     }
@@ -342,8 +338,7 @@ public class LoggerCleanService
         return match.Success
             ? new FuzzyExtractResult
             {
-                User = ulong.Parse(match.Groups[1].Value),
-                ApproxTimestamp = msg.Timestamp().ToInstant()
+                User = ulong.Parse(match.Groups[1].Value)
             }
             : null;
     }
@@ -351,14 +346,12 @@ public class LoggerCleanService
     private static FuzzyExtractResult? ExtractGearBot(Message msg)
     {
         // Simple text based message log.
-        // No message ID, but we have timestamp and author ID.
-        // Not using timestamp here though (seems to be same as message timestamp), might be worth implementing in the future.
+        // No message ID, but we have author ID.
         var match = _GearBotRegex.Match(msg.Content);
         return match.Success
             ? new FuzzyExtractResult
             {
-                User = ulong.Parse(match.Groups[1].Value),
-                ApproxTimestamp = msg.Timestamp().ToInstant()
+                User = ulong.Parse(match.Groups[1].Value)
             }
             : null;
     }
@@ -373,14 +366,11 @@ public class LoggerCleanService
 
     private static FuzzyExtractResult? ExtractVortex(Message msg)
     {
-        // timestamp is HH:MM:SS
-        // however, that can be set to the user's timezone, so we just use the message timestamp
         var match = _VortexRegex.Match(msg.Content);
         return match.Success
             ? new FuzzyExtractResult
             {
-                User = ulong.Parse(match.Groups[2].Value),
-                ApproxTimestamp = msg.Timestamp().ToInstant()
+                User = ulong.Parse(match.Groups[2].Value)
             }
             : null;
     }
@@ -388,15 +378,12 @@ public class LoggerCleanService
     private static FuzzyExtractResult? ExtractProBot(Message msg)
     {
         // user ID and channel ID are in the embed description (we don't use channel ID)
-        // timestamp is in the embed footer
         if (msg.Embeds.Length == 0 || msg.Embeds[0].Description == null) return null;
         var match = _ProBotRegex.Match(msg.Embeds[0].Description);
         return match.Success
             ? new FuzzyExtractResult
             {
-                User = ulong.Parse(match.Groups[1].Value),
-                ApproxTimestamp = OffsetDateTimePattern.Rfc3339
-                    .Parse(msg.Embeds[0].Timestamp).GetValueOrThrow().ToInstant()
+                User = ulong.Parse(match.Groups[1].Value)
             }
             : null;
     }
@@ -435,8 +422,7 @@ public class LoggerCleanService
         return match.Success
             ? new FuzzyExtractResult
             {
-                User = ulong.Parse(match.Groups[2].Value),
-                ApproxTimestamp = DateTimeOffset.FromUnixTimeSeconds(long.Parse(match.Groups[1].Value)).ToInstant()
+                User = ulong.Parse(match.Groups[2].Value)
             }
             : null;
     }
@@ -465,6 +451,5 @@ public class LoggerCleanService
     public struct FuzzyExtractResult
     {
         public ulong User { get; set; }
-        public Instant ApproxTimestamp { get; set; }
     }
 }
