@@ -110,4 +110,27 @@ public partial class ModelRepository
 
         await _db.ExecuteQuery(query);
     }
+
+    public async Task UpdateMemberForDeletedMessage(MemberId id, int msgCount, int numberToDecrement = 1)
+    {
+        if (msgCount <= 0) return;
+
+        var query = new Query("members")
+            .When(msgCount > numberToDecrement,
+                // when message count is higher than number we're removing
+                q => q.AsUpdate(new
+                {
+                    message_count = new UnsafeLiteral($"message_count - {numberToDecrement}")
+                }),
+                // when this is the only/last message(s) (if the db for some reason thinks there are no messages we already returned)
+                q => q.AsUpdate(new
+                {
+                    message_count = 0,
+                    last_message_timestamp = new UnsafeLiteral("null")
+                })
+            )
+            .Where("id", id);
+
+        await _db.ExecuteQuery(query);
+    }
 }

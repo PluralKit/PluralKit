@@ -26,6 +26,9 @@ public partial class ModelRepository
     public Task<PKMessage?> GetMessage(ulong id)
         => _db.QueryFirst<PKMessage?>(new Query("messages").Where("mid", id), messages: true);
 
+    public Task<IEnumerable<PKMessage>> GetMessagesBulk(IReadOnlyCollection<ulong> ids)
+        => _db.Query<PKMessage>(new Query("messages").WhereIn("mid", ids.Select(id => (long)id).ToArray()));
+
     public async Task<FullMessage?> GetFullMessage(ulong id)
     {
         var rawMessage = await GetMessage(id);
