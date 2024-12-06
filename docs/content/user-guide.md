@@ -453,7 +453,7 @@ You can
 
 #### Pinging the user who sent it
 If you'd like to "ping" the account behind a proxied message without having to query the message and ping them yourself,
-you can react to the message with the `:bell:` :bell: emoji (or `:exclamation:` :exclamation:, or even `:ping_pong:` :ping_pong:), and PluralKit will ping the relevant member and account in the same channel on your behalf with a link to the message you reacted to.
+you can react to the message with the `:bell:` :bell: emoji (or `:bellhop:` :bellhop:, `:exclamation:` :exclamation:, or even `:ping_pong:` :ping_pong:), and PluralKit will ping the relevant member and account in the same channel on your behalf with a link to the message you reacted to.
 
 ## Autoproxy
 The bot's *autoproxy* feature allows you to have messages be proxied without directly including the proxy tags. Autoproxy can be set up in various ways. There are three autoproxy modes currently implemented:
