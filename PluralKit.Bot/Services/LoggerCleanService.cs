@@ -81,7 +81,7 @@ public class LoggerCleanService
         new LoggerBot("ProBot Prime", 567703512763334685, fuzzyExtractFunc: ExtractProBot), // webhook (?)
         new LoggerBot("Dozer", 356535250932858885, ExtractDozer),
         new LoggerBot("Skyra", 266624760782258186, ExtractSkyra),
-        new LoggerBot("Annabelle", 231241068383961088, fuzzyExtractFunc: ExtractAnnabelleFuzzy),
+        new LoggerBot("Annabelle", 231241068383961088, ExtractAnnabelle, fuzzyExtractFunc: ExtractAnnabelleFuzzy),
     }.ToDictionary(b => b.Id);
 
     private static Dictionary<ulong, LoggerBot> _botsByApplicationId
