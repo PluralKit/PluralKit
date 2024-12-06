@@ -772,13 +772,14 @@ For example:
 ### Group privacy
 
 Additionally, groups also have privacy settings.
-- Visibility *( whether the group shows up on member cards )*
-- Member list
+
 - Name
 - Description
-- Icon
 - Banner
+- Icon
+- Member list
 - Metadata *( group creation date )*
+- Visibility *( whether the group shows up on member cards )*
 
 As with system and member privacy, each can be set to **public** or **private**. The same rules apply for how they are shown, too. When set to **public**, anyone who queries your system (by account or system ID, or through the API), will see this information. When set to **private**, the information will only be shown when *you yourself* query the information. The cards will still be displayed in the channel the commands are run in, so it's still your responsibility not to pull up information in servers where you don't want it displayed.
 
@@ -795,7 +796,7 @@ To update a group's privacy, you can use the command:
   * `description`
   * `banner`
   * `avatar`
-  * `pronouns`
+  * `members`
   * `metadata`
   * `visiblity`
   * `all` (to change all subjects at once)
