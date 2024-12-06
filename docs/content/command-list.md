@@ -150,6 +150,7 @@ You can have a space after `pk;`, e.g. `pk;system` and `pk; system` will do the 
 - `pk;config pad IDs [left|right|off]` - Toggles whether to pad (add a space) 5-character IDs in lists.
 - `pk;config proxy switch [on|off]` - Toggles whether to log a switch whenever you proxy as a different member.
 - `pk;config name format [format]` - Changes your system's username formatting.
+- `pk;config server name format [format]` - Changes your system's username formatting for the current server.
 
 ## Server owner commands
 *(all commands here require Manage Server permission)*

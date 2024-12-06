@@ -394,6 +394,10 @@ The default proxy username formatting is "{name} {tag}", but you can customize t
     pk;config nameformat {tag} {name}
     pk;config nameformat {name}@{tag}
 
+You can also do this on a per-server basis:
+
+    pk;config servernameformat {tag} {name}
+    pk;config servernameformat {name}@{tag}
 
 ## Interacting with proxied messages
 
