@@ -422,8 +422,7 @@ public class LoggerCleanService
         return match.Success
             ? new FuzzyExtractResult
             {
-                User = ulong.Parse(match.Groups[2].Value),
-                ApproxTimestamp = DateTimeOffset.FromUnixTimeSeconds(long.Parse(match.Groups[1].Value)).ToInstant()
+                User = ulong.Parse(match.Groups[2].Value)
             }
             : null;
     }
