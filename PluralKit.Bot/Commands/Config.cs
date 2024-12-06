@@ -125,7 +125,7 @@ public class Config
 
         items.Add(new(
             "Proxy Switch",
-            "Whether using a proxy tag logs a switch",
+            "Switching behavior when proxy tags are used",
             ctx.Config.ProxySwitch.ToUserString(),
             "off"
         ));
@@ -566,9 +566,9 @@ public class Config
             return;
         }
 
-        // toggle = false means off, toggle = true means on, otherwise if they said add that means add. If none of those, error
+        // toggle = false means off, toggle = true means new, otherwise if they said add that means add or if they said new they mean new. If none of those, error
         var toggle = ctx.MatchToggleOrNull(false);
-        var newVal = toggle == false ? SystemConfig.ProxySwitchAction.Off : toggle == true ? SystemConfig.ProxySwitchAction.New : ctx.Match("add", "a") ? SystemConfig.ProxySwitchAction.Add : throw new PKError("You must pass either \"on\" or \"off\" to this command.");
+        var newVal = toggle == false ? SystemConfig.ProxySwitchAction.Off : toggle == true ? SystemConfig.ProxySwitchAction.New : ctx.Match("add", "a") ? SystemConfig.ProxySwitchAction.Add : ctx.Match("new", "n") ? SystemConfig.ProxySwitchAction.New : throw new PKError("You must pass either \"new\", \"add\", or \"off\" to this command.");
 
         await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { ProxySwitch = newVal });
         switch (newVal)

@@ -551,7 +551,7 @@ If you want to specify a member with multiple words in their name, remember to e
 ### Automatic Switching
 If you want PluralKit to automatically log a new switch whenever you [proxy](/guide/#proxying), you can tell it do so using the following command:
 
-    pk;config proxy switch on
+    pk;config proxy switch new
 
 Alternatively, if you want PluralKit to *add* the proxied member to the current switch instead of logging a new one, you can use this command:
 
