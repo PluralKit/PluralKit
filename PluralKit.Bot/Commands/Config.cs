@@ -125,9 +125,9 @@ public class Config
 
         items.Add(new(
             "Proxy Switch",
-            "Whether using a proxy tag logs a switch",
-            EnabledDisabled(ctx.Config.ProxySwitch),
-            "disabled"
+            "Switching behavior when proxy tags are used",
+            ctx.Config.ProxySwitch.ToUserString(),
+            "off"
         ));
 
         items.Add(new(
@@ -574,14 +574,29 @@ public class Config
     {
         if (!ctx.HasNext())
         {
-            var msg = $"Logging a switch every time a proxy tag is used is currently **{EnabledDisabled(ctx.Config.ProxySwitch)}**.";
+            string msg = ctx.Config.ProxySwitch switch
+            {
+                SystemConfig.ProxySwitchAction.Off => "Currently, when you proxy as a member, no switches are logged or changed.",
+                SystemConfig.ProxySwitchAction.New => "When you proxy as a member, currently it makes a new switch.",
+                SystemConfig.ProxySwitchAction.Add => "When you proxy as a member, currently it adds them to the current switch.",
+                _ => throw new Exception("unreachable"),
+            };
             await ctx.Reply(msg);
             return;
         }
 
-        var newVal = ctx.MatchToggle(false);
+        // toggle = false means off, toggle = true means new, otherwise if they said add that means add or if they said new they mean new. If none of those, error
+        var toggle = ctx.MatchToggleOrNull(false);
+        var newVal = toggle == false ? SystemConfig.ProxySwitchAction.Off : toggle == true ? SystemConfig.ProxySwitchAction.New : ctx.Match("add", "a") ? SystemConfig.ProxySwitchAction.Add : ctx.Match("new", "n") ? SystemConfig.ProxySwitchAction.New : throw new PKError("You must pass either \"new\", \"add\", or \"off\" to this command.");
+
         await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { ProxySwitch = newVal });
-        await ctx.Reply($"Logging a switch every time a proxy tag is used is now {EnabledDisabled(newVal)}.");
+        switch (newVal)
+        {
+            case SystemConfig.ProxySwitchAction.Off: await ctx.Reply("Now when you proxy as a member, no switches are logged or changed."); break;
+            case SystemConfig.ProxySwitchAction.New: await ctx.Reply("When you proxy as a member, it now makes a new switch."); break;
+            case SystemConfig.ProxySwitchAction.Add: await ctx.Reply("When you proxy as a member, it now adds them to the current switch."); break;
+            default: throw new Exception("unreachable");
+        }
     }
 
     public async Task NameFormat(Context ctx)

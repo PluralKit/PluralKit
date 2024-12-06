@@ -23,7 +23,7 @@ public class SystemConfigPatch: PatchObject
     public Partial<bool> HidDisplayCaps { get; set; }
     public Partial<string?> NameFormat { get; set; }
     public Partial<SystemConfig.HidPadFormat> HidListPadding { get; set; }
-    public Partial<bool> ProxySwitch { get; set; }
+    public Partial<SystemConfig.ProxySwitchAction> ProxySwitch { get; set; }
 
     public override Query Apply(Query q) => q.ApplyPatch(wrapper => wrapper
         .With("ui_tz", UiTz)
@@ -107,7 +107,7 @@ public class SystemConfigPatch: PatchObject
             o.Add("hid_list_padding", HidListPadding.Value.ToUserString());
 
         if (ProxySwitch.IsPresent)
-            o.Add("proxy_switch", ProxySwitch.Value);
+            o.Add("proxy_switch", ProxySwitch.Value.ToUserString());
 
         if (NameFormat.IsPresent)
             o.Add("name_format", NameFormat.Value);
@@ -150,7 +150,7 @@ public class SystemConfigPatch: PatchObject
             patch.HidDisplayCaps = o.Value<bool>("hid_display_caps");
 
         if (o.ContainsKey("proxy_switch"))
-            patch.ProxySwitch = o.Value<bool>("proxy_switch");
+            patch.ProxySwitch = o.Value<SystemConfig.ProxySwitchAction>("proxy_switch");
 
         if (o.ContainsKey("name_format"))
             patch.NameFormat = o.Value<string>("name_format");

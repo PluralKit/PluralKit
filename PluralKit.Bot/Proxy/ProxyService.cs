@@ -521,9 +521,22 @@ public class ProxyService
 
         Task DispatchWebhook() => _dispatch.Dispatch(ctx.SystemId.Value, sentMessage);
 
-        Task MaybeLogSwitch() => (ctx.ProxySwitch && !Array.Exists(ctx.LastSwitchMembers, element => element == match.Member.Id))
-            ? _db.Execute(conn => _repo.AddSwitch(conn, (SystemId)ctx.SystemId, new[] { match.Member.Id }))
-            : Task.CompletedTask;
+        async Task MaybeLogSwitch()
+        {
+            if (ctx.ProxySwitch == SystemConfig.ProxySwitchAction.New && !Array.Exists(ctx.LastSwitchMembers, element => element == match.Member.Id))
+                await _db.Execute(conn => _repo.AddSwitch(conn, (SystemId)ctx.SystemId, new[] { match.Member.Id }));
+            else if (ctx.ProxySwitch == SystemConfig.ProxySwitchAction.Add)
+            {
+                if (ctx.LastSwitchMembers.Length == 0)
+                {
+                    await _db.Execute(conn => _repo.AddSwitch(conn, (SystemId)ctx.SystemId, new[] { match.Member.Id }));
+                }
+                else if (!Array.Exists(ctx.LastSwitchMembers, element => element == match.Member.Id))
+                {
+                    await _db.Execute(conn => _repo.EditSwitch(conn, (SwitchId)ctx.LastSwitch, ctx.LastSwitchMembers.Append(match.Member.Id).ToList()));
+                }
+            }
+        }
 
         async Task DeleteProxyTriggerMessage()
         {

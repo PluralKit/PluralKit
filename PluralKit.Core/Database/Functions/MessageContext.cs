@@ -34,6 +34,6 @@ public class MessageContext
     public int? LatchTimeout { get; }
     public bool CaseSensitiveProxyTags { get; }
     public bool ProxyErrorMessageEnabled { get; }
-    public bool ProxySwitch { get; }
+    public SystemConfig.ProxySwitchAction ProxySwitch { get; }
     public bool DenyBotUsage { get; }
 }

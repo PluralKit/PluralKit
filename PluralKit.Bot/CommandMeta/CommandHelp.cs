@@ -30,7 +30,7 @@ public partial class CommandTree
     public static Command ConfigShowPrivate = new Command("config show private", "config show private [on|off]", "Sets whether private information is shown to linked accounts by default");
     public static Command ConfigMemberDefaultPrivacy = new("config private member", "config private member [on|off]", "Sets whether member privacy is automatically set to private when creating a new member");
     public static Command ConfigGroupDefaultPrivacy = new("config private group", "config private group [on|off]", "Sets whether group privacy is automatically set to private when creating a new group");
-    public static Command ConfigProxySwitch = new Command("config proxyswitch", "config proxyswitch [on|off]", "Sets whether to log a switch every time a proxy tag is used");
+    public static Command ConfigProxySwitch = new Command("config proxyswitch", "config proxyswitch [new|add|off]", "Switching behavior when proxy tags are used");
     public static Command ConfigNameFormat = new Command("config nameformat", "config nameformat [format]", "Changes your system's username formatting");
     public static Command ConfigServerNameFormat = new Command("config servernameformat", "config servernameformat [format]", "Changes your system's username formatting in the current server");
     public static Command AutoproxySet = new Command("autoproxy", "autoproxy [off|front|latch|member]", "Sets your system's autoproxy mode for the current server");

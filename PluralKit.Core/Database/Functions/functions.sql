@@ -9,7 +9,7 @@ create function message_context(account_id bigint, guild_id bigint, channel_id b
         latch_timeout integer,
         case_sensitive_proxy_tags bool,
         proxy_error_message_enabled bool,
-        proxy_switch bool,
+        proxy_switch int,
         name_format text,
 
         tag_enabled bool,
