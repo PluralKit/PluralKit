@@ -548,6 +548,15 @@ To log a switch, use the `pk;switch` command with one or more members. For examp
 Note that the order of members are preserved (this is useful for indicating who's "more" at front, if applicable).
 If you want to specify a member with multiple words in their name, remember to encase the name in "double quotes".
 
+### Automatic Switching
+If you want PluralKit to automatically log a new switch whenever you [proxy](/guide/#proxying), you can tell it do so using the following command:
+
+    pk;config proxy switch on
+
+Alternatively, if you want PluralKit to *add* the proxied member to the current switch instead of logging a new one, you can use this command:
+
+    pk;config proxy switch add
+
 ### Switching out
 If you want to log a switch with *no* members, you can log a switch-out as follows:
 
