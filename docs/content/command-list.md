@@ -124,7 +124,7 @@ You can have a space after `pk;`, e.g. `pk;system` and `pk; system` will do the 
 - `pk;switch [member...]` - Registers a switch with the given members.
 - `pk;switch out` - Registers a 'switch-out' - a switch with no associated members.
 - `pk;switch edit <member...|out>` - Edits the members in the latest switch.
-- `pk;switch add <member...>` - Makes a new switch based off the current switch with the listed members added or removed.
+- `pk;switch add <member...>` - Makes a new switch based off the current switch with the listed members added or removed. Has an alias as `pk;switch copy <member...>`.
 - `pk;switch move <time>` - Moves the latest switch backwards in time.
 - `pk;switch delete` - Deletes the latest switch.
 - `pk;switch delete all` - Deletes all logged switches.
