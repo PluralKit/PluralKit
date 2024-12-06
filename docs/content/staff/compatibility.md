@@ -31,6 +31,7 @@ At the moment, log cleanup works with the following bots:
 - [Dyno](https://dyno.gg/) (precise)
 - [GearBot](https://gearbot.rocks/) (fuzzy)
 - [GenericBot](https://github.com/galenguyer/GenericBot) (precise)
+- Koira (precise)
 - [Logger#6088](https://logger.bot/) (precise)
 - [Logger#6278](https://loggerbot.chat/) (precise)
 - [Mantaro](https://mantaro.site/) (precise)
