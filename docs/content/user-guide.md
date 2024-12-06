@@ -769,6 +769,46 @@ For example:
     pk;member Robert privacy birthday public
     pk;member Skyler privacy all private
 
+### Group privacy
+
+Additionally, groups also have privacy settings.
+- Visibility *( whether the group shows up on member cards )*
+- Member list
+- Name
+- Description
+- Icon
+- Banner
+- Metadata *( group creation date )*
+
+As with system and member privacy, each can be set to **public** or **private**. The same rules apply for how they are shown, too. When set to **public**, anyone who queries your system (by account or system ID, or through the API), will see this information. When set to **private**, the information will only be shown when *you yourself* query the information. The cards will still be displayed in the channel the commands are run in, so it's still your responsibility not to pull up information in servers where you don't want it displayed.
+
+As with member privacy, there are two catches:
+- When the **name** is set to private, it will be replaced by the group's **display name**, but only if they have one! If the group has no display name, **name privacy will not do anything**. PluralKit still needs some way to refer to a group by name :) 
+- When **visibility** is set to private, the group will not show up in group lists unless `-all` is used in the command (and you are part of the system).
+
+To update a group's privacy, you can use the command:
+
+    pk;group <group> privacy <subject> <level>
+
+* `subject` is one of:
+  * `name`
+  * `description`
+  * `banner`
+  * `avatar`
+  * `pronouns`
+  * `metadata`
+  * `visiblity`
+  * `all` (to change all subjects at once)
+
+* `level` is either `public` or `private`
+
+For example:
+
+    pk;group MyGroup privacy visibility private
+    pk;group "My Group" privacy description public
+    pk;group SuperCoolGroup privacy banner public
+    pk;group AwesomePeople privacy all private
+
 ## Importing and exporting data
 If you're a user of another proxy bot (e.g. Tupperbox), or you want to import a saved system backup, you can use the importing and exporting commands. Note, if you are on a mobile device, using the links is recommended - using the .json file from either bot may not work as Discord tends to break the file on download/upload.
 
