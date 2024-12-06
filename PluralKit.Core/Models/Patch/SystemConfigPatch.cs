@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Newtonsoft.Json.Linq;
 
 using NodaTime;
@@ -150,7 +151,12 @@ public class SystemConfigPatch: PatchObject
             patch.HidDisplayCaps = o.Value<bool>("hid_display_caps");
 
         if (o.ContainsKey("proxy_switch"))
-            patch.ProxySwitch = o.Value<SystemConfig.ProxySwitchAction>("proxy_switch");
+            patch.ProxySwitch = o.Value<string>("proxy_switch") switch
+            {
+                "new" => SystemConfig.ProxySwitchAction.New,
+                "add" => SystemConfig.ProxySwitchAction.Add,
+                _ => SystemConfig.ProxySwitchAction.Off,
+            };
 
         if (o.ContainsKey("name_format"))
             patch.NameFormat = o.Value<string>("name_format");
