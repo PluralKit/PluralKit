@@ -40,7 +40,7 @@ public class Api
                 new MessageRequest
                 {
                     Content = $"{Emojis.Warn} Please note that this grants access to modify (and delete!) all your system data, so keep it safe and secure."
-                            + $" If it leaks or you need a new one, you can invalidate this one with `pk;token refresh`.\n\nYour token is below:"
+                            + $" If it leaks or you need a new one, you can invalidate this one with `{ctx.DefaultPrefix}token refresh`.\n\nYour token is below:"
                 });
             await ctx.Rest.CreateMessage(dm, new MessageRequest { Content = token });
 
@@ -122,7 +122,7 @@ public class Api
         if (!ctx.HasNext(false))
         {
             if (ctx.System.WebhookUrl == null)
-                await ctx.Reply("Your system does not have a webhook URL set. Set one with `pk;system webhook <url>`!");
+                await ctx.Reply($"Your system does not have a webhook URL set. Set one with `{ctx.DefaultPrefix}system webhook <url>`!");
             else
                 await ctx.Reply($"Your system's webhook URL is <{ctx.System.WebhookUrl}>.");
             return;

@@ -18,7 +18,7 @@ public class Random
     public async Task Member(Context ctx, PKSystem target)
     {
         if (target == null)
-            throw Errors.NoSystemError;
+            throw Errors.NoSystemError(ctx.DefaultPrefix);
 
         ctx.CheckSystemPrivacy(target.Id, target.MemberListPrivacy);
 
@@ -43,7 +43,7 @@ public class Random
     public async Task Group(Context ctx, PKSystem target)
     {
         if (target == null)
-            throw Errors.NoSystemError;
+            throw Errors.NoSystemError(ctx.DefaultPrefix);
 
         ctx.CheckSystemPrivacy(target.Id, target.GroupListPrivacy);
 
