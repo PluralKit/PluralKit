@@ -1,19 +1,23 @@
-use fred::pool::RedisPool;
+use fred::clients::RedisPool;
 use sqlx::postgres::{PgConnectOptions, PgPool, PgPoolOptions};
 use std::str::FromStr;
 use tracing::info;
 
 pub mod repository;
+pub mod types;
 
 pub async fn init_redis() -> anyhow::Result<RedisPool> {
     info!("connecting to redis");
-    let redis = fred::pool::RedisPool::new(
+    let redis = RedisPool::new(
         fred::types::RedisConfig::from_url_centralized(crate::config.db.data_redis_addr.as_ref())
             .expect("redis url is invalid"),
+        None,
+        None,
+        Some(Default::default()),
         10,
     )?;
 
-    let redis_handle = redis.connect(Some(fred::types::ReconnectPolicy::default()));
+    let redis_handle = redis.connect_pool();
     tokio::spawn(async move { redis_handle });
 
     Ok(redis)

@@ -20,6 +20,8 @@ public partial class CommandTree
             return HandleAutoproxyCommand(ctx);
         if (ctx.Match("config", "cfg", "configure"))
             return HandleConfigCommand(ctx);
+        if (ctx.Match("serverconfig", "guildconfig", "scfg"))
+            return HandleServerConfigCommand(ctx);
         if (ctx.Match("list", "find", "members", "search", "query", "l", "f", "fd", "ls"))
             return ctx.Execute<SystemList>(SystemList, m => m.MemberList(ctx, ctx.System));
         if (ctx.Match("link"))
@@ -54,28 +56,26 @@ public partial class CommandTree
             return ctx.Execute<ProxiedMessage>(MessageReproxy, m => m.ReproxyMessage(ctx));
         if (ctx.Match("log"))
             if (ctx.Match("channel"))
-                return ctx.Execute<ServerConfig>(LogChannel, m => m.SetLogChannel(ctx));
+                return ctx.Execute<ServerConfig>(LogChannel, m => m.SetLogChannel(ctx), true);
             else if (ctx.Match("enable", "on"))
-                return ctx.Execute<ServerConfig>(LogEnable, m => m.SetLogEnabled(ctx, true));
+                return ctx.Execute<ServerConfig>(LogEnable, m => m.SetLogEnabled(ctx, true), true);
             else if (ctx.Match("disable", "off"))
-                return ctx.Execute<ServerConfig>(LogDisable, m => m.SetLogEnabled(ctx, false));
+                return ctx.Execute<ServerConfig>(LogDisable, m => m.SetLogEnabled(ctx, false), true);
             else if (ctx.Match("list", "show"))
-                return ctx.Execute<ServerConfig>(LogShow, m => m.ShowLogDisabledChannels(ctx));
-            else if (ctx.Match("commands"))
-                return PrintCommandList(ctx, "message logging", LogCommands);
-            else return PrintCommandExpectedError(ctx, LogCommands);
+                return ctx.Execute<ServerConfig>(LogShow, m => m.ShowLogDisabledChannels(ctx), true);
+            else
+                return ctx.Reply($"{Emojis.Warn} Message logging commands have moved to `pk;serverconfig`.");
         if (ctx.Match("logclean"))
-            return ctx.Execute<ServerConfig>(LogClean, m => m.SetLogCleanup(ctx));
+            return ctx.Execute<ServerConfig>(ServerConfigLogClean, m => m.SetLogCleanup(ctx), true);
         if (ctx.Match("blacklist", "bl"))
             if (ctx.Match("enable", "on", "add", "deny"))
-                return ctx.Execute<ServerConfig>(BlacklistAdd, m => m.SetBlacklisted(ctx, true));
+                return ctx.Execute<ServerConfig>(BlacklistAdd, m => m.SetProxyBlacklisted(ctx, true), true);
             else if (ctx.Match("disable", "off", "remove", "allow"))
-                return ctx.Execute<ServerConfig>(BlacklistRemove, m => m.SetBlacklisted(ctx, false));
+                return ctx.Execute<ServerConfig>(BlacklistRemove, m => m.SetProxyBlacklisted(ctx, false), true);
             else if (ctx.Match("list", "show"))
-                return ctx.Execute<ServerConfig>(BlacklistShow, m => m.ShowBlacklisted(ctx));
-            else if (ctx.Match("commands"))
-                return PrintCommandList(ctx, "channel blacklisting", BlacklistCommands);
-            else return PrintCommandExpectedError(ctx, BlacklistCommands);
+                return ctx.Execute<ServerConfig>(BlacklistShow, m => m.ShowProxyBlacklisted(ctx), true);
+            else
+                return ctx.Reply($"{Emojis.Warn} Blacklist commands have moved to `pk;serverconfig`.");
         if (ctx.Match("proxy"))
             if (ctx.Match("debug"))
                 return ctx.Execute<Checks>(ProxyCheck, m => m.MessageProxyCheck(ctx));
@@ -108,9 +108,55 @@ public partial class CommandTree
         if (ctx.Match("dashboard", "dash"))
             return ctx.Execute<Help>(Dashboard, m => m.Dashboard(ctx));
 
+        // don't send an "invalid command" response if the guild has those turned off
+        if (ctx.GuildConfig != null && ctx.GuildConfig!.InvalidCommandResponseEnabled != true)
+            return Task.CompletedTask;
+
         // remove compiler warning
         return ctx.Reply(
             $"{Emojis.Error} Unknown command {ctx.PeekArgument().AsCode()}. For a list of possible commands, see <https://pluralkit.me/commands>.");
+    }
+
+    private async Task HandleAdminAbuseLogCommand(Context ctx)
+    {
+        ctx.AssertBotAdmin();
+
+        if (ctx.Match("n", "new", "create"))
+            await ctx.Execute<Admin>(Admin, a => a.AbuseLogCreate(ctx));
+        else
+        {
+            AbuseLog? abuseLog = null!;
+            var account = await ctx.MatchUser();
+            if (account != null)
+            {
+                abuseLog = await ctx.Repository.GetAbuseLogByAccount(account.Id);
+            }
+            else
+            {
+                abuseLog = await ctx.Repository.GetAbuseLogByGuid(new Guid(ctx.PopArgument()));
+            }
+
+            if (abuseLog == null)
+            {
+                await ctx.Reply($"{Emojis.Error} Could not find an existing abuse log entry for that query.");
+                return;
+            }
+
+            if (!ctx.HasNext())
+                await ctx.Execute<Admin>(Admin, a => a.AbuseLogShow(ctx, abuseLog));
+            else if (ctx.Match("au", "adduser"))
+                await ctx.Execute<Admin>(Admin, a => a.AbuseLogAddUser(ctx, abuseLog));
+            else if (ctx.Match("ru", "removeuser"))
+                await ctx.Execute<Admin>(Admin, a => a.AbuseLogRemoveUser(ctx, abuseLog));
+            else if (ctx.Match("desc", "description"))
+                await ctx.Execute<Admin>(Admin, a => a.AbuseLogDescription(ctx, abuseLog));
+            else if (ctx.Match("deny", "deny-bot-usage"))
+                await ctx.Execute<Admin>(Admin, a => a.AbuseLogFlagDeny(ctx, abuseLog));
+            else if (ctx.Match("yeet", "remove", "delete"))
+                await ctx.Execute<Admin>(Admin, a => a.AbuseLogDelete(ctx, abuseLog));
+            else
+                await ctx.Reply($"{Emojis.Error} Unknown subcommand {ctx.PeekArgument().AsCode()}.");
+        }
     }
 
     private async Task HandleAdminCommand(Context ctx)
@@ -133,6 +179,10 @@ public partial class CommandTree
             await ctx.Execute<Admin>(Admin, a => a.SystemGroupLimit(ctx));
         else if (ctx.Match("sr", "systemrecover"))
             await ctx.Execute<Admin>(Admin, a => a.SystemRecover(ctx));
+        else if (ctx.Match("sd", "systemdelete"))
+            await ctx.Execute<Admin>(Admin, a => a.SystemDelete(ctx));
+        else if (ctx.Match("al", "abuselog"))
+            await HandleAdminAbuseLogCommand(ctx);
         else
             await ctx.Reply($"{Emojis.Error} Unknown command.");
     }
@@ -164,12 +214,6 @@ public partial class CommandTree
             await ctx.Execute<System>(SystemNew, m => m.New(ctx));
         else if (ctx.Match("commands", "help"))
             await PrintCommandList(ctx, "systems", SystemCommands);
-
-        // these are deprecated (and not accessible by other users anyway), let's leave them out of new parsing
-        else if (ctx.Match("timezone", "tz"))
-            await ctx.Execute<Config>(ConfigTimezone, m => m.SystemTimezone(ctx), true);
-        else if (ctx.Match("ping"))
-            await ctx.Execute<Config>(ConfigPing, m => m.SystemPing(ctx), true);
 
         // todo: these aren't deprecated but also shouldn't be here
         else if (ctx.Match("webhook", "hook"))
@@ -323,7 +367,7 @@ public partial class CommandTree
             if (ctx.Match("add", "a"))
                 await ctx.Execute<GroupMember>(MemberGroupAdd,
                     m => m.AddRemoveGroups(ctx, target, Groups.AddRemoveOperation.Add));
-            else if (ctx.Match("remove", "rem", "r"))
+            else if (ctx.Match("remove", "rem"))
                 await ctx.Execute<GroupMember>(MemberGroupRemove,
                     m => m.AddRemoveGroups(ctx, target, Groups.AddRemoveOperation.Remove));
             else
@@ -383,12 +427,12 @@ public partial class CommandTree
             else if (ctx.Match("add", "a"))
                 await ctx.Execute<GroupMember>(GroupAdd,
                     g => g.AddRemoveMembers(ctx, target, Groups.AddRemoveOperation.Add));
-            else if (ctx.Match("remove", "rem", "r"))
+            else if (ctx.Match("remove", "rem"))
                 await ctx.Execute<GroupMember>(GroupRemove,
                     g => g.AddRemoveMembers(ctx, target, Groups.AddRemoveOperation.Remove));
             else if (ctx.Match("members", "list", "ms", "l", "ls"))
                 await ctx.Execute<GroupMember>(GroupMemberList, g => g.ListGroupMembers(ctx, target));
-            else if (ctx.Match("random", "rand"))
+            else if (ctx.Match("random", "rand", "r"))
                 await ctx.Execute<Random>(GroupMemberRandom, r => r.GroupMember(ctx, target));
             else if (ctx.Match("privacy"))
                 await ctx.Execute<Groups>(GroupPrivacy, g => g.GroupPrivacy(ctx, target, null));
@@ -488,6 +532,11 @@ public partial class CommandTree
             case "cfg":
                 await PrintCommandList(ctx, "settings", ConfigCommands);
                 break;
+            case "serverconfig":
+            case "guildconfig":
+            case "scfg":
+                await PrintCommandList(ctx, "server settings", ServerConfigCommands);
+                break;
             case "autoproxy":
             case "ap":
                 await PrintCommandList(ctx, "autoproxy", AutoproxyCommands);
@@ -505,13 +554,6 @@ public partial class CommandTree
         // so we just emulate checking and throwing an error.
         if (ctx.System == null)
             return ctx.Reply($"{Emojis.Error} {Errors.NoSystemError(ctx.DefaultPrefix).Message}");
-
-        // todo: move this whole block to Autoproxy.cs when these are removed
-
-        if (ctx.Match("account", "ac"))
-            return ctx.Execute<Config>(ConfigAutoproxyAccount, m => m.AutoproxyAccount(ctx), true);
-        if (ctx.Match("timeout", "tm"))
-            return ctx.Execute<Config>(ConfigAutoproxyTimeout, m => m.AutoproxyTimeout(ctx), true);
 
         return ctx.Execute<Autoproxy>(AutoproxySet, m => m.SetAutoproxyMode(ctx));
     }
@@ -548,10 +590,52 @@ public partial class CommandTree
             return ctx.Execute<Config>(null, m => m.HidDisplayCaps(ctx));
         if (ctx.MatchMultiple(new[] { "pad" }, new[] { "id", "ids" }) || ctx.MatchMultiple(new[] { "id" }, new[] { "pad", "padding" }) || ctx.Match("idpad", "padid", "padids"))
             return ctx.Execute<Config>(null, m => m.HidListPadding(ctx));
+        if (ctx.MatchMultiple(new[] { "name" }, new[] { "format" }) || ctx.Match("nameformat", "nf"))
+            return ctx.Execute<Config>(null, m => m.NameFormat(ctx));
         if (ctx.MatchMultiple(new[] { "member", "group" }, new[] { "limit" }) || ctx.Match("limit"))
             return ctx.Execute<Config>(null, m => m.LimitUpdate(ctx));
+        if (ctx.MatchMultiple(new[] { "proxy" }, new[] { "switch" }) || ctx.Match("proxyswitch", "ps"))
+            return ctx.Execute<Config>(null, m => m.ProxySwitch(ctx));
+        if (ctx.MatchMultiple(new[] { "server" }, new[] { "name" }, new[] { "format" }) || ctx.MatchMultiple(new[] { "server", "servername" }, new[] { "format", "nameformat", "nf" }) || ctx.Match("snf", "servernf", "servernameformat", "snameformat"))
+            return ctx.Execute<Config>(null, m => m.ServerNameFormat(ctx));
 
         // todo: maybe add the list of configuration keys here?
         return ctx.Reply($"{Emojis.Error} Could not find a setting with that name. Please see `{ctx.DefaultPrefix}commands config` for the list of possible config settings.");
+    }
+
+    private Task HandleServerConfigCommand(Context ctx)
+    {
+        if (!ctx.HasNext())
+            return ctx.Execute<ServerConfig>(null, m => m.ShowConfig(ctx));
+
+        if (ctx.MatchMultiple(new[] { "log" }, new[] { "cleanup", "clean" }) || ctx.Match("logclean"))
+            return ctx.Execute<ServerConfig>(null, m => m.SetLogCleanup(ctx));
+        if (ctx.MatchMultiple(new[] { "invalid", "unknown" }, new[] { "command" }, new[] { "error", "response" }) || ctx.Match("invalidcommanderror", "unknowncommanderror"))
+            return ctx.Execute<ServerConfig>(null, m => m.InvalidCommandResponse(ctx));
+        if (ctx.MatchMultiple(new[] { "require", "enforce" }, new[] { "tag", "systemtag" }) || ctx.Match("requiretag", "enforcetag"))
+            return ctx.Execute<ServerConfig>(null, m => m.RequireSystemTag(ctx));
+        if (ctx.MatchMultiple(new[] { "log" }, new[] { "channel" }))
+            return ctx.Execute<ServerConfig>(null, m => m.SetLogChannel(ctx));
+        if (ctx.MatchMultiple(new[] { "log" }, new[] { "blacklist" }))
+        {
+            if (ctx.Match("enable", "on", "add", "deny"))
+                return ctx.Execute<ServerConfig>(null, m => m.SetLogBlacklisted(ctx, true));
+            else if (ctx.Match("disable", "off", "remove", "allow"))
+                return ctx.Execute<ServerConfig>(null, m => m.SetLogBlacklisted(ctx, false));
+            else
+                return ctx.Execute<ServerConfig>(null, m => m.ShowLogDisabledChannels(ctx));
+        }
+        if (ctx.MatchMultiple(new[] { "proxy", "proxying" }, new[] { "blacklist" }))
+        {
+            if (ctx.Match("enable", "on", "add", "deny"))
+                return ctx.Execute<ServerConfig>(null, m => m.SetProxyBlacklisted(ctx, true));
+            else if (ctx.Match("disable", "off", "remove", "allow"))
+                return ctx.Execute<ServerConfig>(null, m => m.SetProxyBlacklisted(ctx, false));
+            else
+                return ctx.Execute<ServerConfig>(null, m => m.ShowProxyBlacklisted(ctx));
+        }
+
+        // todo: maybe add the list of configuration keys here?
+        return ctx.Reply($"{Emojis.Error} Could not find a setting with that name. Please see `pk;commands serverconfig` for the list of possible config settings.");
     }
 }

@@ -24,7 +24,7 @@ You can suggest features in the [support server](https://discord.gg/PczBt78)'s `
 We also track feature requests through [Github Issues](https://github.com/PluralKit/PluralKit/issues). Feel free to open issue reports or feature requests there as well.
 
 ### How can I support the bot's development?
-I (the bot author, [Ske](https://twitter.com/floofstrid)) have a Patreon. The income from there goes towards server hosting, domains, infrastructure, my Monster Energy addiction, et cetera. There are no benefits. There might never be any. But nevertheless, it can be found here: [https://www.patreon.com/floofstrid](https://www.patreon.com/floofstrid)
+We accept donations on [Patreon](https://patreon.com/pluralkit/) (recurring) and [Buy Me A Coffee](https://buymeacoffee.com/pluralkit/) (one-time). Any funds donated here will be used to pay for server hosting and (if anything is left over) development work.
 
 ### Can I recover my system if I lose access to my Discord account?
 Yes, through one of two methods. Both require you to do preparations **before** you lose the account. 
@@ -76,7 +76,7 @@ No. This is a limitation in Discord itself, and cannot be changed. The color com
 
 ### Why can't I use nitro emoji in some channels?
 * PluralKit must have the "Use External Emoji" permission to be able to use nitro emojis with the bot.
-If it still doesn't work, make sure this permission isn't denied in channel overrides (found in channel settings -> permissions). You can also check if it's a permissions issue with `pk;permcheck`.
+If it still doesn't work, make sure this permission isn't denied in channel overrides (found in channel settings -> permissions). You can also check if it's a permissions issue with `pk;debug permissions`.
 * PluralKit must be in the server the emojis are from. This is because of a change made by Discord in 2022.
 * Because PluralKit cannot be a Twitch subscriber, it will never be able to use emojis from Twitch integrations.
 

@@ -43,6 +43,7 @@ module.exports = {
           "/user-guide",
           "/command-list",
           "/privacy-policy",
+          "/terms-of-service",
           "/faq",
           "/tips-and-tricks"
         ]
@@ -71,11 +72,15 @@ module.exports = {
         ]
       },
       ["https://discord.gg/PczBt78", "Join the support server"],
-    ]
+    ],
   },
 
   plugins: [
     '@vuepress/plugin-back-to-top',
     ["vuepress-plugin-clean-urls", { normalSuffix: "/" }],
   ],
+
+  globalUIComponents: [
+    'PluralKitBanner'
+  ]
 }

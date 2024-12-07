@@ -42,7 +42,7 @@ public class LogChannelService
         if (logChannelId == null)
             return;
 
-        var triggerChannel = await _cache.GetChannel(proxiedMessage.Channel);
+        var triggerChannel = await _cache.GetChannel(proxiedMessage.Guild!.Value, proxiedMessage.Channel);
 
         var member = await _repo.GetMember(proxiedMessage.Member!.Value);
         var system = await _repo.GetSystem(member.System);
@@ -63,7 +63,7 @@ public class LogChannelService
             return null;
 
         var guildId = proxiedMessage.Guild ?? trigger.GuildId.Value;
-        var rootChannel = await _cache.GetRootChannel(trigger.ChannelId);
+        var rootChannel = await _cache.GetRootChannel(guildId, trigger.ChannelId);
 
         // get log channel info from the database
         var guild = await _repo.GetGuild(guildId);
@@ -109,7 +109,7 @@ public class LogChannelService
     private async Task<Channel?> FindLogChannel(ulong guildId, ulong channelId)
     {
         // TODO: fetch it directly on cache miss?
-        if (await _cache.TryGetChannel(channelId) is Channel channel)
+        if (await _cache.TryGetChannel(guildId, channelId) is Channel channel)
             return channel;
 
         if (await _rest.GetChannelOrNull(channelId) is Channel restChannel)

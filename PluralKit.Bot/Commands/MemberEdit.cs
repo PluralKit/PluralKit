@@ -88,7 +88,7 @@ public class MemberEdit
         if (format == ReplyFormat.Plaintext)
         {
             var eb = new EmbedBuilder()
-                .Description($"Showing description for member {target.Reference(ctx)}");
+                .Description($"Showing description for member {target.NameFor(ctx)} (`{target.DisplayHid(ctx.Config)}`)");
             await ctx.Reply(target.Description, embed: eb.Build());
             return;
         }
@@ -133,7 +133,7 @@ public class MemberEdit
     {
         var noPronounsSetMessage = "This member does not have pronouns set.";
         if (ctx.System?.Id == target.System)
-            noPronounsSetMessage += $"To set some, type `{ctx.DefaultPrefix}member {target.Reference(ctx)} pronouns <pronouns>`.";
+            noPronounsSetMessage += $" To set some, type `{ctx.DefaultPrefix}member {target.Reference(ctx)} pronouns <pronouns>`.";
 
         ctx.CheckSystemPrivacy(target.System, target.PronounPrivacy);
 
@@ -155,7 +155,7 @@ public class MemberEdit
         if (format == ReplyFormat.Plaintext)
         {
             var eb = new EmbedBuilder()
-                .Description($"Showing pronouns for member {target.Reference(ctx)}");
+                .Description($"Showing pronouns for member {target.NameFor(ctx)} (`{target.DisplayHid(ctx.Config)}`)");
             await ctx.Reply(target.Pronouns, embed: eb.Build());
             return;
         }
@@ -194,16 +194,18 @@ public class MemberEdit
 
     public async Task BannerImage(Context ctx, PKMember target)
     {
-        ctx.CheckOwnMember(target);
-
         async Task ClearBannerImage()
         {
+            ctx.CheckOwnMember(target);
+            await ctx.ConfirmClear("this member's banner image");
+
             await ctx.Repository.UpdateMember(target.Id, new MemberPatch { BannerImage = null });
             await ctx.Reply($"{Emojis.Success} Member banner image cleared.");
         }
 
         async Task SetBannerImage(ParsedImage img)
         {
+            ctx.CheckOwnMember(target);
             img = await _avatarHosting.TryRehostImage(img, AvatarHostingService.RehostedImageType.Banner, ctx.Author.Id, ctx.System);
             await AvatarUtils.VerifyAvatarOrThrow(_client, img.Url, true);
 
@@ -229,21 +231,31 @@ public class MemberEdit
         async Task ShowBannerImage()
         {
             if ((target.BannerImage?.Trim() ?? "").Length > 0)
-            {
-                var eb = new EmbedBuilder()
-                    .Title($"{target.NameFor(ctx)}'s banner image")
-                    .Image(new Embed.EmbedImage(target.BannerImage))
-                    .Description($"To clear, use `{ctx.DefaultPrefix}member {target.Reference(ctx)} banner clear`.");
-                await ctx.Reply(embed: eb.Build());
-            }
+                switch (ctx.MatchFormat())
+                {
+                    case ReplyFormat.Raw:
+                        await ctx.Reply($"`{target.BannerImage.TryGetCleanCdnUrl()}`");
+                        break;
+                    case ReplyFormat.Plaintext:
+                        var ebP = new EmbedBuilder()
+                            .Description($"Showing banner for member {target.NameFor(ctx)} (`{target.DisplayHid(ctx.Config)}`)");
+                        await ctx.Reply(text: $"<{target.BannerImage.TryGetCleanCdnUrl()}>", embed: ebP.Build());
+                        break;
+                    default:
+                        var ebS = new EmbedBuilder()
+                            .Title($"{target.NameFor(ctx)}'s banner image")
+                            .Image(new Embed.EmbedImage(target.BannerImage.TryGetCleanCdnUrl()));
+                        if (target.System == ctx.System?.Id)
+                            ebS.Description($"To clear, use `{ctx.DefaultPrefix}member {target.Reference(ctx)} banner clear`.");
+                        await ctx.Reply(embed: ebS.Build());
+                        break;
+                }
             else
-            {
                 throw new PKSyntaxError(
-                    "This member does not have a banner image set. Set one by attaching an image to this command, or by passing an image URL.");
-            }
+                    "This member does not have a banner image set." + ((target.System == ctx.System?.Id) ? " Set one by attaching an image to this command, or by passing an image URL." : ""));
         }
 
-        if (ctx.MatchClear() && await ctx.ConfirmClear("this member's banner image"))
+        if (ctx.MatchClear())
             await ClearBannerImage();
         else if (await ctx.MatchImage() is { } img)
             await SetBannerImage(img);
@@ -430,7 +442,7 @@ public class MemberEdit
         if (format == ReplyFormat.Plaintext)
         {
             var eb = new EmbedBuilder()
-                .Description($"Showing displayname for member {target.Reference(ctx)}");
+                .Description($"Showing displayname for member {target.NameFor(ctx)} (`{target.DisplayHid(ctx.Config)}`)");
             await ctx.Reply(target.DisplayName, embed: eb.Build());
             return;
         }
@@ -506,7 +518,7 @@ public class MemberEdit
         if (format == ReplyFormat.Plaintext)
         {
             var eb = new EmbedBuilder()
-                .Description($"Showing servername for member {target.Reference(ctx)}");
+                .Description($"Showing servername for member {target.NameFor(ctx)} (`{target.DisplayHid(ctx.Config)}`)");
             await ctx.Reply(memberGuildConfig.DisplayName, embed: eb.Build());
             return;
         }
@@ -756,6 +768,7 @@ public class MemberEdit
                 .Field(new Embed.Field("Name (replaces name with display name if member has one)",
                     target.NamePrivacy.Explanation()))
                 .Field(new Embed.Field("Description", target.DescriptionPrivacy.Explanation()))
+                .Field(new Embed.Field("Banner", target.BannerPrivacy.Explanation()))
                 .Field(new Embed.Field("Avatar", target.AvatarPrivacy.Explanation()))
                 .Field(new Embed.Field("Birthday", target.BirthdayPrivacy.Explanation()))
                 .Field(new Embed.Field("Pronouns", target.PronounPrivacy.Explanation()))
@@ -764,7 +777,7 @@ public class MemberEdit
                     target.MetadataPrivacy.Explanation()))
                 .Field(new Embed.Field("Visibility", target.MemberVisibility.Explanation()))
                 .Description(
-                    $"To edit privacy settings, use the command:\n`{ctx.DefaultPrefix}member <member> privacy <subject> <level>`\n\n- `subject` is one of `name`, `description`, `avatar`, `birthday`, `pronouns`, `proxies`, `metadata`, `visibility`, or `all`\n- `level` is either `public` or `private`.")
+                    $"To edit privacy settings, use the command:\n`{ctx.DefaultPrefix}member <member> privacy <subject> <level>`\n\n- `subject` is one of `name`, `description`, `banner`, `avatar`, `birthday`, `pronouns`, `proxies`, `metadata`, `visibility`, or `all`\n- `level` is either `public` or `private`.")
                 .Build());
             return;
         }
@@ -794,6 +807,7 @@ public class MemberEdit
             {
                 MemberPrivacySubject.Name => "name privacy",
                 MemberPrivacySubject.Description => "description privacy",
+                MemberPrivacySubject.Banner => "banner privacy",
                 MemberPrivacySubject.Avatar => "avatar privacy",
                 MemberPrivacySubject.Pronouns => "pronoun privacy",
                 MemberPrivacySubject.Birthday => "birthday privacy",
@@ -809,6 +823,8 @@ public class MemberEdit
                     "This member's name is now hidden from other systems, and will be replaced by the member's display name.",
                 (MemberPrivacySubject.Description, PrivacyLevel.Private) =>
                     "This member's description is now hidden from other systems.",
+                (MemberPrivacySubject.Banner, PrivacyLevel.Private) =>
+                    "This member's banner is now hidden from other systems.",
                 (MemberPrivacySubject.Avatar, PrivacyLevel.Private) =>
                     "This member's avatar is now hidden from other systems.",
                 (MemberPrivacySubject.Birthday, PrivacyLevel.Private) =>
@@ -826,6 +842,8 @@ public class MemberEdit
                     "This member's name is no longer hidden from other systems.",
                 (MemberPrivacySubject.Description, PrivacyLevel.Public) =>
                     "This member's description is no longer hidden from other systems.",
+                (MemberPrivacySubject.Banner, PrivacyLevel.Public) =>
+                    "This member's banner is no longer hidden from other systems.",
                 (MemberPrivacySubject.Avatar, PrivacyLevel.Public) =>
                     "This member's avatar is no longer hidden from other systems.",
                 (MemberPrivacySubject.Birthday, PrivacyLevel.Public) =>

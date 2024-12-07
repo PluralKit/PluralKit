@@ -8,7 +8,6 @@ public class CoreConfig
     public string? MessagesDatabase { get; set; }
     public string? DatabasePassword { get; set; }
     public string RedisAddr { get; set; }
-    public bool UseRedisMetrics { get; set; } = false;
     public string SentryUrl { get; set; }
     public string InfluxUrl { get; set; }
     public string InfluxDb { get; set; }

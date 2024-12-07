@@ -76,12 +76,22 @@ public class InteractionContext
             });
     }
 
+    public async Task Defer()
+    {
+        await Respond(InteractionResponse.ResponseType.DeferredChannelMessageWithSource,
+            new InteractionApplicationCommandCallbackData
+            {
+                Components = Array.Empty<MessageComponent>(),
+                Flags = Message.MessageFlags.Ephemeral,
+            });
+    }
+
     public async Task Ignore()
     {
         await Respond(InteractionResponse.ResponseType.DeferredUpdateMessage,
             new InteractionApplicationCommandCallbackData
             {
-                Components = Event.Message.Components
+                Components = Event.Message?.Components ?? Array.Empty<MessageComponent>()
             });
     }
 

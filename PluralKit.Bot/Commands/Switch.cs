@@ -112,6 +112,8 @@ public class Switch
 
         await using var conn = await ctx.Database.Obtain();
         var currentSwitch = await ctx.Repository.GetLatestSwitch(ctx.System.Id);
+        if (currentSwitch == null)
+            throw Errors.NoRegisteredSwitches;
         var currentSwitchMembers = await ctx.Repository.GetSwitchMembers(conn, currentSwitch.Id).ToListAsync().AsTask();
 
         if (ctx.MatchFlag("first", "f"))

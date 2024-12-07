@@ -1,7 +1,7 @@
 using System.Text;
 
 using Humanizer;
-
+using Myriad.Builders;
 using NodaTime;
 using NodaTime.Text;
 using NodaTime.TimeZones;
@@ -122,6 +122,39 @@ public class Config
             ctx.Config.HidListPadding.ToUserString(),
             "off"
         ));
+
+        items.Add(new(
+            "Proxy Switch",
+            "Switching behavior when proxy tags are used",
+            ctx.Config.ProxySwitch.ToUserString(),
+            "off"
+        ));
+
+        items.Add(new(
+            "Name Format",
+            "Format string used to display a member's name https://pluralkit.me/guide/#setting-a-custom-name-format",
+            ctx.Config.NameFormat,
+            ProxyMember.DefaultFormat
+        ));
+
+        if (ctx.Guild == null)
+        {
+            items.Add(new(
+                "Server Name Format",
+                "Format string used to display a member's name in the current server",
+                "only available in servers",
+                "only available in servers"
+            ));
+        }
+        else
+        {
+            items.Add(new(
+                "Server Name Format",
+                "Format string used to display a member's name in the current server",
+                (await ctx.Repository.GetSystemGuild(ctx.Guild.Id, ctx.System.Id)).NameFormat ?? "none set",
+                "none set"
+            ));
+        }
 
         await ctx.Paginate<PaginatedConfigItem>(
             items.ToAsyncEnumerable(),
@@ -474,7 +507,7 @@ public class Config
             return;
         }
 
-        var newVal = ctx.MatchToggle(true);
+        var newVal = ctx.MatchToggle(false);
         await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { HidDisplaySplit = newVal });
         await ctx.Reply($"Splitting of 6-character IDs with a hyphen is now {EnabledDisabled(newVal)}.");
     }
@@ -488,7 +521,7 @@ public class Config
             return;
         }
 
-        var newVal = ctx.MatchToggle(true);
+        var newVal = ctx.MatchToggle(false);
         await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { HidDisplayCaps = newVal });
         await ctx.Reply($"Displaying IDs as capital letters is now {EnabledDisabled(newVal)}.");
     }
@@ -535,6 +568,96 @@ public class Config
             await ctx.Reply("5-character IDs displayed in lists will now have a padding space added to the end.");
         }
         else throw new PKError(badInputError);
+    }
+
+    public async Task ProxySwitch(Context ctx)
+    {
+        if (!ctx.HasNext())
+        {
+            string msg = ctx.Config.ProxySwitch switch
+            {
+                SystemConfig.ProxySwitchAction.Off => "Currently, when you proxy as a member, no switches are logged or changed.",
+                SystemConfig.ProxySwitchAction.New => "When you proxy as a member, currently it makes a new switch.",
+                SystemConfig.ProxySwitchAction.Add => "When you proxy as a member, currently it adds them to the current switch.",
+                _ => throw new Exception("unreachable"),
+            };
+            await ctx.Reply(msg);
+            return;
+        }
+
+        // toggle = false means off, toggle = true means new, otherwise if they said add that means add or if they said new they mean new. If none of those, error
+        var toggle = ctx.MatchToggleOrNull(false);
+        var newVal = toggle == false ? SystemConfig.ProxySwitchAction.Off : toggle == true ? SystemConfig.ProxySwitchAction.New : ctx.Match("add", "a") ? SystemConfig.ProxySwitchAction.Add : ctx.Match("new", "n") ? SystemConfig.ProxySwitchAction.New : throw new PKError("You must pass either \"new\", \"add\", or \"off\" to this command.");
+
+        await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { ProxySwitch = newVal });
+        switch (newVal)
+        {
+            case SystemConfig.ProxySwitchAction.Off: await ctx.Reply("Now when you proxy as a member, no switches are logged or changed."); break;
+            case SystemConfig.ProxySwitchAction.New: await ctx.Reply("When you proxy as a member, it now makes a new switch."); break;
+            case SystemConfig.ProxySwitchAction.Add: await ctx.Reply("When you proxy as a member, it now adds them to the current switch."); break;
+            default: throw new Exception("unreachable");
+        }
+    }
+
+    public async Task NameFormat(Context ctx)
+    {
+        var clearFlag = ctx.MatchClear();
+        if (!ctx.HasNext() && !clearFlag)
+        {
+            await ctx.Reply($"Member names are currently formatted as `{ctx.Config.NameFormat ?? ProxyMember.DefaultFormat}`");
+            return;
+        }
+
+        string formatString;
+        if (clearFlag)
+            formatString = ProxyMember.DefaultFormat;
+        else
+            formatString = ctx.RemainderOrNull();
+
+        await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { NameFormat = formatString });
+        await ctx.Reply($"Member names are now formatted as `{formatString}`");
+    }
+
+    public async Task ServerNameFormat(Context ctx)
+    {
+        ctx.CheckGuildContext();
+        var clearFlag = ctx.MatchClear();
+        var format = ctx.MatchFormat();
+
+        // if there's nothing next or what's next is raw/plaintext and we're not clearing, it's a query
+        if ((!ctx.HasNext() || format != ReplyFormat.Standard) && !clearFlag)
+        {
+            var guildCfg = await ctx.Repository.GetSystemGuild(ctx.Guild.Id, ctx.System.Id);
+            if (guildCfg.NameFormat == null)
+                await ctx.Reply("You do not have a specific name format set for this server and member names are formatted with your global name format.");
+            else
+                switch (format)
+                {
+                    case ReplyFormat.Raw:
+                        await ctx.Reply($"`{guildCfg.NameFormat}`");
+                        break;
+                    case ReplyFormat.Plaintext:
+                        var eb = new EmbedBuilder()
+                            .Description($"Showing guild Name Format for system {ctx.System.DisplayHid(ctx.Config)}");
+                        await ctx.Reply(guildCfg.NameFormat, eb.Build());
+                        break;
+                    default:
+                        await ctx.Reply($"Your member names in this server are currently formatted as `{guildCfg.NameFormat}`");
+                        break;
+                }
+            return;
+        }
+
+        string? formatString = null;
+        if (!clearFlag)
+        {
+            formatString = ctx.RemainderOrNull();
+        }
+        await ctx.Repository.UpdateSystemGuild(ctx.System.Id, ctx.Guild.Id, new() { NameFormat = formatString });
+        if (formatString == null)
+            await ctx.Reply($"Member names are now formatted with your global name format in this server.");
+        else
+            await ctx.Reply($"Member names are now formatted as `{formatString}` in this server.");
     }
 
     public Task LimitUpdate(Context ctx)

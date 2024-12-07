@@ -25,7 +25,8 @@
             birthday_privacy: "public",
             name_privacy: "public",
             avatar_privacy: "public",
-            proxy_privacy: "public"
+            proxy_privacy: "public",
+            banner_privacy: "public",
         },
         proxy_tags: [
             {
@@ -226,6 +227,13 @@
             <Col xs={12} lg={4} class="mb-3">
                 <Label>Proxy Tags:</Label>
                 <Input type="select" bind:value={input.privacy.proxy_privacy}>
+                    <option>public</option>
+                    <option>private</option>
+                </Input>
+            </Col>
+            <Col xs={12} lg={4} class="mb-3">
+                <Label>Banner:</Label>
+                <Input type="select" bind:value={input.privacy.banner_privacy}>
                     <option>public</option>
                     <option>private</option>
                 </Input>

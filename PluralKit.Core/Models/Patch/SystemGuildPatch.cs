@@ -13,6 +13,7 @@ public class SystemGuildPatch: PatchObject
     public Partial<bool?> TagEnabled { get; set; }
     public Partial<string?> AvatarUrl { get; set; }
     public Partial<string?> DisplayName { get; set; }
+    public Partial<string?> NameFormat { get; set; }
 
     public override Query Apply(Query q) => q.ApplyPatch(wrapper => wrapper
         .With("proxy_enabled", ProxyEnabled)
@@ -20,6 +21,7 @@ public class SystemGuildPatch: PatchObject
         .With("tag_enabled", TagEnabled)
         .With("avatar_url", AvatarUrl)
         .With("display_name", DisplayName)
+        .With("name_format", NameFormat)
     );
 
     public new void AssertIsValid()
@@ -53,6 +55,9 @@ public class SystemGuildPatch: PatchObject
         if (o.ContainsKey("display_name"))
             patch.DisplayName = o.Value<string>("display_name").NullIfEmpty();
 
+        if (o.ContainsKey("name_format"))
+            patch.NameFormat = o.Value<string>("name_format").NullIfEmpty();
+
         return patch;
     }
 
@@ -76,6 +81,9 @@ public class SystemGuildPatch: PatchObject
 
         if (DisplayName.IsPresent)
             o.Add("display_name", DisplayName.Value);
+
+        if (NameFormat.IsPresent)
+            o.Add("name_format", NameFormat.Value);
 
         return o;
     }

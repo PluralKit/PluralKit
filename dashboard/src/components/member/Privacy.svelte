@@ -34,7 +34,8 @@
 		name_privacy: "Name",
 		pronoun_privacy: "Pronouns",
 		visibility: "Visibility",
-        proxy_privacy: "Proxy Tags"
+        proxy_privacy: "Proxy Tags",
+        banner_privacy: "Banner",
 	};
 
     async function submit() {

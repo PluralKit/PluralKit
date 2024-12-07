@@ -150,7 +150,7 @@ public class Groups
         if (format == ReplyFormat.Plaintext)
         {
             var eb = new EmbedBuilder()
-                .Description($"Showing displayname for group {target.Reference(ctx)}");
+                .Description($"Showing displayname for group {target.NameFor(ctx)} (`{target.DisplayHid(ctx.Config)}`)");
             await ctx.Reply(target.DisplayName, embed: eb.Build());
             return;
         }
@@ -228,7 +228,7 @@ public class Groups
         if (format == ReplyFormat.Plaintext)
         {
             var eb = new EmbedBuilder()
-                .Description($"Showing description for group {target.Reference(ctx)}");
+                .Description($"Showing description for group {target.NameFor(ctx)} (`{target.DisplayHid(ctx.Config)}`)");
             await ctx.Reply(target.Description, embed: eb.Build());
             return;
         }
@@ -273,6 +273,7 @@ public class Groups
     {
         async Task ClearIcon()
         {
+            await ctx.ConfirmClear("this group's icon");
             ctx.CheckOwnGroup(target);
 
             await ctx.Repository.UpdateGroup(target.Id, new GroupPatch { Icon = null });
@@ -311,24 +312,31 @@ public class Groups
             ctx.CheckSystemPrivacy(target.System, target.IconPrivacy);
 
             if ((target.Icon?.Trim() ?? "").Length > 0)
-            {
-                var eb = new EmbedBuilder()
-                    .Title("Group icon")
-                    .Image(new Embed.EmbedImage(target.Icon.TryGetCleanCdnUrl()));
-
-                if (target.System == ctx.System?.Id)
-                    eb.Description($"To clear, use `{ctx.DefaultPrefix}group {target.Reference(ctx)} icon -clear`.");
-
-                await ctx.Reply(embed: eb.Build());
-            }
+                switch (ctx.MatchFormat())
+                {
+                    case ReplyFormat.Raw:
+                        await ctx.Reply($"`{target.Icon.TryGetCleanCdnUrl()}`");
+                        break;
+                    case ReplyFormat.Plaintext:
+                        var ebP = new EmbedBuilder()
+                            .Description($"Showing avatar for group {target.NameFor(ctx)} (`{target.DisplayHid(ctx.Config)}`)");
+                        await ctx.Reply(text: $"<{target.Icon.TryGetCleanCdnUrl()}>", embed: ebP.Build());
+                        break;
+                    default:
+                        var ebS = new EmbedBuilder()
+                            .Title("Group icon")
+                            .Image(new Embed.EmbedImage(target.Icon.TryGetCleanCdnUrl()));
+                        if (target.System == ctx.System?.Id)
+                            ebS.Description($"To clear, use `{ctx.DefaultPrefix}group {target.Reference(ctx)} icon -clear`.");
+                        await ctx.Reply(embed: ebS.Build());
+                        break;
+                }
             else
-            {
                 throw new PKSyntaxError(
                     "This group does not have an avatar set. Set one by attaching an image to this command, or by passing an image URL or @mention.");
-            }
         }
 
-        if (ctx.MatchClear() && await ctx.ConfirmClear("this group's icon"))
+        if (ctx.MatchClear())
             await ClearIcon();
         else if (await ctx.MatchImage() is { } img)
             await SetIcon(img);
@@ -340,6 +348,7 @@ public class Groups
     {
         async Task ClearBannerImage()
         {
+            await ctx.ConfirmClear("this group's banner image");
             ctx.CheckOwnGroup(target);
 
             await ctx.Repository.UpdateGroup(target.Id, new GroupPatch { BannerImage = null });
@@ -374,27 +383,34 @@ public class Groups
 
         async Task ShowBannerImage()
         {
-            ctx.CheckSystemPrivacy(target.System, target.DescriptionPrivacy);
+            ctx.CheckSystemPrivacy(target.System, target.BannerPrivacy);
 
-            if ((target.BannerImage?.Trim() ?? "").Length > 0)
-            {
-                var eb = new EmbedBuilder()
-                    .Title("Group banner image")
-                    .Image(new Embed.EmbedImage(target.BannerImage));
-
-                if (target.System == ctx.System?.Id)
-                    eb.Description($"To clear, use `{ctx.DefaultPrefix}group {target.Reference(ctx)} banner clear`.");
-
-                await ctx.Reply(embed: eb.Build());
-            }
+            if ((target.Icon?.Trim() ?? "").Length > 0)
+                switch (ctx.MatchFormat())
+                {
+                    case ReplyFormat.Raw:
+                        await ctx.Reply($"`{target.BannerImage.TryGetCleanCdnUrl()}`");
+                        break;
+                    case ReplyFormat.Plaintext:
+                        var ebP = new EmbedBuilder()
+                            .Description($"Showing banner for group {target.NameFor(ctx)} (`{target.DisplayHid(ctx.Config)}`)");
+                        await ctx.Reply(text: $"<{target.BannerImage.TryGetCleanCdnUrl()}>", embed: ebP.Build());
+                        break;
+                    default:
+                        var ebS = new EmbedBuilder()
+                            .Title("Group banner image")
+                            .Image(new Embed.EmbedImage(target.BannerImage.TryGetCleanCdnUrl()));
+                        if (target.System == ctx.System?.Id)
+                            ebS.Description($"To clear, use `{ctx.DefaultPrefix}group {target.Reference(ctx)} banner clear`.");
+                        await ctx.Reply(embed: ebS.Build());
+                        break;
+                }
             else
-            {
                 throw new PKSyntaxError(
-                    "This group does not have a banner image set. Set one by attaching an image to this command, or by passing an image URL.");
-            }
+                    "This group does not have a banner image set. Set one by attaching an image to this command, or by passing an image URL or @mention.");
         }
 
-        if (ctx.MatchClear() && await ctx.ConfirmClear("this group's banner image"))
+        if (ctx.MatchClear())
             await ClearBannerImage();
         else if (await ctx.MatchImage() is { } img)
             await SetBannerImage(img);
@@ -509,6 +525,7 @@ public class Groups
                 .Title($"Current privacy settings for {target.Name}")
                 .Field(new Embed.Field("Name", target.NamePrivacy.Explanation()))
                 .Field(new Embed.Field("Description", target.DescriptionPrivacy.Explanation()))
+                .Field(new Embed.Field("Banner", target.BannerPrivacy.Explanation()))
                 .Field(new Embed.Field("Icon", target.IconPrivacy.Explanation()))
                 .Field(new Embed.Field("Member list", target.ListPrivacy.Explanation()))
                 .Field(new Embed.Field("Metadata (creation date)", target.MetadataPrivacy.Explanation()))
@@ -539,6 +556,7 @@ public class Groups
             {
                 GroupPrivacySubject.Name => "name privacy",
                 GroupPrivacySubject.Description => "description privacy",
+                GroupPrivacySubject.Banner => "banner privacy",
                 GroupPrivacySubject.Icon => "icon privacy",
                 GroupPrivacySubject.List => "member list",
                 GroupPrivacySubject.Metadata => "metadata",
@@ -552,6 +570,8 @@ public class Groups
                     "This group's name is now hidden from other systems, and will be replaced by the group's display name.",
                 (GroupPrivacySubject.Description, PrivacyLevel.Private) =>
                     "This group's description is now hidden from other systems.",
+                (GroupPrivacySubject.Banner, PrivacyLevel.Private) =>
+                    "This group's banner is now hidden from other systems.",
                 (GroupPrivacySubject.Icon, PrivacyLevel.Private) =>
                     "This group's icon is now hidden from other systems.",
                 (GroupPrivacySubject.Visibility, PrivacyLevel.Private) =>
@@ -565,6 +585,8 @@ public class Groups
                     "This group's name is no longer hidden from other systems.",
                 (GroupPrivacySubject.Description, PrivacyLevel.Public) =>
                     "This group's description is no longer hidden from other systems.",
+                (GroupPrivacySubject.Banner, PrivacyLevel.Public) =>
+                    "This group's banner is no longer hidden from other systems.",
                 (GroupPrivacySubject.Icon, PrivacyLevel.Public) =>
                     "This group's icon is no longer hidden from other systems.",
                 (GroupPrivacySubject.Visibility, PrivacyLevel.Public) =>

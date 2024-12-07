@@ -11,6 +11,7 @@ public class SystemGuildSettings
     public bool TagEnabled { get; }
     public string? AvatarUrl { get; }
     public string? DisplayName { get; }
+    public string? NameFormat { get; }
 }
 
 public static class SystemGuildExt
@@ -24,6 +25,7 @@ public static class SystemGuildExt
         o.Add("tag_enabled", settings.TagEnabled);
         o.Add("avatar_url", settings.AvatarUrl);
         o.Add("display_name", settings.DisplayName);
+        o.Add("name_format", settings.NameFormat);
 
         return o;
     }

@@ -6,7 +6,10 @@ pkgs.mkShellNoCC {
     gcc
     protobuf
     dotnet-sdk_6
+    omnisharp-roslyn
     go
     nodejs yarn
   ];
+
+  NODE_OPTIONS = "--openssl-legacy-provider";
 }

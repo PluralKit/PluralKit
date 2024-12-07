@@ -8,6 +8,7 @@ Some moderation bots have official PluralKit support, and properly handle exclud
 - [**Catalogger**](https://catalogger.starshines.xyz/docs)
 - [**Aero**](https://aero.bot/) 
 - [**CoreBot**](https://discord.gg/GAAj6DDrCJ)
+- [**Quark**](https://quark.bot)
 
 If your server uses an in-house bot for logging, you can use [the API](/api) to implement support yourself.
 
@@ -15,12 +16,13 @@ If your server uses an in-house bot for logging, you can use [the API](/api) to 
 Another solution is for PluralKit to automatically delete log messages from other bots when they get posted.
 PluralKit supports this through the **log cleanup** feature. To enable it, use the following command:
 
-    pk;logclean on
+    pk;serverconfig logclean on
     
 This requires you to have the *Manage Server* permission on the server. 
 
 ### Supported bots
 At the moment, log cleanup works with the following bots:
+- Annabelle (precise in embed format, fuzzy in inline format)
 - [Auttaja](https://auttaja.io/) (precise)
 - [blargbot](https://blargbot.xyz/) (precise)
 - [Carl-bot](https://carl.gg/) (precise)
@@ -34,6 +36,7 @@ At the moment, log cleanup works with the following bots:
 - [Mantaro](https://mantaro.site/) (precise)
 - [Pancake](https://pancake.gg/) (fuzzy)
 - [SafetyAtLast](https://www.safetyatlast.net/) (fuzzy)
+- [Sapphire](https://sapph.xyz/) (precise, only in default format)
 - [Skyra](https://www.skyra.pw/) (precise)
 - [UnbelievaBoat](https://unbelievaboat.com/) (precise)
 - Vanessa (fuzzy)

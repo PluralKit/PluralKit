@@ -72,7 +72,8 @@ public class ShardConnection: IAsyncDisposable
         }
         catch (Exception e)
         {
-            _logger.Error(e, "Shard {ShardId}: Error reading from WebSocket");
+            // these are never useful
+            // _logger.Error(e, "Shard {ShardId}: Error reading from WebSocket");
             // force close so we can "reset"
             await CloseInner(WebSocketCloseStatus.NormalClosure, null);
         }

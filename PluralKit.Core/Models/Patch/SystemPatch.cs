@@ -21,6 +21,7 @@ public class SystemPatch: PatchObject
     public Partial<PrivacyLevel> NamePrivacy { get; set; }
     public Partial<PrivacyLevel> AvatarPrivacy { get; set; }
     public Partial<PrivacyLevel> DescriptionPrivacy { get; set; }
+    public Partial<PrivacyLevel> BannerPrivacy { get; set; }
     public Partial<PrivacyLevel> MemberListPrivacy { get; set; }
     public Partial<PrivacyLevel> GroupListPrivacy { get; set; }
     public Partial<PrivacyLevel> FrontPrivacy { get; set; }
@@ -42,6 +43,7 @@ public class SystemPatch: PatchObject
         .With("name_privacy", NamePrivacy)
         .With("avatar_privacy", AvatarPrivacy)
         .With("description_privacy", DescriptionPrivacy)
+        .With("banner_privacy", BannerPrivacy)
         .With("member_list_privacy", MemberListPrivacy)
         .With("group_list_privacy", GroupListPrivacy)
         .With("front_privacy", FrontPrivacy)
@@ -86,6 +88,8 @@ public class SystemPatch: PatchObject
         {
             if (o.ContainsKey("description_privacy"))
                 patch.DescriptionPrivacy = patch.ParsePrivacy(o, "description_privacy");
+            if (o.ContainsKey("banner_privacy"))
+                patch.BannerPrivacy = patch.ParsePrivacy(o, "banner_privacy");
             if (o.ContainsKey("member_list_privacy"))
                 patch.MemberListPrivacy = patch.ParsePrivacy(o, "member_list_privacy");
             if (o.ContainsKey("front_privacy")) patch.FrontPrivacy = patch.ParsePrivacy(o, "front_privacy");
@@ -105,6 +109,9 @@ public class SystemPatch: PatchObject
 
             if (privacy.ContainsKey("description_privacy"))
                 patch.DescriptionPrivacy = patch.ParsePrivacy(privacy, "description_privacy");
+
+            if (privacy.ContainsKey("banner_privacy"))
+                patch.BannerPrivacy = patch.ParsePrivacy(privacy, "banner_privacy");
 
             if (privacy.ContainsKey("pronoun_privacy"))
                 patch.PronounPrivacy = patch.ParsePrivacy(privacy, "pronoun_privacy");
@@ -150,6 +157,7 @@ public class SystemPatch: PatchObject
             NamePrivacy.IsPresent
             || AvatarPrivacy.IsPresent
             || DescriptionPrivacy.IsPresent
+            || BannerPrivacy.IsPresent
             || PronounPrivacy.IsPresent
             || MemberListPrivacy.IsPresent
             || GroupListPrivacy.IsPresent
@@ -167,6 +175,9 @@ public class SystemPatch: PatchObject
 
             if (DescriptionPrivacy.IsPresent)
                 p.Add("description_privacy", DescriptionPrivacy.Value.ToJsonString());
+
+            if (BannerPrivacy.IsPresent)
+                p.Add("banner_privacy", BannerPrivacy.Value.ToJsonString());
 
             if (PronounPrivacy.IsPresent)
                 p.Add("pronoun_privacy", PronounPrivacy.Value.ToJsonString());

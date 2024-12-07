@@ -63,6 +63,7 @@ public class PKMember
 
     public PrivacyLevel MemberVisibility { get; private set; }
     public PrivacyLevel DescriptionPrivacy { get; private set; }
+    public PrivacyLevel BannerPrivacy { get; private set; }
     public PrivacyLevel AvatarPrivacy { get; private set; }
     public PrivacyLevel NamePrivacy { get; private set; } //ignore setting if no display name is set
     public PrivacyLevel BirthdayPrivacy { get; private set; }
@@ -140,7 +141,7 @@ public static class PKMemberExt
         o.Add("pronouns", member.PronounsFor(ctx));
         o.Add("avatar_url", member.AvatarFor(ctx).TryGetCleanCdnUrl());
         o.Add("webhook_avatar_url", member.AvatarPrivacy.Get(ctx, member.WebhookAvatarUrl?.TryGetCleanCdnUrl()));
-        o.Add("banner", member.DescriptionPrivacy.Get(ctx, member.BannerImage).TryGetCleanCdnUrl());
+        o.Add("banner", member.BannerPrivacy.Get(ctx, member.BannerImage).TryGetCleanCdnUrl());
         o.Add("description", member.DescriptionFor(ctx));
         o.Add("created", member.CreatedFor(ctx)?.FormatExport());
         o.Add("keep_proxy", member.KeepProxy);
@@ -166,6 +167,7 @@ public static class PKMemberExt
             p.Add("visibility", member.MemberVisibility.ToJsonString());
             p.Add("name_privacy", member.NamePrivacy.ToJsonString());
             p.Add("description_privacy", member.DescriptionPrivacy.ToJsonString());
+            p.Add("banner_privacy", member.BannerPrivacy.ToJsonString());
             p.Add("birthday_privacy", member.BirthdayPrivacy.ToJsonString());
             p.Add("pronoun_privacy", member.PronounPrivacy.ToJsonString());
             p.Add("avatar_privacy", member.AvatarPrivacy.ToJsonString());

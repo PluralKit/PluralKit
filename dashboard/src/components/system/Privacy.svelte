@@ -19,7 +19,8 @@
         group_list_privacy: "Group list",
         pronoun_privacy: "Pronouns",
         avatar_privacy: "Avatar",
-        name_privacy: "Name"
+        name_privacy: "Name",
+        banner_privacy: "Banner",
 	};
 
 </script>

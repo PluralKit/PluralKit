@@ -2,6 +2,8 @@ using System.Globalization;
 
 using Autofac;
 
+using AppFact.SerilogOpenSearchSink;
+
 using Microsoft.Extensions.Logging;
 
 using NodaTime;
@@ -9,7 +11,6 @@ using NodaTime;
 using Serilog;
 using Serilog.Events;
 using Serilog.Formatting.Compact;
-using Serilog.Sinks.Elasticsearch;
 using Serilog.Sinks.Seq;
 using Serilog.Sinks.SystemConsole.Themes;
 
@@ -104,16 +105,12 @@ public class LoggingModule: Module
 
         if (config.ElasticUrl != null)
         {
-            var elasticConfig = new ElasticsearchSinkOptions(new Uri(config.ElasticUrl))
-            {
-                AutoRegisterTemplate = true,
-                AutoRegisterTemplateVersion = AutoRegisterTemplateVersion.ESv7,
-                MinimumLogEventLevel = config.ElasticLogLevel,
-                IndexFormat = "pluralkit-logs-{0:yyyy.MM.dd}",
-                CustomFormatter = new ScalarFormatting.Elasticsearch()
-            };
-
-            logCfg.WriteTo.Elasticsearch(elasticConfig);
+            logCfg.WriteTo.OpenSearch(
+                uri: config.ElasticUrl,
+                index: "dotnet-logs",
+                basicAuthUser: "unused",
+                basicAuthPassword: "unused"
+            );
         }
 
         if (config.SeqLogUrl != null)

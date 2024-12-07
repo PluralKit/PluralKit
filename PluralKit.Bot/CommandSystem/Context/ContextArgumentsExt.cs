@@ -98,6 +98,15 @@ public static class ContextArgumentsExt
         return ReplyFormat.Standard;
     }
 
+    public static ReplyFormat PeekMatchFormat(this Context ctx)
+    {
+        int ptr1 = ctx.Parameters._ptr;
+        int ptr2 = ctx.Parameters._ptr;
+        if (ctx.PeekMatch(ref ptr1, new[] { "r", "raw" }) || ctx.MatchFlag("r", "raw")) return ReplyFormat.Raw;
+        if (ctx.PeekMatch(ref ptr2, new[] { "pt", "plaintext" }) || ctx.MatchFlag("pt", "plaintext")) return ReplyFormat.Plaintext;
+        return ReplyFormat.Standard;
+    }
+
     public static bool MatchToggle(this Context ctx, bool? defaultValue = null)
     {
         var value = ctx.MatchToggleOrNull(defaultValue);

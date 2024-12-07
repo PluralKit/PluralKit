@@ -118,7 +118,8 @@ public class ProxiedMessage
 
         // Should we clear embeds?
         var clearEmbeds = ctx.MatchFlag("clear-embed", "ce");
-        if (clearEmbeds && newContent == null)
+        var clearAttachments = ctx.MatchFlag("clear-attachments", "ca");
+        if ((clearEmbeds || clearAttachments) && newContent == null)
             newContent = originalMsg.Content!;
 
         if (newContent == null)
@@ -218,7 +219,7 @@ public class ProxiedMessage
         try
         {
             var editedMsg =
-                await _webhookExecutor.EditWebhookMessage(msg.Channel, msg.Mid, newContent, clearEmbeds);
+                await _webhookExecutor.EditWebhookMessage(msg.Guild ?? 0, msg.Channel, msg.Mid, newContent, clearEmbeds, clearAttachments);
 
             if (ctx.Guild == null)
                 await _rest.CreateReaction(ctx.Channel.Id, ctx.Message.Id, new Emoji { Name = Emojis.Success });
@@ -400,7 +401,8 @@ public class ProxiedMessage
             if (!showContent)
                 throw new PKError(noShowContentError);
 
-            if (message.System?.Id != ctx.System.Id && message.Message.Sender != ctx.Author.Id)
+            // if user has has a system and their system sent the message, or if user sent the message, do not error
+            if (!((ctx.System != null && message.System?.Id == ctx.System.Id) || message.Message.Sender == ctx.Author.Id))
                 throw new PKError("You can only delete your own messages.");
 
             await ctx.Rest.DeleteMessage(message.Message.Channel, message.Message.Mid);
@@ -431,19 +433,19 @@ public class ProxiedMessage
             return;
         }
 
-        await ctx.Reply(embed: await _embeds.CreateMessageInfoEmbed(message, showContent));
+        await ctx.Reply(embed: await _embeds.CreateMessageInfoEmbed(message, showContent, ctx.Config));
     }
 
     private async Task DeleteCommandMessage(Context ctx, ulong messageId)
     {
-        var (authorId, channelId) = await ctx.Services.Resolve<CommandMessageService>().GetCommandMessage(messageId);
-        if (authorId == null)
+        var cmessage = await ctx.Services.Resolve<CommandMessageService>().GetCommandMessage(messageId);
+        if (cmessage == null)
             throw Errors.MessageNotFound(messageId);
 
-        if (authorId != ctx.Author.Id)
+        if (cmessage!.AuthorId != ctx.Author.Id)
             throw new PKError("You can only delete command messages queried by this account.");
 
-        await ctx.Rest.DeleteMessage(channelId!.Value, messageId);
+        await ctx.Rest.DeleteMessage(cmessage.ChannelId, messageId);
 
         if (ctx.Guild != null)
             await ctx.Rest.DeleteMessage(ctx.Message);

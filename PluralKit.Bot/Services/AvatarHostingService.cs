@@ -9,22 +9,35 @@ public class AvatarHostingService
     private readonly BotConfig _config;
     private readonly HttpClient _client;
 
-    public AvatarHostingService(BotConfig config, HttpClient client)
+    public AvatarHostingService(BotConfig config)
     {
         _config = config;
-        _client = client;
+        _client = new HttpClient
+        {
+            Timeout = TimeSpan.FromSeconds(10),
+        };
     }
 
     public async Task<ParsedImage> TryRehostImage(ParsedImage input, RehostedImageType type, ulong userId, PKSystem? system)
     {
-        var uploaded = await TryUploadAvatar(input.Url, type, userId, system);
-        if (uploaded != null)
+        try
         {
-            // todo: make new image type called Cdn?
-            return new ParsedImage { Url = uploaded, Source = AvatarSource.HostedCdn };
-        }
+            var uploaded = await TryUploadAvatar(input.Url, type, userId, system);
+            if (uploaded != null)
+            {
+                // todo: make new image type called Cdn?
+                return new ParsedImage { Url = uploaded, Source = AvatarSource.HostedCdn };
+            }
 
-        return input;
+            return input;
+        }
+        catch (TaskCanceledException e)
+        {
+            // don't show an internal error to users
+            if (e.Message.Contains("HttpClient.Timeout"))
+                throw new PKError("Temporary error setting image, please try again later");
+            throw;
+        }
     }
 
     public async Task<string?> TryUploadAvatar(string? avatarUrl, RehostedImageType type, ulong userId, PKSystem? system)

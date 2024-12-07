@@ -49,13 +49,13 @@ public class SystemEdit
 
         if (format == ReplyFormat.Raw)
         {
-            await ctx.Reply($"` ``\n{target.Name}\n` ``");
+            await ctx.Reply($"```\n{target.Name}\n```");
             return;
         }
         if (format == ReplyFormat.Plaintext)
         {
             var eb = new EmbedBuilder()
-                .Description($"Showing name for system {target.DisplayHid()}");
+                .Description($"Showing name for system `{target.DisplayHid(ctx.Config)}`");
             await ctx.Reply(target.Name, embed: eb.Build());
             return;
         }
@@ -114,13 +114,13 @@ public class SystemEdit
 
         if (format == ReplyFormat.Raw)
         {
-            await ctx.Reply($"` ``\n{settings.DisplayName}\n` ``");
+            await ctx.Reply($"```\n{settings.DisplayName}\n```");
             return;
         }
         if (format == ReplyFormat.Plaintext)
         {
             var eb = new EmbedBuilder()
-                .Description($"Showing servername for system {target.DisplayHid()}");
+                .Description($"Showing servername for system `{target.DisplayHid(ctx.Config)}`");
             await ctx.Reply(settings.DisplayName, embed: eb.Build());
             return;
         }
@@ -177,13 +177,13 @@ public class SystemEdit
 
         if (format == ReplyFormat.Raw)
         {
-            await ctx.Reply($"` ``\n{target.Description}\n` ``");
+            await ctx.Reply($"```\n{target.Description}\n```");
             return;
         }
         if (format == ReplyFormat.Plaintext)
         {
             var eb = new EmbedBuilder()
-                .Description($"Showing description for system {target.DisplayHid()}");
+                .Description($"Showing description for system `{target.DisplayHid(ctx.Config)}`");
             await ctx.Reply(target.Description, embed: eb.Build());
             return;
         }
@@ -299,7 +299,7 @@ public class SystemEdit
         if (format == ReplyFormat.Plaintext)
         {
             var eb = new EmbedBuilder()
-                .Description($"Showing tag for system {target.DisplayHid()}");
+                .Description($"Showing tag for system `{target.DisplayHid(ctx.Config)}`");
             await ctx.Reply(target.Tag, embed: eb.Build());
             return;
         }
@@ -354,7 +354,7 @@ public class SystemEdit
                 if (format == ReplyFormat.Plaintext)
                 {
                     var eb = new EmbedBuilder()
-                        .Description($"Showing servertag for system {target.DisplayHid()}");
+                        .Description($"Showing servertag for system `{target.DisplayHid(ctx.Config)}`");
                     await ctx.Reply(settings.Tag, embed: eb.Build());
                     return;
                 }
@@ -489,7 +489,7 @@ public class SystemEdit
         if (format == ReplyFormat.Plaintext)
         {
             var eb = new EmbedBuilder()
-                .Description($"Showing pronouns for system {target.DisplayHid()}");
+                .Description($"Showing pronouns for system `{target.DisplayHid(ctx.Config)}`");
             await ctx.Reply(target.Pronouns, embed: eb.Build());
             return;
         }
@@ -565,19 +565,28 @@ public class SystemEdit
         async Task ShowIcon()
         {
             if ((target.AvatarUrl?.Trim() ?? "").Length > 0)
-            {
-                var eb = new EmbedBuilder()
-                    .Title("System icon")
-                    .Image(new Embed.EmbedImage(target.AvatarUrl.TryGetCleanCdnUrl()));
-                if (target.Id == ctx.System?.Id)
-                    eb.Description($"To clear, use `{ctx.DefaultPrefix}system icon clear`.");
-                await ctx.Reply(embed: eb.Build());
-            }
+                switch (ctx.MatchFormat())
+                {
+                    case ReplyFormat.Raw:
+                        await ctx.Reply($"`{target.AvatarUrl.TryGetCleanCdnUrl()}`");
+                        break;
+                    case ReplyFormat.Plaintext:
+                        var ebP = new EmbedBuilder()
+                            .Description($"Showing icon for system {target.NameFor(ctx)} (`{target.DisplayHid(ctx.Config)}`)");
+                        await ctx.Reply(text: $"<{target.AvatarUrl.TryGetCleanCdnUrl()}>", embed: ebP.Build());
+                        break;
+                    default:
+                        var ebS = new EmbedBuilder()
+                            .Title("System icon")
+                            .Image(new Embed.EmbedImage(target.AvatarUrl.TryGetCleanCdnUrl()));
+                        if (target.Id == ctx.System?.Id)
+                            ebS.Description($"To clear, use `{ctx.DefaultPrefix}system icon clear`.");
+                        await ctx.Reply(embed: ebS.Build());
+                        break;
+                }
             else
-            {
                 throw new PKSyntaxError(
                     "This system does not have an icon set. Set one by attaching an image to this command, or by passing an image URL or @mention.");
-            }
         }
 
         if (target != null && target?.Id != ctx.System?.Id)
@@ -639,19 +648,28 @@ public class SystemEdit
             var settings = await ctx.Repository.GetSystemGuild(ctx.Guild.Id, target.Id);
 
             if ((settings.AvatarUrl?.Trim() ?? "").Length > 0)
-            {
-                var eb = new EmbedBuilder()
-                    .Title("System server icon")
-                    .Image(new Embed.EmbedImage(settings.AvatarUrl.TryGetCleanCdnUrl()));
-                if (target.Id == ctx.System?.Id)
-                    eb.Description($"To clear, use `{ctx.DefaultPrefix}system servericon clear`.");
-                await ctx.Reply(embed: eb.Build());
-            }
+                switch (ctx.MatchFormat())
+                {
+                    case ReplyFormat.Raw:
+                        await ctx.Reply($"`{settings.AvatarUrl.TryGetCleanCdnUrl()}`");
+                        break;
+                    case ReplyFormat.Plaintext:
+                        var ebP = new EmbedBuilder()
+                            .Description($"Showing icon for system {target.NameFor(ctx)} (`{target.DisplayHid(ctx.Config)}`)");
+                        await ctx.Reply(text: $"<{settings.AvatarUrl.TryGetCleanCdnUrl()}>", embed: ebP.Build());
+                        break;
+                    default:
+                        var ebS = new EmbedBuilder()
+                            .Title("System server icon")
+                            .Image(new Embed.EmbedImage(settings.AvatarUrl.TryGetCleanCdnUrl()));
+                        if (target.Id == ctx.System?.Id)
+                            ebS.Description($"To clear, use `{ctx.DefaultPrefix}system servericon clear`.");
+                        await ctx.Reply(embed: ebS.Build());
+                        break;
+                }
             else
-            {
                 throw new PKSyntaxError(
                     "This system does not have a icon specific to this server. Set one by attaching an image to this command, or by passing an image URL or @mention.");
-            }
         }
 
         ctx.CheckGuildContext();
@@ -672,28 +690,35 @@ public class SystemEdit
 
     public async Task BannerImage(Context ctx, PKSystem target)
     {
-        ctx.CheckSystemPrivacy(target.Id, target.DescriptionPrivacy);
+        ctx.CheckSystemPrivacy(target.Id, target.BannerPrivacy);
 
         var isOwnSystem = target.Id == ctx.System?.Id;
 
-        if (!ctx.HasNext() && ctx.Message.Attachments.Length == 0)
+        if ((!ctx.HasNext() && ctx.Message.Attachments.Length == 0) || ctx.PeekMatchFormat() != ReplyFormat.Standard)
         {
             if ((target.BannerImage?.Trim() ?? "").Length > 0)
-            {
-                var eb = new EmbedBuilder()
-                    .Title("System banner image")
-                    .Image(new Embed.EmbedImage(target.BannerImage));
-
-                if (isOwnSystem)
-                    eb.Description($"To clear, use `{ctx.DefaultPrefix}system banner clear`.");
-
-                await ctx.Reply(embed: eb.Build());
-            }
+                switch (ctx.MatchFormat())
+                {
+                    case ReplyFormat.Raw:
+                        await ctx.Reply($"`{target.BannerImage.TryGetCleanCdnUrl()}`");
+                        break;
+                    case ReplyFormat.Plaintext:
+                        var ebP = new EmbedBuilder()
+                            .Description($"Showing banner for system {target.NameFor(ctx)} (`{target.DisplayHid(ctx.Config)}`)");
+                        await ctx.Reply(text: $"<{target.BannerImage.TryGetCleanCdnUrl()}>", embed: ebP.Build());
+                        break;
+                    default:
+                        var ebS = new EmbedBuilder()
+                            .Title("System banner image")
+                            .Image(new Embed.EmbedImage(target.BannerImage.TryGetCleanCdnUrl()));
+                        if (target.Id == ctx.System?.Id)
+                            ebS.Description($"To clear, use `{ctx.DefaultPrefix}system banner clear`.");
+                        await ctx.Reply(embed: ebS.Build());
+                        break;
+                }
             else
-            {
                 throw new PKSyntaxError("This system does not have a banner image set."
                     + (isOwnSystem ? "Set one by attaching an image to this command, or by passing an image URL or @mention." : ""));
-            }
 
             return;
         }
@@ -835,13 +860,14 @@ public class SystemEdit
                 .Field(new Embed.Field("Name", target.NamePrivacy.Explanation()))
                 .Field(new Embed.Field("Avatar", target.AvatarPrivacy.Explanation()))
                 .Field(new Embed.Field("Description", target.DescriptionPrivacy.Explanation()))
+                .Field(new Embed.Field("Banner", target.BannerPrivacy.Explanation()))
                 .Field(new Embed.Field("Pronouns", target.PronounPrivacy.Explanation()))
                 .Field(new Embed.Field("Member list", target.MemberListPrivacy.Explanation()))
                 .Field(new Embed.Field("Group list", target.GroupListPrivacy.Explanation()))
                 .Field(new Embed.Field("Current fronter(s)", target.FrontPrivacy.Explanation()))
                 .Field(new Embed.Field("Front/switch history", target.FrontHistoryPrivacy.Explanation()))
                 .Description(
-                    $"To edit privacy settings, use the command:\n`{ctx.DefaultPrefix}system privacy <subject> <level>`\n\n- `subject` is one of `name`, `avatar`, `description`, `list`, `front`, `fronthistory`, `groups`, or `all` \n- `level` is either `public` or `private`.");
+                    $"To edit privacy settings, use the command:\n`{ctx.DefaultPrefix}system privacy <subject> <level>`\n\n- `subject` is one of `name`, `avatar`, `description`, `banner`, `pronouns`, `list`, `front`, `fronthistory`, `groups`, or `all` \n- `level` is either `public` or `private`.");
             return ctx.Reply(embed: eb.Build());
         }
 
@@ -861,6 +887,7 @@ public class SystemEdit
                 SystemPrivacySubject.Name => "name",
                 SystemPrivacySubject.Avatar => "avatar",
                 SystemPrivacySubject.Description => "description",
+                SystemPrivacySubject.Banner => "banner",
                 SystemPrivacySubject.Pronouns => "pronouns",
                 SystemPrivacySubject.Front => "front",
                 SystemPrivacySubject.FrontHistory => "front history",

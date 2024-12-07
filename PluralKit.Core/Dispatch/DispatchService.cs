@@ -247,7 +247,7 @@ public class DispatchService
     {
         var repo = _provider.Resolve<ModelRepository>();
         var system = await repo.GetSystemByAccount(accountId);
-        if (system.WebhookUrl == null)
+        if (system?.WebhookUrl == null)
             return;
 
         var data = new UpdateDispatchData();

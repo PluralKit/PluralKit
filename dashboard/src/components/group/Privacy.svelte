@@ -33,6 +33,7 @@
 		list_privacy: "Member list",
 		metadata_privacy: "Metadata",
 		visibility: "Visibility",
+        banner_privacy: "Banner",
 	};
 
     async function submit() {

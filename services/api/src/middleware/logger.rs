@@ -1,7 +1,7 @@
 use std::time::Instant;
 
 use axum::{extract::MatchedPath, extract::Request, middleware::Next, response::Response};
-use metrics::histogram;
+use metrics::{counter, histogram};
 use tracing::{info, span, warn, Instrument, Level};
 
 use crate::util::header_or_unknown;
@@ -10,11 +10,12 @@ use crate::util::header_or_unknown;
 // todo: change as necessary
 const MIN_LOG_TIME: u128 = 2_000;
 
+pub const DID_AUTHENTICATE_HEADER: &'static str = "x-pluralkit-didauthenticate";
+
 pub async fn logger(request: Request, next: Next) -> Response {
     let method = request.method().clone();
 
-    let request_id = header_or_unknown(request.headers().get("Fly-Request-Id"));
-    let remote_ip = header_or_unknown(request.headers().get("Fly-Client-IP"));
+    let remote_ip = header_or_unknown(request.headers().get("X-PluralKit-Client-IP"));
     let user_agent = header_or_unknown(request.headers().get("User-Agent"));
 
     let endpoint = request
@@ -26,10 +27,9 @@ pub async fn logger(request: Request, next: Next) -> Response {
 
     let uri = request.uri().clone();
 
-    let request_id_span = span!(
+    let request_span = span!(
         Level::INFO,
         "request",
-        request_id,
         remote_ip,
         method = method.as_str(),
         endpoint = endpoint.clone(),
@@ -37,8 +37,36 @@ pub async fn logger(request: Request, next: Next) -> Response {
     );
 
     let start = Instant::now();
-    let response = next.run(request).instrument(request_id_span).await;
+    let mut response = next.run(request).instrument(request_span).await;
     let elapsed = start.elapsed().as_millis();
+
+    let authenticated = {
+        let headers = response.headers_mut();
+        println!("{:#?}", headers.keys());
+        if headers.contains_key(DID_AUTHENTICATE_HEADER) {
+            headers.remove(DID_AUTHENTICATE_HEADER);
+            true
+        } else {
+            false
+        }
+    };
+
+    counter!(
+        "pluralkit_api_requests",
+        "method" => method.to_string(),
+        "endpoint" => endpoint.clone(),
+        "status" => response.status().to_string(),
+        "authenticated" => authenticated.to_string(),
+    )
+    .increment(1);
+    histogram!(
+        "pluralkit_api_requests_bucket",
+        "method" => method.to_string(),
+        "endpoint" => endpoint.clone(),
+        "status" => response.status().to_string(),
+        "authenticated" => authenticated.to_string(),
+    )
+    .record(elapsed as f64 / 1_000_f64);
 
     info!(
         "{} handled request for {} {} in {}ms",
@@ -47,15 +75,17 @@ pub async fn logger(request: Request, next: Next) -> Response {
         endpoint,
         elapsed
     );
-    histogram!(
-        "pk_http_requests",
-        "method" => method.to_string(),
-        "route" => endpoint.clone(),
-        "status" => response.status().to_string()
-    )
-    .record((elapsed as f64) / 1_000_f64);
 
     if elapsed > MIN_LOG_TIME {
+        counter!(
+            "pluralkit_api_slow_requests_count",
+            "method" => method.to_string(),
+            "endpoint" => endpoint.clone(),
+            "status" => response.status().to_string(),
+            "authenticated" => authenticated.to_string(),
+        )
+        .increment(1);
+
         warn!(
             "request to {} full path {} (endpoint {}) took a long time ({}ms)!",
             method,

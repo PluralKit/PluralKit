@@ -83,10 +83,12 @@ internal partial class Database: IDatabase
         SqlMapper.AddTypeHandler(new NumericIdHandler<MemberId, int>(i => new MemberId(i)));
         SqlMapper.AddTypeHandler(new NumericIdHandler<SwitchId, int>(i => new SwitchId(i)));
         SqlMapper.AddTypeHandler(new NumericIdHandler<GroupId, int>(i => new GroupId(i)));
+        SqlMapper.AddTypeHandler(new NumericIdHandler<AbuseLogId, int>(i => new AbuseLogId(i)));
         SqlMapper.AddTypeHandler(new NumericIdArrayHandler<SystemId, int>(i => new SystemId(i)));
         SqlMapper.AddTypeHandler(new NumericIdArrayHandler<MemberId, int>(i => new MemberId(i)));
         SqlMapper.AddTypeHandler(new NumericIdArrayHandler<SwitchId, int>(i => new SwitchId(i)));
         SqlMapper.AddTypeHandler(new NumericIdArrayHandler<GroupId, int>(i => new GroupId(i)));
+        SqlMapper.AddTypeHandler(new NumericIdArrayHandler<AbuseLogId, int>(i => new AbuseLogId(i)));
 
         // Register our custom types to Npgsql
         // Without these it'll still *work* but break at the first launch + probably cause other small issues

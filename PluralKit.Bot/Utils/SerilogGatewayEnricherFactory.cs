@@ -38,9 +38,11 @@ public class SerilogGatewayEnricherFactory
         {
             props.Add(new LogEventProperty("ChannelId", new ScalarValue(channel.Value)));
 
-            if (await _cache.TryGetChannel(channel.Value) != null)
+            var guildIdForCache = guild != null ? guild.Value : 0;
+
+            if (await _cache.TryGetChannel(guildIdForCache, channel.Value) != null)
             {
-                var botPermissions = await _cache.BotPermissionsIn(channel.Value);
+                var botPermissions = await _cache.BotPermissionsIn(guildIdForCache, channel.Value);
                 props.Add(new LogEventProperty("BotPermissions", new ScalarValue(botPermissions)));
             }
         }

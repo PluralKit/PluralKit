@@ -382,10 +382,22 @@ You can now set some proxy tags:
 
     pk;member John proxy John:text
 
-Now, oth of the following will work without needing to add multiple versions of the proxy tag:
+Now, both of the following will work without needing to add multiple versions of the proxy tag:
 
     John: Hello!
     JOHN: Hello!
+
+### Setting a custom name format
+
+The default proxy username formatting is "{name} {tag}", but you can customize this value in config:
+
+    pk;config nameformat {tag} {name}
+    pk;config nameformat {name}@{tag}
+
+You can also do this on a per-server basis:
+
+    pk;config servernameformat {tag} {name}
+    pk;config servernameformat {name}@{tag}
 
 ## Interacting with proxied messages
 
@@ -540,6 +552,15 @@ To log a switch, use the `pk;switch` command with one or more members. For examp
 Note that the order of members are preserved (this is useful for indicating who's "more" at front, if applicable).
 If you want to specify a member with multiple words in their name, remember to encase the name in "double quotes".
 
+### Automatic Switching
+If you want PluralKit to automatically log a new switch whenever you [proxy](/guide/#proxying), you can tell it do so using the following command:
+
+    pk;config proxy switch new
+
+Alternatively, if you want PluralKit to *add* the proxied member to the current switch instead of logging a new one, you can use this command:
+
+    pk;config proxy switch add
+
 ### Switching out
 If you want to log a switch with *no* members, you can log a switch-out as follows:
 
@@ -667,6 +688,7 @@ There are various reasons you may not want information about your system or your
 At the moment, there are a few aspects of system privacy that can be configured.
 
 - System description
+- System banner
 - System pronouns
 - Member list
 - Group list
@@ -683,6 +705,7 @@ To update your system privacy settings, use the following commands:
     
 * `subject` is one of:
   * `description`
+  * `banner`
   * `pronouns`
   * `list`
   * `groups`
@@ -707,6 +730,7 @@ There are also some options for configuring member privacy:
 
 - Name
 - Description
+- Banner
 - Avatar
 - Birthday
 - Pronouns
@@ -727,6 +751,7 @@ To update a member's privacy, you can use the command:
 * `subject` is one of:
   * `name`
   * `description`
+  * `banner`
   * `avatar`
   * `birthday`
   * `pronouns`

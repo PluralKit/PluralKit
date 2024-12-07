@@ -67,7 +67,7 @@ public class EmbedService
         if (avatar != null)
             eb.Thumbnail(new Embed.EmbedThumbnail(avatar));
 
-        if (system.DescriptionPrivacy.CanAccess(ctx))
+        if (system.BannerPrivacy.CanAccess(ctx))
             eb.Image(new Embed.EmbedImage(system.BannerImage));
 
         var latestSwitch = await _repo.GetLatestSwitch(system.Id);
@@ -194,7 +194,7 @@ public class EmbedService
             .Footer(new Embed.EmbedFooter(
                 $"System ID: {system.DisplayHid(ccfg)} | Member ID: {member.DisplayHid(ccfg)} {(member.MetadataPrivacy.CanAccess(ctx) ? $"| Created on {member.Created.FormatZoned(zone)}" : "")}"));
 
-        if (member.DescriptionPrivacy.CanAccess(ctx))
+        if (member.BannerPrivacy.CanAccess(ctx))
             eb.Image(new Embed.EmbedImage(member.BannerImage));
 
         var description = "";
@@ -271,7 +271,7 @@ public class EmbedService
 
         eb.Footer(new Embed.EmbedFooter($"System ID: {system.DisplayHid(ctx.Config)} | Group ID: {target.DisplayHid(ctx.Config)}{(target.MetadataPrivacy.CanAccess(pctx) ? $" | Created on {target.Created.FormatZoned(ctx.Zone)}" : "")}"));
 
-        if (target.DescriptionPrivacy.CanAccess(pctx))
+        if (target.BannerPrivacy.CanAccess(pctx))
             eb.Image(new Embed.EmbedImage(target.BannerImage));
 
         if (target.NamePrivacy.CanAccess(pctx) && target.DisplayName != null)
@@ -336,7 +336,7 @@ public class EmbedService
 
     public async Task<Embed> CreateMessageInfoEmbed(FullMessage msg, bool showContent, SystemConfig? ccfg = null)
     {
-        var channel = await _cache.GetOrFetchChannel(_rest, msg.Message.Channel);
+        var channel = await _cache.GetOrFetchChannel(_rest, msg.Message.Guild ?? 0, msg.Message.Channel);
         var ctx = LookupContext.ByNonOwner;
 
         var serverMsg = await _rest.GetMessageOrNull(msg.Message.Channel, msg.Message.Mid);
@@ -403,14 +403,15 @@ public class EmbedService
         var roles = memberInfo?.Roles?.ToList();
         if (roles != null && roles.Count > 0 && showContent)
         {
-            var rolesString = string.Join(", ", (await Task.WhenAll(roles
-                    .Select(async id =>
+            var guild = await _cache.GetGuild(channel.GuildId!.Value);
+            var rolesString = string.Join(", ", (roles
+                    .Select(id =>
                     {
-                        var role = await _cache.TryGetRole(id);
+                        var role = Array.Find(guild.Roles, r => r.Id == id);
                         if (role != null)
                             return role;
                         return new Role { Name = "*(unknown role)*", Position = 0 };
-                    })))
+                    }))
                 .OrderByDescending(role => role.Position)
                 .Select(role => role.Name));
             eb.Field(new Embed.Field($"Account roles ({roles.Count})", rolesString.Truncate(1024)));

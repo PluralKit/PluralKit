@@ -59,7 +59,7 @@ public class ProxyService
     public async Task<bool> HandleIncomingMessage(MessageCreateEvent message, MessageContext ctx,
                                 Guild guild, Channel channel, bool allowAutoproxy, PermissionSet botPermissions, string prefix)
     {
-        var rootChannel = await _cache.GetRootChannel(message.ChannelId);
+        var rootChannel = await _cache.GetRootChannel(message.GuildId!.Value, message.ChannelId);
 
         if (!ShouldProxy(channel, rootChannel, message, ctx, prefix))
             return false;
@@ -121,6 +121,21 @@ public class ProxyService
         if (msg.Content != null && msg.Content.Length > 2000)
         {
             return "PluralKit cannot proxy messages over 2000 characters in length.";
+        }
+
+        if (ctx.RequireSystemTag)
+        {
+            if (!ctx.TagEnabled)
+            {
+                return "This server requires PluralKit users to have a system tag, but your system tag is disabled in this server. " +
+                    "Use `pk;s servertag -enable` to enable it for this server.";
+            }
+
+            if (!ctx.HasProxyableTag())
+            {
+                return "This server requires PluralKit users to have a system tag, but you do not have one set. " +
+                    "A system tag can be set for all servers with `pk;s tag`, or for just this server with `pk;s servertag`.";
+            }
         }
 
         var guild = await _cache.GetGuild(channel.GuildId.Value);
@@ -207,8 +222,8 @@ public class ProxyService
         var content = match.ProxyContent;
         if (!allowEmbeds) content = content.BreakLinkEmbeds();
 
-        var messageChannel = await _cache.GetChannel(trigger.ChannelId);
-        var rootChannel = await _cache.GetRootChannel(trigger.ChannelId);
+        var messageChannel = await _cache.GetChannel(trigger.GuildId!.Value, trigger.ChannelId);
+        var rootChannel = await _cache.GetRootChannel(trigger.GuildId!.Value, trigger.ChannelId);
         var threadId = messageChannel.IsThread() ? messageChannel.Id : (ulong?)null;
         var guild = await _cache.GetGuild(trigger.GuildId.Value);
         var guildMember = await _rest.GetGuildMember(trigger.GuildId!.Value, trigger.Author.Id);
@@ -481,10 +496,10 @@ public class ProxyService
         async Task SaveMessageInRedis()
         {
             // logclean info
-            await _redis.SetLogCleanup(triggerMessage.Author.Id, triggerMessage.GuildId.Value);
+            await _redis.SetLogCleanup(triggerMessage.Author.Id, proxyMessage.GuildId!.Value);
 
             // last message info (edit/reproxy)
-            await _redis.SetLastMessage(triggerMessage.Author.Id, triggerMessage.ChannelId, sentMessage.Mid);
+            await _redis.SetLastMessage(triggerMessage.Author.Id, proxyMessage.ChannelId, sentMessage.Mid);
 
             // "by original mid" lookup
             await _redis.SetOriginalMid(triggerMessage.Id, proxyMessage.Id);
@@ -505,6 +520,23 @@ public class ProxyService
             : Task.CompletedTask;
 
         Task DispatchWebhook() => _dispatch.Dispatch(ctx.SystemId.Value, sentMessage);
+
+        async Task MaybeLogSwitch()
+        {
+            if (ctx.ProxySwitch == SystemConfig.ProxySwitchAction.New && !Array.Exists(ctx.LastSwitchMembers, element => element == match.Member.Id))
+                await _db.Execute(conn => _repo.AddSwitch(conn, (SystemId)ctx.SystemId, new[] { match.Member.Id }));
+            else if (ctx.ProxySwitch == SystemConfig.ProxySwitchAction.Add)
+            {
+                if (ctx.LastSwitchMembers.Length == 0)
+                {
+                    await _db.Execute(conn => _repo.AddSwitch(conn, (SystemId)ctx.SystemId, new[] { match.Member.Id }));
+                }
+                else if (!Array.Exists(ctx.LastSwitchMembers, element => element == match.Member.Id))
+                {
+                    await _db.Execute(conn => _repo.EditSwitch(conn, (SwitchId)ctx.LastSwitch, ctx.LastSwitchMembers.Append(match.Member.Id).ToList()));
+                }
+            }
+        }
 
         async Task DeleteProxyTriggerMessage()
         {
@@ -539,7 +571,8 @@ public class ProxyService
             UpdateMemberForSentMessage(),
             LogMessageToChannel(),
             SaveLatchAutoproxy(),
-            DispatchWebhook()
+            DispatchWebhook(),
+            MaybeLogSwitch()
         );
     }
 

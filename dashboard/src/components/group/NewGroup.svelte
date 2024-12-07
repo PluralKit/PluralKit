@@ -21,7 +21,8 @@
             list_privacy: "public",
             icon_privacy: "public",
             name_privacy: "public",
-            visibility: "public"
+            visibility: "public",
+            banner_privacy: "public",
         }
     }
 
@@ -158,6 +159,13 @@
             <Col xs={12} lg={4} class="mb-3">
                 <Label>Metadata:</Label>
                 <Input type="select" bind:value={input.privacy.metadata_privacy}>
+                    <option>public</option>
+                    <option>private</option>
+                </Input>
+            </Col>
+            <Col xs={12} lg={4} class="mb-3">
+                <Label>Banner:</Label>
+                <Input type="select" bind:value={input.privacy.banner_privacy}>
                     <option>public</option>
                     <option>private</option>
                 </Input>

@@ -24,12 +24,20 @@ public class SystemConfig
     public bool HidDisplaySplit { get; }
     public bool HidDisplayCaps { get; }
     public HidPadFormat HidListPadding { get; }
+    public ProxySwitchAction ProxySwitch { get; }
+    public string NameFormat { get; }
 
     public enum HidPadFormat
     {
         None = 0,
         Left = 1,
         Right = 2,
+    }
+    public enum ProxySwitchAction
+    {
+        Off = 0,
+        New = 1,
+        Add = 2,
     }
 }
 
@@ -52,6 +60,8 @@ public static class SystemConfigExt
         o.Add("hid_display_split", cfg.HidDisplaySplit);
         o.Add("hid_display_caps", cfg.HidDisplayCaps);
         o.Add("hid_list_padding", cfg.HidListPadding.ToUserString());
+        o.Add("proxy_switch", cfg.ProxySwitch.ToUserString());
+        o.Add("name_format", cfg.NameFormat);
 
         o.Add("description_templates", JArray.FromObject(cfg.DescriptionTemplates));
 
@@ -63,4 +73,7 @@ public static class SystemConfigExt
         if (val == SystemConfig.HidPadFormat.None) return "off";
         return val.ToString().ToLower();
     }
+
+    public static string ToUserString(this SystemConfig.ProxySwitchAction val) => val.ToString().ToLower();
+
 }

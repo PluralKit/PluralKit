@@ -55,6 +55,7 @@ public class PKSystem
     public PrivacyLevel NamePrivacy { get; }
     public PrivacyLevel AvatarPrivacy { get; }
     public PrivacyLevel DescriptionPrivacy { get; }
+    public PrivacyLevel BannerPrivacy { get; }
     public PrivacyLevel MemberListPrivacy { get; }
     public PrivacyLevel FrontPrivacy { get; }
     public PrivacyLevel FrontHistoryPrivacy { get; }
@@ -85,7 +86,7 @@ public static class PKSystemExt
         o.Add("pronouns", system.PronounPrivacy.Get(ctx, system.Pronouns));
 
         o.Add("avatar_url", system.AvatarFor(ctx));
-        o.Add("banner", system.DescriptionPrivacy.Get(ctx, system.BannerImage).TryGetCleanCdnUrl());
+        o.Add("banner", system.BannerPrivacy.Get(ctx, system.BannerImage).TryGetCleanCdnUrl());
         o.Add("color", system.Color);
         o.Add("created", system.Created.FormatExport());
 
@@ -100,6 +101,7 @@ public static class PKSystemExt
             p.Add("name_privacy", system.NamePrivacy.ToJsonString());
             p.Add("avatar_privacy", system.AvatarPrivacy.ToJsonString());
             p.Add("description_privacy", system.DescriptionPrivacy.ToJsonString());
+            p.Add("banner_privacy", system.BannerPrivacy.ToJsonString());
             p.Add("pronoun_privacy", system.PronounPrivacy.ToJsonString());
             p.Add("member_list_privacy", system.MemberListPrivacy.ToJsonString());
             p.Add("group_list_privacy", system.GroupListPrivacy.ToJsonString());
