@@ -68,7 +68,7 @@ public class LogChannelService
         // get log channel info from the database
         var guild = await _repo.GetGuild(guildId);
         var logChannelId = guild.LogChannel;
-        var isBlacklisted = guild.LogBlacklist.Any(x => x == proxiedMessage.ChannelId || x == rootChannel.Id);
+        var isBlacklisted = guild.LogBlacklist.Any(x => x == proxiedMessage.Channel || x == rootChannel.Id);
 
         // if (ctx.SystemId == null ||
         // removed the above, there shouldn't be a way to get to this code path if you don't have a system registered
