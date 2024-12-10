@@ -43,7 +43,7 @@ public static class APIJsonExt
     public static async Task WriteJSON(this HttpResponse resp, int statusCode, string jsonText)
     {
         resp.StatusCode = statusCode;
-        resp.Headers.Add("content-type", "application/json");
+        resp.Headers.Append("content-type", "application/json");
         await resp.WriteAsync(jsonText);
     }
 }

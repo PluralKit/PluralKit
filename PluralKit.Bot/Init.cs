@@ -184,15 +184,7 @@ public class Init
             var shardMin = (int)Math.Round(totalShards * (float)nodeIndex / totalNodes);
             var shardMax = (int)Math.Round(totalShards * (float)(nodeIndex + 1) / totalNodes) - 1;
 
-            if (config.RedisGatewayUrl != null)
-            {
-                var shardService = services.Resolve<RedisGatewayService>();
-
-                for (var i = shardMin; i <= shardMax; i++)
-                    await shardService.Start(i);
-            }
-            else
-                await cluster.Start(info.Url, shardMin, shardMax, totalShards, info.SessionStartLimit.MaxConcurrency, redis.Connection);
+            await cluster.Start(info.Url, shardMin, shardMax, totalShards, info.SessionStartLimit.MaxConcurrency, redis.Connection);
         }
         else
         {

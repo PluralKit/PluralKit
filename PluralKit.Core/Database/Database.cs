@@ -24,8 +24,9 @@ internal partial class Database: IDatabase
     private readonly IMetrics _metrics;
     private readonly DbConnectionCountHolder _countHolder;
     private readonly DatabaseMigrator _migrator;
-    private readonly string _connectionString;
-    private readonly string _messagesConnectionString;
+
+    private readonly NpgsqlDataSource _dataSource;
+    private readonly NpgsqlDataSource _dataSourceMessages;
 
     public Database(CoreConfig config, DbConnectionCountHolder countHolder, ILogger logger,
                     IMetrics metrics, DatabaseMigrator migrator)
@@ -54,14 +55,31 @@ internal partial class Database: IDatabase
             return builder.ConnectionString;
         }
 
-        _connectionString = connectionString(_config.Database);
-        _messagesConnectionString = connectionString(_config.MessagesDatabase ?? _config.Database);
+        NpgsqlDataSource createDataSource(string connectionString)
+        {
+            var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString);
+
+            dataSourceBuilder.UseNodaTime();
+
+            // Register our custom types to Npgsql
+            // Without these it'll still *work* but break at the first launch + probably cause other small issues
+            dataSourceBuilder.MapComposite<ProxyTag>("proxy_tag");
+            dataSourceBuilder.MapEnum<PrivacyLevel>("privacy_level");
+
+            return dataSourceBuilder.Build();
+        }
+
+        _dataSource = createDataSource(connectionString(_config.Database));
+        _dataSourceMessages = createDataSource(connectionString(_config.MessagesDatabase ?? _config.Database));
     }
 
     private static readonly PostgresCompiler _compiler = new();
 
     public static void InitStatic()
     {
+        // map postgres `timestamp` to NodaTime.Instant instead of NodaTime.LocalDateTime
+        AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
         DefaultTypeMap.MatchNamesWithUnderscores = true;
 
         // Dapper by default tries to pass ulongs to Npgsql, which rejects them since PostgreSQL technically
@@ -71,8 +89,7 @@ internal partial class Database: IDatabase
         SqlMapper.AddTypeHandler(new UlongEncodeAsLongHandler());
         SqlMapper.AddTypeHandler(new UlongArrayHandler());
 
-        NpgsqlConnection.GlobalTypeMapper.UseNodaTime();
-        // With the thing we add above, Npgsql already handles NodaTime integration
+        // With the thing we add above (in `createDataSource`), Npgsql already handles NodaTime integration
         // This makes Dapper confused since it thinks it has to convert it anyway and doesn't understand the types
         // So we add a custom type handler that literally just passes the type through to Npgsql
         SqlMapper.AddTypeHandler(new PassthroughTypeHandler<Instant>());
@@ -89,11 +106,6 @@ internal partial class Database: IDatabase
         SqlMapper.AddTypeHandler(new NumericIdArrayHandler<SwitchId, int>(i => new SwitchId(i)));
         SqlMapper.AddTypeHandler(new NumericIdArrayHandler<GroupId, int>(i => new GroupId(i)));
         SqlMapper.AddTypeHandler(new NumericIdArrayHandler<AbuseLogId, int>(i => new AbuseLogId(i)));
-
-        // Register our custom types to Npgsql
-        // Without these it'll still *work* but break at the first launch + probably cause other small issues
-        NpgsqlConnection.GlobalTypeMapper.MapComposite<ProxyTag>("proxy_tag");
-        NpgsqlConnection.GlobalTypeMapper.MapEnum<PrivacyLevel>("privacy_level");
     }
 
     // TODO: make sure every SQL query is behind a logged query method
@@ -104,7 +116,7 @@ internal partial class Database: IDatabase
 
         // Create a connection and open it
         // We wrap it in PKConnection for tracing purposes
-        var conn = new PKConnection(new NpgsqlConnection(messages ? _messagesConnectionString : _connectionString), _countHolder, _logger, _metrics);
+        var conn = new PKConnection((messages ? _dataSourceMessages : _dataSource).CreateConnection(), _countHolder, _logger, _metrics);
         await conn.OpenAsync();
         return conn;
     }

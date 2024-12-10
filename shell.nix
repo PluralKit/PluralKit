@@ -5,7 +5,7 @@ pkgs.mkShellNoCC {
     cargo rust-analyzer rustfmt
     gcc
     protobuf
-    dotnet-sdk_6
+    dotnet-sdk_8
     omnisharp-roslyn
     go
     nodejs yarn
