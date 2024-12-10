@@ -38,15 +38,23 @@ func main() {
 
 	r.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+			// only index root and status pages
+			if r.URL.Path != "/" && r.URL.Path != "/status" {
+				rw.Header().Set("X-Robots-Tag", "noindex")
+			}
+
 			rw.Header().Set("X-PluralKit-Version", version)
 			next.ServeHTTP(rw, r)
 		})
 	})
 
+	r.Get("/robots.txt", func(rw http.ResponseWriter, r *http.Request) {
+		rw.Write([]byte("User-Agent: *\nAllow: /$\nAllow: /status\nDisallow: /\n"))
+	})
+
 	r.NotFound(notFoundHandler)
 
 	r.Get("/profile/{type}/{id}", func(rw http.ResponseWriter, r *http.Request) {
-		rw.Header().Set("X-Robots-Tag", "noindex")
 		defer func() {
 			if a := recover(); a != nil {
 				notFoundHandler(rw, r)

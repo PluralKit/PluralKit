@@ -2,9 +2,9 @@ name: Build dashboard Docker image
 
 on:
   push:
-    branches: [main]
     paths:
       - 'dashboard/**'
+      - '.github/workflows/dashboard.yml'
 
 jobs:
   build:
