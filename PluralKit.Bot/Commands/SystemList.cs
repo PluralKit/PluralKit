@@ -10,7 +10,7 @@ public class SystemList
 {
     public async Task MemberList(Context ctx, PKSystem target)
     {
-        if (target == null) throw Errors.NoSystemError;
+        if (target == null) throw Errors.NoSystemError(ctx.DefaultPrefix);
         ctx.CheckSystemPrivacy(target.Id, target.MemberListPrivacy);
 
         // explanation of privacy lookup here:

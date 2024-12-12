@@ -32,7 +32,7 @@ public class MemberAvatar
         {
             if (mgs?.AvatarUrl != null)
                 await ctx.Reply(
-                    $"{Emojis.Success} Member proxy avatar cleared. Note that this member has a server-specific avatar set here, type `pk;member {target.Reference(ctx)} serveravatar clear` if you wish to clear that too.");
+                    $"{Emojis.Success} Member proxy avatar cleared. Note that this member has a server-specific avatar set here, type `{ctx.DefaultPrefix}member {target.Reference(ctx)} serveravatar clear` if you wish to clear that too.");
             else
                 await ctx.Reply($"{Emojis.Success} Member proxy avatar cleared. This member will now use the main avatar for proxied messages.");
         }
@@ -40,7 +40,7 @@ public class MemberAvatar
         {
             if (mgs?.AvatarUrl != null)
                 await ctx.Reply(
-                    $"{Emojis.Success} Member avatar cleared. Note that this member has a server-specific avatar set here, type `pk;member {target.Reference(ctx)} serveravatar clear` if you wish to clear that too.");
+                    $"{Emojis.Success} Member avatar cleared. Note that this member has a server-specific avatar set here, type `{ctx.DefaultPrefix}member {target.Reference(ctx)} serveravatar clear` if you wish to clear that too.");
             else
                 await ctx.Reply($"{Emojis.Success} Member avatar cleared.");
         }
@@ -75,11 +75,11 @@ public class MemberAvatar
 
             if (location == MemberAvatarLocation.MemberWebhook)
                 throw new PKError(
-                    $"This member does not have a proxy avatar set. Type `pk;member {target.Reference(ctx)} avatar` to see their global avatar.");
+                    $"This member does not have a proxy avatar set. Type `{ctx.DefaultPrefix}member {target.Reference(ctx)} avatar` to see their global avatar.");
 
             if (location == MemberAvatarLocation.Server)
                 throw new PKError(
-                    $"This member does not have a server avatar set. Type `pk;member {target.Reference(ctx)} avatar` to see their global avatar.");
+                    $"This member does not have a server avatar set. Type `{ctx.DefaultPrefix}member {target.Reference(ctx)} avatar` to see their global avatar.");
         }
 
         var field = location.Name();
@@ -104,7 +104,7 @@ public class MemberAvatar
                 .Title($"{target.NameFor(ctx)}'s {field}")
                 .Image(new Embed.EmbedImage(currentValue?.TryGetCleanCdnUrl()));
             if (target.System == ctx.System?.Id)
-                eb.Description($"To clear, use `pk;member {target.Reference(ctx)} {location.Command()} clear`.");
+                eb.Description($"To clear, use `{ctx.DefaultPrefix}member {target.Reference(ctx)} {location.Command()} clear`.");
             await ctx.Reply(embed: eb.Build());
         }
         else throw new PKError("Format Not Recognized");

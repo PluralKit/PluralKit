@@ -68,7 +68,7 @@ public class MemberEdit
         var noDescriptionSetMessage = "This member does not have a description set.";
         if (ctx.System?.Id == target.System)
             noDescriptionSetMessage +=
-                $" To set one, type `pk;member {target.Reference(ctx)} description <description>`.";
+                $" To set one, type `{ctx.DefaultPrefix}member {target.Reference(ctx)} description <description>`.";
 
         var format = ctx.MatchFormat();
 
@@ -99,9 +99,9 @@ public class MemberEdit
                 .Title("Member description")
                 .Description(target.Description)
                 .Field(new Embed.Field("\u200B",
-                    $"To print the description with formatting, type `pk;member {target.Reference(ctx)} description -raw`."
+                    $"To print the description with formatting, type `{ctx.DefaultPrefix}member {target.Reference(ctx)} description -raw`."
                     + (ctx.System?.Id == target.System
-                        ? $" To clear it, type `pk;member {target.Reference(ctx)} description -clear`."
+                        ? $" To clear it, type `{ctx.DefaultPrefix}member {target.Reference(ctx)} description -clear`."
                         : "")
                     + $" Using {target.Description.Length}/{Limits.MaxDescriptionLength} characters."))
                 .Build());
@@ -133,7 +133,7 @@ public class MemberEdit
     {
         var noPronounsSetMessage = "This member does not have pronouns set.";
         if (ctx.System?.Id == target.System)
-            noPronounsSetMessage += $" To set some, type `pk;member {target.Reference(ctx)} pronouns <pronouns>`.";
+            noPronounsSetMessage += $" To set some, type `{ctx.DefaultPrefix}member {target.Reference(ctx)} pronouns <pronouns>`.";
 
         ctx.CheckSystemPrivacy(target.System, target.PronounPrivacy);
 
@@ -163,9 +163,9 @@ public class MemberEdit
         if (!ctx.HasNext(false))
         {
             await ctx.Reply(
-                $"**{target.NameFor(ctx)}**'s pronouns are **{target.Pronouns}**.\nTo print the pronouns with formatting, type `pk;member {target.Reference(ctx)} pronouns -raw`."
+                $"**{target.NameFor(ctx)}**'s pronouns are **{target.Pronouns}**.\nTo print the pronouns with formatting, type `{ctx.DefaultPrefix}member {target.Reference(ctx)} pronouns -raw`."
                 + (ctx.System?.Id == target.System
-                    ? $" To clear them, type `pk;member {target.Reference(ctx)} pronouns -clear`."
+                    ? $" To clear them, type `{ctx.DefaultPrefix}member {target.Reference(ctx)} pronouns -clear`."
                     : "")
                 + $" Using {target.Pronouns.Length}/{Limits.MaxPronounsLength} characters.");
             return;
@@ -246,7 +246,7 @@ public class MemberEdit
                             .Title($"{target.NameFor(ctx)}'s banner image")
                             .Image(new Embed.EmbedImage(target.BannerImage.TryGetCleanCdnUrl()));
                         if (target.System == ctx.System?.Id)
-                            ebS.Description($"To clear, use `pk;member {target.Reference(ctx)} banner clear`.");
+                            ebS.Description($"To clear, use `{ctx.DefaultPrefix}member {target.Reference(ctx)} banner clear`.");
                         await ctx.Reply(embed: ebS.Build());
                         break;
                 }
@@ -273,7 +273,7 @@ public class MemberEdit
         {
             if (target.Color == null)
                 await ctx.Reply(
-                    "This member does not have a color set." + (isOwnSystem ? $" To set one, type `pk;member {target.Reference(ctx)} color <color>`." : ""));
+                    "This member does not have a color set." + (isOwnSystem ? $" To set one, type `{ctx.DefaultPrefix}member {target.Reference(ctx)} color <color>`." : ""));
             else if (matchedFormat == ReplyFormat.Raw)
                 await ctx.Reply("```\n#" + target.Color + "\n```");
             else if (matchedFormat == ReplyFormat.Plaintext)
@@ -284,7 +284,7 @@ public class MemberEdit
                     .Color(target.Color.ToDiscordColor())
                     .Thumbnail(new Embed.EmbedThumbnail($"https://fakeimg.pl/256x256/{target.Color}/?text=%20"))
                     .Description($"This member's color is **#{target.Color}**."
-                        + (isOwnSystem ? $" To clear it, type `pk;member {target.Reference(ctx)} color -clear`." : ""))
+                        + (isOwnSystem ? $" To clear it, type `{ctx.DefaultPrefix}member {target.Reference(ctx)} color -clear`." : ""))
                     .Build());
             return;
         }
@@ -333,12 +333,12 @@ public class MemberEdit
             if (target.Birthday == null)
                 await ctx.Reply("This member does not have a birthdate set."
                                 + (ctx.System?.Id == target.System
-                                    ? $" To set one, type `pk;member {target.Reference(ctx)} birthdate <birthdate>`."
+                                    ? $" To set one, type `{ctx.DefaultPrefix}member {target.Reference(ctx)} birthdate <birthdate>`."
                                     : ""));
             else
                 await ctx.Reply($"This member's birthdate is **{target.BirthdayString}**."
                                 + (ctx.System?.Id == target.System
-                                    ? $" To clear it, type `pk;member {target.Reference(ctx)} birthdate -clear`."
+                                    ? $" To clear it, type `{ctx.DefaultPrefix}member {target.Reference(ctx)} birthdate -clear`."
                                     : ""));
         }
         else
@@ -420,7 +420,7 @@ public class MemberEdit
         var noDisplayNameSetMessage = "This member does not have a display name set.";
         if (ctx.System?.Id == target.System)
             noDisplayNameSetMessage +=
-                $" To set one, type `pk;member {target.Reference(ctx)} displayname <display name>`.";
+                $" To set one, type `{ctx.DefaultPrefix}member {target.Reference(ctx)} displayname <display name>`.";
 
         // No perms check, display name isn't covered by member privacy
 
@@ -453,9 +453,9 @@ public class MemberEdit
             var reference = target.Reference(ctx);
             if (ctx.System?.Id == target.System)
                 eb.Description(
-                    $"To change display name, type `pk;member {reference} displayname <display name>`.\n"
-                    + $"To clear it, type `pk;member {reference} displayname -clear`.\n"
-                    + $"To print the raw display name, type `pk;member {reference} displayname -raw`.");
+                    $"To change display name, type `{ctx.DefaultPrefix}member {reference} displayname <display name>`.\n"
+                    + $"To clear it, type `{ctx.DefaultPrefix}member {reference} displayname -clear`.\n"
+                    + $"To print the raw display name, type `{ctx.DefaultPrefix}member {reference} displayname -raw`.");
             await ctx.Reply(embed: eb.Build());
             return;
         }
@@ -495,7 +495,7 @@ public class MemberEdit
         var noServerNameSetMessage = "This member does not have a server name set.";
         if (ctx.System?.Id == target.System)
             noServerNameSetMessage +=
-                $" To set one, type `pk;member {target.Reference(ctx)} servername <server name>`.";
+                $" To set one, type `{ctx.DefaultPrefix}member {target.Reference(ctx)} servername <server name>`.";
 
         // No perms check, display name isn't covered by member privacy
         var memberGuildConfig = await ctx.Repository.GetMemberGuild(ctx.Guild.Id, target.Id);
@@ -529,7 +529,7 @@ public class MemberEdit
             var reference = target.Reference(ctx);
             if (ctx.System?.Id == target.System)
                 eb.Description(
-                    $"To change server name, type `pk;member {reference} servername <server name>`.\nTo clear it, type `pk;member {reference} servername -clear`.\nTo print the raw server name, type `pk;member {reference} servername -raw`.");
+                    $"To change server name, type `{ctx.DefaultPrefix}member {reference} servername <server name>`.\nTo clear it, type `{ctx.DefaultPrefix}member {reference} servername -clear`.\nTo print the raw server name, type `{ctx.DefaultPrefix}member {reference} servername -raw`.");
             await ctx.Reply(embed: eb.Build());
             return;
         }
@@ -591,9 +591,9 @@ public class MemberEdit
                 keepProxyStatusMessage += "This member has keepproxy **disabled**. Proxy tags will **not** be included in the resulting message when proxying.";
 
             if (memberGuildConfig != null && memberGuildConfig.KeepProxy.HasValue && memberGuildConfig.KeepProxy.Value)
-                keepProxyStatusMessage += $"\n{Emojis.Warn} This member has keepproxy **enabled in this server**, which means proxy tags will **always** be included when proxying in this server, regardless of the global keepproxy. To clear this setting in this server, type `pk;m <member> serverkeepproxy clear`.";
+                keepProxyStatusMessage += $"\n{Emojis.Warn} This member has keepproxy **enabled in this server**, which means proxy tags will **always** be included when proxying in this server, regardless of the global keepproxy. To clear this setting in this server, type `{ctx.DefaultPrefix}m <member> serverkeepproxy clear`.";
             else if (memberGuildConfig != null && memberGuildConfig.KeepProxy.HasValue && !memberGuildConfig.KeepProxy.Value)
-                keepProxyStatusMessage += $"\n{Emojis.Warn} This member has keepproxy **disabled in this server**, which means proxy tags will **never** be included when proxying in this server, regardless of the global keepproxy. To clear this setting in this server, type `pk;m <member> serverkeepproxy clear`.";
+                keepProxyStatusMessage += $"\n{Emojis.Warn} This member has keepproxy **disabled in this server**, which means proxy tags will **never** be included when proxying in this server, regardless of the global keepproxy. To clear this setting in this server, type `{ctx.DefaultPrefix}m <member> serverkeepproxy clear`.";
 
             await ctx.Reply(keepProxyStatusMessage);
             return;
@@ -612,9 +612,9 @@ public class MemberEdit
             keepProxyUpdateMessage += $"{Emojis.Success} this member now has keepproxy **disabled**. Member proxy tags will **not** be included in the resulting message when proxying.";
 
         if (memberGuildConfig != null && memberGuildConfig.KeepProxy.HasValue && memberGuildConfig.KeepProxy.Value)
-            keepProxyUpdateMessage += $"\n{Emojis.Warn} This member has keepproxy **enabled in this server**, which means proxy tags will **always** be included when proxying in this server, regardless of the global keepproxy. To clear this setting in this server, type `pk;m <member> serverkeepproxy clear`.";
+            keepProxyUpdateMessage += $"\n{Emojis.Warn} This member has keepproxy **enabled in this server**, which means proxy tags will **always** be included when proxying in this server, regardless of the global keepproxy. To clear this setting in this server, type `{ctx.DefaultPrefix}m <member> serverkeepproxy clear`.";
         else if (memberGuildConfig != null && memberGuildConfig.KeepProxy.HasValue && !memberGuildConfig.KeepProxy.Value)
-            keepProxyUpdateMessage += $"\n{Emojis.Warn} This member has keepproxy **disabled in this server**, which means proxy tags will **never** be included when proxying in this server, regardless of the global keepproxy. To clear this setting in this server, type `pk;m <member> serverkeepproxy clear`.";
+            keepProxyUpdateMessage += $"\n{Emojis.Warn} This member has keepproxy **disabled in this server**, which means proxy tags will **never** be included when proxying in this server, regardless of the global keepproxy. To clear this setting in this server, type `{ctx.DefaultPrefix}m <member> serverkeepproxy clear`.";
 
         await ctx.Reply(keepProxyUpdateMessage);
     }
@@ -648,10 +648,10 @@ public class MemberEdit
             if (memberGuildConfig.KeepProxy.HasValue)
                 if (memberGuildConfig.KeepProxy.Value)
                     await ctx.Reply(
-                        "This member has keepproxy **enabled** in the current server, which means proxy tags will be **included** in the resulting message when proxying. To clear this setting in this server, type `pk;m <member> serverkeepproxy clear`.");
+                        $"This member has keepproxy **enabled** in the current server, which means proxy tags will be **included** in the resulting message when proxying. To clear this setting in this server, type `{ctx.DefaultPrefix}m <member> serverkeepproxy clear`.");
                 else
                     await ctx.Reply(
-                        "This member has keepproxy **disabled** in the current server, which means proxy tags will **not** be included in the resulting message when proxying. To clear this setting in this server, type `pk;m <member> serverkeepproxy clear`.");
+                        $"This member has keepproxy **disabled** in the current server, which means proxy tags will **not** be included in the resulting message when proxying. To clear this setting in this server, type `{ctx.DefaultPrefix}m <member> serverkeepproxy clear`.");
             else
             {
                 var noServerKeepProxySetMessage = "This member does not have a server keepproxy override set.";
@@ -671,10 +671,10 @@ public class MemberEdit
         if (newValue.HasValue)
             if (newValue.Value)
                 await ctx.Reply(
-                    $"{Emojis.Success} Member proxy tags will now be **included** in the resulting message when proxying **in the current server**. To clear this setting in this server, type `pk;m <member> serverkeepproxy clear`.");
+                    $"{Emojis.Success} Member proxy tags will now be **included** in the resulting message when proxying **in the current server**. To clear this setting in this server, type `{ctx.DefaultPrefix}m <member> serverkeepproxy clear`.");
             else
                 await ctx.Reply(
-                    $"{Emojis.Success} Member proxy tags will now **not** be included in the resulting message when proxying **in the current server**. To clear this setting in this server, type `pk;m <member> serverkeepproxy clear`.");
+                    $"{Emojis.Success} Member proxy tags will now **not** be included in the resulting message when proxying **in the current server**. To clear this setting in this server, type `{ctx.DefaultPrefix}m <member> serverkeepproxy clear`.");
         else
         {
             var serverKeepProxyClearedMessage = $"{Emojis.Success} Cleared server keepproxy settings for this member.";
@@ -731,7 +731,7 @@ public class MemberEdit
 
     public async Task MemberAutoproxy(Context ctx, PKMember target)
     {
-        if (ctx.System == null) throw Errors.NoSystemError;
+        if (ctx.System == null) throw Errors.NoSystemError(ctx.DefaultPrefix);
         if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
 
         if (!ctx.HasNext())
@@ -777,7 +777,7 @@ public class MemberEdit
                     target.MetadataPrivacy.Explanation()))
                 .Field(new Embed.Field("Visibility", target.MemberVisibility.Explanation()))
                 .Description(
-                    "To edit privacy settings, use the command:\n`pk;member <member> privacy <subject> <level>`\n\n- `subject` is one of `name`, `description`, `banner`, `avatar`, `birthday`, `pronouns`, `proxies`, `metadata`, `visibility`, or `all`\n- `level` is either `public` or `private`.")
+                    $"To edit privacy settings, use the command:\n`{ctx.DefaultPrefix}member <member> privacy <subject> <level>`\n\n- `subject` is one of `name`, `description`, `banner`, `avatar`, `birthday`, `pronouns`, `proxies`, `metadata`, `visibility`, or `all`\n- `level` is either `public` or `private`.")
                 .Build());
             return;
         }
@@ -872,7 +872,7 @@ public class MemberEdit
             if (subject == MemberPrivacySubject.Avatar && level == PrivacyLevel.Private &&
                 guildSettings?.AvatarUrl == null)
                 await ctx.Reply(
-                    $"{Emojis.Warn} This member does not have a server avatar set, so *proxying* will **still show the member avatar**. If you want to hide your avatar when proxying here, set a server avatar: `pk;member {target.Reference(ctx)} serveravatar`");
+                    $"{Emojis.Warn} This member does not have a server avatar set, so *proxying* will **still show the member avatar**. If you want to hide your avatar when proxying here, set a server avatar: `{ctx.DefaultPrefix}member {target.Reference(ctx)} serveravatar`");
         }
 
         if (ctx.Match("all") || newValueFromCommand != null)
