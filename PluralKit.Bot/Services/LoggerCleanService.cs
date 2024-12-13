@@ -44,7 +44,7 @@ public class LoggerCleanService
     private static readonly Regex _SkyraRegex = new("https://discord.com/channels/(\\d{17,19})/(\\d{17,19})/(\\d{17,19})");
     private static readonly Regex _AnnabelleRegex = new("```\n(\\d{17,19})\n```");
     private static readonly Regex _AnnabelleRegexFuzzy = new("\\<t:(\\d+)\\> A message from \\*\\*[\\w.]{2,32}\\*\\* \\(`(\\d{17,19})`\\) was deleted in <#\\d{17,19}>");
-    private static readonly Regex _koiraRegex = new("\\*\\*ID:\\*\\* \\[(\\d{17,19})\\]");
+    private static readonly Regex _koiraRegex = new("\\*\\*ID:\\*\\* (\\d{17,19})");
 
     private static readonly Regex _VortexRegex =
         new("`\\[(\\d\\d:\\d\\d:\\d\\d)\\]` .* \\(ID:(\\d{17,19})\\).* <#\\d{17,19}>:");
