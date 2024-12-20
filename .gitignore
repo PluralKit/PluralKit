@@ -20,12 +20,18 @@ node_modules/
 
 # User configuration
 .env
+.envrc
 pluralkit.conf
 pluralkit.*.conf
 *.DotSettings.user
 
 # Generated
+.direnv
 logs/
 .version
 recipe.json
 .docker-bin/
+
+# nix
+.nix-process-compose
+result
