@@ -28,8 +28,9 @@ public class ProxyMember
     public string? WebhookAvatar { get; }
     public string? Avatar { get; }
 
-    public bool AllowAutoproxy { get; }
     public string? Color { get; }
+
+    public bool AllowAutoproxy { get; }
 
     // If not set, this formatting will be applied to the proxy name
     public static string DefaultFormat = "{name} {tag}";

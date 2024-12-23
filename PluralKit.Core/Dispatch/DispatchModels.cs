@@ -69,8 +69,8 @@ public static class DispatchExt
 
     private static List<IPNetwork> _privateNetworks = new()
     {
-        IPNetwork.IANA_ABLK_RESERVED1, // 10/8
-        IPNetwork.IANA_CBLK_RESERVED1, // 192.168/16
+        IPNetwork.Parse("10.0.0.0/8"), // 10/8
+        IPNetwork.Parse("192.168.0.0/16"), // 192.168/16
         IPNetwork.Parse("127.0.0.0/8"),
         IPNetwork.Parse("169.254.0.0/16"),
     };

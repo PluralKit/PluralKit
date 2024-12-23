@@ -99,12 +99,12 @@ internal partial class Database: IDatabase
     public async Task<T> QuerySingleProcedure<T>(string queryName, object param)
     {
         using var conn = await Obtain();
-        return await conn.QueryFirstAsync<T>(queryName, param, commandType: CommandType.StoredProcedure);
+        return await conn.QueryFirstAsync<T>(queryName, param, commandType: CommandType.Text);
     }
 
     public async Task<IEnumerable<T>> QueryProcedure<T>(string queryName, object param)
     {
         using var conn = await Obtain();
-        return await conn.QueryAsync<T>(queryName, param, commandType: CommandType.StoredProcedure);
+        return await conn.QueryAsync<T>(queryName, param);
     }
 }

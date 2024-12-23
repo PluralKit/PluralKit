@@ -49,7 +49,7 @@ public class Startup
         // add X-PluralKit-Version header
         app.Use((ctx, next) =>
         {
-            ctx.Response.Headers.Add("X-PluralKit-Version", BuildInfoService.FullVersion);
+            ctx.Response.Headers.Append("X-PluralKit-Version", BuildInfoService.FullVersion);
             return next();
         });
 

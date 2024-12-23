@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 
 WORKDIR /app
 
@@ -18,7 +18,7 @@ COPY . /app
 RUN dotnet build -c Release -o bin
 
 # Build runtime stage (doesn't include SDK)
-FROM mcr.microsoft.com/dotnet/aspnet:6.0
+FROM mcr.microsoft.com/dotnet/aspnet:8.0
 LABEL org.opencontainers.image.source = "https://github.com/PluralKit/PluralKit"
 
 WORKDIR /app
