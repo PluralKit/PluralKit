@@ -7,36 +7,20 @@ namespace PluralKit.Bot;
 
 public class Help
 {
-    private static Embed helpEmbed = new()
+    private static string Description = "PluralKit is a bot designed for plural communities on Discord, and is open for anyone to use. It allows you to register systems, maintain system information, set up message proxying, log switches, and more.\n\n" +
+                "**System recovery:** in the case of your Discord account getting lost or deleted, the PluralKit staff can help you recover your system, **only if you save the system token from `pk;token`**. See [this FAQ entry](https://pluralkit.me/faq/#can-i-recover-my-system-if-i-lose-access-to-my-discord-account) for more details.\n\n" +
+                "If PluralKit is useful to you, please consider donating on [Patreon](https://patreon.com/pluralkit) or [Buy Me A Coffee](https://buymeacoffee.com/pluralkit).\n" +
+                "## Use the buttons below to see more info!";
+
+    public static Embed helpEmbed = new()
     {
         Title = "PluralKit",
-        Description = "PluralKit is a bot designed for plural communities on Discord, and is open for anyone to use. It allows you to register systems, maintain system information, set up message proxying, log switches, and more.",
-        Footer = new("By @ske | Myriad design by @layl, icon by @tedkalashnikov, banner by @fulmine | GitHub: https://github.com/PluralKit/PluralKit/ | Website: https://pluralkit.me/"),
+        Footer = new("PluralKit by @ske and contributors | Myriad design by @layl, icon by @tedkalashnikov, banner by @fulmine | GitHub: https://github.com/PluralKit/PluralKit/ | Website: https://pluralkit.me/"),
         Color = DiscordUtils.Blue,
     };
 
     private static Dictionary<string, Embed.Field[]> helpEmbedPages = new Dictionary<string, Embed.Field[]>
     {
-        {
-            "default",
-            new Embed.Field[]
-            {
-                new
-                (
-                    "System Recovery",
-                    "In the case of your Discord account getting lost or deleted, the PluralKit staff can help you recover your system. "
-                    + "In order to do so, we will need your **PluralKit token**. This is the *only* way you can prove ownership so we can help you recover your system. "
-                    + "To get it, run `pk;token` and then store it in a safe place.\n\n"
-                    + "Keep your token safe, if other people get access to it they can also use it to access your system. "
-                    + "If your token is ever compromised run `pk;token refresh` to invalidate the old token and get a new one."
-                ),
-                new
-                (
-                    "Use the buttons below to see more info!",
-                    ""
-                )
-            }
-        },
         {
             "basicinfo",
             new Embed.Field[]
@@ -158,8 +142,7 @@ public class Help
         => ctx.Rest.CreateMessage(ctx.Channel.Id, new MessageRequest
         {
             Content = $"{Emojis.Warn} If you cannot see the rest of this message see [the FAQ](<https://pluralkit.me/faq/#why-do-most-of-pluralkit-s-messages-look-blank-or-empty>)",
-            Embeds = new[] { helpEmbed with { Description = helpEmbed.Description,
-                                              Fields = helpEmbedPages.GetValueOrDefault("default") } },
+            Embeds = new[] { helpEmbed with { Description = Help.Description } },
             Components = new[] { helpPageButtons(ctx.Author.Id) },
         });
 
@@ -173,7 +156,7 @@ public class Help
         if (ctx.Event.Message.Components.First().Components.Where(x => x.CustomId == ctx.CustomId).First().Style == ButtonStyle.Primary)
             return ctx.Respond(InteractionResponse.ResponseType.UpdateMessage, new()
             {
-                Embeds = new[] { helpEmbed with { Fields = helpEmbedPages.GetValueOrDefault("default") } },
+                Embeds = new[] { helpEmbed with { Description = Help.Description } },
                 Components = new[] { buttons }
             });
 
