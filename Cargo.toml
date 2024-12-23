@@ -40,7 +40,3 @@ twilight-http = { git = "https://github.com/pluralkit/twilight", default-feature
 #twilight-util = { path = "../twilight/twilight-util", features = ["permission-calculator"] }
 #twilight-model = { path = "../twilight/twilight-model" }
 #twilight-http = { path = "../twilight/twilight-http", default-features = false, features = ["rustls-native-roots"] }
-
-prost = "0.12"
-prost-types = "0.12"
-prost-build = "0.12"

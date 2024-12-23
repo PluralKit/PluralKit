@@ -1,8 +1,7 @@
 use crate::ApiContext;
 use axum::{extract::State, response::Json};
 use fred::interfaces::*;
-use libpk::proto::ShardState;
-use prost::Message;
+use libpk::state::ShardState;
 use serde::Deserialize;
 use serde_json::{json, Value};
 use std::collections::HashMap;
@@ -14,16 +13,22 @@ struct ClusterStats {
     pub channel_count: i32,
 }
 
-pub async fn meta(State(ctx): State<ApiContext>) -> Json<Value> {
+pub async fn discord_state(State(ctx): State<ApiContext>) -> Json<Value> {
     let shard_status = ctx
         .redis
-        .hgetall::<HashMap<String, Vec<u8>>, &str>("pluralkit:shardstatus")
+        .hgetall::<HashMap<String, String>, &str>("pluralkit:shardstatus")
         .await
         .unwrap()
         .values()
-        .map(|v| ShardState::decode(v.as_slice()).unwrap())
+        .map(|v| serde_json::from_str(v).expect("could not deserialize shard"))
         .collect::<Vec<ShardState>>();
 
+    Json(json!({
+        "shards": shard_status,
+    }))
+}
+
+pub async fn meta(State(ctx): State<ApiContext>) -> Json<Value> {
     let cluster_stats = ctx
         .redis
         .hgetall::<HashMap<String, String>, &str>("pluralkit:cluster_stats")
@@ -39,15 +44,12 @@ pub async fn meta(State(ctx): State<ApiContext>) -> Json<Value> {
     let channel_count: i32 = cluster_stats.iter().map(|v| v.channel_count).sum();
 
     Json(json!({
-        "shards": shard_status,
-        "stats": {
-            "system_count": db_stats.system_count,
-            "member_count": db_stats.member_count,
-            "group_count": db_stats.group_count,
-            "switch_count": db_stats.switch_count,
-            "message_count": db_stats.message_count,
-            "guild_count": guild_count,
-            "channel_count": channel_count,
-        }
+        "system_count": db_stats.system_count,
+        "member_count": db_stats.member_count,
+        "group_count": db_stats.group_count,
+        "switch_count": db_stats.switch_count,
+        "message_count": db_stats.message_count,
+        "guild_count": guild_count,
+        "channel_count": channel_count,
     }))
 }

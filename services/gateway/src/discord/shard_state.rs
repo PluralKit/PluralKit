@@ -1,11 +1,10 @@
 use bytes::Bytes;
 use fred::{clients::RedisPool, interfaces::HashesInterface};
 use metrics::{counter, gauge};
-use prost::Message;
 use tracing::info;
 use twilight_gateway::Event;
 
-use libpk::{proto::*, util::redis::*};
+use libpk::{state::*, util::redis::*};
 
 #[derive(Clone)]
 pub struct ShardStateManager {
@@ -28,26 +27,24 @@ impl ShardStateManager {
     }
 
     async fn get_shard(&self, shard_id: u32) -> anyhow::Result<ShardState> {
-        let data: Option<Vec<u8>> = self
+        let data: Option<String> = self
             .redis
             .hget("pluralkit:shardstatus", shard_id)
             .await
             .to_option_or_error()?;
         match data {
-            Some(buf) => {
-                Ok(ShardState::decode(buf.as_slice()).expect("could not decode shard data!"))
-            }
+            Some(buf) => Ok(serde_json::from_str(&buf).expect("could not decode shard data!")),
             None => Ok(ShardState::default()),
         }
     }
 
     async fn save_shard(&self, shard_id: u32, info: ShardState) -> anyhow::Result<()> {
         self.redis
-            .hset::<(), &str, (String, Bytes)>(
+            .hset::<(), &str, (String, String)>(
                 "pluralkit:shardstatus",
                 (
                     shard_id.to_string(),
-                    Bytes::copy_from_slice(&info.encode_to_vec()),
+                    serde_json::to_string(&info).expect("could not serialize shard"),
                 ),
             )
             .await?;

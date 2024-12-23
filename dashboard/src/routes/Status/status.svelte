@@ -25,7 +25,7 @@
     let valid = false;
 
     const get = async () => {
-        const pkdata = await api().private.meta.get();
+        const pkdata = await api().private.discord.shard_state.get();
         let data = pkdata.shards.sort((x, y) => (x.id > y.id) ? 1 : -1);
         let latencies = 0;
         data = data.map(shard => {

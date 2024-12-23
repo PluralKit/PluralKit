@@ -2,18 +2,6 @@
   "version": 1,
   "dependencies": {
     "net8.0": {
-      "Google.Protobuf": {
-        "type": "Direct",
-        "requested": "[3.29.1, )",
-        "resolved": "3.29.1",
-        "contentHash": "kDFLP72bPu4GwquVN7HtFnfqxhQs4CLbUEyOc/0yV48HB0Pxf7tDK7zIx6ifaQwGp+RSoLY1sz1CXqoAEAu+AQ=="
-      },
-      "Grpc.Tools": {
-        "type": "Direct",
-        "requested": "[2.68.1, )",
-        "resolved": "2.68.1",
-        "contentHash": "BZ96s7ijKAhJoRpIK+pqCeLaGaSwyc5/CAZFwgCcBuAnkU2naYvH0P6qnYCkl0pWDY/JBOnE2RvX9IvRX1Yc5Q=="
-      },
       "Microsoft.AspNetCore.Mvc.NewtonsoftJson": {
         "type": "Direct",
         "requested": "[8.0.11, )",
@@ -830,7 +818,6 @@
           "Autofac.Extensions.DependencyInjection": "[10.0.0, )",
           "Dapper": "[2.1.35, )",
           "Dapper.Contrib": "[2.0.78, )",
-          "Google.Protobuf": "[3.29.1, )",
           "Microsoft.Extensions.Caching.Memory": "[9.0.0, )",
           "Microsoft.Extensions.Configuration": "[9.0.0, )",
           "Microsoft.Extensions.Configuration.Binder": "[9.0.0, )",

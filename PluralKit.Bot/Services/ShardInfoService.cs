@@ -1,10 +1,10 @@
 using System.Net.WebSockets;
 
-using Google.Protobuf;
-
 using Myriad.Gateway;
 
 using NodaTime;
+
+using Newtonsoft.Json;
 
 using StackExchange.Redis;
 
@@ -13,6 +13,17 @@ using PluralKit.Core;
 using Serilog;
 
 namespace PluralKit.Bot;
+
+public struct ShardState
+{
+    [JsonProperty("shard_id")] public int ShardId;
+    [JsonProperty("up")] public bool Up;
+    [JsonProperty("disconnection_count")] public int DisconnectionCount;
+    [JsonProperty("latency")] public int Latency;
+    [JsonProperty("last_heartbeat")] public int LastHeartbeat;
+    [JsonProperty("last_connection")] public int LastConnection;
+    [JsonProperty("cluster_id")] public int? ClusterId;
+}
 
 public class ShardInfoService
 {
@@ -43,7 +54,7 @@ public class ShardInfoService
             return new ShardState[] { };
         var db = _redis.Connection.GetDatabase();
         var redisInfo = await db.HashGetAllAsync("pluralkit:shardstatus");
-        return redisInfo.Select(x => Proto.Unmarshal<ShardState>(x.Value));
+        return redisInfo.Select(x => JsonConvert.DeserializeObject<ShardState>(x.Value));
     }
 
     private void InitializeShard(Shard shard)
@@ -53,13 +64,8 @@ public class ShardInfoService
         async Task Inner()
         {
             var db = _redis.Connection.GetDatabase();
-            var redisInfo = await db.HashGetAsync("pluralkit::shardstatus", shard.ShardId);
 
-            // Skip adding listeners if we've seen this shard & already added listeners to it
-            if (redisInfo.HasValue)
-                return;
-
-            // latency = 0 because otherwise shard 0 would serialize to an empty array, thanks protobuf
+            // latency = 1 because otherwise shard 0 would serialize to an empty array, thanks protobuf
             var state = new ShardState() { ShardId = shard.ShardId, Up = false, Latency = 1 };
             if (_clusterId != null)
                 state.ClusterId = _clusterId.Value;
@@ -75,13 +81,13 @@ public class ShardInfoService
         }
     }
 
-    private async Task<ShardState?> TryGetShard(Shard shard)
+    private async Task<ShardState> TryGetShard(Shard shard)
     {
         var db = _redis.Connection.GetDatabase();
         var redisInfo = await db.HashGetAsync("pluralkit:shardstatus", shard.ShardId);
         if (redisInfo.HasValue)
-            return Proto.Unmarshal<ShardState>(redisInfo);
-        return null;
+            return JsonConvert.DeserializeObject<ShardState>(redisInfo);
+        throw new Exception("expected shard, but didn't get one");
     }
 
     private void ReadyOrResumed(Shard shard)
@@ -145,5 +151,5 @@ public static class RedisExt
 {
     // convenience method
     public static HashEntry[] HashWrapper(this ShardState state)
-        => new[] { new HashEntry(state.ShardId, state.ToByteArray()) };
+        => new[] { new HashEntry(state.ShardId, JsonConvert.SerializeObject(state)) };
 }

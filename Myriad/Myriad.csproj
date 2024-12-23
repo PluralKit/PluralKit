@@ -21,17 +21,10 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Google.Protobuf" Version="3.29.1" />
-        <PackageReference Include="Grpc.Net.ClientFactory" Version="2.67.0" />
-        <PackageReference Include="Grpc.Tools" Version="2.68.1" PrivateAssets="all" />
         <PackageReference Include="Polly" Version="8.5.0" />
         <PackageReference Include="Polly.Contrib.WaitAndRetry" Version="1.1.1" />
         <PackageReference Include="Serilog" Version="4.2.0" />
         <PackageReference Include="StackExchange.Redis" Version="2.8.22" />
         <PackageReference Include="System.Linq.Async" Version="6.0.1" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <Protobuf Include="../proto/discord_cache.proto" GrpcServices="Client" Link="Protos/discord_cache.proto" />
     </ItemGroup>
 </Project>

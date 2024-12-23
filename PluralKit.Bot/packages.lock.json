@@ -2,28 +2,6 @@
   "version": 1,
   "dependencies": {
     "net8.0": {
-      "Google.Protobuf": {
-        "type": "Direct",
-        "requested": "[3.29.1, )",
-        "resolved": "3.29.1",
-        "contentHash": "kDFLP72bPu4GwquVN7HtFnfqxhQs4CLbUEyOc/0yV48HB0Pxf7tDK7zIx6ifaQwGp+RSoLY1sz1CXqoAEAu+AQ=="
-      },
-      "Grpc.Net.ClientFactory": {
-        "type": "Direct",
-        "requested": "[2.67.0, )",
-        "resolved": "2.67.0",
-        "contentHash": "owkRL6j8ZXvLnn8SsFGCRiWoe/2wGv+u+TASAylzUtGbHLnw7IiFRoeTs0IgpCNTETvlMLVb0gHDiLGo+mJZ6g==",
-        "dependencies": {
-          "Grpc.Net.Client": "2.67.0",
-          "Microsoft.Extensions.Http": "6.0.0"
-        }
-      },
-      "Grpc.Tools": {
-        "type": "Direct",
-        "requested": "[2.68.1, )",
-        "resolved": "2.68.1",
-        "contentHash": "BZ96s7ijKAhJoRpIK+pqCeLaGaSwyc5/CAZFwgCcBuAnkU2naYvH0P6qnYCkl0pWDY/JBOnE2RvX9IvRX1Yc5Q=="
-      },
       "Humanizer.Core": {
         "type": "Direct",
         "requested": "[2.14.1, )",
@@ -156,28 +134,6 @@
           "Microsoft.CSharp": "4.6.0",
           "System.Buffers": "4.5.1",
           "System.Diagnostics.DiagnosticSource": "5.0.0"
-        }
-      },
-      "Grpc.Core.Api": {
-        "type": "Transitive",
-        "resolved": "2.67.0",
-        "contentHash": "cL1/2f8kc8lsAGNdfCU25deedXVehhLA6GXKLLN4hAWx16XN7BmjYn3gFU+FBpir5yJynvDTHEypr3Tl0j7x/Q=="
-      },
-      "Grpc.Net.Client": {
-        "type": "Transitive",
-        "resolved": "2.67.0",
-        "contentHash": "ofTjJQfegWkVlk5R4k/LlwpcucpsBzntygd4iAeuKd/eLMkmBWoXN+xcjYJ5IibAahRpIJU461jABZvT6E9dwA==",
-        "dependencies": {
-          "Grpc.Net.Common": "2.67.0",
-          "Microsoft.Extensions.Logging.Abstractions": "6.0.0"
-        }
-      },
-      "Grpc.Net.Common": {
-        "type": "Transitive",
-        "resolved": "2.67.0",
-        "contentHash": "gazn1cD2Eol0/W5ZJRV4PYbNrxJ9oMs8pGYux5S9E4MymClvl7aqYSmpqgmWAUWvziRqK9K+yt3cjCMfQ3x/5A==",
-        "dependencies": {
-          "Grpc.Core.Api": "2.67.0"
         }
       },
       "IPNetwork2": {
@@ -317,17 +273,6 @@
         "type": "Transitive",
         "resolved": "9.0.0",
         "contentHash": "jGFKZiXs2HNseK3NK/rfwHNNovER71jSj4BD1a/649ml9+h6oEtYd0GSALZDNW8jZ2Rh+oAeadOa6sagYW1F2A=="
-      },
-      "Microsoft.Extensions.Http": {
-        "type": "Transitive",
-        "resolved": "6.0.0",
-        "contentHash": "15+pa2G0bAMHbHewaQIdr/y6ag2H3yh4rd9hTXavtWDzQBkvpe2RMqFg8BxDpcQWssmjmBApGPcw93QRz6YcMg==",
-        "dependencies": {
-          "Microsoft.Extensions.DependencyInjection.Abstractions": "6.0.0",
-          "Microsoft.Extensions.Logging": "6.0.0",
-          "Microsoft.Extensions.Logging.Abstractions": "6.0.0",
-          "Microsoft.Extensions.Options": "6.0.0"
-        }
       },
       "Microsoft.Extensions.Logging": {
         "type": "Transitive",
@@ -778,8 +723,6 @@
       "myriad": {
         "type": "Project",
         "dependencies": {
-          "Google.Protobuf": "[3.29.1, )",
-          "Grpc.Net.ClientFactory": "[2.67.0, )",
           "Polly": "[8.5.0, )",
           "Polly.Contrib.WaitAndRetry": "[1.1.1, )",
           "Serilog": "[4.2.0, )",
@@ -797,7 +740,6 @@
           "Autofac.Extensions.DependencyInjection": "[10.0.0, )",
           "Dapper": "[2.1.35, )",
           "Dapper.Contrib": "[2.0.78, )",
-          "Google.Protobuf": "[3.29.1, )",
           "Microsoft.Extensions.Caching.Memory": "[9.0.0, )",
           "Microsoft.Extensions.Configuration": "[9.0.0, )",
           "Microsoft.Extensions.Configuration.Binder": "[9.0.0, )",

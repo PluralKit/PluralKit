@@ -42,7 +42,6 @@ pub async fn logger(request: Request, next: Next) -> Response {
 
     let authenticated = {
         let headers = response.headers_mut();
-        println!("{:#?}", headers.keys());
         if headers.contains_key(DID_AUTHENTICATE_HEADER) {
             headers.remove(DID_AUTHENTICATE_HEADER);
             true

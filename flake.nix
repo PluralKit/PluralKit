@@ -52,7 +52,6 @@
                   git
                   dotnet-sdk_8
                   gcc
-                  protobuf
                   omnisharp-roslyn
                   bashInteractive
                 ];
@@ -80,14 +79,14 @@
             path = ./.;
             export = false;
           };
-          nci.crates."gateway" = {
-            depsDrvConfig.mkDerivation = {
-              nativeBuildInputs = [ pkgs.protobuf ];
-            };
-            drvConfig.mkDerivation = {
-              nativeBuildInputs = [ pkgs.protobuf ];
-            };
-          };
+          # nci.crates."gateway" = {
+          #   depsDrvConfig.mkDerivation = {
+          #     nativeBuildInputs = [ pkgs.protobuf ];
+          #   };
+          #   drvConfig.mkDerivation = {
+          #     nativeBuildInputs = [ pkgs.protobuf ];
+          #   };
+          # };
 
           # TODO: expose other rust packages after it's verified they build and work properly
           packages = lib.genAttrs ["gateway"] (name: rustOutputs.${name}.packages.release);

@@ -6,7 +6,7 @@ use sentry::IntoDsn;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
 pub mod db;
-pub mod proto;
+pub mod state;
 pub mod util;
 
 pub mod _config;

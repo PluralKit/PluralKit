@@ -104,10 +104,11 @@ fn router(ctx: ApiContext) -> Router {
 
         .route("/v2/messages/:message_id", get(rproxy))
 
-        .route("/private/meta", get(endpoints::private::meta))
         .route("/private/bulk_privacy/member", post(rproxy))
         .route("/private/bulk_privacy/group", post(rproxy))
         .route("/private/discord/callback", post(rproxy))
+        .route("/private/discord/shard_state", get(endpoints::private::discord_state))
+        .route("/private/stats", get(endpoints::private::meta))
 
         .route("/v2/systems/:system_id/oembed.json", get(rproxy))
         .route("/v2/members/:member_id/oembed.json", get(rproxy))
