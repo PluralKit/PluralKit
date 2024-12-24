@@ -14,7 +14,7 @@ struct ClusterStats {
 }
 
 pub async fn discord_state(State(ctx): State<ApiContext>) -> Json<Value> {
-    let shard_status = ctx
+    let mut shard_status = ctx
         .redis
         .hgetall::<HashMap<String, String>, &str>("pluralkit:shardstatus")
         .await
@@ -22,6 +22,8 @@ pub async fn discord_state(State(ctx): State<ApiContext>) -> Json<Value> {
         .values()
         .map(|v| serde_json::from_str(v).expect("could not deserialize shard"))
         .collect::<Vec<ShardState>>();
+
+    shard_status.sort_by(|a, b| a.shard_id.cmp(&b.shard_id));
 
     Json(json!({
         "shards": shard_status,
