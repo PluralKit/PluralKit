@@ -25,12 +25,12 @@
 
 <div class="wrapper">
 	<div
-		class="shard" id={`shard-${shard.id.toString()}`}
+		class="shard" id={`shard-${shard.shard_id.toString()}`}
 		style={color}
-	>{ shard.id }</div>
-	<Tooltip target={`shard-${shard.id.toString()}`} placement="bottom">
+	>{ shard.shard_id }</div>
+	<Tooltip target={`shard-${shard.shard_id.toString()}`} placement="bottom">
 		<br>
-		<h3>Shard { shard.id }</h3>
+		<h3>Shard { shard.shard_id }</h3>
 		<br>
 		<span>Status: <b>{ shard.up ? "up" : "down" }</b></span><br>
 		<span>Latency: { shard.latency }ms</span><br>

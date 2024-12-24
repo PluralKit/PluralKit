@@ -23,7 +23,7 @@ pub async fn discord_state(State(ctx): State<ApiContext>) -> Json<Value> {
         .map(|v| serde_json::from_str(v).expect("could not deserialize shard"))
         .collect::<Vec<ShardState>>();
 
-    shard_status.sort_by(|a, b| a.shard_id.cmp(&b.shard_id));
+    shard_status.sort_by(|a, b| b.shard_id.cmp(&a.shard_id));
 
     Json(json!({
         "shards": shard_status,
