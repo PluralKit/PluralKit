@@ -2,9 +2,9 @@ use futures::StreamExt;
 use libpk::_config::ClusterSettings;
 use metrics::counter;
 use std::sync::{mpsc::Sender, Arc};
-use tracing::{info, warn, error};
+use tracing::{error, info, warn};
 use twilight_gateway::{
-    create_iterator, ConfigBuilder, Event, EventTypeFlags, Shard, ShardId, Message,
+    create_iterator, ConfigBuilder, Event, EventTypeFlags, Message, Shard, ShardId,
 };
 use twilight_model::gateway::{
     payload::outgoing::update_presence::UpdatePresencePayload,
