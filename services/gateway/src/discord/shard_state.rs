@@ -1,8 +1,7 @@
-use bytes::Bytes;
 use fred::{clients::RedisPool, interfaces::HashesInterface};
 use metrics::{counter, gauge};
 use tracing::info;
-use twilight_gateway::Event;
+use twilight_gateway::{Event, Latency};
 
 use libpk::{state::*, util::redis::*};
 
@@ -20,8 +19,6 @@ impl ShardStateManager {
         match event {
             Event::Ready(_) => self.ready_or_resumed(shard_id, false).await,
             Event::Resumed => self.ready_or_resumed(shard_id, true).await,
-            Event::GatewayClose(_) => self.socket_closed(shard_id).await,
-            Event::GatewayHeartbeat(_) => self.heartbeated(shard_id).await,
             _ => Ok(()),
         }
     }
@@ -71,8 +68,7 @@ impl ShardStateManager {
         Ok(())
     }
 
-    async fn socket_closed(&self, shard_id: u32) -> anyhow::Result<()> {
-        info!("shard {} closed", shard_id);
+    pub async fn socket_closed(&self, shard_id: u32) -> anyhow::Result<()> {
         gauge!("pluralkit_gateway_shard_up").decrement(1);
         let mut info = self.get_shard(shard_id).await?;
         info.up = false;
@@ -81,13 +77,14 @@ impl ShardStateManager {
         Ok(())
     }
 
-    async fn heartbeated(&self, shard_id: u32) -> anyhow::Result<()> {
+    pub async fn heartbeated(&self, shard_id: u32, latency: &Latency) -> anyhow::Result<()> {
         let mut info = self.get_shard(shard_id).await?;
         info.up = true;
         info.last_heartbeat = chrono::offset::Utc::now().timestamp() as i32;
-        // todo
-        // info.latency = latency.recent().front().map_or_else(|| 0, |d| d.as_millis()) as i32;
-        info.latency = 1;
+        info.latency = latency
+            .recent()
+            .first()
+            .map_or_else(|| 0, |d| d.as_millis()) as i32;
         self.save_shard(shard_id, info).await?;
         Ok(())
     }

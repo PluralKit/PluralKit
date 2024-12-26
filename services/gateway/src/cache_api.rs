@@ -7,7 +7,6 @@ use axum::{
 };
 use serde_json::{json, to_string};
 use tracing::{error, info};
-use twilight_model::guild::Permissions;
 use twilight_model::id::Id;
 
 use crate::discord::{

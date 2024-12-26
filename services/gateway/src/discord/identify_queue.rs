@@ -10,8 +10,6 @@ use tokio::sync::oneshot;
 use tracing::{error, info};
 use twilight_gateway::queue::Queue;
 
-use libpk::util::redis::RedisErrorExt;
-
 pub fn new(redis: RedisPool) -> RedisQueue {
     RedisQueue {
         redis,
@@ -69,8 +67,7 @@ async fn request_inner(redis: RedisPool, concurrency: u32, shard_id: u32, tx: on
                 Some(SetOptions::NX),
                 false,
             )
-            .await
-            .to_option_or_error();
+            .await;
         match done {
             Ok(Some(_)) => {
                 info!(shard_id, bucket, "got allowance!");

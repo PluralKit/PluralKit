@@ -1,3 +1,6 @@
+#![feature(let_chains)]
+#![feature(if_let_guard)]
+
 use chrono::Timelike;
 use fred::{clients::RedisPool, interfaces::*};
 use signal_hook::{
