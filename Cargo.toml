@@ -6,6 +6,8 @@ members = [
     "./services/gateway",
     "./services/avatars",
     "./services/scheduled_tasks",
+
+    "./lib/models",
 ]
 
 [workspace.dependencies]

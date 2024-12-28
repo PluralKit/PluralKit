@@ -1,0 +1,13 @@
+[package]
+name = "pluralkit_models"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+chrono = { workspace = true, features = ["serde"] }
+model_macros = { path = "../model_macros" }
+sea-query = "0.32.1"
+serde = { workspace = true }
+serde_json = { workspace = true, features = ["preserve_order"] }
+sqlx = { workspace = true, default-features = false, features = ["chrono"] }
+uuid = { workspace = true }
