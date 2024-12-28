@@ -1,0 +1,19 @@
+[package]
+name = "scheduled_tasks"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+libpk = { path = "../../lib/libpk" }
+
+anyhow = { workspace = true }
+chrono = { workspace = true }
+fred = { workspace = true }
+metrics = { workspace = true }
+reqwest = { workspace = true }
+serde = { workspace = true }
+sqlx = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+
+num-format = "0.4.4"

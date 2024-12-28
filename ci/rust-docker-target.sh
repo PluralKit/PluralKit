@@ -41,3 +41,4 @@ build api
 build dispatch
 build gateway
 build avatars "COPY .docker-bin/avatar_cleanup /bin/avatar_cleanup"
+build scheduled_tasks

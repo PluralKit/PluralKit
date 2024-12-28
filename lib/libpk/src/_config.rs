@@ -31,7 +31,8 @@ pub struct DatabaseConfig {
     pub(crate) data_db_uri: String,
     pub(crate) data_db_max_connections: Option<u32>,
     pub(crate) data_db_min_connections: Option<u32>,
-    //    pub(crate) _messages_db_uri: String,
+    pub(crate) messages_db_uri: Option<String>,
+    pub(crate) stats_db_uri: Option<String>,
     pub(crate) db_password: Option<String>,
     pub data_redis_addr: String,
 }
@@ -79,6 +80,13 @@ pub struct S3Config {
     pub endpoint: String,
 }
 
+#[derive(Deserialize, Debug)]
+pub struct ScheduledTasksConfig {
+    pub set_guild_count: bool,
+    pub expected_gateway_count: usize,
+    pub gateway_url: String,
+}
+
 fn _metrics_default() -> bool {
     false
 }
@@ -96,6 +104,8 @@ pub struct PKConfig {
     pub api: Option<ApiConfig>,
     #[serde(default)]
     pub avatars: Option<AvatarsConfig>,
+    #[serde(default)]
+    pub scheduled_tasks: Option<ScheduledTasksConfig>,
 
     #[serde(default = "_metrics_default")]
     pub run_metrics_server: bool,
