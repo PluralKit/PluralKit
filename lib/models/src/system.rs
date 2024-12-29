@@ -6,51 +6,28 @@ use chrono::NaiveDateTime;
 use sqlx::{postgres::PgTypeInfo, Database, Decode, Postgres, Type};
 use uuid::Uuid;
 
+use crate::_util::fake_enum_impls;
+
 // todo: fix this
 pub type SystemId = i32;
 
-// // todo: move this
+// todo: move this
 #[derive(serde::Serialize, Debug, Clone)]
+#[serde(rename_all = "snake_case")]
 pub enum PrivacyLevel {
-    #[serde(rename = "public")]
-    Public = 1,
-    #[serde(rename = "private")]
-    Private = 2,
+    Public,
+    Private,
 }
 
-impl Type<Postgres> for PrivacyLevel {
-    fn type_info() -> PgTypeInfo {
-        PgTypeInfo::with_name("INT4")
-    }
-}
-
-impl From<PrivacyLevel> for i32 {
-    fn from(enum_value: PrivacyLevel) -> Self {
-        enum_value as i32
-    }
-}
+fake_enum_impls!(PrivacyLevel);
 
 impl From<i32> for PrivacyLevel {
     fn from(value: i32) -> Self {
         match value {
             1 => PrivacyLevel::Public,
             2 => PrivacyLevel::Private,
-            _ => unimplemented!(),
+            _ => unreachable!(),
         }
-    }
-}
-
-struct MyType;
-
-impl<'r, DB: Database> Decode<'r, DB> for PrivacyLevel
-where
-    i32: Decode<'r, DB>,
-{
-    fn decode(
-        value: <DB as Database>::ValueRef<'r>,
-    ) -> Result<Self, Box<dyn Error + 'static + Send + Sync>> {
-        let value = <i32 as Decode<DB>>::decode(value)?;
-        Ok(Self::from(value))
     }
 }
 

@@ -16,6 +16,7 @@ struct ModelField {
     patch: ElemPatchability,
     json: Option<Expr>,
     is_privacy: bool,
+    default: Option<Expr>,
 }
 
 fn parse_field(field: syn::Field) -> ModelField {
@@ -25,6 +26,7 @@ fn parse_field(field: syn::Field) -> ModelField {
         patch: ElemPatchability::None,
         json: None,
         is_privacy: false,
+        default: None,
     };
 
     for attr in field.attrs.iter() {
@@ -59,6 +61,12 @@ fn parse_field(field: syn::Field) -> ModelField {
                     }
                     f.json = Some(nv.value.clone());
                 }
+                "default" => {
+                    if f.default.is_some() {
+                        panic!("cannot set default multiple times for same field");
+                    }
+                    f.default = Some(nv.value.clone());
+                }
                 _ => panic!("unknown attribute"),
             },
             Meta::List(_) => panic!("unknown attribute"),
@@ -67,6 +75,10 @@ fn parse_field(field: syn::Field) -> ModelField {
 
     if matches!(f.patch, ElemPatchability::Public) && f.json.is_none() {
         panic!("must have json name to be publicly patchable");
+    }
+
+    if f.json.is_some() && f.is_privacy {
+        panic!("cannot set custom json name for privacy field");
     }
 
     f
@@ -96,7 +108,7 @@ pub fn pk_model(
         panic!("fields of a struct must be named");
     };
 
-    println!("{}: {:#?}", tname, fields);
+    // println!("{}: {:#?}", tname, fields);
 
     let tfields = mk_tfields(fields.clone());
     let from_json = mk_tfrom_json(fields.clone());
@@ -126,7 +138,7 @@ pub fn pk_model(
                 #from_json
             }
 
-            pub fn to_json(self) -> String {
+            pub fn to_json(self) -> serde_json::Value {
                 #to_json
             }
         }
@@ -150,7 +162,7 @@ pub fn pk_model(
                     #patch_to_sql
             }
 
-            pub fn to_json(self) -> String {
+            pub fn to_json(self) -> serde_json::Value {
                 #patch_to_json
             }
         }
@@ -165,7 +177,7 @@ fn mk_tfields(fields: Vec<ModelField>) -> TokenStream {
             let name = f.name.clone();
             let ty = f.ty.clone();
             quote! {
-                #name: #ty,
+                pub #name: #ty,
             }
         })
         .collect()
@@ -183,8 +195,14 @@ fn mk_tto_json(fields: Vec<ModelField>) -> TokenStream {
         .filter_map(|f| {
             f.json.as_ref().map(|v| {
                 let tname = f.name.clone();
-                quote! {
-                    #v: self.#tname,
+                if let Some(default) = f.default.as_ref() {
+                    quote! {
+                        #v: self.#tname.unwrap_or(#default),
+                    }
+                } else {
+                    quote! {
+                        #v: self.#tname,
+                    }
                 }
             })
         })
@@ -206,12 +224,12 @@ fn mk_tto_json(fields: Vec<ModelField>) -> TokenStream {
         .collect();
 
     quote! {
-        serde_json::to_string(&serde_json::json!({
+        serde_json::json!({
             #fielddefs
             "privacy": {
                 #privacyfielddefs
             }
-        })).expect("json serializing generated models should not fail")
+        })
     }
 }
 
@@ -222,7 +240,7 @@ fn mk_patch_fields(fields: Vec<ModelField>) -> TokenStream {
             let name = f.name.clone();
             let ty = f.ty.clone();
             quote! {
-                #name: Option<#ty>,
+                pub #name: Option<#ty>,
             }
         })
         .collect()

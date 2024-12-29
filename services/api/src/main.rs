@@ -107,6 +107,7 @@ fn router(ctx: ApiContext) -> Router {
         .route("/private/bulk_privacy/member", post(rproxy))
         .route("/private/bulk_privacy/group", post(rproxy))
         .route("/private/discord/callback", post(rproxy))
+        .route("/private/discord/callback2", post(endpoints::private::discord_callback))
         .route("/private/discord/shard_state", get(endpoints::private::discord_state))
         .route("/private/stats", get(endpoints::private::meta))
 

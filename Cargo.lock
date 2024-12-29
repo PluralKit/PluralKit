@@ -94,14 +94,18 @@ dependencies = [
  "lazy_static",
  "libpk",
  "metrics",
+ "pluralkit_models",
+ "reqwest 0.12.8",
  "reverse-proxy-service",
  "serde",
  "serde_json",
+ "serde_urlencoded",
  "sqlx",
  "tokio",
  "tower",
  "tower-http 0.5.2",
  "tracing",
+ "twilight-http",
 ]
 
 [[package]]
