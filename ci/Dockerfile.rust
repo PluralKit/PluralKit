@@ -24,7 +24,7 @@ COPY Cargo.toml /build/
 COPY Cargo.lock /build/
 
 # this needs to match workspaces in Cargo.toml
-COPY lib/libpk /build/lib/libpk
+COPY lib /build/lib
 COPY services/ /build/services
 
 RUN cargo build --bin api --release --target x86_64-unknown-linux-musl
