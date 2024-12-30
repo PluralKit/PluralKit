@@ -614,7 +614,7 @@ public partial class CommandTree
             return ctx.Execute<ServerConfig>(null, m => m.InvalidCommandResponse(ctx));
         if (ctx.MatchMultiple(new[] { "require", "enforce" }, new[] { "tag", "systemtag" }) || ctx.Match("requiretag", "enforcetag"))
             return ctx.Execute<ServerConfig>(null, m => m.RequireSystemTag(ctx));
-        if (ctx.MatchMultiple(new[] { "suppress" }, new[] { "notifications" }) || ctx.Match("proxyping", "proxynotif"))
+        if (ctx.MatchMultiple(new[] { "suppress" }, new[] { "notifications" }) || ctx.Match("proxysilent"))
             return ctx.Execute<ServerConfig>(null, m => m.SuppressNotifications(ctx));
         if (ctx.MatchMultiple(new[] { "log" }, new[] { "channel" }))
             return ctx.Execute<ServerConfig>(null, m => m.SetLogChannel(ctx));
