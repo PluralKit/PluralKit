@@ -284,7 +284,7 @@ public class Admin
             return;
         }
 
-        var newLimitStr = ctx.PopArgument();
+        var newLimitStr = ctx.PopArgument().ToLower().Replace(",", null).Replace("k", "000");
         if (!int.TryParse(newLimitStr, out var newLimit))
             throw new PKError($"Couldn't parse `{newLimitStr}` as number.");
 
@@ -313,7 +313,7 @@ public class Admin
             return;
         }
 
-        var newLimitStr = ctx.PopArgument();
+        var newLimitStr = ctx.PopArgument().ToLower().Replace(",", null).Replace("k", "000");
         if (!int.TryParse(newLimitStr, out var newLimit))
             throw new PKError($"Couldn't parse `{newLimitStr}` as number.");
 
