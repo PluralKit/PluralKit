@@ -112,6 +112,7 @@ public partial class CommandTree
     public static Command ServerConfigLogClean = new Command("serverconfig log cleanup", "serverconfig log cleanup [on|off]", "Toggles whether to clean up other bots' log channels");
     public static Command ServerConfigInvalidCommandResponse = new Command("serverconfig invalid command error", "serverconfig invalid command error [on|off]", "Sets whether to show an error message when an unknown command is sent");
     public static Command ServerConfigRequireSystemTag = new Command("serverconfig require tag", "serverconfig require tag [on|off]", "Sets whether server users are required to have a system tag on proxied messages");
+    public static Command ServerConfigSuppressNotifications = new Command("serverconfig suppress notifications", "serverconfig suppress notifications [on|off]", "Sets whether all proxied messages will have notifications suppressed (sent as `@silent` messages)");
     public static Command Invite = new Command("invite", "invite", "Gets a link to invite PluralKit to other servers");
     public static Command PermCheck = new Command("permcheck", "permcheck <guild>", "Checks whether a server's permission setup is correct");
     public static Command Admin = new Command("admin", "admin", "Super secret admin commands (sshhhh)");
@@ -157,6 +158,7 @@ public partial class CommandTree
     public static Command[] ServerConfigCommands =
     {
         ServerConfigLogClean, ServerConfigInvalidCommandResponse, ServerConfigRequireSystemTag,
+        ServerConfigSuppressNotifications,
         LogChannel, LogChannelClear, LogShow, LogDisable, LogEnable,
         BlacklistShow, BlacklistAdd, BlacklistRemove
     };

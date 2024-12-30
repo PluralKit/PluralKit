@@ -157,6 +157,7 @@ You can have a space after `pk;`, e.g. `pk;system` and `pk; system` will do the 
 - `pk;serverconfig log cleanup [on|off]` - Toggles whether to clean up other bots' log channels
 - `pk;serverconfig invalid command error [on|off]` - Sets whether to show an error message when an unknown command is sent
 - `pk;serverconfig require tag [on|off]` - Sets whether server users are required to have a system tag on proxied messages
+- `pk;serverconfig suppress notifications [on|off]` - Sets whether all proxied messages have push notifications suppressed (sent as `@silent` messages)
 - `pk;serverconfig log channel <channel>` - Designates a channel to post proxied messages to
 - `pk;serverconfig log channel -clear` - Clears the currently set log channel
 - `pk;serverconfig log blacklist`- Displays the current list of channels where logging is disabled

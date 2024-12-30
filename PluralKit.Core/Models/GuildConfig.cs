@@ -9,4 +9,5 @@ public class GuildConfig
     public bool LogCleanupEnabled { get; }
     public bool InvalidCommandResponseEnabled { get; }
     public bool RequireSystemTag { get; }
+    public bool SuppressNotifications { get; }
 }

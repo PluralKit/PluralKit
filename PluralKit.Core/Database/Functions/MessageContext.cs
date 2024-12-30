@@ -36,6 +36,6 @@ public class MessageContext
     public bool InLogBlacklist { get; }
     public bool LogCleanupEnabled { get; }
     public bool RequireSystemTag { get; }
-
     public bool DenyBotUsage { get; }
+    public bool SuppressNotifications { get; }
 }

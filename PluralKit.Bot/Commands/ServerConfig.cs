@@ -50,6 +50,13 @@ public class ServerConfig
         ));
 
         items.Add(new(
+            "suppress notifications",
+            "Whether all proxied messages will have notifications suppressed (sent as `@silent` messages)",
+            EnabledDisabled(ctx.GuildConfig!.SuppressNotifications),
+            "disabled"
+        ));
+
+        items.Add(new(
             "log channel",
             "Channel to log proxied messages to",
             ctx.GuildConfig!.LogChannel != null ? $"<#{ctx.GuildConfig.LogChannel}>" : "none",
@@ -425,5 +432,21 @@ public class ServerConfig
         var newVal = ctx.MatchToggle(false);
         await ctx.Repository.UpdateGuild(ctx.Guild.Id, new() { RequireSystemTag = newVal });
         await ctx.Reply($"System tags are now **{(newVal ? "required" : "not required")}** for PluralKit users in this server.");
+    }
+
+    public async Task SuppressNotifications(Context ctx)
+    {
+        await ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
+
+        if (!ctx.HasNext())
+        {
+            var msg = $"Suppressing notifications for proxied messages is currently **{EnabledDisabled(ctx.GuildConfig!.SuppressNotifications)}**.";
+            await ctx.Reply(msg);
+            return;
+        }
+
+        var newVal = ctx.MatchToggle(false);
+        await ctx.Repository.UpdateGuild(ctx.Guild.Id, new() { SuppressNotifications = newVal });
+        await ctx.Reply($"Suppressing notifications for proxied messages is now {EnabledDisabled(newVal)}.");
     }
 }

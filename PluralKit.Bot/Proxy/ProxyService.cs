@@ -232,6 +232,12 @@ public class ProxyService
         var senderPermissions = PermissionExtensions.PermissionsFor(guild, messageChannel, trigger.Author.Id, guildMember);
         var tts = match.Member.Tts && senderPermissions.HasFlag(PermissionSet.SendTtsMessages);
 
+        Message.MessageFlags flags = 0;
+        if (ctx.SuppressNotifications)
+            flags |= Message.MessageFlags.SuppressNotifications;
+        if (trigger.Flags.HasFlag(Message.MessageFlags.VoiceMessage))
+            flags |= Message.MessageFlags.VoiceMessage;
+
         var proxyMessage = await _webhookExecutor.ExecuteWebhook(new ProxyRequest
         {
             GuildId = trigger.GuildId!.Value,
@@ -246,7 +252,7 @@ public class ProxyService
             Embeds = embeds.ToArray(),
             Stickers = trigger.StickerItems,
             AllowEveryone = allowEveryone,
-            Flags = trigger.Flags.HasFlag(Message.MessageFlags.VoiceMessage) ? Message.MessageFlags.VoiceMessage : null,
+            Flags = flags,
             Tts = tts,
             Poll = trigger.Poll,
         });

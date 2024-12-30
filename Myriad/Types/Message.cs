@@ -15,6 +15,7 @@ public record Message
         SourceMessageDeleted = 1 << 3,
         Urgent = 1 << 4,
         Ephemeral = 1 << 6,
+        SuppressNotifications = 1 << 12,
         VoiceMessage = 1 << 13,
     }
 
