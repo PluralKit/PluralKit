@@ -256,10 +256,10 @@ public class Checks
         // Run everything through the checks, catch the ProxyCheckFailedException, and reply with the error message.
         try
         {
-            _proxy.ShouldProxy(channel, rootChannel, msg, context);
-            _matcher.TryMatch(context, autoproxySettings, members, out var match, msg.Content, msg.Attachments.Length > 0, true, ctx.Config.CaseSensitiveProxyTags);
+            _proxy.ShouldProxy(channel, rootChannel, msg, context, ctx.DefaultPrefix);
+            _matcher.TryMatch(context, autoproxySettings, members, out var match, msg.Content, ctx.DefaultPrefix, msg.Attachments.Length > 0, true, ctx.Config.CaseSensitiveProxyTags);
 
-            var canProxy = await _proxy.CanProxy(channel, rootChannel, msg, context);
+            var canProxy = await _proxy.CanProxy(channel, rootChannel, msg, context, ctx.DefaultPrefix);
             if (canProxy != null)
             {
                 await ctx.Reply(canProxy);

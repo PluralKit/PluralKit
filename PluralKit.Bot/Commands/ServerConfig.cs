@@ -63,7 +63,7 @@ public class ServerConfig
             "none"
         ));
 
-        string ChannelListMessage(int count, string cmd) => $"{count} channels, use `pk;scfg {cmd}` to view/update";
+        string ChannelListMessage(int count, string cmd) => $"{count} channels, use `{ctx.DefaultPrefix}scfg {cmd}` to view/update";
 
         items.Add(new(
             "log blacklist",
@@ -105,7 +105,7 @@ public class ServerConfig
                 eb.Description(description.ToString());
 
                 // using *large* blue diamond here since it's easier to see in the small footer
-                eb.Footer(new("\U0001f537 means this setting was changed. Type `pk;serverconfig <setting name> clear` to reset it to the default."));
+                eb.Footer(new($"\U0001f537 means this setting was changed. Type `{ctx.DefaultPrefix}serverconfig <setting name> clear` to reset it to the default."));
 
                 return Task.CompletedTask;
             }
@@ -188,7 +188,7 @@ public class ServerConfig
         await ctx.Reply(
             $"{Emojis.Success} Message logging for the given channels {(enable ? "enabled" : "disabled")}." +
             (logChannel == null
-                ? $"\n{Emojis.Warn} Please note that no logging channel is set, so there is nowhere to log messages to. You can set a logging channel using `pk;serverconfig log channel #your-log-channel`."
+                ? $"\n{Emojis.Warn} Please note that no logging channel is set, so there is nowhere to log messages to. You can set a logging channel using `{ctx.DefaultPrefix}serverconfig log channel #your-log-channel`."
                 : ""));
     }
 
@@ -360,7 +360,7 @@ public class ServerConfig
         await ctx.Reply(
             $"{Emojis.Success} Channels {(shouldAdd ? "added to" : "removed from")} the logging blacklist." +
             (guild.LogChannel == null
-                ? $"\n{Emojis.Warn} Please note that no logging channel is set, so there is nowhere to log messages to. You can set a logging channel using `pk;serverconfig log channel #your-log-channel`."
+                ? $"\n{Emojis.Warn} Please note that no logging channel is set, so there is nowhere to log messages to. You can set a logging channel using `{ctx.DefaultPrefix}serverconfig log channel #your-log-channel`."
                 : ""));
     }
 
@@ -385,10 +385,10 @@ public class ServerConfig
         {
             if (ctx.GuildConfig!.LogCleanupEnabled)
                 eb.Description(
-                    "Log cleanup is currently **on** for this server. To disable it, type `pk;serverconfig logclean off`.");
+                    $"Log cleanup is currently **on** for this server. To disable it, type `{ctx.DefaultPrefix}serverconfig logclean off`.");
             else
                 eb.Description(
-                    "Log cleanup is currently **off** for this server. To enable it, type `pk;serverconfig logclean on`.");
+                    $"Log cleanup is currently **off** for this server. To enable it, type `{ctx.DefaultPrefix}serverconfig logclean on`.");
             await ctx.Reply(embed: eb.Build());
             return;
         }

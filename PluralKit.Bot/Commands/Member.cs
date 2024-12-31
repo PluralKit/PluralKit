@@ -29,7 +29,7 @@ public class Member
 
     public async Task NewMember(Context ctx)
     {
-        if (ctx.System == null) throw Errors.NoSystemError;
+        if (ctx.System == null) throw Errors.NoSystemError(ctx.DefaultPrefix);
         var memberName = ctx.RemainderOrNull() ?? throw new PKSyntaxError("You must pass a member name.");
 
         // Hard name length cap
@@ -106,7 +106,7 @@ public class Member
         if (await ctx.Database.Execute(conn => conn.QuerySingleAsync<bool>("select has_private_members(@System)",
                 new { System = ctx.System.Id })) && !ctx.Config.MemberDefaultPrivate) //if has private members
             await ctx.Reply(
-                $"{Emojis.Warn} This member is currently **public**. To change this, use `pk;member {member.DisplayHid(ctx.Config)} private`.");
+                $"{Emojis.Warn} This member is currently **public**. To change this, use `{ctx.DefaultPrefix}member {member.DisplayHid(ctx.Config)} private`.");
         if (avatarArg != null)
             if (imageMatchError == null)
                 await ctx.Reply(

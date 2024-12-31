@@ -51,21 +51,21 @@ public static class ContextChecksExt
     public static Context CheckSystem(this Context ctx)
     {
         if (ctx.System == null)
-            throw Errors.NoSystemError;
+            throw Errors.NoSystemError(ctx.DefaultPrefix);
         return ctx;
     }
 
     public static Context CheckSystem(this Context ctx, PKSystem system)
     {
         if (system == null)
-            throw Errors.NoSystemError;
+            throw Errors.NoSystemError(ctx.DefaultPrefix);
         return ctx;
     }
 
     public static Context CheckNoSystem(this Context ctx)
     {
         if (ctx.System != null)
-            throw Errors.ExistingSystemError;
+            throw Errors.ExistingSystemError(ctx.DefaultPrefix);
         return ctx;
     }
 

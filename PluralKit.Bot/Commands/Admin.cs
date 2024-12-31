@@ -346,7 +346,7 @@ public class Admin
 
         var existingAccount = await ctx.Repository.GetSystemByAccount(account.Id);
         if (existingAccount != null)
-            throw Errors.AccountInOtherSystem(existingAccount, ctx.Config);
+            throw Errors.AccountInOtherSystem(existingAccount, ctx.Config, ctx.DefaultPrefix);
 
         var system = await ctx.Repository.GetSystem(systemId.Value!);
         await ctx.Reply(null, await CreateEmbed(ctx, system));

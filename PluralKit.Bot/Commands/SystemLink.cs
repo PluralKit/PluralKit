@@ -18,7 +18,7 @@ public class SystemLink
 
         var existingAccount = await ctx.Repository.GetSystemByAccount(account.Id);
         if (existingAccount != null)
-            throw Errors.AccountInOtherSystem(existingAccount, ctx.Config);
+            throw Errors.AccountInOtherSystem(existingAccount, ctx.Config, ctx.DefaultPrefix);
 
         var msg = $"{account.Mention()}, please confirm the link.";
         if (!await ctx.PromptYesNo(msg, "Confirm", account, false)) throw Errors.MemberLinkCancelled;
@@ -36,7 +36,7 @@ public class SystemLink
 
         var accountIds = (await ctx.Repository.GetSystemAccounts(ctx.System.Id)).ToList();
         if (!accountIds.Contains(id)) throw Errors.AccountNotLinked;
-        if (accountIds.Count == 1) throw Errors.UnlinkingLastAccount;
+        if (accountIds.Count == 1) throw Errors.UnlinkingLastAccount(ctx.DefaultPrefix);
 
         var msg = $"Are you sure you want to unlink <@{id}> from your system?";
         if (!await ctx.PromptYesNo(msg, "Unlink")) throw Errors.MemberUnlinkCancelled;
