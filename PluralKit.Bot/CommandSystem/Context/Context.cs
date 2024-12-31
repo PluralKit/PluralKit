@@ -138,6 +138,11 @@ public class Context
             // Got a complaint the old error was a bit too patronizing. Hopefully this is better?
             await Reply($"{Emojis.Error} Operation timed out, sorry. Try again, perhaps?");
         }
+        catch (TaskCanceledException)
+        {
+            // HTTP timeouts...
+            await Reply($"{Emojis.Error} Operation timed out, please try again later.");
+        }
     }
 
     /// <summary>
