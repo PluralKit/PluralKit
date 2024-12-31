@@ -108,7 +108,7 @@ public partial class CommandTree
     public static Command LogShow = new Command("serverconfig log blacklist", "serverconfig log blacklist", "Displays the current list of channels where logging is disabled");
     public static Command BlacklistShow = new Command("serverconfig proxy blacklist", "serverconfig proxy blacklist", "Displays the current list of channels where message proxying is disabled");
     public static Command BlacklistAdd = new Command("serverconfig proxy blacklist add", "serverconfig proxy blacklist add all|<channel> [channel 2] [channel 3...]", "Disables message proxying in certain channels");
-    public static Command BlacklistRemove = new Command("serverconfig blacklist remove", "serverconfig blacklist remove all|<channel> [channel 2] [channel 3...]", "Enables message proxying in certain channels");
+    public static Command BlacklistRemove = new Command("serverconfig proxy blacklist remove", "serverconfig proxy blacklist remove all|<channel> [channel 2] [channel 3...]", "Enables message proxying in certain channels");
     public static Command ServerConfigLogClean = new Command("serverconfig log cleanup", "serverconfig log cleanup [on|off]", "Toggles whether to clean up other bots' log channels");
     public static Command ServerConfigInvalidCommandResponse = new Command("serverconfig invalid command error", "serverconfig invalid command error [on|off]", "Sets whether to show an error message when an unknown command is sent");
     public static Command ServerConfigRequireSystemTag = new Command("serverconfig require tag", "serverconfig require tag [on|off]", "Sets whether server users are required to have a system tag on proxied messages");
