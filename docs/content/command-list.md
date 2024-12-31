@@ -165,7 +165,7 @@ You can have a space after `pk;`, e.g. `pk;system` and `pk; system` will do the 
 - `pk;serverconfig log blacklist remove all|<channel> [channel 2] [channel 3...]` - Enables message logging in certain channels
 - `pk;serverconfig proxy blacklist` - Displays the current proxy blacklist
 - `pk;serverconfig proxy blacklist add all|<channel> [channel 2] [channel 3...]` - Adds certain channels to the proxy blacklist
-- `pk;serverconfig blacklist remove all|<channel> [channel 2] [channel 3...]` - Removes certain channels from the proxy blacklist
+- `pk;serverconfig proxy blacklist remove all|<channel> [channel 2] [channel 3...]` - Removes certain channels from the proxy blacklist
 
 ## Utility
 - `pk;message <message id|message link|reply>` - Looks up information about a proxied message by its message ID or link.
