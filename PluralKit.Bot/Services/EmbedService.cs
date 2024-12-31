@@ -79,7 +79,7 @@ public class EmbedService
             {
                 var memberStr = string.Join(", ", switchMembers.Select(m => m.NameFor(ctx)));
                 if (memberStr.Length > 200)
-                    memberStr = $"[too many to show, see `pk;system {system.DisplayHid(cctx.Config)} fronters`]";
+                    memberStr = $"[too many to show, see `{cctx.DefaultPrefix}system {system.DisplayHid(cctx.Config)} fronters`]";
                 eb.Field(new Embed.Field("Fronter".ToQuantity(switchMembers.Count, ShowQuantityAs.None), memberStr));
             }
         }
@@ -126,9 +126,9 @@ public class EmbedService
         {
             if (memberCount > 0)
                 eb.Field(new Embed.Field($"Members ({memberCount})",
-                    $"(see `pk;system {system.DisplayHid(cctx.Config)} list` or `pk;system {system.DisplayHid(cctx.Config)} list full`)", true));
+                    $"(see `{cctx.DefaultPrefix}system {system.DisplayHid(cctx.Config)} list` or `{cctx.DefaultPrefix}system {system.DisplayHid(cctx.Config)} list full`)", true));
             else
-                eb.Field(new Embed.Field($"Members ({memberCount})", "Add one with `pk;member new`!", true));
+                eb.Field(new Embed.Field($"Members ({memberCount})", $"Add one with `{cctx.DefaultPrefix}member new`!", true));
         }
 
         if (system.DescriptionFor(ctx) is { } desc)
@@ -284,13 +284,13 @@ public class EmbedService
             if (memberCount == 0 && pctx == LookupContext.ByOwner)
                 // Only suggest the add command if this is actually the owner lol
                 eb.Field(new Embed.Field("Members (0)",
-                    $"Add one with `pk;group {target.Reference(ctx)} add <member>`!"));
+                    $"Add one with `{ctx.DefaultPrefix}group {target.Reference(ctx)} add <member>`!"));
             else
             {
                 var name = pctx == LookupContext.ByOwner
                     ? target.Reference(ctx)
                     : target.DisplayHid(ctx.Config);
-                eb.Field(new Embed.Field($"Members ({memberCount})", $"(see `pk;group {name} list`)"));
+                eb.Field(new Embed.Field($"Members ({memberCount})", $"(see `{ctx.DefaultPrefix}group {name} list`)"));
             }
         }
 

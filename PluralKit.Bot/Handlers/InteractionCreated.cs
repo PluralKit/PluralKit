@@ -17,15 +17,17 @@ public class InteractionCreated: IEventHandler<InteractionCreateEvent>
     private readonly ILifetimeScope _services;
     private readonly ILogger _logger;
     private readonly ModelRepository _repo;
+    private readonly BotConfig _config;
 
     public InteractionCreated(InteractionDispatchService interactionDispatch, ApplicationCommandTree commandTree,
-                              ILifetimeScope services, ILogger logger, ModelRepository repo)
+                              ILifetimeScope services, ILogger logger, ModelRepository repo, BotConfig config)
     {
         _interactionDispatch = interactionDispatch;
         _commandTree = commandTree;
         _services = services;
         _logger = logger;
         _repo = repo;
+        _config = config;
     }
 
     public async Task Handle(int shardId, InteractionCreateEvent evt)
@@ -42,7 +44,7 @@ public class InteractionCreated: IEventHandler<InteractionCreateEvent>
                 if (customId == null) return;
 
                 if (customId.Contains("help-menu"))
-                    await Help.ButtonClick(ctx);
+                    await Help.ButtonClick(ctx, (_config.Prefixes[0] ?? BotConfig.DefaultPrefixes[0]));
                 else
                     await _interactionDispatch.Dispatch(customId, ctx);
 

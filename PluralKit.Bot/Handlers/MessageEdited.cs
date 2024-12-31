@@ -84,7 +84,7 @@ public class MessageEdited: IEventHandler<MessageUpdateEvent>
         try
         {
             await _proxy.HandleIncomingMessage(equivalentEvt, ctx, allowAutoproxy: false, guild: guild,
-                channel: channel, botPermissions: botPermissions);
+                channel: channel, botPermissions: botPermissions, prefix: (_config.Prefixes[0] ?? BotConfig.DefaultPrefixes[0]));
         }
         // Catch any failed proxy checks so they get ignored in the global error handler
         catch (ProxyService.ProxyChecksFailedException) { }

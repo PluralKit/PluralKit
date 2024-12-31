@@ -17,7 +17,7 @@ public class SystemFront
 
     public async Task SystemFronter(Context ctx, PKSystem system)
     {
-        if (system == null) throw Errors.NoSystemError;
+        if (system == null) throw Errors.NoSystemError(ctx.DefaultPrefix);
         ctx.CheckSystemPrivacy(system.Id, system.FrontPrivacy);
 
         var sw = await ctx.Repository.GetLatestSwitch(system.Id);
@@ -34,7 +34,7 @@ public class SystemFront
             return;
         }
 
-        if (system == null) throw Errors.NoSystemError;
+        if (system == null) throw Errors.NoSystemError(ctx.DefaultPrefix);
         ctx.CheckSystemPrivacy(system.Id, system.FrontHistoryPrivacy);
 
         var totalSwitches = await ctx.Repository.GetSwitchCount(system.Id);
@@ -108,7 +108,7 @@ public class SystemFront
 
     public async Task FrontPercent(Context ctx, PKSystem? system = null, PKGroup? group = null)
     {
-        if (system == null && group == null) throw Errors.NoSystemError;
+        if (system == null && group == null) throw Errors.NoSystemError(ctx.DefaultPrefix);
         if (system == null) system = await GetGroupSystem(ctx, group);
 
         ctx.CheckSystemPrivacy(system.Id, system.FrontHistoryPrivacy);

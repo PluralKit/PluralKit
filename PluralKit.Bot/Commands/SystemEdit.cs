@@ -35,7 +35,7 @@ public class SystemEdit
 
         var noNameSetMessage = $"{(isOwnSystem ? "Your" : "This")} system does not have a name set.";
         if (isOwnSystem)
-            noNameSetMessage += " Type `pk;system name <name>` to set one.";
+            noNameSetMessage += $" Type `{ctx.DefaultPrefix}system name <name>` to set one.";
 
         var format = ctx.MatchFormat();
 
@@ -64,7 +64,7 @@ public class SystemEdit
         {
             await ctx.Reply(
                 $"{(isOwnSystem ? "Your" : "This")} system's name is currently **{target.Name}**."
-                + (isOwnSystem ? " Type `pk;system name -clear` to clear it." : "")
+                + (isOwnSystem ? $" Type `{ctx.DefaultPrefix}system name -clear` to clear it." : "")
                 + $" Using {target.Name.Length}/{Limits.MaxSystemNameLength} characters.");
             return;
         }
@@ -98,7 +98,7 @@ public class SystemEdit
 
         var noNameSetMessage = $"{(isOwnSystem ? "Your" : "This")} system does not have a name specific to this server.";
         if (isOwnSystem)
-            noNameSetMessage += " Type `pk;system servername <name>` to set one.";
+            noNameSetMessage += $" Type `{ctx.DefaultPrefix}system servername <name>` to set one.";
 
         var settings = await ctx.Repository.GetSystemGuild(ctx.Guild.Id, target.Id);
 
@@ -129,7 +129,7 @@ public class SystemEdit
         {
             await ctx.Reply(
                 $"{(isOwnSystem ? "Your" : "This")} system's name for this server is currently **{settings.DisplayName}**."
-                + (isOwnSystem ? " Type `pk;system servername -clear` to clear it." : "")
+                + (isOwnSystem ? $" Type `{ctx.DefaultPrefix}system servername -clear` to clear it." : "")
                 + $" Using {settings.DisplayName.Length}/{Limits.MaxSystemNameLength} characters.");
             return;
         }
@@ -163,7 +163,7 @@ public class SystemEdit
 
         var noDescriptionSetMessage = "This system does not have a description set.";
         if (isOwnSystem)
-            noDescriptionSetMessage += " To set one, type `pk;s description <description>`.";
+            noDescriptionSetMessage += $" To set one, type `{ctx.DefaultPrefix}s description <description>`.";
 
         var format = ctx.MatchFormat();
 
@@ -194,8 +194,8 @@ public class SystemEdit
                 .Title("System description")
                 .Description(target.Description)
                 .Footer(new Embed.EmbedFooter(
-                    "To print the description with formatting, type `pk;s description -raw`."
-                        + (isOwnSystem ? " To clear it, type `pk;s description -clear`. To change it, type `pk;s description <new description>`." : "")
+                    $"To print the description with formatting, type `{ctx.DefaultPrefix}s description -raw`."
+                        + (isOwnSystem ? $" To clear it, type `{ctx.DefaultPrefix}s description -clear`. To change it, type `{ctx.DefaultPrefix}s description <new description>`." : "")
                         + $" Using {target.Description.Length}/{Limits.MaxDescriptionLength} characters."))
                 .Build());
             return;
@@ -231,7 +231,7 @@ public class SystemEdit
         {
             if (target.Color == null)
                 await ctx.Reply(
-                    "This system does not have a color set." + (isOwnSystem ? " To set one, type `pk;system color <color>`." : ""));
+                    "This system does not have a color set." + (isOwnSystem ? $" To set one, type `{ctx.DefaultPrefix}system color <color>`." : ""));
             else if (matchedFormat == ReplyFormat.Raw)
                 await ctx.Reply("```\n#" + target.Color + "\n```");
             else if (matchedFormat == ReplyFormat.Plaintext)
@@ -242,7 +242,7 @@ public class SystemEdit
                     .Color(target.Color.ToDiscordColor())
                     .Thumbnail(new Embed.EmbedThumbnail($"https://fakeimg.pl/256x256/{target.Color}/?text=%20"))
                     .Description(
-                        $"This system's color is **#{target.Color}**." + (isOwnSystem ? " To clear it, type `pk;s color -clear`." : ""))
+                        $"This system's color is **#{target.Color}**." + (isOwnSystem ? $" To clear it, type `{ctx.DefaultPrefix}s color -clear`." : ""))
                     .Build());
             return;
         }
@@ -278,7 +278,7 @@ public class SystemEdit
         var isOwnSystem = ctx.System?.Id == target.Id;
 
         var noTagSetMessage = isOwnSystem
-            ? "You currently have no system tag set. To set one, type `pk;s tag <tag>`."
+            ? $"You currently have no system tag set. To set one, type `{ctx.DefaultPrefix}s tag <tag>`."
             : "This system currently has no system tag set.";
 
         var format = ctx.MatchFormat();
@@ -307,7 +307,7 @@ public class SystemEdit
         if (!ctx.HasNext(false))
         {
             await ctx.Reply($"{(isOwnSystem ? "Your" : "This system's")} current system tag is {target.Tag.AsCode()}."
-                + (isOwnSystem ? "To change it, type `pk;s tag <tag>`. To clear it, type `pk;s tag -clear`." : ""));
+                + (isOwnSystem ? $"To change it, type `{ctx.DefaultPrefix}s tag <tag>`. To clear it, type `{ctx.DefaultPrefix}s tag -clear`." : ""));
             return;
         }
 
@@ -338,7 +338,7 @@ public class SystemEdit
         ctx.CheckSystem().CheckOwnSystem(target).CheckGuildContext();
 
         var setDisabledWarning =
-            $"{Emojis.Warn} Your system tag is currently **disabled** in this server. No tag will be applied when proxying.\nTo re-enable the system tag in the current server, type `pk;s servertag -enable`.";
+            $"{Emojis.Warn} Your system tag is currently **disabled** in this server. No tag will be applied when proxying.\nTo re-enable the system tag in the current server, type `{ctx.DefaultPrefix}s servertag -enable`.";
 
         var settings = await ctx.Repository.GetSystemGuild(ctx.Guild.Id, target.Id);
 
@@ -361,10 +361,10 @@ public class SystemEdit
 
                 var msg = $"Your current system tag in '{ctx.Guild.Name}' is {settings.Tag.AsCode()}";
                 if (!settings.TagEnabled)
-                    msg += ", but it is currently **disabled**. To re-enable it, type `pk;s servertag -enable`.";
+                    msg += $", but it is currently **disabled**. To re-enable it, type `{ctx.DefaultPrefix}s servertag -enable`.";
                 else
                     msg +=
-                        ". To change it, type `pk;s servertag <tag>`. To clear it, type `pk;s servertag -clear`.";
+                        $". To change it, type `{ctx.DefaultPrefix}s servertag <tag>`. To clear it, type `{ctx.DefaultPrefix}s servertag -clear`.";
 
                 await ctx.Reply(msg);
                 return;
@@ -372,10 +372,10 @@ public class SystemEdit
 
             if (!settings.TagEnabled)
                 await ctx.Reply(
-                    $"Your global system tag is {target.Tag}, but it is **disabled** in this server. To re-enable it, type `pk;s servertag -enable`");
+                    $"Your global system tag is {target.Tag}, but it is **disabled** in this server. To re-enable it, type `{ctx.DefaultPrefix}s servertag -enable`");
             else
                 await ctx.Reply(
-                    $"You currently have no system tag specific to the server '{ctx.Guild.Name}'. To set one, type `pk;s servertag <tag>`. To disable the system tag in the current server, type `pk;s servertag -disable`.");
+                    $"You currently have no system tag specific to the server '{ctx.Guild.Name}'. To set one, type `{ctx.DefaultPrefix}s servertag <tag>`. To disable the system tag in the current server, type `{ctx.DefaultPrefix}s servertag -disable`.");
         }
 
         async Task Set()
@@ -469,7 +469,7 @@ public class SystemEdit
 
         var noPronounsSetMessage = "This system does not have pronouns set.";
         if (isOwnSystem)
-            noPronounsSetMessage += " To set some, type `pk;system pronouns <pronouns>`";
+            noPronounsSetMessage += $" To set some, type `{ctx.DefaultPrefix}system pronouns <pronouns>`";
 
         var format = ctx.MatchFormat();
 
@@ -496,8 +496,8 @@ public class SystemEdit
 
         if (!ctx.HasNext(false))
         {
-            await ctx.Reply($"{(isOwnSystem ? "Your" : "This system's")} current pronouns are **{target.Pronouns}**.\nTo print the pronouns with formatting, type `pk;system pronouns -raw`."
-            + (isOwnSystem ? " To clear them, type `pk;system pronouns -clear`."
+            await ctx.Reply($"{(isOwnSystem ? "Your" : "This system's")} current pronouns are **{target.Pronouns}**.\nTo print the pronouns with formatting, type `{ctx.DefaultPrefix}system pronouns -raw`."
+            + (isOwnSystem ? $" To clear them, type `{ctx.DefaultPrefix}system pronouns -clear`."
             : "")
             + $" Using {target.Pronouns.Length}/{Limits.MaxPronounsLength} characters.");
             return;
@@ -580,7 +580,7 @@ public class SystemEdit
                             .Title("System icon")
                             .Image(new Embed.EmbedImage(target.AvatarUrl.TryGetCleanCdnUrl()));
                         if (target.Id == ctx.System?.Id)
-                            ebS.Description("To clear, use `pk;system icon clear`.");
+                            ebS.Description($"To clear, use `{ctx.DefaultPrefix}system icon clear`.");
                         await ctx.Reply(embed: ebS.Build());
                         break;
                 }
@@ -663,7 +663,7 @@ public class SystemEdit
                             .Title("System server icon")
                             .Image(new Embed.EmbedImage(settings.AvatarUrl.TryGetCleanCdnUrl()));
                         if (target.Id == ctx.System?.Id)
-                            ebS.Description("To clear, use `pk;system servericon clear`.");
+                            ebS.Description($"To clear, use `{ctx.DefaultPrefix}system servericon clear`.");
                         await ctx.Reply(embed: ebS.Build());
                         break;
                 }
@@ -712,7 +712,7 @@ public class SystemEdit
                             .Title("System banner image")
                             .Image(new Embed.EmbedImage(target.BannerImage.TryGetCleanCdnUrl()));
                         if (target.Id == ctx.System?.Id)
-                            ebS.Description("To clear, use `pk;system banner clear`.");
+                            ebS.Description($"To clear, use `{ctx.DefaultPrefix}system banner clear`.");
                         await ctx.Reply(embed: ebS.Build());
                         break;
                 }
@@ -764,7 +764,7 @@ public class SystemEdit
         var warnMsg = $"{Emojis.Warn} Are you sure you want to delete your system? If so, reply to this message with your system's ID (`{target.DisplayHid(ctx.Config)}`).\n";
         if (!noExport)
             warnMsg += "**Note: this action is permanent,** but you will get a copy of your system's data that can be re-imported into PluralKit at a later date sent to you in DMs."
-                + " If you don't want this to happen, use `pk;s delete -no-export` instead.";
+                + $" If you don't want this to happen, use `{ctx.DefaultPrefix}s delete -no-export` instead.";
 
         await ctx.Reply(warnMsg);
         if (!await ctx.ConfirmWithReply(target.Hid, treatAsHid: true))
@@ -788,7 +788,7 @@ public class SystemEdit
             {
                 var dm = await _dmCache.GetOrCreateDmChannel(ctx.Author.Id);
                 var msg = await ctx.Rest.CreateMessage(dm,
-                    new MessageRequest { Content = $"{Emojis.Success} System deleted. If you want to set up your PluralKit system again, you can import the file below with `pk;import`." },
+                    new MessageRequest { Content = $"{Emojis.Success} System deleted. If you want to set up your PluralKit system again, you can import the file below with `{ctx.DefaultPrefix}import`." },
                     new[] { new MultipartFile("system.json", stream, null, null, null) });
                 await ctx.Rest.CreateMessage(dm, new MessageRequest { Content = $"<{msg.Attachments[0].Url}>" });
 
@@ -800,7 +800,7 @@ public class SystemEdit
             {
                 // If user has DMs closed, tell 'em to open them
                 throw new PKError(
-                    $"I couldn't send you a DM with your system's data before deleting your system. Either make sure your DMs are open, or use `pk;s delete -no-export` to delete your system without exporting first.");
+                    $"I couldn't send you a DM with your system's data before deleting your system. Either make sure your DMs are open, or use `{ctx.DefaultPrefix}s delete -no-export` to delete your system without exporting first.");
             }
         }
         else
@@ -832,10 +832,10 @@ public class SystemEdit
         {
             if (gs.ProxyEnabled)
                 await ctx.Reply(
-                    $"Proxying in {serverText} is currently **enabled** for your system. To disable it, type `pk;system proxy off`.");
+                    $"Proxying in {serverText} is currently **enabled** for your system. To disable it, type `{ctx.DefaultPrefix}system proxy off`.");
             else
                 await ctx.Reply(
-                    $"Proxying in {serverText} is currently **disabled** for your system. To enable it, type `pk;system proxy on`.");
+                    $"Proxying in {serverText} is currently **disabled** for your system. To enable it, type `{ctx.DefaultPrefix}system proxy on`.");
             return;
         }
 
@@ -867,7 +867,7 @@ public class SystemEdit
                 .Field(new Embed.Field("Current fronter(s)", target.FrontPrivacy.Explanation()))
                 .Field(new Embed.Field("Front/switch history", target.FrontHistoryPrivacy.Explanation()))
                 .Description(
-                    "To edit privacy settings, use the command:\n`pk;system privacy <subject> <level>`\n\n- `subject` is one of `name`, `avatar`, `description`, `banner`, `pronouns`, `list`, `front`, `fronthistory`, `groups`, or `all` \n- `level` is either `public` or `private`.");
+                    $"To edit privacy settings, use the command:\n`{ctx.DefaultPrefix}system privacy <subject> <level>`\n\n- `subject` is one of `name`, `avatar`, `description`, `banner`, `pronouns`, `list`, `front`, `fronthistory`, `groups`, or `all` \n- `level` is either `public` or `private`.");
             return ctx.Reply(embed: eb.Build());
         }
 

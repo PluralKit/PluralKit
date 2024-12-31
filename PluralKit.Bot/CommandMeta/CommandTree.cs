@@ -64,7 +64,7 @@ public partial class CommandTree
             else if (ctx.Match("list", "show"))
                 return ctx.Execute<ServerConfig>(LogShow, m => m.ShowLogDisabledChannels(ctx), true);
             else
-                return ctx.Reply($"{Emojis.Warn} Message logging commands have moved to `pk;serverconfig`.");
+                return ctx.Reply($"{Emojis.Warn} Message logging commands have moved to `{ctx.DefaultPrefix}serverconfig`.");
         if (ctx.Match("logclean"))
             return ctx.Execute<ServerConfig>(ServerConfigLogClean, m => m.SetLogCleanup(ctx), true);
         if (ctx.Match("blacklist", "bl"))
@@ -75,7 +75,7 @@ public partial class CommandTree
             else if (ctx.Match("list", "show"))
                 return ctx.Execute<ServerConfig>(BlacklistShow, m => m.ShowProxyBlacklisted(ctx), true);
             else
-                return ctx.Reply($"{Emojis.Warn} Blacklist commands have moved to `pk;serverconfig`.");
+                return ctx.Reply($"{Emojis.Warn} Blacklist commands have moved to `{ctx.DefaultPrefix}serverconfig`.");
         if (ctx.Match("proxy"))
             if (ctx.Match("debug"))
                 return ctx.Execute<Checks>(ProxyCheck, m => m.MessageProxyCheck(ctx));
@@ -257,7 +257,7 @@ public partial class CommandTree
                     return;
                 }
 
-                var list = CreatePotentialCommandList(SystemCommands);
+                var list = CreatePotentialCommandList(ctx.DefaultPrefix, SystemCommands);
                 await ctx.Reply($"{Emojis.Error} {await CreateSystemNotFoundError(ctx)}\n\n"
                         + $"Perhaps you meant to use one of the following commands?\n{list}");
             }
@@ -493,7 +493,7 @@ public partial class CommandTree
         {
             await ctx.Reply(
                 "Available command help targets: `system`, `member`, `group`, `switch`, `config`, `autoproxy`, `log`, `blacklist`."
-                + "\n- **pk;commands <target>** - *View commands related to a help target.*"
+                + $"\n- **{ctx.DefaultPrefix}commands <target>** - *View commands related to a help target.*"
                 + "\n\nFor the full list of commands, see the website: <https://pluralkit.me/commands>");
             return;
         }
@@ -553,7 +553,7 @@ public partial class CommandTree
         // oops, that breaks stuff! PKErrors before ctx.Execute don't actually do anything.
         // so we just emulate checking and throwing an error.
         if (ctx.System == null)
-            return ctx.Reply($"{Emojis.Error} {Errors.NoSystemError.Message}");
+            return ctx.Reply($"{Emojis.Error} {Errors.NoSystemError(ctx.DefaultPrefix).Message}");
 
         return ctx.Execute<Autoproxy>(AutoproxySet, m => m.SetAutoproxyMode(ctx));
     }
@@ -561,7 +561,7 @@ public partial class CommandTree
     private Task HandleConfigCommand(Context ctx)
     {
         if (ctx.System == null)
-            return ctx.Reply($"{Emojis.Error} {Errors.NoSystemError.Message}");
+            return ctx.Reply($"{Emojis.Error} {Errors.NoSystemError(ctx.DefaultPrefix).Message}");
 
         if (!ctx.HasNext())
             return ctx.Execute<Config>(null, m => m.ShowConfig(ctx));
@@ -600,7 +600,7 @@ public partial class CommandTree
             return ctx.Execute<Config>(null, m => m.ServerNameFormat(ctx));
 
         // todo: maybe add the list of configuration keys here?
-        return ctx.Reply($"{Emojis.Error} Could not find a setting with that name. Please see `pk;commands config` for the list of possible config settings.");
+        return ctx.Reply($"{Emojis.Error} Could not find a setting with that name. Please see `{ctx.DefaultPrefix}commands config` for the list of possible config settings.");
     }
 
     private Task HandleServerConfigCommand(Context ctx)
@@ -638,6 +638,6 @@ public partial class CommandTree
         }
 
         // todo: maybe add the list of configuration keys here?
-        return ctx.Reply($"{Emojis.Error} Could not find a setting with that name. Please see `pk;commands serverconfig` for the list of possible config settings.");
+        return ctx.Reply($"{Emojis.Error} Could not find a setting with that name. Please see `{ctx.DefaultPrefix}commands serverconfig` for the list of possible config settings.");
     }
 }

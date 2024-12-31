@@ -99,11 +99,11 @@ public class ImportExport
             else if (ctx.System == null)
                 // We didn't have a system prior to importing, so give them the new system's ID
                 await ctx.Reply(
-                    $"{Emojis.Success} PluralKit has created a system for you based on the given file. Your system ID is `{result.CreatedSystem}`. Type `pk;system` for more information.");
+                    $"{Emojis.Success} PluralKit has created a system for you based on the given file. Your system ID is `{result.CreatedSystem}`. Type `{ctx.DefaultPrefix}system` for more information.");
             else
                 // We already had a system, so show them what changed
                 await ctx.Reply(
-                    $"{Emojis.Success} Updated {result.Modified} members, created {result.Added} members. Type `pk;system list` to check!");
+                    $"{Emojis.Success} Updated {result.Modified} members, created {result.Added} members. Type `{ctx.DefaultPrefix}system list` to check!");
         });
     }
 

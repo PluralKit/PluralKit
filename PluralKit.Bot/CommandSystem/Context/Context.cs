@@ -30,7 +30,7 @@ public class Context
 
     public Context(ILifetimeScope provider, int shardId, Guild? guild, Channel channel, MessageCreateEvent message,
                                                     int commandParseOffset, PKSystem senderSystem, SystemConfig config,
-                                                    GuildConfig? guildConfig)
+                                                    GuildConfig? guildConfig, string[] prefixes)
     {
         Message = (Message)message;
         ShardId = shardId;
@@ -47,6 +47,7 @@ public class Context
         _provider = provider;
         _commandMessageService = provider.Resolve<CommandMessageService>();
         CommandPrefix = message.Content?.Substring(0, commandParseOffset);
+        DefaultPrefix = prefixes[0];
         Parameters = new Parameters(message.Content?.Substring(commandParseOffset));
         Rest = provider.Resolve<DiscordApiClient>();
         Cluster = provider.Resolve<Cluster>();
@@ -74,6 +75,7 @@ public class Context
     public DateTimeZone Zone => Config?.Zone ?? DateTimeZone.Utc;
 
     public readonly string CommandPrefix;
+    public readonly string DefaultPrefix;
     public readonly Parameters Parameters;
 
     internal readonly IDatabase Database;
@@ -115,7 +117,7 @@ public class Context
 
         if (deprecated && commandDef != null)
         {
-            await Reply($"{Emojis.Warn} Server configuration has moved to `pk;serverconfig`. The command you are trying to run is now `pk;{commandDef.Key}`.");
+            await Reply($"{Emojis.Warn} Server configuration has moved to `{DefaultPrefix}serverconfig`. The command you are trying to run is now `{DefaultPrefix}{commandDef.Key}`.");
         }
 
         try
@@ -127,7 +129,7 @@ public class Context
         }
         catch (PKSyntaxError e)
         {
-            await Reply($"{Emojis.Error} {e.Message}\n**Command usage:**\n> pk;{commandDef?.Usage}");
+            await Reply($"{Emojis.Error} {e.Message}\n**Command usage:**\n> {DefaultPrefix}{commandDef?.Usage}");
         }
         catch (PKError e)
         {
