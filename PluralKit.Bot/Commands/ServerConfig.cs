@@ -26,8 +26,6 @@ public class ServerConfig
         await ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
         var items = new List<PaginatedConfigItem>();
 
-        // TODO: move log channel / blacklist into here
-
         items.Add(new(
             "log cleanup",
             "Whether to clean up other bots' log channels",
