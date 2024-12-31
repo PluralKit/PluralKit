@@ -89,7 +89,8 @@ You cannot look up private members or groups of another system.
 |pk;switch edit and pk;switch copy|-first|-f|Move member to the front of the current switch or make a new switch with the member at the front|
 |pk;switch edit and pk;switch copy|-remove|-r|Remove members from the current switch or make a new switch with members removed|
 |Most commands|-all|-a|Show hidden/private information|
-|Most commands|-raw|-r|Show text with formatting, for easier copy-pasting|
+|Most commands|-raw|-r|Show text with formatting, for easier copy-pasting on desktop|
+|Most commands|-plaintext|-pt|Print text with nothing else in message, for easier copy-pasting on mobile|
 |All commands|-private|-priv|Show private information|
 |All commands|-public|-pub|Hide private information|
 |All commands, except `delete`|-y|-yes|Skip confirmation prompt|
