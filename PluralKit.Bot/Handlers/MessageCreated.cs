@@ -86,12 +86,19 @@ public class MessageCreated: IEventHandler<MessageCreateEvent>
         }
 
         // Try each handler until we find one that succeeds
+        // only show exceptions to users if the checks above succeed
+        try
+        {
+            if (await TryHandleCommand(shardId, evt, guild, channel))
+                return;
 
-        if (await TryHandleCommand(shardId, evt, guild, channel))
-            return;
-
-        if (evt.GuildId != null)
-            await TryHandleProxy(evt, guild, channel, rootChannel.Id, botPermissions);
+            if (evt.GuildId != null)
+                await TryHandleProxy(evt, guild, channel, rootChannel.Id, botPermissions);
+        }
+        catch (Exception exc)
+        {
+            await _bot.HandleError(this, evt, _services, exc, true);
+        }
     }
 
     private async Task TryHandleLogClean(Channel channel, MessageCreateEvent evt)

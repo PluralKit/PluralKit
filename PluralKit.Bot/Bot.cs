@@ -179,7 +179,7 @@ public class Bot
             catch (Exception exc)
             {
 
-                await HandleError(handler, evt, serviceScope, exc);
+                await HandleError(handler, evt, serviceScope, exc, false);
             }
             _logger.Verbose("Received gateway event: {@Event}", evt);
 
@@ -202,13 +202,13 @@ public class Bot
             }
             catch (Exception exc)
             {
-                await HandleError(handler, evt, serviceScope, exc);
+                await HandleError(handler, evt, serviceScope, exc, false);
             }
         }
     }
 
-    private async Task HandleError<T>(IEventHandler<T> handler, T evt, ILifetimeScope serviceScope,
-                                      Exception exc)
+    public async Task HandleError<T>(IEventHandler<T> handler, T evt, ILifetimeScope serviceScope,
+                                      Exception exc, bool preChecksDone)
         where T : IGatewayEvent
     {
         _metrics.Measure.Meter.Mark(BotMetrics.BotErrors, exc.GetType().FullName);
@@ -244,6 +244,10 @@ public class Bot
             // most of these errors aren't useful...
             if (_config.DisableErrorReporting)
                 return;
+
+            // don't show errors for "failed to lookup channel" and such
+            // interaction handler doesn't have pre-checks, so just always try to show
+            if (!(preChecksDone && !(evt is InteractionCreateEvent _))) return;
 
             if (!exc.ShowToUser()) return;
 
