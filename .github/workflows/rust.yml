@@ -7,10 +7,7 @@ name: Build and push Rust service Docker images
 on:
   push:
     paths:
-    - 'lib/libpk/**'
-    - 'services/api/**'
-    - 'services/gateway/**'
-    - 'services/avatars/**'
+    - 'crates/**'
     - '.github/workflows/rust.yml'
     - 'ci/Dockerfile.rust'
     - 'ci/rust-docker-target.sh'
