@@ -44,7 +44,7 @@ public class InteractionCreated: IEventHandler<InteractionCreateEvent>
                 if (customId == null) return;
 
                 if (customId.Contains("help-menu"))
-                    await Help.ButtonClick(ctx, (_config.Prefixes[0] ?? BotConfig.DefaultPrefixes[0]));
+                    await Help.ButtonClick(ctx, (_config.Prefixes?[0] ?? BotConfig.DefaultPrefixes[0]));
                 else
                     await _interactionDispatch.Dispatch(customId, ctx);
 

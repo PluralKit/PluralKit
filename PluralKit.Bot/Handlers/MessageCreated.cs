@@ -174,7 +174,7 @@ public class MessageCreated: IEventHandler<MessageCreateEvent>
 
         try
         {
-            return await _proxy.HandleIncomingMessage(evt, ctx, guild, channel, true, botPermissions, (_config.Prefixes[0] ?? BotConfig.DefaultPrefixes[0]));
+            return await _proxy.HandleIncomingMessage(evt, ctx, guild, channel, true, botPermissions, (_config.Prefixes?[0] ?? BotConfig.DefaultPrefixes[0]));
         }
 
         // Catch any failed proxy checks so they get ignored in the global error handler
