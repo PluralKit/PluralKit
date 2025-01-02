@@ -20,6 +20,7 @@ pub fn header_or_unknown(header: Option<&HeaderValue>) -> &str {
     }
 }
 
+#[allow(dead_code)]
 pub fn wrapper<F>(handler: F) -> impl Fn() -> axum::response::Response
 where
     F: Fn() -> anyhow::Result<Value>,

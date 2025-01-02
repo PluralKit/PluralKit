@@ -1,7 +1,7 @@
 use image::{DynamicImage, ImageFormat};
 use std::borrow::Cow;
 use std::io::Cursor;
-use time::Instant;
+use std::time::Instant;
 use tracing::{debug, error, info, instrument};
 
 use crate::{hash::Hash, ImageKind, PKAvatarError};
@@ -100,10 +100,10 @@ pub fn process(data: &[u8], kind: ImageKind) -> Result<ProcessOutput, PKAvatarEr
         "{}: lossy size {}K (parse: {} ms, decode: {} ms, resize: {} ms, encode: {} ms)",
         encoded.hash,
         encoded.data.len() / 1024,
-        (time_after_parse - time_before).whole_milliseconds(),
-        (time_after_decode - time_after_parse).whole_milliseconds(),
-        (time_after_resize - time_after_decode).whole_milliseconds(),
-        (time_after - time_after_resize).whole_milliseconds(),
+        (time_after_parse - time_before).as_millis(),
+        (time_after_decode - time_after_parse).as_millis(),
+        (time_after_resize - time_after_decode).as_millis(),
+        (time_after - time_after_resize).as_millis(),
     );
 
     debug!(
@@ -198,7 +198,7 @@ fn process_gif_inner(
         hash,
         original_data.buffer().len() / 1024,
         data.len() / 1024,
-        (time_after - time_before).whole_milliseconds(),
+        (time_after - time_before).as_millis(),
         frame_count
     );
 

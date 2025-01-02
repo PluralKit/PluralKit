@@ -1,5 +1,5 @@
 mod hash;
-mod migrate;
+// mod migrate;
 mod process;
 mod pull;
 mod store;

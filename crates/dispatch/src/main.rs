@@ -54,6 +54,7 @@ struct DispatchRequest {
     test: Option<String>,
 }
 
+#[allow(dead_code)]
 #[derive(Debug)]
 enum DispatchResponse {
     OK,

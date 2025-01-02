@@ -70,7 +70,7 @@ public class ShardConnection: IAsyncDisposable
             var (_, packet) = await _serializer.ReadPacket(_client);
             return packet;
         }
-        catch (Exception e)
+        catch (Exception)
         {
             // these are never useful
             // _logger.Error(e, "Shard {ShardId}: Error reading from WebSocket");

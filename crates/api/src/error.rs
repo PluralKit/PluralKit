@@ -1,6 +1,8 @@
 use axum::http::StatusCode;
 use std::fmt;
 
+// todo
+#[allow(dead_code)]
 #[derive(Debug)]
 pub struct PKError {
     pub response_code: StatusCode,
@@ -16,6 +18,7 @@ impl fmt::Display for PKError {
 
 impl std::error::Error for PKError {}
 
+#[allow(unused_macros)]
 macro_rules! define_error {
     ( $name:ident, $response_code:expr, $json_code:expr, $message:expr ) => {
         const $name: PKError = PKError {
@@ -26,4 +29,4 @@ macro_rules! define_error {
     };
 }
 
-define_error! { GENERIC_BAD_REQUEST, StatusCode::BAD_REQUEST, 0, "400: Bad Request" }
+// define_error! { GENERIC_BAD_REQUEST, StatusCode::BAD_REQUEST, 0, "400: Bad Request" }

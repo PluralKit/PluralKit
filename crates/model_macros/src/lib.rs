@@ -112,7 +112,7 @@ pub fn pk_model(
 
     let tfields = mk_tfields(fields.clone());
     let from_json = mk_tfrom_json(fields.clone());
-    let from_sql = mk_tfrom_sql(fields.clone());
+    let _from_sql = mk_tfrom_sql(fields.clone());
     let to_json = mk_tto_json(fields.clone());
 
     let fields: Vec<ModelField> = fields
@@ -182,10 +182,10 @@ fn mk_tfields(fields: Vec<ModelField>) -> TokenStream {
         })
         .collect()
 }
-fn mk_tfrom_json(fields: Vec<ModelField>) -> TokenStream {
+fn mk_tfrom_json(_fields: Vec<ModelField>) -> TokenStream {
     quote! { unimplemented!(); }
 }
-fn mk_tfrom_sql(fields: Vec<ModelField>) -> TokenStream {
+fn mk_tfrom_sql(_fields: Vec<ModelField>) -> TokenStream {
     quote! { unimplemented!(); }
 }
 fn mk_tto_json(fields: Vec<ModelField>) -> TokenStream {
@@ -248,12 +248,12 @@ fn mk_patch_fields(fields: Vec<ModelField>) -> TokenStream {
 fn mk_patch_validate(_fields: Vec<ModelField>) -> TokenStream {
     quote! { true }
 }
-fn mk_patch_from_json(fields: Vec<ModelField>) -> TokenStream {
+fn mk_patch_from_json(_fields: Vec<ModelField>) -> TokenStream {
     quote! { unimplemented!(); }
 }
-fn mk_patch_to_sql(fields: Vec<ModelField>) -> TokenStream {
+fn mk_patch_to_sql(_fields: Vec<ModelField>) -> TokenStream {
     quote! { unimplemented!(); }
 }
-fn mk_patch_to_json(fields: Vec<ModelField>) -> TokenStream {
+fn mk_patch_to_json(_fields: Vec<ModelField>) -> TokenStream {
     quote! { unimplemented!(); }
 }

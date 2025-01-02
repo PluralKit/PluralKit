@@ -165,6 +165,8 @@ public class HttpDiscordCache: IDiscordCache
     //        return hres;
     //    }
 
+    // it's fine
+#pragma warning disable CS8603
     public async Task<IEnumerable<Channel>> GetGuildChannels(ulong guildId)
     {
         var hres = await QueryCache<IEnumerable<Channel>>($"/guilds/{guildId}/channels", guildId);

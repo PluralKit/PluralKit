@@ -1,14 +1,14 @@
-use std::time::Duration;
 use std::{str::FromStr, sync::Arc};
 
 use crate::PKAvatarError;
 use anyhow::Context;
-use reqwest::{Client, ClientBuilder, StatusCode, Url};
-use time::Instant;
+use reqwest::{Client, StatusCode, Url};
+use std::time::Instant;
 use tracing::{error, instrument};
 
 const MAX_SIZE: u64 = 8 * 1024 * 1024;
 
+#[allow(dead_code)]
 pub struct PullResult {
     pub data: Vec<u8>,
     pub content_type: String,
@@ -85,16 +85,16 @@ pub async fn pull(
             "{}: {} (headers: {}ms, body: {}ms)",
             status,
             &trimmed_url,
-            headers_time.whole_milliseconds(),
-            body_time.whole_milliseconds()
+            headers_time.as_millis(),
+            body_time.as_millis()
         );
     } else {
         tracing::info!(
             "{}: {} (headers: {}ms, body: {}ms)",
             status,
             &trimmed_url,
-            headers_time.whole_milliseconds(),
-            body_time.whole_milliseconds()
+            headers_time.as_millis(),
+            body_time.as_millis()
         );
     };
 
@@ -105,6 +105,7 @@ pub async fn pull(
     })
 }
 
+#[allow(dead_code)]
 #[derive(Debug)]
 pub struct ParsedUrl {
     pub channel_id: u64,
