@@ -1,5 +1,8 @@
 use serde::{Deserialize, Serialize};
-use sqlx::{types::chrono::NaiveDateTime, FromRow};
+use sqlx::{
+    types::chrono::{DateTime, Utc},
+    FromRow,
+};
 use uuid::Uuid;
 
 #[derive(FromRow)]
@@ -11,7 +14,7 @@ pub struct ImageMeta {
     pub file_size: i32,
     pub width: i32,
     pub height: i32,
-    pub uploaded_at: Option<NaiveDateTime>,
+    pub uploaded_at: Option<DateTime<Utc>>,
 
     pub original_url: Option<String>,
     pub original_attachment_id: Option<i64>,
