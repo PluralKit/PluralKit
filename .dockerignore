@@ -3,12 +3,10 @@
 
 # Include project code and build files
 !PluralKit.*/
-!services/
-!lib/
 !Myriad/
 !.git
-!proto
 !dashboard
+!crates/
 
 !Cargo.toml
 !Cargo.lock

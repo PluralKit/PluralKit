@@ -23,9 +23,7 @@ RUN cargo chef cook --release --recipe-path recipe.json --target x86_64-unknown-
 COPY Cargo.toml /build/
 COPY Cargo.lock /build/
 
-# this needs to match workspaces in Cargo.toml
-COPY lib /build/lib
-COPY services/ /build/services
+COPY crates/ /build/crates
 
 RUN cargo build --bin api --release --target x86_64-unknown-linux-musl
 RUN cargo build --bin dispatch --release --target x86_64-unknown-linux-musl
