@@ -23,6 +23,7 @@
 
     <ItemGroup>
         <PackageReference Include="Humanizer.Core" Version="2.14.1" />
+        <PackageReference Include="Microsoft.AspNetCore.Server.Kestrel" Version="2.2.0" />
         <PackageReference Include="Sentry" Version="4.13.0" />
         <PackageReference Include="SixLabors.ImageSharp" Version="3.1.6" />
     </ItemGroup>

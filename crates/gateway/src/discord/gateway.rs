@@ -6,10 +6,14 @@ use tracing::{error, info, warn};
 use twilight_gateway::{
     create_iterator, ConfigBuilder, Event, EventTypeFlags, Message, Shard, ShardId,
 };
-use twilight_model::gateway::{
-    payload::outgoing::update_presence::UpdatePresencePayload,
-    presence::{Activity, ActivityType, Status},
-    Intents,
+use twilight_mention::ParseMention;
+use twilight_model::{
+    gateway::{
+        payload::outgoing::update_presence::UpdatePresencePayload,
+        presence::{Activity, ActivityType, Status},
+        Intents,
+    },
+    id::{marker::UserMarker, Id},
 };
 
 use crate::discord::identify_queue::{self, RedisQueue};
@@ -78,7 +82,7 @@ pub fn create_shards(redis: fred::clients::RedisPool) -> anyhow::Result<Vec<Shar
 
 pub async fn runner(
     mut shard: Shard<RedisQueue>,
-    _tx: Sender<(ShardId, String)>,
+    tx: Sender<(ShardId, String)>,
     shard_state: ShardStateManager,
     cache: Arc<DiscordCache>,
 ) {
@@ -165,7 +169,44 @@ pub async fn runner(
         cache.0.update(&event);
 
         // okay, we've handled the event internally, let's send it to consumers
-        // tx.send((shard.id(), raw_event)).unwrap();
+        // todo: caches
+        // todo: logclean
+        if let Event::MessageCreate(event) = event.clone()
+            && has_command_prefix(event.content.clone())
+        {
+            tx.send((shard.id(), raw_event)).unwrap();
+        } else if matches!(event, Event::ReactionAdd(_))
+            || matches!(event, Event::InteractionCreate(_))
+            || matches!(event, Event::MessageDelete(_))
+            || matches!(event, Event::MessageDeleteBulk(_))
+        {
+            tx.send((shard.id(), raw_event)).unwrap();
+        }
+    }
+}
+
+fn has_command_prefix(content: String) -> bool {
+    content.starts_with("pk;") || content.starts_with("pk!") || {
+        if content.len() < 3
+            || content.chars().nth(0) != Some('<')
+            || content.chars().nth(1) != Some('@')
+        {
+            return false;
+        }
+
+        let Some(idx) = content.find(|c| c == '>') else {
+            return false;
+        };
+
+        let Ok(id) = Id::<UserMarker>::parse(&content[0..=idx]) else {
+            return false;
+        };
+
+        id == libpk::config
+            .discord
+            .as_ref()
+            .expect("missing discord config")
+            .client_id
     }
 }
 

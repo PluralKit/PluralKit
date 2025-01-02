@@ -112,7 +112,7 @@ public class MessageCreated: IEventHandler<MessageCreateEvent>
             await _loggerClean.HandleLoggerBotCleanup(evt);
     }
 
-    private async ValueTask<bool> TryHandleCommand(int shardId, MessageCreateEvent evt, Guild? guild, Channel channel)
+    public async ValueTask<bool> TryHandleCommand(int shardId, MessageCreateEvent evt, Guild? guild, Channel channel)
     {
         var content = evt.Content;
         if (content == null) return false;

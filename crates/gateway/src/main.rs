@@ -3,6 +3,7 @@
 
 use chrono::Timelike;
 use fred::{clients::RedisPool, interfaces::*};
+use reqwest::ClientBuilder;
 use signal_hook::{
     consts::{SIGINT, SIGTERM},
     iterator::Signals,
@@ -33,7 +34,7 @@ async fn real_main() -> anyhow::Result<()> {
 
     let shards = discord::gateway::create_shards(redis.clone())?;
 
-    let (event_tx, _event_rx) = channel();
+    let (event_tx, event_rx) = channel();
 
     let mut senders = Vec::new();
     let mut signal_senders = Vec::new();
@@ -53,6 +54,26 @@ async fn real_main() -> anyhow::Result<()> {
     set.spawn(tokio::spawn(
         async move { scheduled_task(redis, senders).await },
     ));
+
+    set.spawn(tokio::spawn(async move {
+        let client = ClientBuilder::new()
+            .connect_timeout(Duration::from_secs(3))
+            .timeout(Duration::from_secs(3))
+            .build()
+            .expect("error making client");
+
+        while let Ok((_, event)) = event_rx.recv() {
+            if let Err(error) = client
+                .post("http://127.0.0.1:6000")
+                .header("content-type", "application/json")
+                .body(event)
+                .send()
+                .await
+            {
+                tracing::error!("failed to send command: {error}");
+            }
+        }
+    }));
 
     // todo: probably don't do it this way
     let api_shutdown_tx = shutdown_tx.clone();
