@@ -54,13 +54,14 @@ struct CleanupJobEntry {
 async fn cleanup_job(pool: sqlx::PgPool, bucket: Arc<s3::Bucket>) -> anyhow::Result<()> {
     let mut tx = pool.begin().await?;
 
-    let image_id: Option<CleanupJobEntry> =
-        sqlx::query_as(r#"
+    let image_id: Option<CleanupJobEntry> = sqlx::query_as(
+        r#"
                 select id from image_cleanup_jobs
                 where ts < now() - interval '1 day'
-                for update skip locked limit 1;"#)
-            .fetch_optional(&mut *tx)
-            .await?;
+                for update skip locked limit 1;"#,
+    )
+    .fetch_optional(&mut *tx)
+    .await?;
     if image_id.is_none() {
         info!("no job to run, sleeping for 1 minute");
         tokio::time::sleep(tokio::time::Duration::from_secs(60)).await;

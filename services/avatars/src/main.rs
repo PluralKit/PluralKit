@@ -89,6 +89,8 @@ async fn pull(
 
     if !req.force {
         if let Some(existing) = db::get_by_attachment_id(&state.pool, parsed.attachment_id).await? {
+            // remove any pending image cleanup
+            db::remove_deletion_queue(&state.pool, parsed.attachment_id).await?;
             return Ok(Json(PullResponse {
                 url: existing.url,
                 new: false,

@@ -33,6 +33,23 @@ pub async fn get_by_attachment_id(
     )
 }
 
+pub async fn remove_deletion_queue(pool: &PgPool, attachment_id: u64) -> anyhow::Result<()> {
+    sqlx::query(
+        r#"
+            delete from image_cleanup_jobs
+            where id in (
+                select id from images
+                where original_attachment_id = $1
+            )
+        "#,
+    )
+    .bind(attachment_id as i64)
+    .execute(pool)
+    .await?;
+
+    Ok(())
+}
+
 pub async fn pop_queue(
     pool: &PgPool,
 ) -> anyhow::Result<Option<(Transaction<Postgres>, ImageQueueEntry)>> {
