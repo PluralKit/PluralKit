@@ -61,25 +61,7 @@
         </Exec>
     </Target>
 
-    <Target Name="SetSourceRevisionTimestamp" BeforeTargets="InitializeSourceControlInformation">
-        <Exec Command="git show --no-patch --format=%at $(git rev-parse HEAD) &gt; ../.versionts" IgnoreExitCode="False">
-        </Exec>
-    </Target>
-
-    <Target Name="SetSourceIsDev" BeforeTargets="InitializeSourceControlInformation">
-        <Exec Command="(git diff-index --quiet HEAD -- &amp;&amp; echo 1) &gt; ../.versiondev" IgnoreExitCode="True">
-        </Exec>
-    </Target>
-
     <ItemGroup>
         <EmbeddedResource Include="..\.version" LogicalName="version" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <EmbeddedResource Include="..\.versionts" LogicalName="versionts" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <EmbeddedResource Include="..\.versiondev" LogicalName="versiondev" />
     </ItemGroup>
 </Project>
