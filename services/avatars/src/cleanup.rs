@@ -55,7 +55,10 @@ async fn cleanup_job(pool: sqlx::PgPool, bucket: Arc<s3::Bucket>) -> anyhow::Res
     let mut tx = pool.begin().await?;
 
     let image_id: Option<CleanupJobEntry> =
-        sqlx::query_as("select id from image_cleanup_jobs for update skip locked limit 1;")
+        sqlx::query_as(r#"
+                select id from image_cleanup_jobs
+                where ts < now() - interval '1 day'
+                for update skip locked limit 1;"#)
             .fetch_optional(&mut *tx)
             .await?;
     if image_id.is_none() {

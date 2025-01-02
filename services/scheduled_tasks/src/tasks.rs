@@ -131,7 +131,7 @@ pub async fn queue_deleted_image_cleanup(ctx: AppCtx) -> anyhow::Result<()> {
         .execute(
             r#"
 insert into image_cleanup_jobs
-select id from images where
+select id, now() from images where
         not exists (select from image_cleanup_jobs j where j.id = images.id)
     and not exists (select from systems where avatar_url = images.url)
     and not exists (select from systems where banner_image = images.url)
