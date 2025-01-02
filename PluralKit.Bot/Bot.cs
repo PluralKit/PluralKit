@@ -103,7 +103,7 @@ public class Bot
         await OnEventReceivedInner(shardId, evt);
     }
 
-    private async Task OnEventReceivedInner(int shardId, IGatewayEvent evt)
+    public async Task OnEventReceivedInner(int shardId, IGatewayEvent evt)
     {
         // HandleEvent takes a type parameter, automatically inferred by the event type
         // It will then look up an IEventHandler<TypeOfEvent> in the DI container and call that object's handler method

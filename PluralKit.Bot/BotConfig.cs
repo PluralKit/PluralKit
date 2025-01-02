@@ -32,6 +32,8 @@ public class BotConfig
     public bool IsBetaBot { get; set; } = false!;
     public string BetaBotAPIUrl { get; set; }
 
+    public bool RunCommandsHttpServer { get; set; } = false;
+
     public record ClusterSettings
     {
         // this is zero-indexed

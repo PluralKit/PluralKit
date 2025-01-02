@@ -30,6 +30,7 @@ twilight-cache-inmemory = { git = "https://github.com/pluralkit/twilight", featu
 twilight-util = { git = "https://github.com/pluralkit/twilight", features = ["permission-calculator"] }
 twilight-model = { git = "https://github.com/pluralkit/twilight" }
 twilight-http = { git = "https://github.com/pluralkit/twilight", default-features = false, features = ["rustls-native-roots"] }
+twilight-mention = { git = "https://github.com/pluralkit/twilight" }
 
 #twilight-gateway = { path = "../twilight/twilight-gateway" }
 #twilight-cache-inmemory = { path = "../twilight/twilight-cache-inmemory", features = ["permission-calculator"] }

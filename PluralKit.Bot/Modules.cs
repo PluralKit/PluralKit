@@ -153,6 +153,7 @@ public class BotModule: Module
         builder.RegisterType<CommandMessageService>().AsSelf().SingleInstance();
         builder.RegisterType<InteractionDispatchService>().AsSelf().SingleInstance();
         builder.RegisterType<AvatarHostingService>().AsSelf().SingleInstance();
+        builder.RegisterType<HttpCommandsService>().AsSelf().SingleInstance();
 
         // Sentry stuff
         builder.Register(_ => new Scope(null)).AsSelf().InstancePerLifetimeScope();

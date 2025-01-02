@@ -13,6 +13,7 @@ futures = { workspace = true }
 lazy_static = { workspace = true }
 libpk = { path = "../libpk" }
 metrics = { workspace = true }
+reqwest = { workspace = true }
 serde_json = { workspace = true }
 signal-hook = { workspace = true }
 tokio = { workspace = true }
@@ -23,5 +24,6 @@ twilight-cache-inmemory = { workspace = true }
 twilight-util = { workspace = true }
 twilight-model = { workspace = true }
 twilight-http = { workspace = true }
+twilight-mention = { workspace = true }
 
 serde_variant = "0.1.3"

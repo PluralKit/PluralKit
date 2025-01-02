@@ -1088,6 +1088,7 @@ dependencies = [
  "lazy_static",
  "libpk",
  "metrics",
+ "reqwest 0.12.8",
  "serde_json",
  "serde_variant",
  "signal-hook",
@@ -1096,6 +1097,7 @@ dependencies = [
  "twilight-cache-inmemory",
  "twilight-gateway",
  "twilight-http",
+ "twilight-mention",
  "twilight-model",
  "twilight-util",
 ]
@@ -4121,6 +4123,14 @@ source = "git+https://github.com/pluralkit/twilight#b346757b3054d461f5652b5ba014
 dependencies = [
  "tokio",
  "tracing",
+]
+
+[[package]]
+name = "twilight-mention"
+version = "0.16.0-rc.1"
+source = "git+https://github.com/pluralkit/twilight#b346757b3054d461f5652b5ba0148a70eda5697e"
+dependencies = [
+ "twilight-model",
 ]
 
 [[package]]

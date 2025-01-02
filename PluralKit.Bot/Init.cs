@@ -57,6 +57,12 @@ public class Init
 
             var cache = services.Resolve<IDiscordCache>();
 
+            if (config.RunCommandsHttpServer)
+            {
+                await services.Resolve<HttpCommandsService>().Run();
+                return;
+            }
+
             if (config.Cluster == null)
             {
                 // "Connect to the database" (ie. set off database migrations and ensure state)
