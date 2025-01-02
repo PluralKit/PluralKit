@@ -16,4 +16,5 @@ sqlx = { workspace = true }
 tokio = { workspace = true }
 tracing = { workspace = true }
 
+croner = "2.1.0"
 num-format = "0.4.4"
