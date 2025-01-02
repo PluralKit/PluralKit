@@ -43,6 +43,12 @@ public class Shard
 
     private GatewayStatusUpdate? _presence { get; init; }
 
+    // opening hundreds of websocket connections simultaneously (at cold start) breaks *something*,
+    // so we use the identify ratelimiter to delay them
+    // we can't do this on later reconnections though, since it will time the session out and fail
+    // to resume
+    private bool _didInitialIdentify { get; set; } = false;
+
     public Shard(GatewaySettings settings, ShardInfo info, IGatewayRatelimiter ratelimiter, string url, ILogger logger, GatewayStatusUpdate? presence = null)
     {
         _jsonSerializerOptions = new JsonSerializerOptions().ConfigureForMyriad();
@@ -132,7 +138,8 @@ public class Shard
     {
         while (true)
         {
-            await _ratelimiter.Identify(_info.ShardId);
+            if (!_didInitialIdentify)
+                await _ratelimiter.Identify(_info.ShardId);
 
             _logger.Information("Shard {ShardId}: Connecting to WebSocket", _info.ShardId);
             try
@@ -152,7 +159,12 @@ public class Shard
         => _conn.Disconnect(closeStatus, null);
 
     private async Task SendIdentify()
-        => await _conn.Send(new GatewayPacket
+    {
+        if (_didInitialIdentify)
+            await _ratelimiter.Identify(_info.ShardId);
+        _didInitialIdentify = true;
+
+        await _conn.Send(new GatewayPacket
         {
             Opcode = GatewayOpcode.Identify,
             Payload = new GatewayIdentify
@@ -171,6 +183,7 @@ public class Shard
                 Presence = _presence,
             }
         });
+    }
 
     private async Task SendResume((string SessionId, int? LastSeq) arg)
         => await _conn.Send(new GatewayPacket
