@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-libpk = { path = "../../lib/libpk" }
+libpk = { path = "../libpk" }
 
 anyhow = { workspace = true }
 chrono = { workspace = true }

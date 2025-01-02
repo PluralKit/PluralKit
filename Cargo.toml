@@ -1,13 +1,6 @@
 [workspace]
 members = [
-    "./lib/libpk",
-    "./services/api",
-    "./services/dispatch",
-    "./services/gateway",
-    "./services/avatars",
-    "./services/scheduled_tasks",
-
-    "./lib/models",
+    "./crates/*"
 ]
 
 [workspace.dependencies]

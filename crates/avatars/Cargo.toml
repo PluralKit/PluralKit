@@ -8,7 +8,7 @@ name = "avatar_cleanup"
 path = "src/cleanup.rs"
 
 [dependencies]
-libpk = { path = "../../lib/libpk" }
+libpk = { path = "../libpk" }
 anyhow = { workspace = true }
 axum = { workspace = true }
 futures = { workspace = true }

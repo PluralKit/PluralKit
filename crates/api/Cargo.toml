@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-pluralkit_models = { path = "../../lib/models" }
-libpk = { path = "../../lib/libpk" }
+pluralkit_models = { path = "../models" }
+libpk = { path = "../libpk" }
 
 anyhow = { workspace = true } 
 axum = { workspace = true }
