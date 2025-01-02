@@ -329,7 +329,7 @@ public class SystemEdit
             await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { Tag = newTag });
 
             await ctx.Reply(
-                $"{Emojis.Success} System tag changed (using {newTag.Length}/{Limits.MaxSystemTagLength} characters). Member names will now end with {newTag.AsCode()} when proxied.");
+                $"{Emojis.Success} System tag changed (using {newTag.Length}/{Limits.MaxSystemTagLength} characters). Member names will now have the tag {newTag.AsCode()} when proxied.\n\nTo check or change where your tag appears in your name use the command `{ctx.DefaultPrefix}cfg name format`.");
         }
     }
 
@@ -387,7 +387,7 @@ public class SystemEdit
             await ctx.Repository.UpdateSystemGuild(target.Id, ctx.Guild.Id, new SystemGuildPatch { Tag = newTag });
 
             await ctx.Reply(
-                $"{Emojis.Success} System server tag changed (using {newTag.Length}/{Limits.MaxSystemTagLength} characters). Member names will now end with {newTag.AsCode()} when proxied in the current server '{ctx.Guild.Name}'.");
+                $"{Emojis.Success} System server tag changed (using {newTag.Length}/{Limits.MaxSystemTagLength} characters). Member names will now have the tag {newTag.AsCode()} when proxied in the current server '{ctx.Guild.Name}'.\n\nTo check or change where your tag appears in your name use the command `{ctx.DefaultPrefix}cfg name format`.");
 
             if (!settings.TagEnabled)
                 await ctx.Reply(setDisabledWarning);
@@ -398,7 +398,7 @@ public class SystemEdit
             await ctx.Repository.UpdateSystemGuild(target.Id, ctx.Guild.Id, new SystemGuildPatch { Tag = null });
 
             await ctx.Reply(
-                $"{Emojis.Success} System server tag cleared. Member names will now end with the global system tag, if there is one set.");
+                $"{Emojis.Success} System server tag cleared. Member names will now use the global system tag, if there is one set.\n\nTo check or change where your tag appears in your name use the command `{ctx.DefaultPrefix}cfg name format`.");
 
             if (!settings.TagEnabled)
                 await ctx.Reply(setDisabledWarning);
@@ -437,10 +437,12 @@ public class SystemEdit
                 {
                     if (settings.Tag != null)
                         str +=
-                            $" Member names will now end with the server-specific tag {settings.Tag.AsCode()} when proxied in the current server '{ctx.Guild.Name}'.";
+                            $" Member names will now use the server-specific tag {settings.Tag.AsCode()} when proxied in the current server '{ctx.Guild.Name}'."
+                            + $"\n\nTo check or change where your tag appears in your name use the command `{ctx.DefaultPrefix}cfg name format`.";
                     else
                         str +=
-                            " Member names will now end with the global system tag when proxied in the current server, if there is one set.";
+                            " Member names will now use the global system tag when proxied in the current server, if there is one set."
+                            + "\n\nTo check or change where your tag appears in your name use the command `{ctx.DefaultPrefix}cfg name format`.";
                 }
             }
 
