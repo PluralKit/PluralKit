@@ -1,42 +1,42 @@
 use std::collections::HashMap;
 
-use smol_str::SmolStr;
+use smol_str::{SmolStr, ToSmolStr};
 
 lazy_static::lazy_static! {
     // Dictionary of (left, right) quote pairs
     // Each char in the string is an individual quote, multi-char strings imply "one of the following chars"
     // Certain languages can have quote patterns that have a different character for open and close
-    pub static ref QUOTE_PAIRS: HashMap<String, String> = {
-        let mut pairs = HashMap::new();
+    pub static ref QUOTE_PAIRS: HashMap<SmolStr, SmolStr> = {
+        let mut pairs: HashMap<SmolStr, SmolStr> = HashMap::new();
 
-        macro_rules! insert_pair {
-            ($a:literal, $b:literal) => {
-                pairs.insert($a.to_string(), $b.to_string());
-                // make it easier to look up right quotes
-                for char in $a.chars() {
-                    pairs.insert(char.to_string(), $b.to_string());
-                }
+        let mut insert_pair = |a: &'static str, b: &'static str| {
+            let a = SmolStr::new_static(a);
+            let b = SmolStr::new_static(b);
+            pairs.insert(a.clone(), b.clone());
+            // make it easier to look up right quotes
+            for char in a.chars() {
+                pairs.insert(char.to_smolstr(), b.clone());
             }
-        }
+        };
 
         // Basic
-        insert_pair!( "'", "'" ); // ASCII single quotes
-        insert_pair!( "\"", "\"" ); // ASCII double quotes
+        insert_pair( "'", "'" ); // ASCII single quotes
+        insert_pair( "\"", "\"" ); // ASCII double quotes
 
         // "Smart quotes"
         // Specifically ignore the left/right status of the quotes and match any combination of them
         // Left string also includes "low" quotes to allow for the low-high style used in some locales
-        insert_pair!( "\u{201C}\u{201D}\u{201F}\u{201E}", "\u{201C}\u{201D}\u{201F}" ); // double quotes
-        insert_pair!( "\u{2018}\u{2019}\u{201B}\u{201A}", "\u{2018}\u{2019}\u{201B}" ); // single quotes
+        insert_pair( "\u{201C}\u{201D}\u{201F}\u{201E}", "\u{201C}\u{201D}\u{201F}" ); // double quotes
+        insert_pair( "\u{2018}\u{2019}\u{201B}\u{201A}", "\u{2018}\u{2019}\u{201B}" ); // single quotes
 
         // Chevrons (normal and "fullwidth" variants)
-        insert_pair!( "\u{00AB}\u{300A}", "\u{00BB}\u{300B}" ); // double chevrons, pointing away (<<text>>)
-        insert_pair!( "\u{00BB}\u{300B}", "\u{00AB}\u{300A}" ); // double chevrons, pointing together (>>text<<)
-        insert_pair!( "\u{2039}\u{3008}", "\u{203A}\u{3009}" ); // single chevrons, pointing away (<text>)
-        insert_pair!( "\u{203A}\u{3009}", "\u{2039}\u{3008}" ); // single chevrons, pointing together (>text<)
+        insert_pair( "\u{00AB}\u{300A}", "\u{00BB}\u{300B}" ); // double chevrons, pointing away (<<text>>)
+        insert_pair( "\u{00BB}\u{300B}", "\u{00AB}\u{300A}" ); // double chevrons, pointing together (>>text<<)
+        insert_pair( "\u{2039}\u{3008}", "\u{203A}\u{3009}" ); // single chevrons, pointing away (<text>)
+        insert_pair( "\u{203A}\u{3009}", "\u{2039}\u{3008}" ); // single chevrons, pointing together (>text<)
 
         // Other
-        insert_pair!( "\u{300C}\u{300E}", "\u{300D}\u{300F}" ); // corner brackets (Japanese/Chinese)
+        insert_pair( "\u{300C}\u{300E}", "\u{300D}\u{300F}" ); // corner brackets (Japanese/Chinese)
 
         pairs
     };
