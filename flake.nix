@@ -104,7 +104,7 @@
               text = ''
                 set -x
                 [ "''${1:-}" == "" ] && cargo build --package commands --release
-                uniffi-bindgen-cs "''${1:-target/debug/libcommands.so}" --library --out-dir="''${2:-./PluralKit.Bot}"
+                uniffi-bindgen-cs "''${1:-target/release/libcommands.so}" --library --out-dir="''${2:-./PluralKit.Bot}"
               '';
             };
           };
