@@ -1,3 +1,5 @@
+use smol_str::SmolStr;
+
 #[derive(Debug, Clone, Eq, Hash, PartialEq)]
 pub enum Token {
     /// Token used to represent a finished command (i.e. no more parameters required)
@@ -5,10 +7,10 @@ pub enum Token {
     Empty,
 
     /// A bot-defined value ("member" in `pk;member MyName`)
-    Value(Vec<String>),
+    Value(Vec<SmolStr>),
     /// A command defined by multiple values
     // todo!
-    MultiValue(Vec<Vec<String>>),
+    MultiValue(Vec<Vec<SmolStr>>),
 
     FullString,
 
@@ -26,20 +28,20 @@ pub enum Token {
 pub enum TokenMatchResult {
     NoMatch,
     /// Token matched, optionally with a value.
-    Match(Option<String>),
+    Match(Option<SmolStr>),
 }
 
 // move this somewhere else
 lazy_static::lazy_static!(
-    static ref MEMBER_PRIVACY_TARGETS: Vec<String> = vec![
-        "visibility".to_string(),
-        "name".to_string(),
-        "todo".to_string()
-    ];
+    static ref MEMBER_PRIVACY_TARGETS: Vec<SmolStr> = [
+        "visibility",
+        "name",
+        "todo",
+    ].into_iter().map(SmolStr::new_static).collect();
 );
 
 impl Token {
-    pub fn try_match(&self, input: Option<String>) -> TokenMatchResult {
+    pub fn try_match(&self, input: Option<SmolStr>) -> TokenMatchResult {
         // short circuit on empty things
         if matches!(self, Self::Empty) && input.is_none() {
             return TokenMatchResult::Match(None);
@@ -66,7 +68,9 @@ impl Token {
             Self::FullString => return TokenMatchResult::Match(Some(input)),
             Self::MemberRef => return TokenMatchResult::Match(Some(input)),
             Self::MemberPrivacyTarget
-                if MEMBER_PRIVACY_TARGETS.contains(&input.trim().to_string()) =>
+                if MEMBER_PRIVACY_TARGETS
+                    .iter()
+                    .any(|target| target.eq(input.trim())) =>
             {
                 return TokenMatchResult::Match(Some(input))
             }

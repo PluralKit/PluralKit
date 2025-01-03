@@ -7,6 +7,7 @@ uniffi::include_scaffolding!("commands");
 
 mod string;
 mod token;
+use smol_str::SmolStr;
 use token::*;
 
 // todo!: move all this stuff into a different file
@@ -74,77 +75,84 @@ struct Command {
     cb: String,
 }
 
-fn command(tokens: &[&Token], help: &str, cb: &str) -> Command {
+fn command(tokens: impl IntoIterator<Item = Token>, help: impl ToString, cb: impl ToString) -> Command {
     Command {
-        tokens: tokens.iter().map(|&x| x.clone()).collect(),
+        tokens: tokens.into_iter().collect(),
         help: help.to_string(),
         cb: cb.to_string(),
     }
 }
 
+macro_rules! command {
+    ([$($v:expr),+], $help:expr, $cb:expr) => {
+        $crate::command([$($v.clone()),*], $help, $cb)
+    };
+}
+
 mod commands {
+    use smol_str::SmolStr;
+
     use super::Token;
 
-    use super::command;
-    use super::Token::*;
-
-    fn cmd(value: &str) -> Token {
-        Token::Value(vec![value.to_string()])
+    fn cmd(value: impl Into<SmolStr>) -> Token {
+        Token::Value(vec![value.into()])
     }
 
-    pub fn cmd_with_alias(value: &[&str]) -> Token {
-        Token::Value(value.iter().map(|x| x.to_string()).collect())
+    pub fn cmd_with_alias(value: impl IntoIterator<Item = impl Into<SmolStr>>) -> Token {
+        Token::Value(value.into_iter().map(Into::into).collect())
     }
 
     // todo: this needs to have less ampersands -alyssa
     pub fn happy() -> Vec<super::Command> {
-        let system = &cmd_with_alias(&["system", "s"]);
-        let member = &cmd_with_alias(&["member", "m"]);
-        let description = &cmd_with_alias(&["description", "desc"]);
-        let privacy = &cmd_with_alias(&["privacy", "priv"]);
+        use Token::*;
+
+        let system = cmd_with_alias(["system", "s"]);
+        let member = cmd_with_alias(["member", "m"]);
+        let description = cmd_with_alias(["description", "desc"]);
+        let privacy = cmd_with_alias(["privacy", "priv"]);
         vec![
-            command(&[&cmd("help")], "help", "Shows the help command"),
-            command(
-                &[system],
+            command!([cmd("help")], "help", "Shows the help command"),
+            command!(
+                [system],
                 "system_show",
-                "Shows information about your system",
+                "Shows information about your system"
             ),
-            command(&[system, &cmd("new")], "system_new", "Creates a new system"),
-            command(
-                &[member, &cmd_with_alias(&["new", "n"])],
+            command!([system, cmd("new")], "system_new", "Creates a new system"),
+            command!(
+                [member, cmd_with_alias(["new", "n"])],
                 "member_new",
-                "Creates a new system member",
+                "Creates a new system member"
             ),
-            command(
-                &[member, &MemberRef],
+            command!(
+                [member, MemberRef],
                 "member_show",
-                "Shows information about a member",
+                "Shows information about a member"
             ),
-            command(
-                &[member, &MemberRef, description],
+            command!(
+                [member, MemberRef, description],
                 "member_desc_show",
-                "Shows a member's description",
+                "Shows a member's description"
             ),
-            command(
-                &[member, &MemberRef, description, &FullString],
+            command!(
+                [member, MemberRef, description, FullString],
                 "member_desc_update",
-                "Changes a member's description",
+                "Changes a member's description"
             ),
-            command(
-                &[member, &MemberRef, privacy],
+            command!(
+                [member, MemberRef, privacy],
                 "member_privacy_show",
-                "Displays a member's current privacy settings",
+                "Displays a member's current privacy settings"
             ),
-            command(
-                &[
+            command!(
+                [
                     member,
-                    &MemberRef,
+                    MemberRef,
                     privacy,
-                    &MemberPrivacyTarget,
-                    &PrivacyLevel,
+                    MemberPrivacyTarget,
+                    PrivacyLevel
                 ],
                 "member_privacy_update",
-                "Changes a member's privacy settings",
+                "Changes a member's privacy settings"
             ),
         ]
     }
@@ -188,9 +196,9 @@ pub struct ParsedCommand {
 /// - optionally a short-circuit error
 fn next_token(
     possible_tokens: Vec<Token>,
-    input: String,
+    input: SmolStr,
     current_pos: usize,
-) -> Result<(Token, Option<String>, usize), Option<String>> {
+) -> Result<(Token, Option<SmolStr>, usize), Option<SmolStr>> {
     // get next parameter, matching quotes
     let param = crate::string::next_param(input.clone(), current_pos);
     println!("matched: {param:?}\n---");
@@ -203,7 +211,7 @@ fn next_token(
     {
         return Ok((
             Token::Flag,
-            Some(value.trim_start_matches('-').to_string()),
+            Some(value.trim_start_matches('-').into()),
             new_pos,
         ));
     }
@@ -230,6 +238,7 @@ fn next_token(
 }
 
 fn parse_command(input: String) -> CommandResult {
+    let input: SmolStr = input.into();
     let mut local_tree: TreeBranch = COMMAND_TREE.clone();
 
     // end position of all currently matched tokens
@@ -247,13 +256,13 @@ fn parse_command(input: String) -> CommandResult {
             Ok((found_token, arg, new_pos)) => {
                 current_pos = new_pos;
                 if let Token::Flag = found_token {
-                    flags.insert(arg.unwrap(), None);
+                    flags.insert(arg.unwrap().into(), None);
                     // don't try matching flags as tree elements
                     continue;
                 }
 
                 if let Some(arg) = arg {
-                    args.push(arg);
+                    args.push(arg.into());
                 }
 
                 if let Some(next_tree) = local_tree.branches.get(&found_token) {
@@ -280,7 +289,7 @@ fn parse_command(input: String) -> CommandResult {
             }
             Err(Some(short_circuit)) => {
                 return CommandResult::Err {
-                    error: short_circuit,
+                    error: short_circuit.into(),
                 };
             }
         }

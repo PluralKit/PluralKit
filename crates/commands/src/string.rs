@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 
+use smol_str::SmolStr;
+
 lazy_static::lazy_static! {
     // Dictionary of (left, right) quote pairs
     // Each char in the string is an individual quote, multi-char strings imply "one of the following chars"
@@ -43,14 +45,14 @@ lazy_static::lazy_static! {
 // very very simple quote matching
 // quotes need to be at start/end of words, and are ignored if a closing quote is not present
 // WTB POSIX quoting: https://pubs.opengroup.org/onlinepubs/9799919799/utilities/V3_chap02.html
-pub fn next_param(input: String, current_pos: usize) -> Option<(String, usize)> {
+pub(super) fn next_param(input: SmolStr, current_pos: usize) -> Option<(SmolStr, usize)> {
     if input.len() == current_pos {
         return None;
     }
 
     let leading_whitespace_count =
         input[..current_pos].len() - input[..current_pos].trim_start().len();
-    let substr_to_match = input[current_pos + leading_whitespace_count..].to_string();
+    let substr_to_match: SmolStr = input[current_pos + leading_whitespace_count..].into();
     println!("stuff: {input} {current_pos} {leading_whitespace_count}");
     println!("to match: {substr_to_match}");
 
@@ -67,7 +69,7 @@ pub fn next_param(input: String, current_pos: usize) -> Option<(String, usize)> 
                 {
                     // return quoted string, without quotes
                     return Some((
-                        substr_to_match[1..pos - 1].to_string(),
+                        substr_to_match[1..pos - 1].into(),
                         current_pos + pos + 1,
                     ));
                 }
@@ -78,7 +80,7 @@ pub fn next_param(input: String, current_pos: usize) -> Option<(String, usize)> 
     // find next whitespace character
     for (pos, char) in substr_to_match.clone().char_indices() {
         if char.is_whitespace() {
-            return Some((substr_to_match[..pos].to_string(), current_pos + pos + 1));
+            return Some((substr_to_match[..pos].into(), current_pos + pos + 1));
         }
     }
 
