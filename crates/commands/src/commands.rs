@@ -18,26 +18,28 @@ pub mod server_config;
 pub mod switch;
 pub mod system;
 
+use smol_str::SmolStr;
+
 use crate::{command, token::Token};
 
 #[derive(Clone)]
 pub struct Command {
     // TODO: fix hygiene
     pub tokens: Vec<Token>,
-    pub help: String,
-    pub cb: String,
+    pub help: SmolStr,
+    pub cb: SmolStr,
 }
 
 impl Command {
     pub fn new(
         tokens: impl IntoIterator<Item = Token>,
-        help: impl ToString,
-        cb: impl ToString,
+        help: impl Into<SmolStr>,
+        cb: impl Into<SmolStr>,
     ) -> Self {
         Self {
             tokens: tokens.into_iter().collect(),
-            help: help.to_string(),
-            cb: cb.to_string(),
+            help: help.into(),
+            cb: cb.into(),
         }
     }
 }

@@ -1,9 +1,11 @@
+use smol_str::SmolStr;
+
 use crate::{commands::Command, Token};
 use std::{cmp::Ordering, collections::HashMap};
 
 #[derive(Debug, Clone)]
 pub struct TreeBranch {
-    pub current_command_key: Option<String>,
+    pub current_command_key: Option<SmolStr>,
     /// branches.keys(), but sorted by specificity
     pub possible_tokens: Vec<Token>,
     pub branches: HashMap<Token, TreeBranch>,

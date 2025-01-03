@@ -84,7 +84,7 @@ fn parse_command(input: String) -> CommandResult {
                 if let Some(command_ref) = local_tree.current_command_key {
                     return CommandResult::Ok {
                         command: ParsedCommand {
-                            command_ref: command_ref.to_owned(),
+                            command_ref: command_ref.into(),
                             args,
                             flags,
                         },
