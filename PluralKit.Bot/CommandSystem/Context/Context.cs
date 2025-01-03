@@ -48,7 +48,6 @@ public class Context
         _commandMessageService = provider.Resolve<CommandMessageService>();
         CommandPrefix = message.Content?.Substring(0, commandParseOffset);
         DefaultPrefix = prefixes[0];
-        Parameters = new Parameters(message.Content?.Substring(commandParseOffset));
         Rest = provider.Resolve<DiscordApiClient>();
         Cluster = provider.Resolve<Cluster>();
 
@@ -87,7 +86,7 @@ public class Context
 
     public readonly string CommandPrefix;
     public readonly string DefaultPrefix;
-    public readonly Parameters Parameters;
+    public readonly ParametersFFI Parameters;
 
     internal readonly IDatabase Database;
     internal readonly ModelRepository Repository;
