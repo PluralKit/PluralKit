@@ -103,8 +103,13 @@
               ];
               text = ''
                 set -x
-                [ "''${1:-}" == "" ] && cargo build --package commands --release
-                uniffi-bindgen-cs "''${1:-target/release/libcommands.so}" --library --out-dir="''${2:-./PluralKit.Bot}"
+                commandslib="''${1:-}"
+                if [ "$commandslib" == "" ]; then
+                  cargo build --package commands --release
+                  commandslib="target/release/libcommands.so"
+                fi
+                uniffi-bindgen-cs "$commandslib" --library --out-dir="''${2:-./PluralKit.Bot}"
+                cp -f "$commandslib" obj/
               '';
             };
           };
