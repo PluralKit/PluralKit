@@ -34,9 +34,9 @@ pub async fn update_db_meta(ctx: AppCtx) -> anyhow::Result<()> {
             r#"
             update info set
                 system_count = (select count(*) from systems),
-                member_count = (select count(*) from systems),
-                group_count = (select count(*) from systems),
-                switch_count = (select count(*) from systems)
+                member_count = (select count(*) from members),
+                group_count = (select count(*) from groups),
+                switch_count = (select count(*) from switches)
         "#,
         )
         .await?;
