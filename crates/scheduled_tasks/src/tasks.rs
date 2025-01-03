@@ -87,7 +87,7 @@ pub async fn update_discord_stats(ctx: AppCtx) -> anyhow::Result<()> {
     let mut guild_count = 0;
     let mut channel_count = 0;
 
-    for idx in 0..=cfg.expected_gateway_count {
+    for idx in 0..cfg.expected_gateway_count {
         let res = client
             .get(format!("http://cluster{idx}.{}/stats", cfg.gateway_url))
             .send()
