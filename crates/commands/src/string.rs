@@ -68,10 +68,7 @@ pub(super) fn next_param(input: SmolStr, current_pos: usize) -> Option<(SmolStr,
                         .is_whitespace()
                 {
                     // return quoted string, without quotes
-                    return Some((
-                        substr_to_match[1..pos - 1].into(),
-                        current_pos + pos + 1,
-                    ));
+                    return Some((substr_to_match[1..pos - 1].into(), current_pos + pos + 1));
                 }
             }
         }

@@ -41,6 +41,14 @@ lazy_static::lazy_static!(
 );
 
 impl Token {
+    pub fn cmd(value: impl Into<SmolStr>) -> Self {
+        Self::Value(vec![value.into()])
+    }
+
+    pub fn cmd_with_alias(value: impl IntoIterator<Item = impl Into<SmolStr>>) -> Self {
+        Self::Value(value.into_iter().map(Into::into).collect())
+    }
+
     pub fn try_match(&self, input: Option<SmolStr>) -> TokenMatchResult {
         // short circuit on empty things
         if matches!(self, Self::Empty) && input.is_none() {
