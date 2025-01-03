@@ -51,6 +51,17 @@ public class Context
         Parameters = new Parameters(message.Content?.Substring(commandParseOffset));
         Rest = provider.Resolve<DiscordApiClient>();
         Cluster = provider.Resolve<Cluster>();
+
+        try
+        {
+            Parameters = new ParametersFFI(message.Content?.Substring(commandParseOffset));
+        }
+        catch (PKError e)
+        {
+            // todo: not this
+            Reply($"{Emojis.Error} {e.Message}");
+            throw;
+        }
     }
 
     public readonly IDiscordCache Cache;
