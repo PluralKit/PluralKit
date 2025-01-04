@@ -388,7 +388,7 @@ public class MemberEdit
 
         eb.Field(new Embed.Field("Display name", (target.DisplayName != null && showDisplayName)
             ? boldIf(target.DisplayName, memberGuildConfig?.DisplayName == null)
-            : "*(none)*"
+            : "*(no displayname set or name is private)*"
         ));
 
         if (ctx.Guild != null)
@@ -417,18 +417,18 @@ public class MemberEdit
             await ctx.Reply(successStr);
         }
 
-        var noDisplayNameSetMessage = "This member does not have a display name set.";
-        if (ctx.System?.Id == target.System)
-            noDisplayNameSetMessage +=
-                $" To set one, type `{ctx.DefaultPrefix}member {target.Reference(ctx)} displayname <display name>`.";
+        var isOwner = ctx.System?.Id == target.System;
+        var noDisplayNameSetMessage = $"This member does not have a display name set{(isOwner ? "" : " or name is private")}."
+            + (isOwner ? $" To set one, type `{ctx.DefaultPrefix}member {target.Reference(ctx)} displayname <display name>`." : "");
 
-        // No perms check, display name isn't covered by member privacy
+        // Whether displayname is shown or not should depend on if member name privacy is set.
+        // If name privacy is on then displayname should look like name.
 
         var format = ctx.MatchFormat();
 
         // if what's next is "raw"/"plaintext" we need to check for null
         if (format != ReplyFormat.Standard)
-            if (target.DisplayName == null)
+            if (target.DisplayName == null || !target.NamePrivacy.CanAccess(ctx.DirectLookupContextFor(target.System)))
             {
                 await ctx.Reply(noDisplayNameSetMessage);
                 return;
