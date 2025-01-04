@@ -90,11 +90,12 @@
                 set -x
                 commandslib="''${1:-}"
                 if [ "$commandslib" == "" ]; then
-                  cargo build --package commands --release
-                  commandslib="target/release/libcommands.so"
+                  cargo -Z unstable-options build --package commands --release --artifact-dir obj/
+                  commandslib="obj/libcommands.so"
+                else
+                  cp -f "$commandslib" obj/
                 fi
                 uniffi-bindgen-cs "$commandslib" --library --out-dir="''${2:-./PluralKit.Bot}"
-                cp -f "$commandslib" obj/
               '';
             };
           };
@@ -204,7 +205,7 @@
                         set -x
                         ${pluralkitConfCheck}
                         ${self'.apps.generate-command-parser-bindings.program}
-                        dotnet build -c Release -o obj/
+                        dotnet build ./PluralKit.Bot/PluralKit.Bot.csproj -c Release -o obj/
                         exec dotnet obj/PluralKit.Bot.dll
                       '';
                     };
