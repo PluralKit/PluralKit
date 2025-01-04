@@ -85,6 +85,8 @@ impl ShardStateManager {
             .recent()
             .first()
             .map_or_else(|| 0, |d| d.as_millis()) as i32;
+        gauge!("pluralkit_gateway_shard_latency", "shard_id" => shard_id.to_string())
+            .set(info.latency);
         self.save_shard(shard_id, info).await?;
         Ok(())
     }
