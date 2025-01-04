@@ -23,6 +23,32 @@ public class MemberEdit
 
     public async Task Name(Context ctx, PKMember target)
     {
+        var format = ctx.MatchFormat();
+
+        if (!ctx.HasNext() || format != ReplyFormat.Standard)
+        {
+            var lctx = ctx.DirectLookupContextFor(target.System);
+            switch (format)
+            {
+                case ReplyFormat.Raw:
+                    await ctx.Reply($"```{target.NameFor(lctx)}```");
+                    break;
+                case ReplyFormat.Plaintext:
+                    var eb = new EmbedBuilder()
+                        .Description($"Showing name for member {target.NameFor(ctx)} (`{target.DisplayHid(ctx.Config)}`)");
+                    await ctx.Reply(target.NameFor(lctx), embed: eb.Build());
+                    break;
+                default:
+                    var replyStr = $"Name for member {target.DisplayHid(ctx.Config)} is **{target.NameFor(lctx)}**.";
+                    if (target.System == ctx.System?.Id)
+                        replyStr += $"\nTo rename {target.DisplayHid(ctx.Config)} type `{ctx.DefaultPrefix}member {target.NameFor(ctx)} rename <new name>`."
+                        + $" Using {target.NameFor(lctx).Length}/{Limits.MaxMemberNameLength} characters.";
+                    await ctx.Reply(replyStr);
+                    break;
+            }
+            return;
+        }
+
         ctx.CheckSystem().CheckOwnMember(target);
 
         var newName = ctx.RemainderOrNull() ?? throw new PKSyntaxError("You must pass a new name for the member.");
