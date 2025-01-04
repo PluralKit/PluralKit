@@ -204,7 +204,8 @@
                         set -x
                         ${pluralkitConfCheck}
                         ${self'.apps.generate-command-parser-bindings.program}
-                        exec dotnet run -c Release --project PluralKit.Bot
+                        dotnet build -c Release -o obj/
+                        exec dotnet obj/PluralKit.Bot.dll
                       '';
                     };
                     depends_on.postgres.condition = "process_healthy";
