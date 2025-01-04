@@ -1,4 +1,4 @@
-use smol_str::SmolStr;
+use smol_str::{SmolStr, ToSmolStr};
 
 #[derive(Debug, Clone, Eq, Hash, PartialEq)]
 pub enum Token {
@@ -41,14 +41,6 @@ lazy_static::lazy_static!(
 );
 
 impl Token {
-    pub fn cmd(value: impl Into<SmolStr>) -> Self {
-        Self::Value(vec![value.into()])
-    }
-
-    pub fn cmd_with_alias(value: impl IntoIterator<Item = impl Into<SmolStr>>) -> Self {
-        Self::Value(value.into_iter().map(Into::into).collect())
-    }
-
     pub fn try_match(&self, input: Option<SmolStr>) -> TokenMatchResult {
         // short circuit on empty things
         if matches!(self, Self::Empty) && input.is_none() {
@@ -92,5 +84,27 @@ impl Token {
         // instead, for conditional matches, also add generic cases with no return
 
         return TokenMatchResult::NoMatch;
+    }
+}
+
+pub trait ToToken {
+    fn to_token(&self) -> Token;
+}
+
+impl ToToken for Token {
+    fn to_token(&self) -> Token {
+        self.clone()
+    }
+}
+
+impl ToToken for &str {
+    fn to_token(&self) -> Token {
+        Token::Value(vec![self.to_smolstr()])
+    }
+}
+
+impl ToToken for [&str] {
+    fn to_token(&self) -> Token {
+        Token::Value(self.into_iter().map(|s| s.to_smolstr()).collect())
     }
 }

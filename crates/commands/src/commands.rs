@@ -20,7 +20,10 @@ pub mod system;
 
 use smol_str::SmolStr;
 
-use crate::{command, token::Token};
+use crate::{
+    command,
+    token::{ToToken, Token},
+};
 
 #[derive(Clone, Debug)]
 pub struct Command {
@@ -47,7 +50,7 @@ impl Command {
 #[macro_export]
 macro_rules! command {
     ([$($v:expr),+], $cb:expr, $help:expr) => {
-        $crate::commands::Command::new([$($v.clone()),*], $help, $cb)
+        $crate::commands::Command::new([$($v.to_token()),*], $help, $cb)
     };
 }
 
@@ -55,5 +58,6 @@ pub fn all() -> Vec<Command> {
     (help::cmds())
         .chain(system::cmds())
         .chain(member::cmds())
+        .chain(fun::cmds())
         .collect()
 }

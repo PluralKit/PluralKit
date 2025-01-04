@@ -3,10 +3,10 @@ use super::*;
 pub fn cmds() -> impl Iterator<Item = Command> {
     use Token::*;
 
-    let member = Token::cmd_with_alias(["member", "m"]);
-    let description = Token::cmd_with_alias(["description", "desc"]);
-    let privacy = Token::cmd_with_alias(["privacy", "priv"]);
-    let new = Token::cmd_with_alias(["new", "n"]);
+    let member = ["member", "m"];
+    let description = ["description", "desc"];
+    let privacy = ["privacy", "priv"];
+    let new = ["new", "n"];
 
     [
         command!(

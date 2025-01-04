@@ -3,8 +3,8 @@ use super::*;
 pub fn cmds() -> impl Iterator<Item = Command> {
     use Token::*;
 
-    let system = Token::cmd_with_alias(["system", "s"]);
-    let new = Token::cmd_with_alias(["new", "n"]);
+    let system = ["system", "s"];
+    let new = ["new", "n"];
 
     [
         command!(

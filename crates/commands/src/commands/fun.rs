@@ -2,7 +2,7 @@ use super::*;
 
 pub fn cmds() -> impl Iterator<Item = Command> {
     [command!(
-        [Token::cmd("thunder")],
+        ["thunder"],
         "fun_thunder",
         "Shows the help command"
     )]
