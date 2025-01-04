@@ -567,6 +567,9 @@ public class SystemEdit
         async Task ShowIcon()
         {
             if ((target.AvatarUrl?.Trim() ?? "").Length > 0)
+            {
+                if (!target.AvatarPrivacy.CanAccess(ctx.DirectLookupContextFor(target.Id)))
+                    throw new PKSyntaxError("This system does not have an icon set or it is private.");
                 switch (ctx.MatchFormat())
                 {
                     case ReplyFormat.Raw:
@@ -586,9 +589,14 @@ public class SystemEdit
                         await ctx.Reply(embed: ebS.Build());
                         break;
                 }
+            }
             else
+            {
+                var isOwner = target.Id == ctx.System?.Id;
                 throw new PKSyntaxError(
-                    "This system does not have an icon set. Set one by attaching an image to this command, or by passing an image URL or @mention.");
+                    $"This system does not have an icon set{(isOwner ? "" : " or it is private")}."
+                    + (isOwner ? " Set one by attaching an image to this command, or by passing an image URL or @mention." : ""));
+            }
         }
 
         if (target != null && target?.Id != ctx.System?.Id)
@@ -646,10 +654,12 @@ public class SystemEdit
 
         async Task ShowIcon()
         {
-
             var settings = await ctx.Repository.GetSystemGuild(ctx.Guild.Id, target.Id);
 
             if ((settings.AvatarUrl?.Trim() ?? "").Length > 0)
+            {
+                if (!target.AvatarPrivacy.CanAccess(ctx.DirectLookupContextFor(target.Id)))
+                    throw new PKSyntaxError("This system does not have a icon specific to this server or it is private.");
                 switch (ctx.MatchFormat())
                 {
                     case ReplyFormat.Raw:
@@ -669,9 +679,14 @@ public class SystemEdit
                         await ctx.Reply(embed: ebS.Build());
                         break;
                 }
+            }
             else
+            {
+                var isOwner = target.Id == ctx.System?.Id;
                 throw new PKSyntaxError(
-                    "This system does not have a icon specific to this server. Set one by attaching an image to this command, or by passing an image URL or @mention.");
+                    $"This system does not have a icon specific to this server{(isOwner ? "" : " or it is private")}."
+                    + (isOwner ? " Set one by attaching an image to this command, or by passing an image URL or @mention." : ""));
+            }
         }
 
         ctx.CheckGuildContext();
