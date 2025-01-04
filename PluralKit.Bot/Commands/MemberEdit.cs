@@ -128,8 +128,8 @@ public class MemberEdit
                     $"To print the description with formatting, type `{ctx.DefaultPrefix}member {target.Reference(ctx)} description -raw`."
                     + (ctx.System?.Id == target.System
                         ? $" To clear it, type `{ctx.DefaultPrefix}member {target.Reference(ctx)} description -clear`."
-                        : "")
-                    + $" Using {target.Description.Length}/{Limits.MaxDescriptionLength} characters."))
+                        + $" Using {target.Description.Length}/{Limits.MaxDescriptionLength} characters."
+                        : "")))
                 .Build());
             return;
         }
@@ -192,8 +192,8 @@ public class MemberEdit
                 $"**{target.NameFor(ctx)}**'s pronouns are **{target.Pronouns}**.\nTo print the pronouns with formatting, type `{ctx.DefaultPrefix}member {target.Reference(ctx)} pronouns -raw`."
                 + (ctx.System?.Id == target.System
                     ? $" To clear them, type `{ctx.DefaultPrefix}member {target.Reference(ctx)} pronouns -clear`."
-                    : "")
-                + $" Using {target.Pronouns.Length}/{Limits.MaxPronounsLength} characters.");
+                    + $" Using {target.Pronouns.Length}/{Limits.MaxPronounsLength} characters."
+                    : ""));
             return;
         }
 
@@ -403,7 +403,7 @@ public class MemberEdit
             .Footer(new Embed.EmbedFooter(
                 $"Member ID: {target.DisplayHid(ctx.Config)} | Active name in bold. Server name overrides display name, which overrides base name."
                 + (target.DisplayName != null && ctx.System?.Id == target.System ? $" Using {target.DisplayName.Length}/{Limits.MaxMemberNameLength} characters for the display name." : "")
-                + (memberGuildConfig?.DisplayName != null ? $" Using {memberGuildConfig?.DisplayName.Length}/{Limits.MaxMemberNameLength} characters for the server name." : "")));
+                + (memberGuildConfig?.DisplayName != null && ctx.System?.Id == target.System ? $" Using {memberGuildConfig?.DisplayName.Length}/{Limits.MaxMemberNameLength} characters for the server name." : "")));
 
         var showDisplayName = target.NamePrivacy.CanAccess(lcx);
 

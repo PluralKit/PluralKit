@@ -64,8 +64,8 @@ public class SystemEdit
         {
             await ctx.Reply(
                 $"{(isOwnSystem ? "Your" : "This")} system's name is currently **{target.Name}**."
-                + (isOwnSystem ? $" Type `{ctx.DefaultPrefix}system name -clear` to clear it." : "")
-                + $" Using {target.Name.Length}/{Limits.MaxSystemNameLength} characters.");
+                + (isOwnSystem ? $" Type `{ctx.DefaultPrefix}system name -clear` to clear it."
+                + $" Using {target.Name.Length}/{Limits.MaxSystemNameLength} characters." : ""));
             return;
         }
 
@@ -129,8 +129,8 @@ public class SystemEdit
         {
             await ctx.Reply(
                 $"{(isOwnSystem ? "Your" : "This")} system's name for this server is currently **{settings.DisplayName}**."
-                + (isOwnSystem ? $" Type `{ctx.DefaultPrefix}system servername -clear` to clear it." : "")
-                + $" Using {settings.DisplayName.Length}/{Limits.MaxSystemNameLength} characters.");
+                + (isOwnSystem ? $" Type `{ctx.DefaultPrefix}system servername -clear` to clear it."
+                + $" Using {settings.DisplayName.Length}/{Limits.MaxSystemNameLength} characters." : ""));
             return;
         }
 
@@ -195,8 +195,8 @@ public class SystemEdit
                 .Description(target.Description)
                 .Footer(new Embed.EmbedFooter(
                     $"To print the description with formatting, type `{ctx.DefaultPrefix}s description -raw`."
-                        + (isOwnSystem ? $" To clear it, type `{ctx.DefaultPrefix}s description -clear`. To change it, type `{ctx.DefaultPrefix}s description <new description>`." : "")
-                        + $" Using {target.Description.Length}/{Limits.MaxDescriptionLength} characters."))
+                        + (isOwnSystem ? $" To clear it, type `{ctx.DefaultPrefix}s description -clear`. To change it, type `{ctx.DefaultPrefix}s description <new description>`."
+                        + $" Using {target.Description.Length}/{Limits.MaxDescriptionLength} characters." : "")))
                 .Build());
             return;
         }
@@ -500,8 +500,7 @@ public class SystemEdit
         {
             await ctx.Reply($"{(isOwnSystem ? "Your" : "This system's")} current pronouns are **{target.Pronouns}**.\nTo print the pronouns with formatting, type `{ctx.DefaultPrefix}system pronouns -raw`."
             + (isOwnSystem ? $" To clear them, type `{ctx.DefaultPrefix}system pronouns -clear`."
-            : "")
-            + $" Using {target.Pronouns.Length}/{Limits.MaxPronounsLength} characters.");
+            + $" Using {target.Pronouns.Length}/{Limits.MaxPronounsLength} characters." : ""));
             return;
         }
 
