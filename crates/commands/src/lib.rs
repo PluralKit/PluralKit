@@ -93,7 +93,7 @@ fn parse_command(input: String) -> CommandResult {
                 // todo: check if last token is a common incorrect unquote (multi-member names etc)
                 // todo: check if this is a system name in pk;s command
                 return CommandResult::Err {
-                    error: "Command not found.".to_string(),
+                    error: format!("Unknown command `{input}`. For a list of possible commands, see <https://pluralkit.me/commands>."),
                 };
             }
             Err(Some(short_circuit)) => {

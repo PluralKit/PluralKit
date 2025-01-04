@@ -18,6 +18,9 @@ pub enum Token {
     MemberRef,
     MemberPrivacyTarget,
 
+    /// System reference
+    SystemRef,
+
     PrivacyLevel,
 
     // currently not included in command definitions
@@ -32,13 +35,7 @@ pub enum TokenMatchResult {
 }
 
 // move this somewhere else
-lazy_static::lazy_static!(
-    static ref MEMBER_PRIVACY_TARGETS: Vec<SmolStr> = [
-        "visibility",
-        "name",
-        "todo",
-    ].into_iter().map(SmolStr::new_static).collect();
-);
+const MEMBER_PRIVACY_TARGETS: &[&str] = &["visibility", "name", "todo"];
 
 impl Token {
     pub fn try_match(&self, input: Option<SmolStr>) -> TokenMatchResult {
@@ -66,12 +63,9 @@ impl Token {
             }
             Self::MultiValue(_) => todo!(),
             Self::FullString => return TokenMatchResult::Match(Some(input)),
+            Self::SystemRef => return TokenMatchResult::Match(Some(input)),
             Self::MemberRef => return TokenMatchResult::Match(Some(input)),
-            Self::MemberPrivacyTarget
-                if MEMBER_PRIVACY_TARGETS
-                    .iter()
-                    .any(|target| target.eq(input.trim())) =>
-            {
+            Self::MemberPrivacyTarget if MEMBER_PRIVACY_TARGETS.contains(&input.trim()) => {
                 return TokenMatchResult::Match(Some(input))
             }
             Self::MemberPrivacyTarget => {}

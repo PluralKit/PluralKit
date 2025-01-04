@@ -11,7 +11,12 @@ pub fn cmds() -> impl Iterator<Item = Command> {
         command!(
             [help, "commands"],
             "help_commands",
-            "Commands"
+            "help commands"
+        ),
+        command!(
+            [help, "proxy"],
+            "help_proxy",
+            "help proxy"
         ),
     ]
     .into_iter()

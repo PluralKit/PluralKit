@@ -57,8 +57,12 @@ public class Context
         }
         catch (PKError e)
         {
-            // todo: not this
-            Reply($"{Emojis.Error} {e.Message}");
+            // don't send an "invalid command" response if the guild has those turned off
+            if (!(GuildConfig != null && GuildConfig!.InvalidCommandResponseEnabled != true))
+            {
+                // todo: not this
+                Reply($"{Emojis.Error} {e.Message}");
+            }
             throw;
         }
     }

@@ -10,14 +10,16 @@ public partial class CommandTree
         {
             case "fun_thunder":
                 return ctx.Execute<Fun>(null, m => m.Thunder(ctx));
-            default:
-                // don't send an "invalid command" response if the guild has those turned off
-                if (ctx.GuildConfig != null && ctx.GuildConfig!.InvalidCommandResponseEnabled != true)
-                    return Task.CompletedTask;
-
-                // remove compiler warning
+            case "help":
+                return ctx.Execute<Help>(Help, m => m.HelpRoot(ctx));
+            case "help_commands":
+                return ctx.Reply("For the list of commands, see the website: <https://pluralkit.me/commands>");
+            case "help_proxy":
                 return ctx.Reply(
-                    $"{Emojis.Error} Unknown command {ctx.PeekArgument().AsCode()}. For a list of possible commands, see <https://pluralkit.me/commands>.");
+                    "The proxy help page has been moved! See the website: https://pluralkit.me/guide#proxying");
+            default:
+                // remove compiler warning
+                return ctx.Reply($"{Emojis.Error} Parsed command {ctx.Parameters.Callback().AsCode()} not implemented in PluralKit.Bot!");
         }
         if (ctx.Match("system", "s"))
             return HandleSystemCommand(ctx);
@@ -50,13 +52,6 @@ public partial class CommandTree
             return ctx.Execute<ImportExport>(Import, m => m.Import(ctx));
         if (ctx.Match("export"))
             return ctx.Execute<ImportExport>(Export, m => m.Export(ctx));
-        if (ctx.Match("help", "h"))
-            if (ctx.Match("commands"))
-                return ctx.Reply("For the list of commands, see the website: <https://pluralkit.me/commands>");
-            else if (ctx.Match("proxy"))
-                return ctx.Reply(
-                    "The proxy help page has been moved! See the website: https://pluralkit.me/guide#proxying");
-            else return ctx.Execute<Help>(Help, m => m.HelpRoot(ctx));
         if (ctx.Match("explain"))
             return ctx.Execute<Help>(Explain, m => m.Explain(ctx));
         if (ctx.Match("message", "msg", "messageinfo"))
