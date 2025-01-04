@@ -22,7 +22,7 @@ use smol_str::SmolStr;
 
 use crate::{command, token::Token};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Command {
     // TODO: fix hygiene
     pub tokens: Vec<Token>,

@@ -43,22 +43,6 @@
           ...
         }:
         let
-          # this is used as devshell for bot, and in the process-compose processes as environment
-          mkBotEnv =
-            cmd:
-            pkgs.buildFHSEnv {
-              name = "env";
-              targetPkgs =
-                pkgs: with pkgs; [
-                  coreutils
-                  git
-                  dotnet-sdk_8
-                  gcc
-                  omnisharp-roslyn
-                  bashInteractive
-                ];
-              runScript = cmd;
-            };
           uniffi-bindgen-cs = config.nci.lib.buildCrate {
             src = inp.uniffi-bindgen-cs;
             cratePath = "bindgen";
@@ -75,7 +59,7 @@
             programs.nixfmt.enable = true;
           };
 
-          nci.projects."pluralkit-services" = {
+          nci.projects."pk-services" = {
             path = ./.;
             export = false;
           };
@@ -118,9 +102,23 @@
           packages = lib.genAttrs [ "gateway" "commands" ] (name: rustOutputs.${name}.packages.release);
           # TODO: package the bot itself (dotnet)
 
-          devShells = {
-            services = rustOutputs."pluralkit-services".devShell;
-            bot = (mkBotEnv "bash").env;
+          devShells = rec {
+            services = rustOutputs."pk-services".devShell;
+            bot = pkgs.mkShell {
+              name = "pkbot-devshell";
+              nativeBuildInputs = with pkgs; [
+                coreutils
+                git
+                dotnet-sdk_8
+                gcc
+                omnisharp-roslyn
+                bashInteractive
+              ];
+            };
+            all = (pkgs.mkShell.override { stdenv = services.stdenv; }) {
+              name = "pk-devshell";
+              nativeBuildInputs = bot.nativeBuildInputs ++ services.nativeBuildInputs;
+            };
           };
 
           process-compose."dev" =
@@ -194,27 +192,31 @@
                   pluralkit-bot-init = {
                     command = pkgs.writeShellApplication {
                       name = "pluralkit-bot-init";
-                      runtimeInputs = [
+                      runtimeInputs = self'.devShells.bot.nativeBuildInputs ++ [
                         pkgs.coreutils
                         pkgs.git
+                        self'.devShells.bot.stdenv.cc
                       ];
                       text = ''
                         ${sourceDotenv}
                         set -x
                         ${pluralkitConfCheck}
                         ${self'.apps.generate-command-parser-bindings.program}
-                        exec ${mkBotEnv "dotnet build -c Release -o obj/"}/bin/env
+                        exec dotnet build -c Release -o obj/
                       '';
                     };
                   };
                   pluralkit-bot = {
                     command = pkgs.writeShellApplication {
                       name = "pluralkit-bot";
-                      runtimeInputs = [ pkgs.coreutils ];
+                      runtimeInputs = self'.devShells.bot.nativeBuildInputs ++ [
+                        pkgs.coreutils
+                        self'.devShells.bot.stdenv.cc
+                      ];
                       text = ''
                         ${sourceDotenv}
                         set -x
-                        exec ${mkBotEnv "dotnet obj/PluralKit.Bot.dll"}/bin/env
+                        exec dotnet obj/PluralKit.Bot.dll
                       '';
                     };
                     depends_on.pluralkit-bot-init.condition = "process_completed_successfully";

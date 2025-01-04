@@ -29,6 +29,11 @@ public class ParametersFFI
         }
     }
 
+    public string Callback()
+    {
+        return _cb;
+    }
+
     public string Pop()
     {
         if (_args.Count > _ptr + 1) Console.WriteLine($"pop: {_ptr + 1}, {_args[_ptr + 1]}");

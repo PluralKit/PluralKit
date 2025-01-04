@@ -1,6 +1,6 @@
 #![feature(let_chains)]
 
-mod commands;
+pub mod commands;
 mod string;
 mod token;
 mod tree;
@@ -17,7 +17,7 @@ pub use commands::Command;
 pub use token::*;
 
 lazy_static::lazy_static! {
-    static ref COMMAND_TREE: TreeBranch = {
+    pub static ref COMMAND_TREE: TreeBranch = {
         let mut tree = TreeBranch {
             current_command_key: None,
             possible_tokens: vec![],

@@ -6,6 +6,19 @@ public partial class CommandTree
 {
     public Task ExecuteCommand(Context ctx)
     {
+        switch (ctx.Parameters.Callback())
+        {
+            case "fun_thunder":
+                return ctx.Execute<Fun>(null, m => m.Thunder(ctx));
+            default:
+                // don't send an "invalid command" response if the guild has those turned off
+                if (ctx.GuildConfig != null && ctx.GuildConfig!.InvalidCommandResponseEnabled != true)
+                    return Task.CompletedTask;
+
+                // remove compiler warning
+                return ctx.Reply(
+                    $"{Emojis.Error} Unknown command {ctx.PeekArgument().AsCode()}. For a list of possible commands, see <https://pluralkit.me/commands>.");
+        }
         if (ctx.Match("system", "s"))
             return HandleSystemCommand(ctx);
         if (ctx.Match("member", "m"))
@@ -107,14 +120,6 @@ public partial class CommandTree
                 return ctx.Execute<Random>(MemberRandom, m => m.Member(ctx, ctx.System));
         if (ctx.Match("dashboard", "dash"))
             return ctx.Execute<Help>(Dashboard, m => m.Dashboard(ctx));
-
-        // don't send an "invalid command" response if the guild has those turned off
-        if (ctx.GuildConfig != null && ctx.GuildConfig!.InvalidCommandResponseEnabled != true)
-            return Task.CompletedTask;
-
-        // remove compiler warning
-        return ctx.Reply(
-            $"{Emojis.Error} Unknown command {ctx.PeekArgument().AsCode()}. For a list of possible commands, see <https://pluralkit.me/commands>.");
     }
 
     private async Task HandleAdminAbuseLogCommand(Context ctx)
