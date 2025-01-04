@@ -81,6 +81,7 @@
               runtimeInputs = [
                 (config.nci.toolchains.mkBuild pkgs)
                 self'.devShells.services.stdenv.cc
+                pkgs.dotnet-sdk_8
                 pkgs.csharpier
                 pkgs.coreutils
                 uniffi-bindgen-cs
@@ -159,18 +160,19 @@
               settings.processes =
                 let
                   procCfg = composeCfg.settings.processes;
-                  mkServiceInitProcess =
+                  mkServiceProcess =
+                    name:
                     {
-                      name,
                       inputs ? [ ],
                       ...
-                    }:
+                    }@attrs:
                     let
                       shell = rustOutputs.${name}.devShell;
+                      filteredAttrs = lib.removeAttrs attrs ["inputs"];
                     in
-                    {
+                    filteredAttrs // {
                       command = pkgs.writeShellApplication {
-                        name = "pluralkit-${name}-init";
+                        name = "pluralkit-${name}";
                         runtimeInputs =
                           (with pkgs; [
                             coreutils
@@ -182,16 +184,16 @@
                           ${sourceDotenv}
                           set -x
                           ${pluralkitConfCheck}
-                          exec cargo build --package ${name}
+                          exec cargo run --package ${name}
                         '';
                       };
                     };
                 in
                 {
                   ### bot ###
-                  pluralkit-bot-init = {
+                  pluralkit-bot = {
                     command = pkgs.writeShellApplication {
-                      name = "pluralkit-bot-init";
+                      name = "pluralkit-bot";
                       runtimeInputs = self'.devShells.bot.nativeBuildInputs ++ [
                         pkgs.coreutils
                         pkgs.git
@@ -202,24 +204,9 @@
                         set -x
                         ${pluralkitConfCheck}
                         ${self'.apps.generate-command-parser-bindings.program}
-                        exec dotnet build -c Release -o obj/
+                        exec dotnet run -c Release --project PluralKit.Bot
                       '';
                     };
-                  };
-                  pluralkit-bot = {
-                    command = pkgs.writeShellApplication {
-                      name = "pluralkit-bot";
-                      runtimeInputs = self'.devShells.bot.nativeBuildInputs ++ [
-                        pkgs.coreutils
-                        self'.devShells.bot.stdenv.cc
-                      ];
-                      text = ''
-                        ${sourceDotenv}
-                        set -x
-                        exec dotnet obj/PluralKit.Bot.dll
-                      '';
-                    };
-                    depends_on.pluralkit-bot-init.condition = "process_completed_successfully";
                     depends_on.postgres.condition = "process_healthy";
                     depends_on.redis.condition = "process_healthy";
                     depends_on.pluralkit-gateway.condition = "process_healthy";
@@ -227,26 +214,10 @@
                     ready_log_line = "Received Ready";
                   };
                   ### gateway ###
-                  pluralkit-gateway-init = mkServiceInitProcess {
-                    name = "gateway";
-                  };
-                  pluralkit-gateway = {
-                    command = pkgs.writeShellApplication {
-                      name = "pluralkit-gateway";
-                      runtimeInputs = with pkgs; [
-                        coreutils
-                        curl
-                        gnugrep
-                      ];
-                      text = ''
-                        ${sourceDotenv}
-                        set -x
-                        exec target/debug/gateway
-                      '';
-                    };
+                  pluralkit-gateway = mkServiceProcess "gateway" {
+                    inputs = with pkgs; [curl gnugrep];
                     depends_on.postgres.condition = "process_healthy";
                     depends_on.redis.condition = "process_healthy";
-                    depends_on.pluralkit-gateway-init.condition = "process_completed_successfully";
                     # configure health checks
                     # TODO: don't assume port?
                     liveness_probe.exec.command = ''curl -s -o /dev/null -w "%{http_code}" http://localhost:5000/stats | grep "302"'';
