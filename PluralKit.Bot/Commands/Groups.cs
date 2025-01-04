@@ -125,18 +125,19 @@ public class Groups
 
     public async Task GroupDisplayName(Context ctx, PKGroup target)
     {
-        var noDisplayNameSetMessage = "This group does not have a display name set.";
-        if (ctx.System?.Id == target.System)
-            noDisplayNameSetMessage +=
-                $" To set one, type `{ctx.DefaultPrefix}group {target.Reference(ctx)} displayname <display name>`.";
+        var noDisplayNameSetMessage = "This group does not have a display name set" +
+            (ctx.System?.Id == target.System
+                ? $". To set one, type `{ctx.DefaultPrefix}group {target.Reference(ctx)} displayname <display name>`."
+                : " or name is private.");
 
-        // No perms check, display name isn't covered by member privacy
+        // Whether displayname is shown or not should depend on if group name privacy is set.
+        // If name privacy is on then displayname should look like name.
 
         var format = ctx.MatchFormat();
 
-        // if there's nothing next or what's next is "raw"/"plaintext" we're doing a query, so check for null
-        if (!ctx.HasNext(false) || format != ReplyFormat.Standard)
-            if (target.DisplayName == null)
+        // if we're doing a raw or plaintext query check for null
+        if (format != ReplyFormat.Standard)
+            if (target.DisplayName == null || !target.NamePrivacy.CanAccess(ctx.DirectLookupContextFor(target.System)))
             {
                 await ctx.Reply(noDisplayNameSetMessage);
                 return;
@@ -157,9 +158,12 @@ public class Groups
 
         if (!ctx.HasNext(false))
         {
+            var showDisplayName = target.NamePrivacy.CanAccess(ctx.LookupContextFor(target.System)) && target.DisplayName != null;
+
             var eb = new EmbedBuilder()
-                .Field(new Embed.Field("Name", target.Name))
-                .Field(new Embed.Field("Display Name", target.DisplayName));
+                .Title("Group names")
+                .Field(new Embed.Field("Name", target.NameFor(ctx)))
+                .Field(new Embed.Field("Display Name", showDisplayName ? target.DisplayName : "*(no displayname set or name is private)*"));
 
             var reference = target.Reference(ctx);
 
@@ -169,7 +173,7 @@ public class Groups
                     + $"To clear it, type `{ctx.DefaultPrefix}group {reference} displayname -clear`.\n"
                     + $"To print the raw display name, type `{ctx.DefaultPrefix}group {reference} displayname -raw`.");
 
-            if (ctx.System?.Id == target.System)
+            if (ctx.System?.Id == target.System && showDisplayName)
                 eb.Footer(new Embed.EmbedFooter($"Using {target.DisplayName.Length}/{Limits.MaxGroupNameLength} characters."));
 
             await ctx.Reply(embed: eb.Build());
