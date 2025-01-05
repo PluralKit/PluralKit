@@ -18,7 +18,7 @@ public static class BuildInfoService
         FullVersion = data[0];
         Timestamp = data[1];
 
-        IsDev = data[2] == "";
+        IsDev = data.Length < 3 || data[2] == "";
 
         // show only short commit hash to users
         Version = FullVersion.Remove(7);

@@ -57,7 +57,7 @@
     </ItemGroup>
 
     <Target Name="SetSourceRevisionId" BeforeTargets="InitializeSourceControlInformation">
-        <Exec Command="git rev-parse HEAD &gt; ../.version &amp; git show --no-patch --format=%at $(git rev-parse HEAD) &gt;&gt; ../.version &amp; (git diff-index --quiet HEAD -- &amp;&amp; echo 1) &gt;&gt; ../.version" IgnoreExitCode="True">
+        <Exec Command="../ci/dotnet-version.sh" IgnoreExitCode="False">
         </Exec>
     </Target>
 
