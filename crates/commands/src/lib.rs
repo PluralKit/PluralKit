@@ -21,7 +21,6 @@ lazy_static::lazy_static! {
     pub static ref COMMAND_TREE: TreeBranch = {
         let mut tree = TreeBranch {
             current_command_key: None,
-            possible_tokens: vec![],
             branches: OrderMap::new(),
         };
 
@@ -101,12 +100,13 @@ fn parse_command(input: String) -> CommandResult {
     let mut flags: HashMap<String, Option<String>> = HashMap::new();
 
     loop {
-        println!("{:?}", local_tree.possible_tokens);
+        println!("possible: {:?}", local_tree.branches.keys());
         let next = next_token(
-            local_tree.possible_tokens.clone(),
+            local_tree.branches.keys().cloned().collect(),
             input.clone(),
             current_pos,
         );
+        println!("next: {:?}", next);
         match next {
             Ok((found_token, arg, new_pos)) => {
                 current_pos = new_pos;
