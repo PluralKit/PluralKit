@@ -61,11 +61,23 @@ public class Misc
         var shards = await _shards.GetShards();
 
         var shardInfo = shards.Where(s => s.ShardId == ctx.ShardId).FirstOrDefault();
+        var shardsUp = shards.Where(s => s.Up).Count();
+
+        if (stats == null)
+        {
+            var content = $"Stats unavailable (is scheduled_tasks service running?)\n\n**Quick info:**"
+                        + $"\nPluralKit [{BuildInfoService.Version}](<https://github.com/pluralkit/pluralkit/commit/{BuildInfoService.FullVersion}>)"
+                        + $"\nCurrently on shard {ctx.ShardId}, {shardsUp}/{shards.Count()} shards up,"
+                        + $" API latency: {apiLatency.TotalMilliseconds:F0}ms";
+            await ctx.Rest.EditMessage(msg.ChannelId, msg.Id,
+                new MessageEditRequest { Content = content });
+            return;
+        }
 
         var embed = new EmbedBuilder();
 
         embed
-            .Field(new("Connection status", $"**{shards.Count()}** shards across **{shards.Select(s => s.ClusterId).Distinct().Count()}** clusters\n"
+            .Field(new("Connection status", $"**{shards.Count()}** shards across **{shards.Select(s => s.ClusterId).Distinct().Count()}** clusters (**{shardsUp} up**)\n"
                                             + $"Current server is on **shard {ctx.ShardId} (cluster {shardInfo.ClusterId ?? 0})**\n"
                                             + $"Latency: API **{apiLatency.TotalMilliseconds:F0}ms** (p90: {stats.prom.nirn_proxy_latency_p90 * 1000:F0}ms, p99: {stats.prom.nirn_proxy_latency_p99 * 1000:F0}ms), "
                                             + $"shard **{shardInfo.Latency}ms** (avg: {stats.prom.shard_latency_average}ms)", true))
@@ -91,11 +103,11 @@ public class Misc
             new MessageEditRequest { Content = "", Embeds = new[] { embed.Build() } });
     }
 
-    private async Task<Stats> GetStats(Context ctx)
+    private async Task<Stats?> GetStats(Context ctx)
     {
         var db = ctx.Redis.Connection.GetDatabase();
         var data = await db.StringGetAsync("statsapi");
-        return JsonConvert.DeserializeObject<Stats>(data);
+        return data.HasValue ? JsonConvert.DeserializeObject<Stats>(data) : null;
     }
 }
 
