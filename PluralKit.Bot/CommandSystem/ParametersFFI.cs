@@ -73,6 +73,7 @@ public class Parameters
     }
 }
 
+// TODO: im not really sure if this should be the way to go
 public class ResolvedParameters
 {
     public readonly Parameters Raw;
@@ -87,7 +88,7 @@ public class ResolvedParameters
     }
 }
 
-// TODO: move this to another file
+// TODO: move this to another file (?)
 public static class ParametersExt
 {
     public static bool HasFlag(this Parameters parameters, params string[] potentialMatches)

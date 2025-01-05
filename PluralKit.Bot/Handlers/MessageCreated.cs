@@ -147,6 +147,7 @@ public class MessageCreated: IEventHandler<MessageCreateEvent>
             catch (PKError e)
             {
                 // don't send an "invalid command" response if the guild has those turned off
+                // TODO: only dont send command not found, not every parse error (eg. missing params, syntax error...)
                 if (!(ctx.GuildConfig != null && ctx.GuildConfig!.InvalidCommandResponseEnabled != true))
                 {
                     await ctx.Reply($"{Emojis.Error} {e.Message}");
