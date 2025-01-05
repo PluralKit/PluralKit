@@ -2,6 +2,8 @@ name: Build and push Docker image
 on:
   push:
     paths:
+    - '.github/workflows/docker.yml'
+    - 'ci/dotnet-version.sh'
     - 'Myriad/**'
     - 'PluralKit.API/**'
     - 'PluralKit.Bot/**'
