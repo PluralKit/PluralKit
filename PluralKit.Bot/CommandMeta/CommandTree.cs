@@ -8,8 +8,6 @@ public partial class CommandTree
     {
         switch (parameters.Raw.Callback())
         {
-            case "fun_thunder":
-                return ctx.Execute<Fun>(null, m => m.Thunder(ctx));
             case "help":
                 return ctx.Execute<Help>(Help, m => m.HelpRoot(ctx));
             case "help_commands":
@@ -22,6 +20,10 @@ public partial class CommandTree
                 return ctx.Execute<Member>(MemberInfo, m => m.ViewMember(ctx, parameters.MemberParams["target"]));
             case "member_new":
                 return ctx.Execute<Member>(MemberNew, m => m.NewMember(ctx, parameters.Raw.Params()["name"]));
+            case "fun_thunder":
+                return ctx.Execute<Fun>(null, m => m.Thunder(ctx));
+            case "fun_meow":
+                return ctx.Execute<Fun>(null, m => m.Meow(ctx));
             default:
                 return ctx.Reply(
                     $"{Emojis.Error} Parsed command {parameters.Raw.Callback().AsCode()} not implemented in PluralKit.Bot!");
