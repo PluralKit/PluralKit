@@ -39,11 +39,11 @@ public class MemberEdit
                     await ctx.Reply(target.NameFor(lctx), embed: eb.Build());
                     break;
                 default:
-                    var replyStr = $"Name for member {target.DisplayHid(ctx.Config)} is **{target.NameFor(lctx)}**.";
+                    var replyStrQ = $"Name for member {target.DisplayHid(ctx.Config)} is **{target.NameFor(lctx)}**.";
                     if (target.System == ctx.System?.Id)
-                        replyStr += $"\nTo rename {target.DisplayHid(ctx.Config)} type `{ctx.DefaultPrefix}member {target.NameFor(ctx)} rename <new name>`."
+                        replyStrQ += $"\nTo rename {target.DisplayHid(ctx.Config)} type `{ctx.DefaultPrefix}member {target.NameFor(ctx)} rename <new name>`."
                         + $" Using {target.NameFor(lctx).Length}/{Limits.MaxMemberNameLength} characters.";
-                    await ctx.Reply(replyStr);
+                    await ctx.Reply(replyStrQ);
                     break;
             }
             return;
@@ -70,21 +70,19 @@ public class MemberEdit
         var patch = new MemberPatch { Name = Partial<string>.Present(newName) };
         await ctx.Repository.UpdateMember(target.Id, patch);
 
-        await ctx.Reply($"{Emojis.Success} Member renamed (using {newName.Length}/{Limits.MaxMemberNameLength} characters).");
+        var replyStr = $"{Emojis.Success} Member renamed (using {newName.Length}/{Limits.MaxMemberNameLength} characters).";
         if (newName.Contains(" "))
-            await ctx.Reply(
-                $"{Emojis.Note} Note that this member's name now contains spaces. You will need to surround it with \"double quotes\" when using commands referring to it, or just use the member's short ID (which is `{target.DisplayHid(ctx.Config)}`).");
+            replyStr += $"\n{Emojis.Note} Note that this member's name now contains spaces. You will need to surround it with \"double quotes\" when using commands referring to it, or just use the member's short ID (which is `{target.DisplayHid(ctx.Config)}`).";
         if (target.DisplayName != null)
-            await ctx.Reply(
-                $"{Emojis.Note} Note that this member has a display name set ({target.DisplayName}), and will be proxied using that name instead.");
+            replyStr += $"\n{Emojis.Note} Note that this member has a display name set ({target.DisplayName}), and will be proxied using that name instead.";
 
         if (ctx.Guild != null)
         {
             var memberGuildConfig = await ctx.Repository.GetMemberGuild(ctx.Guild.Id, target.Id);
             if (memberGuildConfig.DisplayName != null)
-                await ctx.Reply(
-                    $"{Emojis.Note} Note that this member has a server name set ({memberGuildConfig.DisplayName}) in this server ({ctx.Guild.Name}), and will be proxied using that name here.");
+                replyStr += $"\n{Emojis.Note} Note that this member has a server name set ({memberGuildConfig.DisplayName}) in this server ({ctx.Guild.Name}), and will be proxied using that name here.";
         }
+        await ctx.Reply(replyStr);
     }
 
     public async Task Description(Context ctx, PKMember target)
@@ -886,19 +884,18 @@ public class MemberEdit
                 _ => throw new InvalidOperationException($"Invalid subject/level tuple ({subject}, {level})")
             };
 
-            await ctx.Reply(
-                $"{Emojis.Success} {target.NameFor(ctx)}'s **{subjectName}** has been set to **{level.LevelName()}**. {explanation}");
+            var replyStr = $"{Emojis.Success} {target.NameFor(ctx)}'s **{subjectName}** has been set to **{level.LevelName()}**. {explanation}";
 
             // Name privacy only works given a display name
             if (subject == MemberPrivacySubject.Name && level == PrivacyLevel.Private && target.DisplayName == null)
-                await ctx.Reply(
-                    $"{Emojis.Warn} This member does not have a display name set, and name privacy **will not take effect**.");
+                replyStr += $"\n{Emojis.Warn} This member does not have a display name set, and name privacy **will not take effect**.";
 
             // Avatar privacy doesn't apply when proxying if no server avatar is set
             if (subject == MemberPrivacySubject.Avatar && level == PrivacyLevel.Private &&
                 guildSettings?.AvatarUrl == null)
-                await ctx.Reply(
-                    $"{Emojis.Warn} This member does not have a server avatar set, so *proxying* will **still show the member avatar**. If you want to hide your avatar when proxying here, set a server avatar: `{ctx.DefaultPrefix}member {target.Reference(ctx)} serveravatar`");
+                replyStr += $"\n{Emojis.Warn} This member does not have a server avatar set, so *proxying* will **still show the member avatar**. If you want to hide your avatar when proxying here, set a server avatar: `{ctx.DefaultPrefix}member {target.Reference(ctx)} serveravatar`";
+
+            await ctx.Reply(replyStr);
         }
 
         if (ctx.Match("all") || newValueFromCommand != null)

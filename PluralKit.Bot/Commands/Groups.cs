@@ -91,11 +91,12 @@ public class Groups
                 $"> {ctx.DefaultPrefix}group **{reference}** description **This is my new group, and here is the description!**"))
             .Field(new Embed.Field("Set the group icon",
                 $"> {ctx.DefaultPrefix}group **{reference}** icon\n*(with an image attached)*"));
-        await ctx.Reply($"{Emojis.Success} Group created!", eb.Build());
+        var replyStr = $"{Emojis.Success} Group created!";
 
         if (existingGroupCount >= Limits.WarnThreshold(groupLimit))
-            await ctx.Reply(
-                $"{Emojis.Warn} You are approaching the per-system group limit ({existingGroupCount} / {groupLimit} groups). Once you reach this limit, you will be unable to create new groups until existing groups are deleted, or you can ask for your limit to be raised in the PluralKit support server: <https://discord.gg/PczBt78>");
+            replyStr += $"\n{Emojis.Warn} You are approaching the per-system group limit ({existingGroupCount} / {groupLimit} groups). Once you reach this limit, you will be unable to create new groups until existing groups are deleted, or you can ask for your limit to be raised in the PluralKit support server: <https://discord.gg/PczBt78>";
+
+        await ctx.Reply(replyStr, eb.Build());
     }
 
     public async Task RenameGroup(Context ctx, PKGroup target)
@@ -188,9 +189,10 @@ public class Groups
             var patch = new GroupPatch { DisplayName = Partial<string>.Null() };
             await ctx.Repository.UpdateGroup(target.Id, patch);
 
-            await ctx.Reply($"{Emojis.Success} Group display name cleared.");
+            var replyStr = $"{Emojis.Success} Group display name cleared.";
             if (target.NamePrivacy == PrivacyLevel.Private)
-                await ctx.Reply($"{Emojis.Warn} Since this group no longer has a display name set, their name privacy **can no longer take effect**.");
+                replyStr += $"\n{Emojis.Warn} Since this group no longer has a display name set, their name privacy **can no longer take effect**.";
+            await ctx.Reply(replyStr);
         }
         else
         {
@@ -603,12 +605,12 @@ public class Groups
                 _ => throw new InvalidOperationException($"Invalid subject/level tuple ({subject}, {level})")
             };
 
-            await ctx.Reply(
-                $"{Emojis.Success} {target.Name}'s **{subjectName}** has been set to **{level.LevelName()}**. {explanation}");
+            var replyStr = $"{Emojis.Success} {target.Name}'s **{subjectName}** has been set to **{level.LevelName()}**. {explanation}";
 
             if (subject == GroupPrivacySubject.Name && level == PrivacyLevel.Private && target.DisplayName == null)
-                await ctx.Reply(
-                    $"{Emojis.Warn} This group does not have a display name set, and name privacy **will not take effect**.");
+                replyStr += $"\n{Emojis.Warn} This group does not have a display name set, and name privacy **will not take effect**.";
+
+            await ctx.Reply(replyStr);
         }
 
         if (ctx.Match("all") || newValueFromCommand != null)

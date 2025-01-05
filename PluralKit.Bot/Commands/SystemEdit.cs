@@ -386,22 +386,24 @@ public class SystemEdit
 
             await ctx.Repository.UpdateSystemGuild(target.Id, ctx.Guild.Id, new SystemGuildPatch { Tag = newTag });
 
-            await ctx.Reply(
-                $"{Emojis.Success} System server tag changed (using {newTag.Length}/{Limits.MaxSystemTagLength} characters). Member names will now have the tag {newTag.AsCode()} when proxied in the current server '{ctx.Guild.Name}'.\n\nTo check or change where your tag appears in your name use the command `{ctx.DefaultPrefix}cfg name format`.");
+            var replyStr = $"{Emojis.Success} System server tag changed (using {newTag.Length}/{Limits.MaxSystemTagLength} characters). Member names will now have the tag {newTag.AsCode()} when proxied in the current server '{ctx.Guild.Name}'.\n\nTo check or change where your tag appears in your name use the command `{ctx.DefaultPrefix}cfg name format`.";
 
             if (!settings.TagEnabled)
-                await ctx.Reply(setDisabledWarning);
+                replyStr += "\n" + setDisabledWarning;
+
+            await ctx.Reply(replyStr);
         }
 
         async Task Clear()
         {
             await ctx.Repository.UpdateSystemGuild(target.Id, ctx.Guild.Id, new SystemGuildPatch { Tag = null });
 
-            await ctx.Reply(
-                $"{Emojis.Success} System server tag cleared. Member names will now use the global system tag, if there is one set.\n\nTo check or change where your tag appears in your name use the command `{ctx.DefaultPrefix}cfg name format`.");
+            var replyStr = $"{Emojis.Success} System server tag cleared. Member names will now use the global system tag, if there is one set.\n\nTo check or change where your tag appears in your name use the command `{ctx.DefaultPrefix}cfg name format`.";
 
             if (!settings.TagEnabled)
-                await ctx.Reply(setDisabledWarning);
+                replyStr += "\n" + setDisabledWarning;
+
+            await ctx.Reply(replyStr);
         }
 
         async Task EnableDisable(bool newValue)
