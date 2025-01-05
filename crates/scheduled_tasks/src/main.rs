@@ -74,7 +74,6 @@ async fn real_main() -> anyhow::Result<()> {
         "message stats updater",
         update_db_message_meta
     );
-    // every minute
     doforever!("* * * * *", "discord stats updater", update_discord_stats);
     // on :00 and :30
     doforever!(
@@ -82,6 +81,7 @@ async fn real_main() -> anyhow::Result<()> {
         "queue deleted image cleanup job",
         queue_deleted_image_cleanup
     );
+    doforever!("0,30 * * * * *", "stats api updater", update_stats_api);
 
     set.join_next()
         .await
