@@ -67,7 +67,7 @@ public class Misc
         {
             var content = $"Stats unavailable (is scheduled_tasks service running?)\n\n**Quick info:**"
                         + $"\nPluralKit [{BuildInfoService.Version}](<https://github.com/pluralkit/pluralkit/commit/{BuildInfoService.FullVersion}>)"
-                        + (BuildInfoService.IsDev ? ", **development build**" : "")
+                        // + (BuildInfoService.IsDev ? ", **development build**" : "")
                         + $"\nCurrently on shard {ctx.ShardId}, {shardsUp}/{shards.Count()} shards up,"
                         + $" API latency: {apiLatency.TotalMilliseconds:F0}ms";
             await ctx.Rest.EditMessage(msg.ChannelId, msg.Id,
@@ -97,7 +97,7 @@ public class Misc
         var uptime = ((DateTimeOffset)process.StartTime).ToUnixTimeSeconds();
         embed.Description($"### PluralKit [{BuildInfoService.Version}](https://github.com/pluralkit/pluralkit/commit/{BuildInfoService.FullVersion})\n" +
                           $"Built on <t:{BuildInfoService.Timestamp}> (<t:{BuildInfoService.Timestamp}:R>)"
-                        + (BuildInfoService.IsDev ? ", **development build**" : "")
+                        // + (BuildInfoService.IsDev ? ", **development build**" : "")
                         + $"\nLast restart: <t:{uptime}:R>");
 
         await ctx.Rest.EditMessage(msg.ChannelId, msg.Id,
