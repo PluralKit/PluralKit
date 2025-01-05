@@ -11,6 +11,7 @@ lazy_static = { workspace = true }
 
 uniffi = { version = "0.25" }
 smol_str = "0.3.2"
+ordermap = "0.5"
 
 [build-dependencies]
 uniffi = { version = "0.25", features = [ "build" ] }

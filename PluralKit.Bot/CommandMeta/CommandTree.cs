@@ -4,22 +4,27 @@ namespace PluralKit.Bot;
 
 public partial class CommandTree
 {
-    public Task ExecuteCommand(Context ctx)
+    public Task ExecuteCommand(Context ctx, ResolvedParameters parameters)
     {
-        switch (ctx.Parameters.Callback())
+        switch (parameters.Raw.Callback())
         {
             case "fun_thunder":
                 return ctx.Execute<Fun>(null, m => m.Thunder(ctx));
             case "help":
                 return ctx.Execute<Help>(Help, m => m.HelpRoot(ctx));
             case "help_commands":
-                return ctx.Reply("For the list of commands, see the website: <https://pluralkit.me/commands>");
+                return ctx.Reply(
+                    "For the list of commands, see the website: <https://pluralkit.me/commands>");
             case "help_proxy":
                 return ctx.Reply(
                     "The proxy help page has been moved! See the website: https://pluralkit.me/guide#proxying");
+            case "member_show":
+                return ctx.Execute<Member>(MemberInfo, m => m.ViewMember(ctx, parameters.MemberParams["target"]));
+            case "member_new":
+                return ctx.Execute<Member>(MemberNew, m => m.NewMember(ctx, parameters.Raw.Params()["name"]));
             default:
-                // remove compiler warning
-                return ctx.Reply($"{Emojis.Error} Parsed command {ctx.Parameters.Callback().AsCode()} not implemented in PluralKit.Bot!");
+                return ctx.Reply(
+                    $"{Emojis.Error} Parsed command {parameters.Raw.Callback().AsCode()} not implemented in PluralKit.Bot!");
         }
         if (ctx.Match("system", "s"))
             return HandleSystemCommand(ctx);
@@ -224,43 +229,44 @@ public partial class CommandTree
         // finally, parse commands that *can* take a system target
         else
         {
-            // try matching a system ID
-            var target = await ctx.MatchSystem();
-            var previousPtr = ctx.Parameters._ptr;
+            // TODO: actually implement this
+            // // try matching a system ID
+            // var target = await ctx.MatchSystem();
+            // var previousPtr = ctx.Parameters._ptr;
 
-            // if we have a parsed target and no more commands, don't bother with the command flow
-            // we skip the `target != null` check here since the argument isn't be popped if it's not a system
-            if (!ctx.HasNext())
-            {
-                await ctx.Execute<System>(SystemInfo, m => m.Query(ctx, target ?? ctx.System));
-                return;
-            }
+            // // if we have a parsed target and no more commands, don't bother with the command flow
+            // // we skip the `target != null` check here since the argument isn't be popped if it's not a system
+            // if (!ctx.HasNext())
+            // {
+            //     await ctx.Execute<System>(SystemInfo, m => m.Query(ctx, target ?? ctx.System));
+            //     return;
+            // }
 
-            // hacky, but we need to CheckSystem(target) which throws a PKError
-            // normally PKErrors are only handled in ctx.Execute
-            try
-            {
-                await HandleSystemCommandTargeted(ctx, target ?? ctx.System);
-            }
-            catch (PKError e)
-            {
-                await ctx.Reply($"{Emojis.Error} {e.Message}");
-                return;
-            }
+            // // hacky, but we need to CheckSystem(target) which throws a PKError
+            // // normally PKErrors are only handled in ctx.Execute
+            // try
+            // {
+            //     await HandleSystemCommandTargeted(ctx, target ?? ctx.System);
+            // }
+            // catch (PKError e)
+            // {
+            //     await ctx.Reply($"{Emojis.Error} {e.Message}");
+            //     return;
+            // }
 
-            // if we *still* haven't matched anything, the user entered an invalid command name or system reference
-            if (ctx.Parameters._ptr == previousPtr)
-            {
-                if (!ctx.Parameters.Peek().TryParseHid(out _) && !ctx.Parameters.Peek().TryParseMention(out _))
-                {
-                    await PrintCommandNotFoundError(ctx, SystemCommands);
-                    return;
-                }
+            // // if we *still* haven't matched anything, the user entered an invalid command name or system reference
+            // if (ctx.Parameters._ptr == previousPtr)
+            // {
+            //     if (!ctx.Parameters.Peek().TryParseHid(out _) && !ctx.Parameters.Peek().TryParseMention(out _))
+            //     {
+            //         await PrintCommandNotFoundError(ctx, SystemCommands);
+            //         return;
+            //     }
 
-                var list = CreatePotentialCommandList(ctx.DefaultPrefix, SystemCommands);
-                await ctx.Reply($"{Emojis.Error} {await CreateSystemNotFoundError(ctx)}\n\n"
-                        + $"Perhaps you meant to use one of the following commands?\n{list}");
-            }
+            //     var list = CreatePotentialCommandList(ctx.DefaultPrefix, SystemCommands);
+            //     await ctx.Reply($"{Emojis.Error} {await CreateSystemNotFoundError(ctx)}\n\n"
+            //             + $"Perhaps you meant to use one of the following commands?\n{list}");
+            // }
         }
     }
 
@@ -324,20 +330,21 @@ public partial class CommandTree
 
     private async Task HandleMemberCommand(Context ctx)
     {
-        if (ctx.Match("new", "n", "add", "create", "register"))
-            await ctx.Execute<Member>(MemberNew, m => m.NewMember(ctx));
-        else if (ctx.Match("list"))
-            await ctx.Execute<SystemList>(SystemList, m => m.MemberList(ctx, ctx.System));
-        else if (ctx.Match("commands", "help"))
-            await PrintCommandList(ctx, "members", MemberCommands);
-        else if (await ctx.MatchMember() is PKMember target)
-            await HandleMemberCommandTargeted(ctx, target);
-        else if (!ctx.HasNext())
-            await PrintCommandExpectedError(ctx, MemberNew, MemberInfo, MemberRename, MemberDisplayName,
-                MemberServerName, MemberDesc, MemberPronouns,
-                MemberColor, MemberBirthday, MemberProxy, MemberDelete, MemberAvatar);
-        else
-            await ctx.Reply($"{Emojis.Error} {ctx.CreateNotFoundError("Member", ctx.PopArgument())}");
+        // TODO: implement
+        // if (ctx.Match("new", "n", "add", "create", "register"))
+        //     await ctx.Execute<Member>(MemberNew, m => m.NewMember(ctx));
+        // else if (ctx.Match("list"))
+        //     await ctx.Execute<SystemList>(SystemList, m => m.MemberList(ctx, ctx.System));
+        // else if (ctx.Match("commands", "help"))
+        //     await PrintCommandList(ctx, "members", MemberCommands);
+        // else if (await ctx.MatchMember() is PKMember target)
+        //     await HandleMemberCommandTargeted(ctx, target);
+        // else if (!ctx.HasNext())
+        //     await PrintCommandExpectedError(ctx, MemberNew, MemberInfo, MemberRename, MemberDisplayName,
+        //         MemberServerName, MemberDesc, MemberPronouns,
+        //         MemberColor, MemberBirthday, MemberProxy, MemberDelete, MemberAvatar);
+        // else
+        //     await ctx.Reply($"{Emojis.Error} {ctx.CreateNotFoundError("Member", ctx.PopArgument())}");
     }
 
     private async Task HandleMemberCommandTargeted(Context ctx, PKMember target)
@@ -408,59 +415,60 @@ public partial class CommandTree
 
     private async Task HandleGroupCommand(Context ctx)
     {
-        // Commands with no group argument
-        if (ctx.Match("n", "new"))
-            await ctx.Execute<Groups>(GroupNew, g => g.CreateGroup(ctx));
-        else if (ctx.Match("list", "l"))
-            await ctx.Execute<Groups>(GroupList, g => g.ListSystemGroups(ctx, null));
-        else if (ctx.Match("commands", "help"))
-            await PrintCommandList(ctx, "groups", GroupCommands);
-        else if (await ctx.MatchGroup() is { } target)
-        {
-            // Commands with group argument
-            if (ctx.Match("rename", "name", "changename", "setname", "rn"))
-                await ctx.Execute<Groups>(GroupRename, g => g.RenameGroup(ctx, target));
-            else if (ctx.Match("nick", "dn", "displayname", "nickname"))
-                await ctx.Execute<Groups>(GroupDisplayName, g => g.GroupDisplayName(ctx, target));
-            else if (ctx.Match("description", "desc", "describe", "d", "bio", "info", "text", "intro"))
-                await ctx.Execute<Groups>(GroupDesc, g => g.GroupDescription(ctx, target));
-            else if (ctx.Match("add", "a"))
-                await ctx.Execute<GroupMember>(GroupAdd,
-                    g => g.AddRemoveMembers(ctx, target, Groups.AddRemoveOperation.Add));
-            else if (ctx.Match("remove", "rem"))
-                await ctx.Execute<GroupMember>(GroupRemove,
-                    g => g.AddRemoveMembers(ctx, target, Groups.AddRemoveOperation.Remove));
-            else if (ctx.Match("members", "list", "ms", "l", "ls"))
-                await ctx.Execute<GroupMember>(GroupMemberList, g => g.ListGroupMembers(ctx, target));
-            else if (ctx.Match("random", "rand", "r"))
-                await ctx.Execute<Random>(GroupMemberRandom, r => r.GroupMember(ctx, target));
-            else if (ctx.Match("privacy"))
-                await ctx.Execute<Groups>(GroupPrivacy, g => g.GroupPrivacy(ctx, target, null));
-            else if (ctx.Match("public", "pub"))
-                await ctx.Execute<Groups>(GroupPrivacy, g => g.GroupPrivacy(ctx, target, PrivacyLevel.Public));
-            else if (ctx.Match("private", "priv"))
-                await ctx.Execute<Groups>(GroupPrivacy, g => g.GroupPrivacy(ctx, target, PrivacyLevel.Private));
-            else if (ctx.Match("delete", "destroy", "erase", "yeet"))
-                await ctx.Execute<Groups>(GroupDelete, g => g.DeleteGroup(ctx, target));
-            else if (ctx.Match("avatar", "picture", "icon", "image", "pic", "pfp"))
-                await ctx.Execute<Groups>(GroupIcon, g => g.GroupIcon(ctx, target));
-            else if (ctx.Match("banner", "splash", "cover"))
-                await ctx.Execute<Groups>(GroupBannerImage, g => g.GroupBannerImage(ctx, target));
-            else if (ctx.Match("fp", "frontpercent", "front%", "frontbreakdown"))
-                await ctx.Execute<SystemFront>(GroupFrontPercent, g => g.FrontPercent(ctx, group: target));
-            else if (ctx.Match("color", "colour"))
-                await ctx.Execute<Groups>(GroupColor, g => g.GroupColor(ctx, target));
-            else if (ctx.Match("id"))
-                await ctx.Execute<Groups>(GroupId, g => g.DisplayId(ctx, target));
-            else if (!ctx.HasNext())
-                await ctx.Execute<Groups>(GroupInfo, g => g.ShowGroupCard(ctx, target));
-            else
-                await PrintCommandNotFoundError(ctx, GroupCommandsTargeted);
-        }
-        else if (!ctx.HasNext())
-            await PrintCommandExpectedError(ctx, GroupCommands);
-        else
-            await ctx.Reply($"{Emojis.Error} {ctx.CreateNotFoundError("Group", ctx.PopArgument())}");
+        // TODO: implement
+        // // Commands with no group argument
+        // if (ctx.Match("n", "new"))
+        //     await ctx.Execute<Groups>(GroupNew, g => g.CreateGroup(ctx));
+        // else if (ctx.Match("list", "l"))
+        //     await ctx.Execute<Groups>(GroupList, g => g.ListSystemGroups(ctx, null));
+        // else if (ctx.Match("commands", "help"))
+        //     await PrintCommandList(ctx, "groups", GroupCommands);
+        // else if (await ctx.MatchGroup() is { } target)
+        // {
+        //     // Commands with group argument
+        //     if (ctx.Match("rename", "name", "changename", "setname", "rn"))
+        //         await ctx.Execute<Groups>(GroupRename, g => g.RenameGroup(ctx, target));
+        //     else if (ctx.Match("nick", "dn", "displayname", "nickname"))
+        //         await ctx.Execute<Groups>(GroupDisplayName, g => g.GroupDisplayName(ctx, target));
+        //     else if (ctx.Match("description", "desc", "describe", "d", "bio", "info", "text", "intro"))
+        //         await ctx.Execute<Groups>(GroupDesc, g => g.GroupDescription(ctx, target));
+        //     else if (ctx.Match("add", "a"))
+        //         await ctx.Execute<GroupMember>(GroupAdd,
+        //             g => g.AddRemoveMembers(ctx, target, Groups.AddRemoveOperation.Add));
+        //     else if (ctx.Match("remove", "rem"))
+        //         await ctx.Execute<GroupMember>(GroupRemove,
+        //             g => g.AddRemoveMembers(ctx, target, Groups.AddRemoveOperation.Remove));
+        //     else if (ctx.Match("members", "list", "ms", "l", "ls"))
+        //         await ctx.Execute<GroupMember>(GroupMemberList, g => g.ListGroupMembers(ctx, target));
+        //     else if (ctx.Match("random", "rand", "r"))
+        //         await ctx.Execute<Random>(GroupMemberRandom, r => r.GroupMember(ctx, target));
+        //     else if (ctx.Match("privacy"))
+        //         await ctx.Execute<Groups>(GroupPrivacy, g => g.GroupPrivacy(ctx, target, null));
+        //     else if (ctx.Match("public", "pub"))
+        //         await ctx.Execute<Groups>(GroupPrivacy, g => g.GroupPrivacy(ctx, target, PrivacyLevel.Public));
+        //     else if (ctx.Match("private", "priv"))
+        //         await ctx.Execute<Groups>(GroupPrivacy, g => g.GroupPrivacy(ctx, target, PrivacyLevel.Private));
+        //     else if (ctx.Match("delete", "destroy", "erase", "yeet"))
+        //         await ctx.Execute<Groups>(GroupDelete, g => g.DeleteGroup(ctx, target));
+        //     else if (ctx.Match("avatar", "picture", "icon", "image", "pic", "pfp"))
+        //         await ctx.Execute<Groups>(GroupIcon, g => g.GroupIcon(ctx, target));
+        //     else if (ctx.Match("banner", "splash", "cover"))
+        //         await ctx.Execute<Groups>(GroupBannerImage, g => g.GroupBannerImage(ctx, target));
+        //     else if (ctx.Match("fp", "frontpercent", "front%", "frontbreakdown"))
+        //         await ctx.Execute<SystemFront>(GroupFrontPercent, g => g.FrontPercent(ctx, group: target));
+        //     else if (ctx.Match("color", "colour"))
+        //         await ctx.Execute<Groups>(GroupColor, g => g.GroupColor(ctx, target));
+        //     else if (ctx.Match("id"))
+        //         await ctx.Execute<Groups>(GroupId, g => g.DisplayId(ctx, target));
+        //     else if (!ctx.HasNext())
+        //         await ctx.Execute<Groups>(GroupInfo, g => g.ShowGroupCard(ctx, target));
+        //     else
+        //         await PrintCommandNotFoundError(ctx, GroupCommandsTargeted);
+        // }
+        // else if (!ctx.HasNext())
+        //     await PrintCommandExpectedError(ctx, GroupCommands);
+        // else
+        //     await ctx.Reply($"{Emojis.Error} {ctx.CreateNotFoundError("Group", ctx.PopArgument())}");
     }
 
     private async Task HandleSwitchCommand(Context ctx)

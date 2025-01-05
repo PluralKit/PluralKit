@@ -6,8 +6,21 @@ interface CommandResult {
 	Ok(ParsedCommand command);
 	Err(string error);
 };
+[Enum]
+interface ParameterKind {
+	MemberRef();
+	SystemRef();
+	MemberPrivacyTarget();
+	PrivacyLevel();
+	OpaqueString();
+};
+dictionary Parameter {
+	string raw;
+	ParameterKind kind;
+};
 dictionary ParsedCommand {
 	string command_ref;
 	sequence<string> args;
+	record<string, Parameter> params;
 	record<string, string?> flags;
 };

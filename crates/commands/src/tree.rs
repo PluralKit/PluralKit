@@ -1,14 +1,15 @@
+use ordermap::OrderMap;
 use smol_str::SmolStr;
 
 use crate::{commands::Command, Token};
-use std::{cmp::Ordering, collections::HashMap};
+use std::cmp::Ordering;
 
 #[derive(Debug, Clone)]
 pub struct TreeBranch {
     pub current_command_key: Option<SmolStr>,
     /// branches.keys(), but sorted by specificity
     pub possible_tokens: Vec<Token>,
-    pub branches: HashMap<Token, TreeBranch>,
+    pub branches: OrderMap<Token, TreeBranch>,
 }
 
 impl TreeBranch {
@@ -20,7 +21,7 @@ impl TreeBranch {
             current_branch = current_branch.branches.entry(token).or_insert(TreeBranch {
                 current_command_key: None,
                 possible_tokens: vec![],
-                branches: HashMap::new(),
+                branches: OrderMap::new(),
             })
         }
         // when we're out of tokens, add an Empty branch with the callback and no sub-branches
@@ -29,31 +30,8 @@ impl TreeBranch {
             TreeBranch {
                 current_command_key: Some(command.cb),
                 possible_tokens: vec![],
-                branches: HashMap::new(),
+                branches: OrderMap::new(),
             },
         );
-    }
-
-    pub fn sort_tokens(&mut self) {
-        for branch in self.branches.values_mut() {
-            branch.sort_tokens();
-        }
-
-        // put Value tokens at the end
-        // i forget exactly how this works
-        // todo!: document this before PR mergs
-        self.possible_tokens = self
-            .branches
-            .keys()
-            .into_iter()
-            .map(|v| v.clone())
-            .collect();
-        self.possible_tokens.sort_by(|v, _| {
-            if matches!(v, Token::Value(_)) {
-                Ordering::Greater
-            } else {
-                Ordering::Less
-            }
-        });
     }
 }

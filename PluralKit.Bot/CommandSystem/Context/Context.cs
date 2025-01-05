@@ -50,21 +50,6 @@ public class Context
         DefaultPrefix = prefixes[0];
         Rest = provider.Resolve<DiscordApiClient>();
         Cluster = provider.Resolve<Cluster>();
-
-        try
-        {
-            Parameters = new ParametersFFI(message.Content?.Substring(commandParseOffset));
-        }
-        catch (PKError e)
-        {
-            // don't send an "invalid command" response if the guild has those turned off
-            if (!(GuildConfig != null && GuildConfig!.InvalidCommandResponseEnabled != true))
-            {
-                // todo: not this
-                Reply($"{Emojis.Error} {e.Message}");
-            }
-            throw;
-        }
     }
 
     public readonly IDiscordCache Cache;
@@ -90,7 +75,6 @@ public class Context
 
     public readonly string CommandPrefix;
     public readonly string DefaultPrefix;
-    public readonly ParametersFFI Parameters;
 
     internal readonly IDatabase Database;
     internal readonly ModelRepository Repository;

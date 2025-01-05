@@ -1,5 +1,7 @@
 use smol_str::{SmolStr, ToSmolStr};
 
+type ParamName = &'static str;
+
 #[derive(Debug, Clone, Eq, Hash, PartialEq)]
 pub enum Token {
     /// Token used to represent a finished command (i.e. no more parameters required)
@@ -12,16 +14,16 @@ pub enum Token {
     // todo!
     MultiValue(Vec<Vec<SmolStr>>),
 
-    FullString,
+    FullString(ParamName),
 
     /// Member reference (hid or member name)
-    MemberRef,
-    MemberPrivacyTarget,
+    MemberRef(ParamName),
+    MemberPrivacyTarget(ParamName),
 
     /// System reference
-    SystemRef,
+    SystemRef(ParamName),
 
-    PrivacyLevel,
+    PrivacyLevel(ParamName),
 
     // currently not included in command definitions
     // todo: flags with values
@@ -32,6 +34,9 @@ pub enum TokenMatchResult {
     NoMatch,
     /// Token matched, optionally with a value.
     Match(Option<SmolStr>),
+    MissingParameter {
+        name: ParamName,
+    },
 }
 
 // move this somewhere else
@@ -43,36 +48,38 @@ impl Token {
         if matches!(self, Self::Empty) && input.is_none() {
             return TokenMatchResult::Match(None);
         } else if input.is_none() {
-            return TokenMatchResult::NoMatch;
+            return match self {
+                Self::FullString(param_name) => TokenMatchResult::MissingParameter { name: param_name },
+                Self::MemberRef(param_name) => TokenMatchResult::MissingParameter { name: param_name },
+                Self::MemberPrivacyTarget(param_name) => TokenMatchResult::MissingParameter { name: param_name },
+                Self::SystemRef(param_name) => TokenMatchResult::MissingParameter { name: param_name },
+                Self::PrivacyLevel(param_name) => TokenMatchResult::MissingParameter { name: param_name },
+                _ => TokenMatchResult::NoMatch,
+            }
         }
 
-        let input = input.unwrap();
+        let input = input.as_ref().map(|s| s.trim()).unwrap();
 
         // try actually matching stuff
         match self {
             Self::Empty => return TokenMatchResult::NoMatch,
             Self::Flag => unreachable!(), // matched upstream
-            Self::Value(values) => {
-                for v in values {
-                    if input.trim() == v {
-                        // c# bot currently needs subcommands provided as arguments
-                        // todo!: remove this
-                        return TokenMatchResult::Match(Some(v.clone()));
-                    }
-                }
+            Self::Value(values) if values.iter().any(|v| v.eq(input)) => {
+                return TokenMatchResult::Match(None);
             }
+            Self::Value(_) => {}
             Self::MultiValue(_) => todo!(),
-            Self::FullString => return TokenMatchResult::Match(Some(input)),
-            Self::SystemRef => return TokenMatchResult::Match(Some(input)),
-            Self::MemberRef => return TokenMatchResult::Match(Some(input)),
-            Self::MemberPrivacyTarget if MEMBER_PRIVACY_TARGETS.contains(&input.trim()) => {
-                return TokenMatchResult::Match(Some(input))
+            Self::FullString(_) => return TokenMatchResult::Match(Some(input.into())),
+            Self::SystemRef(_) => return TokenMatchResult::Match(Some(input.into())),
+            Self::MemberRef(_) => return TokenMatchResult::Match(Some(input.into())),
+            Self::MemberPrivacyTarget(_) if MEMBER_PRIVACY_TARGETS.contains(&input) => {
+                return TokenMatchResult::Match(Some(input.into()))
             }
-            Self::MemberPrivacyTarget => {}
-            Self::PrivacyLevel if input == "public" || input == "private" => {
-                return TokenMatchResult::Match(Some(input))
+            Self::MemberPrivacyTarget(_) => {}
+            Self::PrivacyLevel(_) if input == "public" || input == "private" => {
+                return TokenMatchResult::Match(Some(input.into()))
             }
-            Self::PrivacyLevel => {}
+            Self::PrivacyLevel(_) => {}
         }
         // note: must not add a _ case to the above match
         // instead, for conditional matches, also add generic cases with no return

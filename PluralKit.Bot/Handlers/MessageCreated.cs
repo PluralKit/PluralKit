@@ -137,8 +137,22 @@ public class MessageCreated: IEventHandler<MessageCreateEvent>
             var system = await _repo.GetSystemByAccount(evt.Author.Id);
             var config = system != null ? await _repo.GetSystemConfig(system.Id) : null;
             var guildConfig = guild != null ? await _repo.GetGuild(guild.Id) : null;
-
-            await _tree.ExecuteCommand(new Context(_services, shardId, guild, channel, evt, cmdStart, system, config, guildConfig, _config.Prefixes ?? BotConfig.DefaultPrefixes));
+            var ctx = new Context(_services, shardId, guild, channel, evt, cmdStart, system, config, guildConfig, _config.Prefixes ?? BotConfig.DefaultPrefixes);
+            try
+            {
+                var parameters = new Parameters(evt.Content?.Substring(cmdStart));
+                var resolved_parameters = await parameters.ResolveParameters(ctx);
+                await _tree.ExecuteCommand(ctx, resolved_parameters);
+            }
+            catch (PKError e)
+            {
+                // don't send an "invalid command" response if the guild has those turned off
+                if (!(ctx.GuildConfig != null && ctx.GuildConfig!.InvalidCommandResponseEnabled != true))
+                {
+                    await ctx.Reply($"{Emojis.Error} {e.Message}");
+                }
+                throw;
+            }
         }
         catch (PKError)
         {

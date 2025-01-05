@@ -1,18 +1,19 @@
+using PluralKit.Core;
 using uniffi.commands;
 
 namespace PluralKit.Bot;
 
-public class ParametersFFI
+public class Parameters
 {
     private string _cb { get; init; }
     private List<string> _args { get; init; }
-    public int _ptr = -1;
     private Dictionary<string, string?> _flags { get; init; }
+    private Dictionary<string, Parameter> _params { get; init; }
 
     // just used for errors, temporarily
     public string FullCommand { get; init; }
 
-    public ParametersFFI(string cmd)
+    public Parameters(string cmd)
     {
         FullCommand = cmd;
         var result = CommandsMethods.ParseCommand(cmd);
@@ -22,6 +23,7 @@ public class ParametersFFI
             _cb = command.@commandRef;
             _args = command.@args;
             _flags = command.@flags;
+            _params = command.@params;
         }
         else
         {
@@ -29,43 +31,67 @@ public class ParametersFFI
         }
     }
 
+    public async Task<ResolvedParameters> ResolveParameters(Context ctx)
+    {
+        var parsed_members = await MemberParams().ToAsyncEnumerable().ToDictionaryAwaitAsync(async item => item.Key, async item =>
+            await ctx.ParseMember(this, item.Value) ?? throw new PKError(ctx.CreateNotFoundError(this, "Member", item.Value))
+        );
+        var parsed_systems = await SystemParams().ToAsyncEnumerable().ToDictionaryAwaitAsync(async item => item.Key, async item =>
+            await ctx.ParseSystem(item.Value) ?? throw new PKError(ctx.CreateNotFoundError(this, "System", item.Value))
+        );
+        return new ResolvedParameters(this, parsed_members, parsed_systems);
+    }
+
     public string Callback()
     {
         return _cb;
     }
 
-    public string Pop()
+    public IDictionary<string, string> Flags()
     {
-        if (_args.Count > _ptr + 1) Console.WriteLine($"pop: {_ptr + 1}, {_args[_ptr + 1]}");
-        else Console.WriteLine("pop: no more arguments");
-        if (_args.Count() == _ptr + 1) return "";
-        _ptr++;
-        return _args[_ptr];
+        return _flags;
     }
 
-    public string Peek()
+    private Dictionary<string, string> Params(Func<ParameterKind, bool> filter)
     {
-        if (_args.Count > _ptr + 1) Console.WriteLine($"peek: {_ptr + 1}, {_args[_ptr + 1]}");
-        else Console.WriteLine("peek: no more arguments");
-        if (_args.Count() == _ptr + 1) return "";
-        return _args[_ptr + 1];
+        return _params.Where(item => filter(item.Value.@kind)).ToDictionary(item => item.Key, item => item.Value.@raw);
     }
 
-    // this might not work quite right
-    public string PeekWithPtr(ref int ptr)
+    public IDictionary<string, string> Params()
     {
-        return _args[ptr];
+        return Params(_ => true);
     }
 
-    public ISet<string> Flags()
+    public IDictionary<string, string> MemberParams()
     {
-        return new HashSet<string>(_flags.Keys);
+        return Params(kind => kind == ParameterKind.MemberRef);
     }
 
-    // parsed differently in new commands, does this work right?
-    // note: skipFlags here does nothing
-    public string Remainder(bool skipFlags = false)
+    public IDictionary<string, string> SystemParams()
     {
-        return Pop();
+        return Params(kind => kind == ParameterKind.SystemRef);
+    }
+}
+
+public class ResolvedParameters
+{
+    public readonly Parameters Raw;
+    public readonly Dictionary<string, PKMember> MemberParams;
+    public readonly Dictionary<string, PKSystem> SystemParams;
+
+    public ResolvedParameters(Parameters parameters, Dictionary<string, PKMember> member_params, Dictionary<string, PKSystem> system_params)
+    {
+        Raw = parameters;
+        MemberParams = member_params;
+        SystemParams = system_params;
+    }
+}
+
+// TODO: move this to another file
+public static class ParametersExt
+{
+    public static bool HasFlag(this Parameters parameters, params string[] potentialMatches)
+    {
+        return potentialMatches.Any(parameters.Flags().ContainsKey);
     }
 }

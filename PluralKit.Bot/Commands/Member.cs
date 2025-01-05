@@ -27,10 +27,10 @@ public class Member
         _avatarHosting = avatarHosting;
     }
 
-    public async Task NewMember(Context ctx)
+    public async Task NewMember(Context ctx, string memberName)
     {
         if (ctx.System == null) throw Errors.NoSystemError(ctx.DefaultPrefix);
-        var memberName = ctx.RemainderOrNull() ?? throw new PKSyntaxError("You must pass a member name.");
+        memberName = memberName ?? throw new PKSyntaxError("You must pass a member name.");
 
         // Hard name length cap
         if (memberName.Length > Limits.MaxMemberNameLength)
