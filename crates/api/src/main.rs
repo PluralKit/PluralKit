@@ -52,6 +52,28 @@ async fn rproxy(
         .into_response())
 }
 
+async fn test(State(ctx): State<ApiContext>) -> axum::Json<serde_json::Value> {
+    let system: Option<pluralkit_models::PKSystem> = sqlx::query_as(
+        r#"
+            select * from systems where hid = 'jyhxnn'
+        "#,
+        // select systems.*
+        //     from accounts
+        //     left join systems on accounts.system = systems.id
+        //     where accounts.uid = $1
+    )
+    .bind(883545422860283964i64)
+    .fetch_optional(&ctx.db)
+    .await
+    .expect("failed to query");
+
+    axum::Json(
+        system
+            .unwrap()
+            .to_json(pluralkit_models::PrivacyLevel::Private),
+    )
+}
+
 // this function is manually formatted for easier legibility of route_services
 #[rustfmt::skip]
 fn router(ctx: ApiContext) -> Router {
@@ -120,6 +142,8 @@ fn router(ctx: ApiContext) -> Router {
         .layer(axum::middleware::from_fn(middleware::ignore_invalid_routes))
         .layer(axum::middleware::from_fn(middleware::cors))
         .layer(axum::middleware::from_fn(middleware::logger))
+
+        .route("/test", get(test))
 
         .layer(tower_http::catch_panic::CatchPanicLayer::custom(util::handle_panic))
 

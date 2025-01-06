@@ -40,21 +40,25 @@ struct System {
     #[json = "uuid"]
     uuid: Uuid,
     #[json = "name"]
+    #[privacy = name_privacy]
     name: Option<String>,
     #[json = "description"]
+    #[privacy = description_privacy]
     description: Option<String>,
     #[json = "tag"]
     tag: Option<String>,
     #[json = "pronouns"]
+    #[privacy = pronoun_privacy]
     pronouns: Option<String>,
     #[json = "avatar_url"]
+    #[privacy = avatar_privacy]
     avatar_url: Option<String>,
-    #[json = "banner_image"]
+    #[json = "banner"]
+    #[privacy = banner_privacy]
     banner_image: Option<String>,
     #[json = "color"]
     color: Option<String>,
     token: Option<String>,
-    #[json = "webhook_url"]
     webhook_url: Option<String>,
     webhook_token: Option<String>,
     #[json = "created"]
