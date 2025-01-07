@@ -26,11 +26,9 @@ public class Context
     private readonly IMetrics _metrics;
     private readonly CommandMessageService _commandMessageService;
 
-    private Command? _currentCommand;
-
     public Context(ILifetimeScope provider, int shardId, Guild? guild, Channel channel, MessageCreateEvent message,
                                                     int commandParseOffset, PKSystem senderSystem, SystemConfig config,
-                                                    GuildConfig? guildConfig, string[] prefixes)
+                                                    GuildConfig? guildConfig, string[] prefixes, Parameters parameters)
     {
         Message = (Message)message;
         ShardId = shardId;
@@ -50,6 +48,7 @@ public class Context
         DefaultPrefix = prefixes[0];
         Rest = provider.Resolve<DiscordApiClient>();
         Cluster = provider.Resolve<Cluster>();
+        Parameters = parameters;
     }
 
     public readonly IDiscordCache Cache;
@@ -75,6 +74,7 @@ public class Context
 
     public readonly string CommandPrefix;
     public readonly string DefaultPrefix;
+    public readonly Parameters Parameters;
 
     internal readonly IDatabase Database;
     internal readonly ModelRepository Repository;
@@ -111,8 +111,6 @@ public class Context
 
     public async Task Execute<T>(Command? commandDef, Func<T, Task> handler, bool deprecated = false)
     {
-        _currentCommand = commandDef;
-
         if (deprecated && commandDef != null)
         {
             await Reply($"{Emojis.Warn} Server configuration has moved to `{DefaultPrefix}serverconfig`. The command you are trying to run is now `{DefaultPrefix}{commandDef.Key}`.");
@@ -153,8 +151,8 @@ public class Context
 
     public LookupContext LookupContextFor(SystemId systemId)
     {
-        var hasPrivateOverride = this.MatchFlag("private", "priv");
-        var hasPublicOverride = this.MatchFlag("public", "pub");
+        var hasPrivateOverride = Parameters.HasFlag("private", "priv");
+        var hasPublicOverride = Parameters.HasFlag("public", "pub");
 
         if (hasPrivateOverride && hasPublicOverride)
             throw new PKError("Cannot match both public and private flags at the same time.");

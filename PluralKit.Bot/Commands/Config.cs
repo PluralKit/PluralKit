@@ -190,17 +190,17 @@ public class Config
     }
     private string EnabledDisabled(bool value) => value ? "enabled" : "disabled";
 
-    public async Task AutoproxyAccount(Context ctx)
+    public async Task ViewAutoproxyAccount(Context ctx)
     {
         var allowAutoproxy = await ctx.Repository.GetAutoproxyEnabled(ctx.Author.Id);
 
-        if (!ctx.HasNext())
-        {
-            await ctx.Reply($"Autoproxy is currently **{EnabledDisabled(allowAutoproxy)}** for account <@{ctx.Author.Id}>.");
-            return;
-        }
+        await ctx.Reply($"Autoproxy is currently **{EnabledDisabled(allowAutoproxy)}** for account <@{ctx.Author.Id}>.");
+    }
 
-        var allow = ctx.MatchToggle(true);
+    public async Task EditAutoproxyAccount(Context ctx)
+    {
+        var allowAutoproxy = await ctx.Repository.GetAutoproxyEnabled(ctx.Author.Id);
+        var allow = await ctx.ParamResolveToggle("toggle") ?? throw new PKSyntaxError("You need to specify whether to enable or disable autoproxy for this account.");
 
         var statusString = EnabledDisabled(allow);
         if (allowAutoproxy == allow)
@@ -213,31 +213,34 @@ public class Config
         await ctx.Reply($"{Emojis.Success} Autoproxy {statusString} for account <@{ctx.Author.Id}>.");
     }
 
-
-    public async Task AutoproxyTimeout(Context ctx)
+    public async Task ViewAutoproxyTimeout(Context ctx)
     {
-        if (!ctx.HasNext())
-        {
-            var timeout = ctx.Config.LatchTimeout.HasValue
-                ? Duration.FromSeconds(ctx.Config.LatchTimeout.Value)
-                : (Duration?)null;
+        var timeout = ctx.Config.LatchTimeout.HasValue
+        ? Duration.FromSeconds(ctx.Config.LatchTimeout.Value)
+        : (Duration?)null;
 
-            if (timeout == null)
-                await ctx.Reply($"You do not have a custom autoproxy timeout duration set. The default latch timeout duration is {ProxyMatcher.DefaultLatchExpiryTime.ToTimeSpan().Humanize(4)}.");
-            else if (timeout == Duration.Zero)
-                await ctx.Reply("Latch timeout is currently **disabled** for your system. Latch mode autoproxy will never time out.");
-            else
-                await ctx.Reply($"The current latch timeout duration for your system is {timeout.Value.ToTimeSpan().Humanize(4)}.");
-            return;
-        }
+        if (timeout == null)
+            await ctx.Reply($"You do not have a custom autoproxy timeout duration set. The default latch timeout duration is {ProxyMatcher.DefaultLatchExpiryTime.ToTimeSpan().Humanize(4)}.");
+        else if (timeout == Duration.Zero)
+            await ctx.Reply("Latch timeout is currently **disabled** for your system. Latch mode autoproxy will never time out.");
+        else
+            await ctx.Reply($"The current latch timeout duration for your system is {timeout.Value.ToTimeSpan().Humanize(4)}.");
+    }
+
+    public async Task EditAutoproxyTimeout(Context ctx)
+    {
+        var _newTimeout = await ctx.ParamResolveOpaque("timeout");
+        var _reset = await ctx.ParamResolveReset("reset");
+        var _toggle = await ctx.ParamResolveToggle("toggle");
 
         Duration? newTimeout;
         Duration overflow = Duration.Zero;
-        if (ctx.Match("off", "stop", "cancel", "no", "disable", "remove")) newTimeout = Duration.Zero;
-        else if (ctx.MatchClear()) newTimeout = null;
+        if (_toggle == false) newTimeout = Duration.Zero;
+        else if (_reset == true) newTimeout = null;
         else
         {
-            var timeoutStr = ctx.RemainderOrNull();
+            // todo: we should parse date in the command parser
+            var timeoutStr = _newTimeout;
             var timeoutPeriod = DateUtils.ParsePeriod(timeoutStr);
             if (timeoutPeriod == null) throw new PKError($"Could not parse '{timeoutStr}' as a valid duration. Try using a syntax such as \"3h5m\" (i.e. 3 hours and 5 minutes).");
             if (timeoutPeriod.Value.TotalHours > 100000)

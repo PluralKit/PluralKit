@@ -36,48 +36,15 @@ pub enum CommandResult {
     Err { error: String },
 }
 
-#[derive(Debug)]
-pub enum ParameterKind {
-    MemberRef,
-    SystemRef,
-	MemberPrivacyTarget,
-	PrivacyLevel,
-	OpaqueString,
-}
-
-#[derive(Debug)]
-pub struct Parameter {
-    raw: String,
-    kind: ParameterKind,
-}
-
-impl Parameter {
-    fn new(raw: impl ToString, kind: ParameterKind) -> Self {
-        Self {
-            raw: raw.to_string(),
-            kind,
-        }
-    }
-}
-
-macro_rules! parameter_impl {
-    ($($name:ident $kind:ident),*) => {
-        impl Parameter {
-            $(
-                fn $name(raw: impl ToString) -> Self {
-                    Self::new(raw, $crate::ParameterKind::$kind)
-                }
-            )*
-        }
-    };
-}
-
-parameter_impl! {
-    opaque OpaqueString,
-    member MemberRef,
-    system SystemRef,
-    member_privacy_target MemberPrivacyTarget,
-    privacy_level PrivacyLevel
+#[derive(Debug, Clone)]
+pub enum Parameter {
+    MemberRef { member: String },
+    SystemRef { system: String },
+	MemberPrivacyTarget { target: String },
+	PrivacyLevel { level: String },
+	OpaqueString { raw: String },
+    Toggle { toggle: bool },
+    Reset,
 }
 
 #[derive(Debug)]
@@ -111,27 +78,17 @@ fn parse_command(input: String) -> CommandResult {
             Ok((found_token, arg, new_pos)) => {
                 current_pos = new_pos;
                 if let Token::Flag = found_token {
-                    flags.insert(arg.unwrap().into(), None);
+                    flags.insert(arg.unwrap().raw.into(), None);
                     // don't try matching flags as tree elements
                     continue;
                 }
 
                 if let Some(arg) = arg.as_ref() {
-                    // get param name from token
-                    // TODO: idk if this should be on token itself, doesn't feel right, but does work
-                    let param = match &found_token {
-                        Token::FullString(n) => Some((n, Parameter::opaque(arg))),
-                        Token::MemberRef(n) => Some((n, Parameter::member(arg))),
-                        Token::MemberPrivacyTarget(n) => Some((n, Parameter::member_privacy_target(arg))),
-                        Token::SystemRef(n) => Some((n, Parameter::system(arg))),
-                        Token::PrivacyLevel(n) => Some((n, Parameter::privacy_level(arg))),
-                        _ => None,
-                    };
                     // insert arg as paramater if this is a parameter
-                    if let Some((param_name, param)) = param {
-                        params.insert(param_name.to_string(), param);
+                    if let Some((param_name, param)) = arg.param.as_ref() {
+                        params.insert(param_name.to_string(), param.clone());
                     }
-                    args.push(arg.to_string());
+                    args.push(arg.raw.to_string());
                 }
 
                 if let Some(next_tree) = local_tree.branches.get(&found_token) {
@@ -178,7 +135,7 @@ fn next_token(
     possible_tokens: Vec<Token>,
     input: SmolStr,
     current_pos: usize,
-) -> Result<(Token, Option<SmolStr>, usize), Option<SmolStr>> {
+) -> Result<(Token, Option<TokenMatchedValue>, usize), Option<SmolStr>> {
     // get next parameter, matching quotes
     let param = crate::string::next_param(input.clone(), current_pos);
     println!("matched: {param:?}\n---");
@@ -191,7 +148,10 @@ fn next_token(
     {
         return Ok((
             Token::Flag,
-            Some(value.trim_start_matches('-').into()),
+            Some(TokenMatchedValue {
+                raw: value,
+                param: None,
+            }),
             new_pos,
         ));
     }

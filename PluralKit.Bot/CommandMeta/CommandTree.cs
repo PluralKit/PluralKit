@@ -4,30 +4,29 @@ namespace PluralKit.Bot;
 
 public partial class CommandTree
 {
-    public Task ExecuteCommand(Context ctx, ResolvedParameters parameters)
+    public Task ExecuteCommand(Context ctx)
     {
-        switch (parameters.Raw.Callback())
+        return ctx.Parameters.Callback() switch
         {
-            case "help":
-                return ctx.Execute<Help>(Help, m => m.HelpRoot(ctx));
-            case "help_commands":
-                return ctx.Reply(
-                    "For the list of commands, see the website: <https://pluralkit.me/commands>");
-            case "help_proxy":
-                return ctx.Reply(
-                    "The proxy help page has been moved! See the website: https://pluralkit.me/guide#proxying");
-            case "member_show":
-                return ctx.Execute<Member>(MemberInfo, m => m.ViewMember(ctx, parameters.MemberParams["target"]));
-            case "member_new":
-                return ctx.Execute<Member>(MemberNew, m => m.NewMember(ctx, parameters.Raw.Params()["name"]));
-            case "fun_thunder":
-                return ctx.Execute<Fun>(null, m => m.Thunder(ctx));
-            case "fun_meow":
-                return ctx.Execute<Fun>(null, m => m.Meow(ctx));
-            default:
-                return ctx.Reply(
-                    $"{Emojis.Error} Parsed command {parameters.Raw.Callback().AsCode()} not implemented in PluralKit.Bot!");
-        }
+            "help" => ctx.Execute<Help>(Help, m => m.HelpRoot(ctx)),
+            "help_commands" => ctx.Reply(
+                    "For the list of commands, see the website: <https://pluralkit.me/commands>"),
+            "help_proxy" => ctx.Reply(
+                    "The proxy help page has been moved! See the website: https://pluralkit.me/guide#proxying"),
+            "member_show" => ctx.Execute<Member>(MemberInfo, m => m.ViewMember(ctx)),
+            "member_new" => ctx.Execute<Member>(MemberNew, m => m.NewMember(ctx)),
+            "member_soulscream" => ctx.Execute<Member>(MemberInfo, m => m.Soulscream(ctx)),
+            "cfg_ap_account_show" => ctx.Execute<Config>(null, m => m.ViewAutoproxyAccount(ctx)),
+            "cfg_ap_account_update" => ctx.Execute<Config>(null, m => m.EditAutoproxyAccount(ctx)),
+            "cfg_ap_timeout_show" => ctx.Execute<Config>(null, m => m.ViewAutoproxyTimeout(ctx)),
+            "cfg_ap_timeout_update" => ctx.Execute<Config>(null, m => m.EditAutoproxyTimeout(ctx)),
+            "fun_thunder" => ctx.Execute<Fun>(null, m => m.Thunder(ctx)),
+            "fun_meow" => ctx.Execute<Fun>(null, m => m.Meow(ctx)),
+            _  =>
+                // this should only ever occur when deving if commands are not implemented...
+                ctx.Reply(
+                    $"{Emojis.Error} Parsed command {ctx.Parameters.Callback().AsCode()} not implemented in PluralKit.Bot!"),
+        };
         if (ctx.Match("system", "s"))
             return HandleSystemCommand(ctx);
         if (ctx.Match("member", "m"))
@@ -405,10 +404,6 @@ public partial class CommandTree
             await ctx.Execute<MemberEdit>(MemberPrivacy, m => m.Privacy(ctx, target, PrivacyLevel.Private));
         else if (ctx.Match("public", "shown", "show", "unhide", "unhidden"))
             await ctx.Execute<MemberEdit>(MemberPrivacy, m => m.Privacy(ctx, target, PrivacyLevel.Public));
-        else if (ctx.Match("soulscream"))
-            await ctx.Execute<Member>(MemberInfo, m => m.Soulscream(ctx, target));
-        else if (!ctx.HasNext()) // Bare command
-            await ctx.Execute<Member>(MemberInfo, m => m.ViewMember(ctx, target));
         else
             await PrintCommandNotFoundError(ctx, MemberInfo, MemberRename, MemberDisplayName, MemberServerName,
                 MemberDesc, MemberPronouns, MemberColor, MemberBirthday, MemberProxy, MemberDelete, MemberAvatar,
@@ -576,10 +571,6 @@ public partial class CommandTree
         if (!ctx.HasNext())
             return ctx.Execute<Config>(null, m => m.ShowConfig(ctx));
 
-        if (ctx.MatchMultiple(new[] { "autoproxy", "ap" }, new[] { "account", "ac" }))
-            return ctx.Execute<Config>(null, m => m.AutoproxyAccount(ctx));
-        if (ctx.MatchMultiple(new[] { "autoproxy", "ap" }, new[] { "timeout", "tm" }))
-            return ctx.Execute<Config>(null, m => m.AutoproxyTimeout(ctx));
         if (ctx.Match("timezone", "zone", "tz"))
             return ctx.Execute<Config>(null, m => m.SystemTimezone(ctx));
         if (ctx.Match("ping"))

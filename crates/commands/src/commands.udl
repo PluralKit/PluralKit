@@ -7,16 +7,14 @@ interface CommandResult {
 	Err(string error);
 };
 [Enum]
-interface ParameterKind {
-	MemberRef();
-	SystemRef();
-	MemberPrivacyTarget();
-	PrivacyLevel();
-	OpaqueString();
-};
-dictionary Parameter {
-	string raw;
-	ParameterKind kind;
+interface Parameter {
+	MemberRef(string member);
+	SystemRef(string system);
+	MemberPrivacyTarget(string target);
+	PrivacyLevel(string level);
+	OpaqueString(string raw);
+	Toggle(boolean toggle);
+	Reset();
 };
 dictionary ParsedCommand {
 	string command_ref;

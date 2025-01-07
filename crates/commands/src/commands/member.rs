@@ -20,6 +20,11 @@ pub fn cmds() -> impl Iterator<Item = Command> {
             "Shows information about a member"
         ),
         command!(
+            [member, MemberRef("target"), "soulscream"],
+            "member_soulscream",
+            "todo"
+        ),
+        command!(
             [member, MemberRef("target"), description],
             "member_desc_show",
             "Shows a member's description"

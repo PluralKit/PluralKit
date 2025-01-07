@@ -1,14 +1,27 @@
+using System.Diagnostics;
 using PluralKit.Core;
 using uniffi.commands;
 
 namespace PluralKit.Bot;
+
+// corresponds to the ffi Paramater type, but with stricter types (also avoiding exposing ffi types!)
+public abstract record Parameter()
+{
+    public record MemberRef(PKMember member): Parameter;
+    public record SystemRef(PKSystem system): Parameter;
+    public record MemberPrivacyTarget(MemberPrivacySubject target): Parameter;
+    public record PrivacyLevel(string level): Parameter;
+    public record Toggle(bool value): Parameter;
+    public record Opaque(string value): Parameter;
+    public record Reset(): Parameter;
+}
 
 public class Parameters
 {
     private string _cb { get; init; }
     private List<string> _args { get; init; }
     private Dictionary<string, string?> _flags { get; init; }
-    private Dictionary<string, Parameter> _params { get; init; }
+    private Dictionary<string, uniffi.commands.Parameter> _params { get; init; }
 
     // just used for errors, temporarily
     public string FullCommand { get; init; }
@@ -31,68 +44,61 @@ public class Parameters
         }
     }
 
-    public async Task<ResolvedParameters> ResolveParameters(Context ctx)
-    {
-        var parsed_members = await MemberParams().ToAsyncEnumerable().ToDictionaryAwaitAsync(async item => item.Key, async item =>
-            await ctx.ParseMember(this, item.Value) ?? throw new PKError(ctx.CreateNotFoundError(this, "Member", item.Value))
-        );
-        var parsed_systems = await SystemParams().ToAsyncEnumerable().ToDictionaryAwaitAsync(async item => item.Key, async item =>
-            await ctx.ParseSystem(item.Value) ?? throw new PKError(ctx.CreateNotFoundError(this, "System", item.Value))
-        );
-        return new ResolvedParameters(this, parsed_members, parsed_systems);
-    }
-
     public string Callback()
     {
         return _cb;
     }
 
-    public IDictionary<string, string> Flags()
+    public bool HasFlag(params string[] potentialMatches)
     {
-        return _flags;
+        return potentialMatches.Any(_flags.ContainsKey);
     }
 
-    private Dictionary<string, string> Params(Func<ParameterKind, bool> filter)
+    // resolves a single parameter
+    private async Task<Parameter?> ResolveParameter(Context ctx, string param_name)
     {
-        return _params.Where(item => filter(item.Value.@kind)).ToDictionary(item => item.Key, item => item.Value.@raw);
+        if (!_params.ContainsKey(param_name)) return null;
+        switch (_params[param_name])
+        {
+            case uniffi.commands.Parameter.MemberRef memberRef:
+                var byId = HasFlag("id", "by-id");
+                return new Parameter.MemberRef(
+                    await ctx.ParseMember(memberRef.member, byId)
+                    ?? throw new PKError(ctx.CreateNotFoundError("Member", memberRef.member, byId))
+                );
+            case uniffi.commands.Parameter.SystemRef systemRef:
+                // todo: do we need byId here?
+                return new Parameter.SystemRef(
+                    await ctx.ParseSystem(systemRef.system)
+                    ?? throw new PKError(ctx.CreateNotFoundError("System", systemRef.system))
+                );
+            case uniffi.commands.Parameter.MemberPrivacyTarget memberPrivacyTarget:
+                // this should never really fail...
+                // todo: we shouldn't have *three* different MemberPrivacyTarget types (rust, ffi, c#) syncing the cases will be annoying...
+                if (!MemberPrivacyUtils.TryParseMemberPrivacy(memberPrivacyTarget.target, out var target))
+                    throw new PKError($"Invalid member privacy target {memberPrivacyTarget.target}");
+                return new Parameter.MemberPrivacyTarget(target);
+            case uniffi.commands.Parameter.PrivacyLevel privacyLevel:
+                return new Parameter.PrivacyLevel(privacyLevel.level);
+            case uniffi.commands.Parameter.Toggle toggle:
+                return new Parameter.Toggle(toggle.toggle);
+            case uniffi.commands.Parameter.OpaqueString opaque:
+                return new Parameter.Opaque(opaque.raw);
+            case uniffi.commands.Parameter.Reset _:
+                return new Parameter.Reset();
+        }
+        // this should also never happen
+        throw new PKError($"Unknown parameter type for parameter {param_name}");
     }
 
-    public IDictionary<string, string> Params()
+    public async Task<T> ResolveParameter<T>(Context ctx, string param_name, Func<Parameter, T?> extract_func)
     {
-        return Params(_ => true);
-    }
-
-    public IDictionary<string, string> MemberParams()
-    {
-        return Params(kind => kind == ParameterKind.MemberRef);
-    }
-
-    public IDictionary<string, string> SystemParams()
-    {
-        return Params(kind => kind == ParameterKind.SystemRef);
-    }
-}
-
-// TODO: im not really sure if this should be the way to go
-public class ResolvedParameters
-{
-    public readonly Parameters Raw;
-    public readonly Dictionary<string, PKMember> MemberParams;
-    public readonly Dictionary<string, PKSystem> SystemParams;
-
-    public ResolvedParameters(Parameters parameters, Dictionary<string, PKMember> member_params, Dictionary<string, PKSystem> system_params)
-    {
-        Raw = parameters;
-        MemberParams = member_params;
-        SystemParams = system_params;
-    }
-}
-
-// TODO: move this to another file (?)
-public static class ParametersExt
-{
-    public static bool HasFlag(this Parameters parameters, params string[] potentialMatches)
-    {
-        return potentialMatches.Any(parameters.Flags().ContainsKey);
+        var param = await ResolveParameter(ctx, param_name);
+        // todo: i think this should return null for everything...?
+        if (param == null) return default;
+        return extract_func(param)
+            // this should never really happen (hopefully!), but in case the parameter names dont match up (typos...) between rust <-> c#...
+            // (it would be very cool to have this statically checked somehow..?)
+            ?? throw new PKError($"Parameter {param_name.AsCode()} was not found for command {Callback().AsCode()} -- this is a bug!!");
     }
 }

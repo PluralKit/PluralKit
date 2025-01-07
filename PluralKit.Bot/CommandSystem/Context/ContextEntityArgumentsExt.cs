@@ -59,7 +59,7 @@ public static class ContextEntityArgumentsExt
         return null;
     }
 
-    public static async Task<PKMember> ParseMember(this Context ctx, Parameters parameters, string input, SystemId? restrictToSystem = null)
+    public static async Task<PKMember> ParseMember(this Context ctx, string input, bool byId, SystemId? restrictToSystem = null)
     {
         // Member references can have one of three forms, depending on
         // whether you're in a system or not:
@@ -69,7 +69,7 @@ public static class ContextEntityArgumentsExt
 
         // Skip name / display name matching if the user does not have a system
         // or if they specifically request by-HID matching
-        if (ctx.System != null && !parameters.HasFlag("id", "by-id"))
+        if (ctx.System != null && !byId)
         {
             // First, try finding by member name in system
             if (await ctx.Repository.GetMemberByName(ctx.System.Id, input) is PKMember memberByName)
@@ -169,9 +169,9 @@ public static class ContextEntityArgumentsExt
         return group;
     }
 
-    public static string CreateNotFoundError(this Context ctx, Parameters parameters, string entity, string input)
+    public static string CreateNotFoundError(this Context ctx, string entity, string input, bool byId = false)
     {
-        var isIDOnlyQuery = ctx.System == null || parameters.HasFlag("id", "by-id");
+        var isIDOnlyQuery = ctx.System == null || byId;
         var inputIsHid = HidUtils.ParseHid(input) != null;
 
         if (isIDOnlyQuery)

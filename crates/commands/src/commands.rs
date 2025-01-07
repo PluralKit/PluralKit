@@ -58,6 +58,7 @@ pub fn all() -> Vec<Command> {
     (help::cmds())
         .chain(system::cmds())
         .chain(member::cmds())
+        .chain(config::cmds())
         .chain(fun::cmds())
         .collect()
 }

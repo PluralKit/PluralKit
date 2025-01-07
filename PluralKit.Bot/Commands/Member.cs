@@ -1,4 +1,5 @@
 using System.Net;
+using System.Reflection.Metadata;
 using System.Web;
 
 using Dapper;
@@ -27,8 +28,10 @@ public class Member
         _avatarHosting = avatarHosting;
     }
 
-    public async Task NewMember(Context ctx, string memberName)
+    public async Task NewMember(Context ctx)
     {
+        var memberName = await ctx.ParamResolveOpaque("name");
+
         if (ctx.System == null) throw Errors.NoSystemError(ctx.DefaultPrefix);
         memberName = memberName ?? throw new PKSyntaxError("You must pass a member name.");
 
@@ -124,17 +127,19 @@ public class Member
                 $"{Emojis.Warn} You are approaching the per-system member limit ({memberCount} / {memberLimit} members). Once you reach this limit, you will be unable to create new members until existing members are deleted, or you can ask for your limit to be raised in the PluralKit support server: <https://discord.gg/PczBt78>");
     }
 
-    public async Task ViewMember(Context ctx, PKMember target)
+    public async Task ViewMember(Context ctx)
     {
+        var target = await ctx.ParamResolveMember("target");
         var system = await ctx.Repository.GetSystem(target.System);
         await ctx.Reply(
             embed: await _embeds.CreateMemberEmbed(system, target, ctx.Guild, ctx.Config, ctx.LookupContextFor(system.Id), ctx.Zone));
     }
 
-    public async Task Soulscream(Context ctx, PKMember target)
+    public async Task Soulscream(Context ctx)
     {
         // this is for a meme, please don't take this code seriously. :)
 
+        var target = await ctx.ParamResolveMember("target");
         var name = target.NameFor(ctx.LookupContextFor(target.System));
         var encoded = HttpUtility.UrlEncode(name);
 
