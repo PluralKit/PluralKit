@@ -162,30 +162,20 @@
                 let
                   procCfg = composeCfg.settings.processes;
                   mkServiceProcess =
-                    name:
-                    {
-                      inputs ? [ ],
-                      ...
-                    }@attrs:
+                    name: attrs:
                     let
                       shell = rustOutputs.${name}.devShell;
-                      filteredAttrs = lib.removeAttrs attrs ["inputs"];
                     in
-                    filteredAttrs // {
+                    attrs
+                    // {
                       command = pkgs.writeShellApplication {
                         name = "pluralkit-${name}";
-                        runtimeInputs =
-                          (with pkgs; [
-                            coreutils
-                            shell.stdenv.cc
-                          ])
-                          ++ shell.nativeBuildInputs
-                          ++ inputs;
+                        runtimeInputs = [ pkgs.coreutils ];
                         text = ''
                           ${sourceDotenv}
                           set -x
                           ${pluralkitConfCheck}
-                          exec cargo run --package ${name}
+                          nix develop .#services -c cargo run --package ${name}
                         '';
                       };
                     };
@@ -195,38 +185,35 @@
                   pluralkit-bot = {
                     command = pkgs.writeShellApplication {
                       name = "pluralkit-bot";
-                      runtimeInputs = self'.devShells.bot.nativeBuildInputs ++ [
-                        pkgs.coreutils
-                        pkgs.git
-                        self'.devShells.bot.stdenv.cc
-                      ];
+                      runtimeInputs = [ pkgs.coreutils ];
                       text = ''
                         ${sourceDotenv}
                         set -x
                         ${pluralkitConfCheck}
                         ${self'.apps.generate-command-parser-bindings.program}
-                        dotnet build ./PluralKit.Bot/PluralKit.Bot.csproj -c Release -o obj/
-                        exec dotnet obj/PluralKit.Bot.dll
+                        nix develop .#bot -c bash -c "dotnet build ./PluralKit.Bot/PluralKit.Bot.csproj -c Release -o obj/ && dotnet obj/PluralKit.Bot.dll"
                       '';
                     };
                     depends_on.postgres.condition = "process_healthy";
                     depends_on.redis.condition = "process_healthy";
-                    depends_on.pluralkit-gateway.condition = "process_healthy";
+                    depends_on.pluralkit-gateway.condition = "process_log_ready";
                     # TODO: add liveness check
                     ready_log_line = "Received Ready";
+                    availability.restart = "on_failure";
+                    availability.max_restarts = 3;
                   };
                   ### gateway ###
                   pluralkit-gateway = mkServiceProcess "gateway" {
-                    inputs = with pkgs; [curl gnugrep];
                     depends_on.postgres.condition = "process_healthy";
                     depends_on.redis.condition = "process_healthy";
                     # configure health checks
                     # TODO: don't assume port?
-                    liveness_probe.exec.command = ''curl -s -o /dev/null -w "%{http_code}" http://localhost:5000/stats | grep "302"'';
-                    liveness_probe.period_seconds = 5;
-                    readiness_probe.exec.command = procCfg.pluralkit-gateway.liveness_probe.exec.command;
-                    readiness_probe.period_seconds = 5;
-                    readiness_probe.initial_delay_seconds = 3;
+                    liveness_probe.exec.command = ''${pkgs.curl}/bin/curl -s -o /dev/null -w "%{http_code}" http://localhost:5000/stats | ${pkgs.busybox}/bin/grep "302"'';
+                    liveness_probe.period_seconds = 7;
+                    # TODO: add actual listening or running line in gateway
+                    ready_log_line = "Running ";
+                    availability.restart = "on_failure";
+                    availability.max_restarts = 3;
                   };
                   # TODO: add the rest of the services
                 };
