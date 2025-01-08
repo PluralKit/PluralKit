@@ -90,7 +90,7 @@
                 set -x
                 commandslib="''${1:-}"
                 if [ "$commandslib" == "" ]; then
-                  cargo -Z unstable-options build --package commands --release --artifact-dir obj/
+                  cargo -Z unstable-options build --package commands --lib --release --artifact-dir obj/
                   commandslib="obj/libcommands.so"
                 else
                   cp -f "$commandslib" obj/

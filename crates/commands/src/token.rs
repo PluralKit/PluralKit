@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::{fmt::Display, ops::Not, str::FromStr};
 
 use smol_str::{SmolStr, ToSmolStr};
 
@@ -33,6 +33,8 @@ pub enum Token {
     PrivacyLevel(ParamName),
 
     /// on, off; yes, no; true, false
+    Enable(ParamName),
+    Disable(ParamName),
     Toggle(ParamName),
 
     /// reset, clear, default
@@ -100,11 +102,15 @@ impl Token {
                     | Self::SystemRef(param_name)
                     | Self::PrivacyLevel(param_name)
                     | Self::Toggle(param_name)
+                    | Self::Enable(param_name)
+                    | Self::Disable(param_name)
                     | Self::Reset(param_name) => MissingParameter { name: param_name },
-                    Self::Any(tokens) => tokens.is_empty().then_some(NoMatch).unwrap_or_else(|| {
-                        let mut results = tokens.iter().map(|t| t.try_match(None));
-                        results.find(|r| !matches!(r, NoMatch)).unwrap_or(NoMatch)
-                    }),
+                    Self::Any(tokens) => {
+                        tokens.is_empty().then_some(NoMatch).unwrap_or_else(|| {
+                            let mut results = tokens.iter().map(|t| t.try_match(None));
+                            results.find(|r| !matches!(r, NoMatch)).unwrap_or(NoMatch)
+                        })
+                    }
                     // everything else doesnt match if no input anyway
                     Token::Value(_) => NoMatch,
                     Token::Flag => NoMatch,
@@ -167,12 +173,30 @@ impl Token {
                 ),
                 Err(_) => NoMatch,
             },
-
-            Self::Toggle(param_name) => match Toggle::from_str(input) {
+            Self::Toggle(param_name) => match Enable::from_str(input)
+                .map(Into::<bool>::into)
+                .or_else(|_| Disable::from_str(input).map(Into::<bool>::into))
+            {
+                Ok(toggle) => TokenMatchResult::new_match_param(
+                    input,
+                    param_name,
+                    Parameter::Toggle { toggle },
+                ),
+                Err(_) => NoMatch,
+            },
+            Self::Enable(param_name) => match Enable::from_str(input) {
                 Ok(t) => TokenMatchResult::new_match_param(
                     input,
                     param_name,
-                    Parameter::Toggle { toggle: t.0 },
+                    Parameter::Toggle { toggle: t.into() },
+                ),
+                Err(_) => NoMatch,
+            },
+            Self::Disable(param_name) => match Disable::from_str(input) {
+                Ok(t) => TokenMatchResult::new_match_param(
+                    input,
+                    param_name,
+                    Parameter::Toggle { toggle: t.into() },
                 ),
                 Err(_) => NoMatch,
             },
@@ -181,6 +205,37 @@ impl Token {
                 Err(_) => NoMatch,
             },
             // don't add a _ match here!
+        }
+    }
+}
+
+impl Display for Token {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Token::Empty => write!(f, ""),
+            Token::Any(vec) => {
+                write!(f, "(")?;
+                for (i, token) in vec.iter().enumerate() {
+                    if i != 0 {
+                        write!(f, " | ")?;
+                    }
+                    write!(f, "{}", token)?;
+                }
+                write!(f, ")")
+            }
+            Token::Value(vec) if vec.is_empty().not() => write!(f, "{}", vec.first().unwrap()),
+            Token::Value(_) => Ok(()), // if value token has no values (lol), don't print anything
+            // todo: it might not be the best idea to directly use param name here (what if we want to display something else but keep the name? or translations?)
+            Token::FullString(param_name) => write!(f, "[{}]", param_name),
+            Token::MemberRef(param_name) => write!(f, "<{}>", param_name),
+            Token::SystemRef(param_name) => write!(f, "<{}>", param_name),
+            Token::MemberPrivacyTarget(param_name) => write!(f, "[{}]", param_name),
+            Token::PrivacyLevel(param_name) => write!(f, "[{}]", param_name),
+            Token::Enable(_) => write!(f, "on"),
+            Token::Disable(_) => write!(f, "off"),
+            Token::Toggle(_) => write!(f, "on/off"),
+            Token::Reset(_) => write!(f, "reset"),
+            Token::Flag => unreachable!("flag tokens should never be in command definitions"),
         }
     }
 }
@@ -218,7 +273,13 @@ impl ToToken for [Token] {
 pub enum MemberPrivacyTarget {
     Visibility,
     Name,
-    // todo
+    Description,
+    Banner,
+    Avatar,
+    Birthday,
+    Pronouns,
+    Proxy,
+    Metadata,
 }
 
 impl AsRef<str> for MemberPrivacyTarget {
@@ -226,6 +287,13 @@ impl AsRef<str> for MemberPrivacyTarget {
         match self {
             Self::Visibility => "visibility",
             Self::Name => "name",
+            Self::Description => "description",
+            Self::Banner => "banner",
+            Self::Avatar => "avatar",
+            Self::Birthday => "birthday",
+            Self::Pronouns => "pronouns",
+            Self::Proxy => "proxy",
+            Self::Metadata => "metadata",
         }
     }
 }
@@ -235,9 +303,16 @@ impl FromStr for MemberPrivacyTarget {
     type Err = ();
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
+        match s.to_lowercase().as_str() {
             "visibility" => Ok(Self::Visibility),
             "name" => Ok(Self::Name),
+            "description" => Ok(Self::Description),
+            "banner" => Ok(Self::Banner),
+            "avatar" => Ok(Self::Avatar),
+            "birthday" => Ok(Self::Birthday),
+            "pronouns" => Ok(Self::Pronouns),
+            "proxy" => Ok(Self::Proxy),
+            "metadata" => Ok(Self::Metadata),
             _ => Err(()),
         }
     }
@@ -271,28 +346,6 @@ impl FromStr for PrivacyLevel {
 }
 
 #[derive(Debug, Clone, Eq, Hash, PartialEq)]
-pub struct Toggle(bool);
-
-impl AsRef<str> for Toggle {
-    fn as_ref(&self) -> &str {
-        // on / off better than others for docs and stuff?
-        self.0.then_some("on").unwrap_or("off")
-    }
-}
-
-impl FromStr for Toggle {
-    type Err = ();
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "on" | "yes" | "true" | "enable" | "enabled" => Ok(Self(true)),
-            "off" | "no" | "false" | "disable" | "disabled" => Ok(Self(false)),
-            _ => Err(()),
-        }
-    }
-}
-
-#[derive(Debug, Clone, Eq, Hash, PartialEq)]
 pub struct Reset;
 
 impl AsRef<str> for Reset {
@@ -309,5 +362,57 @@ impl FromStr for Reset {
             "reset" | "clear" | "default" => Ok(Self),
             _ => Err(()),
         }
+    }
+}
+
+#[derive(Debug, Clone, Eq, Hash, PartialEq)]
+pub struct Enable;
+
+impl AsRef<str> for Enable {
+    fn as_ref(&self) -> &str {
+        "on"
+    }
+}
+
+impl FromStr for Enable {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "on" | "yes" | "true" | "enable" | "enabled" => Ok(Self),
+            _ => Err(()),
+        }
+    }
+}
+
+impl Into<bool> for Enable {
+    fn into(self) -> bool {
+        true
+    }
+}
+
+#[derive(Debug, Clone, Eq, Hash, PartialEq)]
+pub struct Disable;
+
+impl AsRef<str> for Disable {
+    fn as_ref(&self) -> &str {
+        "off"
+    }
+}
+
+impl FromStr for Disable {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "off" | "no" | "false" | "disable" | "disabled" => Ok(Self),
+            _ => Err(()),
+        }
+    }
+}
+
+impl Into<bool> for Disable {
+    fn into(self) -> bool {
+        false
     }
 }

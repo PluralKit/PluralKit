@@ -18,6 +18,8 @@ pub mod server_config;
 pub mod switch;
 pub mod system;
 
+use std::fmt::Display;
+
 use smol_str::SmolStr;
 
 use crate::{
@@ -44,6 +46,18 @@ impl Command {
             help: help.into(),
             cb: cb.into(),
         }
+    }
+}
+
+impl Display for Command {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for (idx, token) in self.tokens.iter().enumerate() {
+            write!(f, "{}", token)?;
+            if idx < self.tokens.len() - 1 {
+                write!(f, " ")?;
+            }
+        }
+        write!(f, " - {}", self.help)
     }
 }
 

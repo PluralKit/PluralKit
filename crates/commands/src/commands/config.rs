@@ -23,7 +23,12 @@ pub fn cmds() -> impl Iterator<Item = Command> {
             "Shows the autoproxy timeout"
         ),
         command!(
-            [cfg, autoproxy, ["timeout", "tm"], [Toggle("toggle"), Reset("reset"), FullString("timeout")]],
+            [
+                cfg,
+                autoproxy,
+                ["timeout", "tm"],
+                [Disable("toggle"), Reset("reset"), FullString("timeout")]
+            ],
             "cfg_ap_timeout_update",
             "Sets the autoproxy timeout"
         ),

@@ -40,9 +40,9 @@ pub enum CommandResult {
 pub enum Parameter {
     MemberRef { member: String },
     SystemRef { system: String },
-	MemberPrivacyTarget { target: String },
-	PrivacyLevel { level: String },
-	OpaqueString { raw: String },
+    MemberPrivacyTarget { target: String },
+    PrivacyLevel { level: String },
+    OpaqueString { raw: String },
     Toggle { toggle: bool },
     Reset,
 }
@@ -109,6 +109,7 @@ fn parse_command(input: String) -> CommandResult {
                         },
                     };
                 }
+
                 // todo: check if last token is a common incorrect unquote (multi-member names etc)
                 // todo: check if this is a system name in pk;s command
                 return CommandResult::Err {
@@ -161,8 +162,14 @@ fn next_token(
         // for FullString just send the whole string
         let input_to_match = param.clone().map(|v| v.0);
         match token.try_match(input_to_match) {
-            TokenMatchResult::Match(value) => return Ok((token, value, param.map(|v| v.1).unwrap_or(current_pos))),
-            TokenMatchResult::MissingParameter { name } => return Err(Some(format_smolstr!("Missing parameter `{name}` in command `{input} [{name}]`."))),
+            TokenMatchResult::Match(value) => {
+                return Ok((token, value, param.map(|v| v.1).unwrap_or(current_pos)))
+            }
+            TokenMatchResult::MissingParameter { name } => {
+                return Err(Some(format_smolstr!(
+                    "Missing parameter `{name}` in command `{input} [{name}]`."
+                )))
+            }
             TokenMatchResult::NoMatch => {}
         }
     }

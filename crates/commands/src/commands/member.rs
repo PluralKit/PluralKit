@@ -30,7 +30,12 @@ pub fn cmds() -> impl Iterator<Item = Command> {
             "Shows a member's description"
         ),
         command!(
-            [member, MemberRef("target"), description, FullString("description")],
+            [
+                member,
+                MemberRef("target"),
+                description,
+                FullString("description")
+            ],
             "member_desc_update",
             "Changes a member's description"
         ),
