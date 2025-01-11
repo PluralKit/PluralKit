@@ -1,4 +1,5 @@
 #![feature(let_chains)]
+#![feature(anonymous_lifetime_in_impl_trait)]
 
 pub mod commands;
 mod string;
@@ -10,8 +11,9 @@ uniffi::include_scaffolding!("commands");
 use core::panic;
 use std::collections::HashMap;
 use std::fmt::Write;
+use std::ops::Not;
 
-use smol_str::{format_smolstr, SmolStr};
+use smol_str::SmolStr;
 use tree::TreeBranch;
 
 pub use commands::Command;
@@ -69,10 +71,10 @@ pub fn parse_command(prefix: String, input: String) -> CommandResult {
     loop {
         let possible_tokens = local_tree.possible_tokens().cloned().collect::<Vec<_>>();
         println!("possible: {:?}", possible_tokens);
-        let next = next_token(possible_tokens.clone(), &prefix, input.clone(), current_pos);
+        let next = next_token(possible_tokens.clone(), input.clone(), current_pos);
         println!("next: {:?}", next);
         match next {
-            Ok((found_token, arg, new_pos)) => {
+            Some(Ok((found_token, arg, new_pos))) => {
                 current_pos = new_pos;
                 if let Token::Flag = found_token {
                     flags.insert(arg.unwrap().raw.into(), None);
@@ -94,7 +96,15 @@ pub fn parse_command(prefix: String, input: String) -> CommandResult {
                     panic!("found token could not match tree, at {input}");
                 }
             }
-            Err(None) => {
+            Some(Err((token, err))) => {
+                let error_msg = match err {
+                    TokenMatchError::MissingParameter { name } => {
+                        format!("Expected parameter `{name}` in command `{prefix}{input} {token}`.")
+                    }
+                };
+                return CommandResult::Err { error: error_msg };
+            }
+            None => {
                 if let Some(command) = local_tree.command() {
                     println!("{} {params:?}", command.cb);
                     return CommandResult::Ok {
@@ -109,32 +119,18 @@ pub fn parse_command(prefix: String, input: String) -> CommandResult {
 
                 let mut error = format!("Unknown command `{prefix}{input}`.");
 
-                let possible_commands = local_tree.possible_commands(2);
-                if !possible_commands.is_empty() {
-                    error.push_str(" Perhaps you meant to use one of the commands below:\n");
-                    for command in possible_commands.iter().take(MAX_SUGGESTIONS) {
-                        if !command.show_in_suggestions {
-                            continue;
-                        }
-                        writeln!(&mut error, "- **{prefix}{command}** - *{}*", command.help)
-                            .expect("oom");
-                    }
-                } else {
-                    error.push_str("\n");
+                if fmt_possible_commands(&mut error, &prefix, local_tree.possible_commands(2)).not()
+                {
+                    error.push_str(" ");
                 }
 
                 error.push_str(
-                    "For a list of possible commands, see <https://pluralkit.me/commands>.",
+                    "For a list of all possible commands, see <https://pluralkit.me/commands>.",
                 );
 
                 // todo: check if last token is a common incorrect unquote (multi-member names etc)
                 // todo: check if this is a system name in pk;s command
                 return CommandResult::Err { error };
-            }
-            Err(Some(short_circuit)) => {
-                return CommandResult::Err {
-                    error: short_circuit.into(),
-                };
             }
         }
     }
@@ -143,16 +139,16 @@ pub fn parse_command(prefix: String, input: String) -> CommandResult {
 /// Find the next token from an either raw or partially parsed command string
 ///
 /// Returns:
+/// - nothing (none matched)
 /// - matched token, to move deeper into the tree
 /// - matched value (if this command matched an user-provided value such as a member name)
 /// - end position of matched token
-/// - optionally a short-circuit error
+/// - error when matching
 fn next_token(
     possible_tokens: Vec<Token>,
-    prefix: &str,
     input: SmolStr,
     current_pos: usize,
-) -> Result<(Token, Option<TokenMatchedValue>, usize), Option<SmolStr>> {
+) -> Option<Result<(Token, Option<TokenMatchedValue>, usize), (Token, TokenMatchError)>> {
     // get next parameter, matching quotes
     let param = crate::string::next_param(input.clone(), current_pos);
     println!("matched: {param:?}\n---");
@@ -163,14 +159,14 @@ fn next_token(
     if let Some((value, new_pos)) = param.clone()
         && value.starts_with('-')
     {
-        return Ok((
+        return Some(Ok((
             Token::Flag,
             Some(TokenMatchedValue {
                 raw: value,
                 param: None,
             }),
             new_pos,
-        ));
+        )));
     }
 
     // iterate over tokens and run try_match
@@ -178,17 +174,39 @@ fn next_token(
         // for FullString just send the whole string
         let input_to_match = param.clone().map(|v| v.0);
         match token.try_match(input_to_match) {
-            TokenMatchResult::Match(value) => {
-                return Ok((token, value, param.map(|v| v.1).unwrap_or(current_pos)))
-            }
-            TokenMatchResult::MissingParameter { name } => {
-                return Err(Some(format_smolstr!(
-                    "Missing parameter `{name}` in command `{prefix}{input} {token}`."
+            Some(Ok(value)) => {
+                return Some(Ok((
+                    token,
+                    value,
+                    param.map(|v| v.1).unwrap_or(current_pos),
                 )))
             }
-            TokenMatchResult::NoMatch => {}
+            Some(Err(err)) => {
+                return Some(Err((token, err)));
+            }
+            None => {} // continue matching until we exhaust all tokens
         }
     }
 
-    Err(None)
+    None
+}
+
+// todo: should probably move this somewhere else
+/// returns true if wrote possible commands, false if not
+fn fmt_possible_commands(
+    f: &mut String,
+    prefix: &str,
+    mut possible_commands: impl Iterator<Item = &Command>,
+) -> bool {
+    if let Some(first) = possible_commands.next() {
+        f.push_str(" Perhaps you meant to use one of the commands below:\n");
+        for command in std::iter::once(first).chain(possible_commands.take(MAX_SUGGESTIONS - 1)) {
+            if !command.show_in_suggestions {
+                continue;
+            }
+            writeln!(f, "- **{prefix}{command}** - *{}*", command.help).expect("oom");
+        }
+        return true;
+    }
+    return false;
 }

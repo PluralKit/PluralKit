@@ -18,7 +18,7 @@ pub mod server_config;
 pub mod switch;
 pub mod system;
 
-use std::fmt::Display;
+use std::fmt::{Debug, Display};
 
 use smol_str::SmolStr;
 
@@ -27,7 +27,7 @@ use crate::{
     token::{ToToken, Token},
 };
 
-#[derive(Clone, Debug)]
+#[derive(Debug, Clone)]
 pub struct Command {
     // TODO: fix hygiene
     pub tokens: Vec<Token>,

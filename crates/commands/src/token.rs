@@ -45,20 +45,8 @@ pub enum Token {
     Flag,
 }
 
-// #[macro_export]
-// macro_rules! any {
-//     ($($token:expr),+) => {
-//         Token::Any(vec![$($token.to_token()),+])
-//     };
-// }
-
 #[derive(Debug)]
-pub enum TokenMatchResult {
-    /// Token did not match.
-    NoMatch,
-    /// Token matched, optionally with a value.
-    Match(Option<TokenMatchedValue>),
-    /// A required parameter was missing.
+pub enum TokenMatchError {
     MissingParameter { name: ParamName },
 }
 
@@ -68,33 +56,45 @@ pub struct TokenMatchedValue {
     pub param: Option<(ParamName, Parameter)>,
 }
 
-impl TokenMatchResult {
-    fn new_match(raw: impl Into<SmolStr>) -> Self {
-        Self::Match(Some(TokenMatchedValue {
+impl TokenMatchedValue {
+    fn new_match(raw: impl Into<SmolStr>) -> TryMatchResult {
+        Some(Ok(Some(Self {
             raw: raw.into(),
             param: None,
-        }))
+        })))
     }
 
-    fn new_match_param(raw: impl Into<SmolStr>, param_name: ParamName, param: Parameter) -> Self {
-        Self::Match(Some(TokenMatchedValue {
+    fn new_match_param(
+        raw: impl Into<SmolStr>,
+        param_name: ParamName,
+        param: Parameter,
+    ) -> TryMatchResult {
+        Some(Ok(Some(Self {
             raw: raw.into(),
             param: Some((param_name, param)),
-        }))
+        })))
     }
 }
 
-impl Token {
-    pub fn try_match(&self, input: Option<SmolStr>) -> TokenMatchResult {
-        use TokenMatchResult::*;
+/// None -> no match
+/// Some(Ok(None)) -> match, no value
+/// Some(Ok(Some(_))) -> match, with value
+/// Some(Err(_)) -> error while matching
+// q: why do this while we could have a NoMatch in TokenMatchError?
+// a: because we want to differentiate between no match and match failure (it matched with an error)
+//    "no match" has a different charecteristic because we want to continue matching other tokens...
+//    ...while "match failure" means we should stop matching and return the error
+type TryMatchResult = Option<Result<Option<TokenMatchedValue>, TokenMatchError>>;
 
+impl Token {
+    pub fn try_match(&self, input: Option<SmolStr>) -> TryMatchResult {
         let input = match input {
             Some(input) => input,
             None => {
                 // short circuit on:
                 return match self {
                     // empty token
-                    Self::Empty => Match(None),
+                    Self::Empty => Some(Ok(None)),
                     // missing paramaters
                     Self::FullString(param_name)
                     | Self::MemberRef(param_name)
@@ -104,16 +104,16 @@ impl Token {
                     | Self::Toggle(param_name)
                     | Self::Enable(param_name)
                     | Self::Disable(param_name)
-                    | Self::Reset(param_name) => MissingParameter { name: param_name },
-                    Self::Any(tokens) => {
-                        tokens.is_empty().then_some(NoMatch).unwrap_or_else(|| {
-                            let mut results = tokens.iter().map(|t| t.try_match(None));
-                            results.find(|r| !matches!(r, NoMatch)).unwrap_or(NoMatch)
-                        })
+                    | Self::Reset(param_name) => {
+                        Some(Err(TokenMatchError::MissingParameter { name: param_name }))
                     }
+                    Self::Any(tokens) => tokens.is_empty().then_some(None).unwrap_or_else(|| {
+                        let mut results = tokens.iter().map(|t| t.try_match(None));
+                        results.find(|r| !matches!(r, None)).unwrap_or(None)
+                    }),
                     // everything else doesnt match if no input anyway
-                    Token::Value(_) => NoMatch,
-                    Token::Flag => NoMatch,
+                    Token::Value(_) => None,
+                    Token::Flag => None,
                     // don't add a _ match here!
                 };
             }
@@ -122,31 +122,31 @@ impl Token {
 
         // try actually matching stuff
         match self {
-            Self::Empty => NoMatch,
+            Self::Empty => None,
             Self::Flag => unreachable!(), // matched upstream (dusk: i don't really like this tbh)
             Self::Any(tokens) => tokens
                 .iter()
                 .map(|t| t.try_match(Some(input.into())))
-                .find(|r| !matches!(r, NoMatch))
-                .unwrap_or(NoMatch),
+                .find(|r| !matches!(r, None))
+                .unwrap_or(None),
             Self::Value(values) => values
                 .iter()
                 .any(|v| v.eq(input))
-                .then(|| TokenMatchResult::new_match(input))
-                .unwrap_or(NoMatch),
-            Self::FullString(param_name) => TokenMatchResult::new_match_param(
+                .then(|| TokenMatchedValue::new_match(input))
+                .unwrap_or(None),
+            Self::FullString(param_name) => TokenMatchedValue::new_match_param(
                 input,
                 param_name,
                 Parameter::OpaqueString { raw: input.into() },
             ),
-            Self::SystemRef(param_name) => TokenMatchResult::new_match_param(
+            Self::SystemRef(param_name) => TokenMatchedValue::new_match_param(
                 input,
                 param_name,
                 Parameter::SystemRef {
                     system: input.into(),
                 },
             ),
-            Self::MemberRef(param_name) => TokenMatchResult::new_match_param(
+            Self::MemberRef(param_name) => TokenMatchedValue::new_match_param(
                 input,
                 param_name,
                 Parameter::MemberRef {
@@ -154,55 +154,55 @@ impl Token {
                 },
             ),
             Self::MemberPrivacyTarget(param_name) => match MemberPrivacyTarget::from_str(input) {
-                Ok(target) => TokenMatchResult::new_match_param(
+                Ok(target) => TokenMatchedValue::new_match_param(
                     input,
                     param_name,
                     Parameter::MemberPrivacyTarget {
                         target: target.as_ref().into(),
                     },
                 ),
-                Err(_) => NoMatch,
+                Err(_) => None,
             },
             Self::PrivacyLevel(param_name) => match PrivacyLevel::from_str(input) {
-                Ok(level) => TokenMatchResult::new_match_param(
+                Ok(level) => TokenMatchedValue::new_match_param(
                     input,
                     param_name,
                     Parameter::PrivacyLevel {
                         level: level.as_ref().into(),
                     },
                 ),
-                Err(_) => NoMatch,
+                Err(_) => None,
             },
             Self::Toggle(param_name) => match Enable::from_str(input)
                 .map(Into::<bool>::into)
                 .or_else(|_| Disable::from_str(input).map(Into::<bool>::into))
             {
-                Ok(toggle) => TokenMatchResult::new_match_param(
+                Ok(toggle) => TokenMatchedValue::new_match_param(
                     input,
                     param_name,
                     Parameter::Toggle { toggle },
                 ),
-                Err(_) => NoMatch,
+                Err(_) => None,
             },
             Self::Enable(param_name) => match Enable::from_str(input) {
-                Ok(t) => TokenMatchResult::new_match_param(
+                Ok(t) => TokenMatchedValue::new_match_param(
                     input,
                     param_name,
                     Parameter::Toggle { toggle: t.into() },
                 ),
-                Err(_) => NoMatch,
+                Err(_) => None,
             },
             Self::Disable(param_name) => match Disable::from_str(input) {
-                Ok(t) => TokenMatchResult::new_match_param(
+                Ok(t) => TokenMatchedValue::new_match_param(
                     input,
                     param_name,
                     Parameter::Toggle { toggle: t.into() },
                 ),
-                Err(_) => NoMatch,
+                Err(_) => None,
             },
             Self::Reset(param_name) => match Reset::from_str(input) {
-                Ok(_) => TokenMatchResult::new_match_param(input, param_name, Parameter::Reset),
-                Err(_) => NoMatch,
+                Ok(_) => TokenMatchedValue::new_match_param(input, param_name, Parameter::Reset),
+                Err(_) => None,
             },
             // don't add a _ match here!
         }
