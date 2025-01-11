@@ -110,6 +110,7 @@ pub fn parse_command(prefix: String, input: String) -> CommandResult {
                 if !possible_commands.is_empty() {
                     error.push_str(" Perhaps you meant to use one of the commands below:\n");
                     for command in possible_commands {
+                        if !command.show_in_suggestions { continue }
                         writeln!(&mut error, "- **{prefix}{command}** - *{}*", command.help)
                             .expect("oom");
                     }

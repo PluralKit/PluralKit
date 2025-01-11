@@ -33,6 +33,7 @@ pub struct Command {
     pub tokens: Vec<Token>,
     pub help: SmolStr,
     pub cb: SmolStr,
+    pub show_in_suggestions: bool,
 }
 
 impl Command {
@@ -40,11 +41,13 @@ impl Command {
         tokens: impl IntoIterator<Item = Token>,
         help: impl Into<SmolStr>,
         cb: impl Into<SmolStr>,
+        show_in_suggestions: bool,
     ) -> Self {
         Self {
             tokens: tokens.into_iter().collect(),
             help: help.into(),
             cb: cb.into(),
+            show_in_suggestions,
         }
     }
 }
@@ -63,8 +66,11 @@ impl Display for Command {
 
 #[macro_export]
 macro_rules! command {
+    ([$($v:expr),+], $cb:expr, $help:expr, suggest = $suggest:expr) => {
+        $crate::commands::Command::new([$($v.to_token()),*], $help, $cb, $suggest)
+    };
     ([$($v:expr),+], $cb:expr, $help:expr) => {
-        $crate::commands::Command::new([$($v.to_token()),*], $help, $cb)
+        $crate::command!([$($v),+], $cb, $help, suggest = true)
     };
 }
 
