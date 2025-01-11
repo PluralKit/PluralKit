@@ -1,5 +1,5 @@
 namespace commands {
-    CommandResult parse_command(string input);
+    CommandResult parse_command(string prefix, string input);
 };
 [Enum]
 interface CommandResult {

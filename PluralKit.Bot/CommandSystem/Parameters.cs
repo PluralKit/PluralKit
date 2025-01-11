@@ -26,10 +26,10 @@ public class Parameters
     // just used for errors, temporarily
     public string FullCommand { get; init; }
 
-    public Parameters(string cmd)
+    public Parameters(string prefix, string cmd)
     {
         FullCommand = cmd;
-        var result = CommandsMethods.ParseCommand(cmd);
+        var result = CommandsMethods.ParseCommand(prefix, cmd);
         if (result is CommandResult.Ok)
         {
             var command = ((CommandResult.Ok)result).@command;

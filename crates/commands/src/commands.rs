@@ -57,7 +57,7 @@ impl Display for Command {
                 write!(f, " ")?;
             }
         }
-        write!(f, " - {}", self.help)
+        Ok(())
     }
 }
 

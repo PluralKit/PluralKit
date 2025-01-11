@@ -142,7 +142,7 @@ public class MessageCreated: IEventHandler<MessageCreateEvent>
             Parameters parameters;
             try
             {
-                parameters = new Parameters(evt.Content?.Substring(cmdStart));
+                parameters = new Parameters(evt.Content?.Substring(0, cmdStart), evt.Content?.Substring(cmdStart));
             }
             catch (PKError e)
             {

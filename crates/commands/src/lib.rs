@@ -9,6 +9,7 @@ uniffi::include_scaffolding!("commands");
 
 use core::panic;
 use std::collections::HashMap;
+use std::fmt::Write;
 
 use smol_str::{format_smolstr, SmolStr};
 use tree::TreeBranch;
@@ -51,7 +52,7 @@ pub struct ParsedCommand {
     pub flags: HashMap<String, Option<String>>,
 }
 
-pub fn parse_command(input: String) -> CommandResult {
+pub fn parse_command(prefix: String, input: String) -> CommandResult {
     let input: SmolStr = input.into();
     let mut local_tree: TreeBranch = COMMAND_TREE.clone();
 
@@ -91,11 +92,11 @@ pub fn parse_command(input: String) -> CommandResult {
                 }
             }
             Err(None) => {
-                if let Some(command_ref) = local_tree.callback() {
-                    println!("{command_ref} {params:?}");
+                if let Some(command) = local_tree.command() {
+                    println!("{} {params:?}", command.cb);
                     return CommandResult::Ok {
                         command: ParsedCommand {
-                            command_ref: command_ref.into(),
+                            command_ref: command.cb.into(),
                             params,
                             args,
                             flags,
@@ -103,13 +104,26 @@ pub fn parse_command(input: String) -> CommandResult {
                     };
                 }
 
-                println!("{possible_tokens:?}");
+                let mut error = format!("Unknown command `{prefix}{input}`.");
+
+                let possible_commands = local_tree.possible_commands(2);
+                if !possible_commands.is_empty() {
+                    error.push_str(" Perhaps you meant to use one of the commands below:\n");
+                    for command in possible_commands {
+                        writeln!(&mut error, "- **{prefix}{command}** - *{}*", command.help)
+                            .expect("oom");
+                    }
+                } else {
+                    error.push_str("\n");
+                }
+
+                error.push_str(
+                    "For a list of possible commands, see <https://pluralkit.me/commands>.",
+                );
 
                 // todo: check if last token is a common incorrect unquote (multi-member names etc)
                 // todo: check if this is a system name in pk;s command
-                return CommandResult::Err {
-                    error: format!("Unknown command `{input}`. For a list of possible commands, see <https://pluralkit.me/commands>."),
-                };
+                return CommandResult::Err { error };
             }
             Err(Some(short_circuit)) => {
                 return CommandResult::Err {
