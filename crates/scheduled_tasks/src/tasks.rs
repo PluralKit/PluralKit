@@ -10,6 +10,7 @@ use metrics::gauge;
 use num_format::{Locale, ToFormattedString};
 use reqwest::ClientBuilder;
 use sqlx::Executor;
+use tracing::error;
 
 use crate::AppCtx;
 
@@ -182,16 +183,23 @@ pub async fn update_stats_api(ctx: AppCtx) -> anyhow::Result<()> {
 
             let data = resp.json::<PrometheusResult>().await?;
 
+            let error_handler = || {
+                error!("missing data at {}", $q);
+            };
+
             data.data
                 .result
                 .get(0)
-                .expect("missing data")
+                .ok_or_else(error_handler)
+                .unwrap()
                 .value
                 .clone()
                 .get(1)
-                .expect("missing data")
+                .ok_or_else(error_handler)
+                .unwrap()
                 .as_str()
-                .expect("invalid data")
+                .ok_or_else(error_handler)
+                .unwrap()
                 .parse::<$t>()?
         }};
         ($t:ty, $q:expr, $wrap:expr) => {{
@@ -259,8 +267,7 @@ pub async fn update_stats_api(ctx: AppCtx) -> anyhow::Result<()> {
         .set::<(), &str, String>(
             "statsapi",
             serde_json::to_string(&data).expect("should not fail"),
-            // Some(fred::types::Expiration::EX(60)),
-            None,
+            Some(fred::types::Expiration::EX(60)),
             None,
             false,
         )
