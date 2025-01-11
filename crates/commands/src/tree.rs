@@ -10,6 +10,13 @@ pub struct TreeBranch {
 }
 
 impl TreeBranch {
+    pub fn empty() -> Self {
+        Self {
+            current_command_key: None,
+            branches: OrderMap::new(),
+        }
+    }
+
     pub fn register_command(&mut self, command: Command) {
         let mut current_branch = self;
         // iterate over tokens in command

@@ -10,7 +10,6 @@ uniffi::include_scaffolding!("commands");
 use core::panic;
 use std::collections::HashMap;
 
-use ordermap::OrderMap;
 use smol_str::{format_smolstr, SmolStr};
 use tree::TreeBranch;
 
@@ -19,10 +18,7 @@ pub use token::*;
 
 lazy_static::lazy_static! {
     pub static ref COMMAND_TREE: TreeBranch = {
-        let mut tree = TreeBranch {
-            current_command_key: None,
-            branches: OrderMap::new(),
-        };
+        let mut tree = TreeBranch::empty();
 
         crate::commands::all().into_iter().for_each(|x| tree.register_command(x));
 
