@@ -52,7 +52,6 @@ pub enum Parameter {
 #[derive(Debug)]
 pub struct ParsedCommand {
     pub command_ref: String,
-    pub args: Vec<String>,
     pub params: HashMap<String, Parameter>,
     pub flags: HashMap<String, Option<String>>,
 }
@@ -64,7 +63,6 @@ pub fn parse_command(prefix: String, input: String) -> CommandResult {
     // end position of all currently matched tokens
     let mut current_pos = 0;
 
-    let mut args: Vec<String> = Vec::new();
     let mut params: HashMap<String, Parameter> = HashMap::new();
     let mut flags: HashMap<String, Option<String>> = HashMap::new();
 
@@ -87,7 +85,6 @@ pub fn parse_command(prefix: String, input: String) -> CommandResult {
                     if let Some((param_name, param)) = arg.param.as_ref() {
                         params.insert(param_name.to_string(), param.clone());
                     }
-                    args.push(arg.raw.to_string());
                 }
 
                 if let Some(next_tree) = local_tree.get_branch(&found_token) {
@@ -126,7 +123,6 @@ pub fn parse_command(prefix: String, input: String) -> CommandResult {
                         command: ParsedCommand {
                             command_ref: command.cb.into(),
                             params,
-                            args,
                             flags,
                         },
                     };

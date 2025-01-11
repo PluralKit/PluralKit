@@ -18,7 +18,6 @@ interface Parameter {
 };
 dictionary ParsedCommand {
 	string command_ref;
-	sequence<string> args;
 	record<string, Parameter> params;
 	record<string, string?> flags;
 };

@@ -19,7 +19,6 @@ public abstract record Parameter()
 public class Parameters
 {
     private string _cb { get; init; }
-    private List<string> _args { get; init; }
     private Dictionary<string, string?> _flags { get; init; }
     private Dictionary<string, uniffi.commands.Parameter> _params { get; init; }
 
@@ -34,7 +33,6 @@ public class Parameters
         {
             var command = ((CommandResult.Ok)result).@command;
             _cb = command.@commandRef;
-            _args = command.@args;
             _flags = command.@flags;
             _params = command.@params;
         }
