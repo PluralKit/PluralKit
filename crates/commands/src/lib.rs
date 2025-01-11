@@ -69,7 +69,7 @@ pub fn parse_command(prefix: String, input: String) -> CommandResult {
     loop {
         let possible_tokens = local_tree.possible_tokens().cloned().collect::<Vec<_>>();
         println!("possible: {:?}", possible_tokens);
-        let next = next_token(possible_tokens.clone(), input.clone(), current_pos);
+        let next = next_token(possible_tokens.clone(), &prefix, input.clone(), current_pos);
         println!("next: {:?}", next);
         match next {
             Ok((found_token, arg, new_pos)) => {
@@ -113,7 +113,9 @@ pub fn parse_command(prefix: String, input: String) -> CommandResult {
                 if !possible_commands.is_empty() {
                     error.push_str(" Perhaps you meant to use one of the commands below:\n");
                     for command in possible_commands.iter().take(MAX_SUGGESTIONS) {
-                        if !command.show_in_suggestions { continue }
+                        if !command.show_in_suggestions {
+                            continue;
+                        }
                         writeln!(&mut error, "- **{prefix}{command}** - *{}*", command.help)
                             .expect("oom");
                     }
@@ -147,6 +149,7 @@ pub fn parse_command(prefix: String, input: String) -> CommandResult {
 /// - optionally a short-circuit error
 fn next_token(
     possible_tokens: Vec<Token>,
+    prefix: &str,
     input: SmolStr,
     current_pos: usize,
 ) -> Result<(Token, Option<TokenMatchedValue>, usize), Option<SmolStr>> {
@@ -180,7 +183,7 @@ fn next_token(
             }
             TokenMatchResult::MissingParameter { name } => {
                 return Err(Some(format_smolstr!(
-                    "Missing parameter `{name}` in command `{input} [{name}]`."
+                    "Missing parameter `{name}` in command `{prefix}{input} [{name}]`."
                 )))
             }
             TokenMatchResult::NoMatch => {}
