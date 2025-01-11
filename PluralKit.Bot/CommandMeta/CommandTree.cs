@@ -22,7 +22,7 @@ public partial class CommandTree
             "cfg_ap_timeout_update" => ctx.Execute<Config>(null, m => m.EditAutoproxyTimeout(ctx)),
             "fun_thunder" => ctx.Execute<Fun>(null, m => m.Thunder(ctx)),
             "fun_meow" => ctx.Execute<Fun>(null, m => m.Meow(ctx)),
-            _  =>
+            _ =>
                 // this should only ever occur when deving if commands are not implemented...
                 ctx.Reply(
                     $"{Emojis.Error} Parsed command {ctx.Parameters.Callback().AsCode()} not implemented in PluralKit.Bot!"),
