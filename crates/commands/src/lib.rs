@@ -183,7 +183,7 @@ fn next_token(
             }
             TokenMatchResult::MissingParameter { name } => {
                 return Err(Some(format_smolstr!(
-                    "Missing parameter `{name}` in command `{prefix}{input} [{name}]`."
+                    "Missing parameter `{name}` in command `{prefix}{input} {token}`."
                 )))
             }
             TokenMatchResult::NoMatch => {}
