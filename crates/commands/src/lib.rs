@@ -55,7 +55,7 @@ pub struct ParsedCommand {
     pub flags: HashMap<String, Option<String>>,
 }
 
-fn parse_command(input: String) -> CommandResult {
+pub fn parse_command(input: String) -> CommandResult {
     let input: SmolStr = input.into();
     let mut local_tree: TreeBranch = COMMAND_TREE.clone();
 
