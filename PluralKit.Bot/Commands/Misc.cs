@@ -85,11 +85,11 @@ public class Misc
             .Field(new("Resource usage", $"**CPU:** {stats.prom.cpu_used}% used / {stats.prom.cpu_total_cores} total cores ({stats.prom.cpu_total_threads} threads)\n"
                                         + $"**Memory:** {(stats.prom.memory_used / 1_000_000_000):N1}GB used / {(stats.prom.memory_total / 1_000_000_000):N1}GB total", true))
             .Field(new("Usage metrics", $"Messages received: **{stats.prom.messages_1m}/s** ({stats.prom.messages_15m}/s over 15m)\n" +
-                                        $"Messages proxied: **{stats.prom.proxy_1m}/s** ({stats.prom.proxy_15m}/s over 15m, {stats.db.messages_24h} total in last 24h)\n" +
+                                        $"Messages proxied: **{stats.prom.proxy_1m}/s** ({stats.prom.proxy_15m}/s over 15m, {stats.db.messages_24h:N0} total in last 24h)\n" +
                                         $"Commands executed: **{stats.prom.commands_1m}/m** ({stats.prom.commands_15m}/m over 15m)"));
 
         embed.Field(new("Total numbers", $"**{stats.db.systems:N0}** systems, **{stats.db.members:N0}** members, **{stats.db.groups:N0}** groups, "
-                                       + $"**${stats.db.switches:N0}** switches, **{stats.db.messages:N0}** messages\n" +
+                                       + $"**{stats.db.switches:N0}** switches, **{stats.db.messages:N0}** messages\n" +
                                          $"**{stats.db.guilds:N0}** servers with **{stats.db.channels:N0}** channels"));
 
         embed.Footer(Help.helpEmbed.Footer);
