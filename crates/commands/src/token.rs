@@ -48,6 +48,7 @@ pub enum Token {
 #[derive(Debug)]
 pub enum TokenMatchError {
     MissingParameter { name: ParamName },
+    MissingAny { tokens: Vec<Token> },
 }
 
 #[derive(Debug)]
@@ -108,8 +109,9 @@ impl Token {
                         Some(Err(TokenMatchError::MissingParameter { name: param_name }))
                     }
                     Self::Any(tokens) => tokens.is_empty().then_some(None).unwrap_or_else(|| {
-                        let mut results = tokens.iter().map(|t| t.try_match(None));
-                        results.find(|r| !matches!(r, None)).unwrap_or(None)
+                        Some(Err(TokenMatchError::MissingAny {
+                            tokens: tokens.clone(),
+                        }))
                     }),
                     // everything else doesnt match if no input anyway
                     Token::Value(_) => None,

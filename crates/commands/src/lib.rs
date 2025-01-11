@@ -101,6 +101,21 @@ pub fn parse_command(prefix: String, input: String) -> CommandResult {
                     TokenMatchError::MissingParameter { name } => {
                         format!("Expected parameter `{name}` in command `{prefix}{input} {token}`.")
                     }
+                    TokenMatchError::MissingAny { tokens } => {
+                        let mut msg = format!("Expected one of ");
+                        for (idx, token) in tokens.iter().enumerate() {
+                            write!(&mut msg, "`{token}`").expect("oom");
+                            if idx < tokens.len() - 1 {
+                                if tokens.len() > 2 && idx == tokens.len() - 2 {
+                                    msg.push_str(" or ");
+                                } else {
+                                    msg.push_str(", ");
+                                }
+                            }
+                        }
+                        write!(&mut msg, " in command `{prefix}{input} {token}`.").expect("oom");
+                        msg
+                    }
                 };
                 return CommandResult::Err { error: error_msg };
             }
