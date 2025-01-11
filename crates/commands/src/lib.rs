@@ -63,12 +63,9 @@ pub fn parse_command(input: String) -> CommandResult {
     let mut flags: HashMap<String, Option<String>> = HashMap::new();
 
     loop {
-        println!("possible: {:?}", local_tree.branches.keys());
-        let next = next_token(
-            local_tree.branches.keys().cloned().collect(),
-            input.clone(),
-            current_pos,
-        );
+        let possible_tokens = local_tree.possible_tokens().cloned().collect::<Vec<_>>();
+        println!("possible: {:?}", possible_tokens);
+        let next = next_token(possible_tokens.clone(), input.clone(), current_pos);
         println!("next: {:?}", next);
         match next {
             Ok((found_token, arg, new_pos)) => {
@@ -87,14 +84,14 @@ pub fn parse_command(input: String) -> CommandResult {
                     args.push(arg.raw.to_string());
                 }
 
-                if let Some(next_tree) = local_tree.branches.get(&found_token) {
+                if let Some(next_tree) = local_tree.get_branch(&found_token) {
                     local_tree = next_tree.clone();
                 } else {
                     panic!("found token could not match tree, at {input}");
                 }
             }
             Err(None) => {
-                if let Some(command_ref) = local_tree.current_command_key {
+                if let Some(command_ref) = local_tree.callback() {
                     println!("{command_ref} {params:?}");
                     return CommandResult::Ok {
                         command: ParsedCommand {
@@ -105,6 +102,8 @@ pub fn parse_command(input: String) -> CommandResult {
                         },
                     };
                 }
+
+                println!("{possible_tokens:?}");
 
                 // todo: check if last token is a common incorrect unquote (multi-member names etc)
                 // todo: check if this is a system name in pk;s command

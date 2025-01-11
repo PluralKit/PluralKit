@@ -5,8 +5,8 @@ use crate::{commands::Command, Token};
 
 #[derive(Debug, Clone)]
 pub struct TreeBranch {
-    pub current_command_key: Option<SmolStr>,
-    pub branches: OrderMap<Token, TreeBranch>,
+    current_command_key: Option<SmolStr>,
+    branches: OrderMap<Token, TreeBranch>,
 }
 
 impl TreeBranch {
@@ -35,5 +35,17 @@ impl TreeBranch {
                 branches: OrderMap::new(),
             },
         );
+    }
+
+    pub fn callback(&self) -> Option<SmolStr> {
+        self.current_command_key.clone()
+    }
+
+    pub fn possible_tokens(&self) -> impl Iterator<Item = &Token> {
+        self.branches.keys()
+    }
+
+    pub fn get_branch(&self, token: &Token) -> Option<&TreeBranch> {
+        self.branches.get(token)
     }
 }
