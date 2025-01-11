@@ -17,6 +17,9 @@ use tree::TreeBranch;
 pub use commands::Command;
 pub use token::*;
 
+// todo: this should come from the bot probably
+const MAX_SUGGESTIONS: usize = 7;
+
 lazy_static::lazy_static! {
     pub static ref COMMAND_TREE: TreeBranch = {
         let mut tree = TreeBranch::empty();
@@ -109,7 +112,7 @@ pub fn parse_command(prefix: String, input: String) -> CommandResult {
                 let possible_commands = local_tree.possible_commands(2);
                 if !possible_commands.is_empty() {
                     error.push_str(" Perhaps you meant to use one of the commands below:\n");
-                    for command in possible_commands {
+                    for command in possible_commands.iter().take(MAX_SUGGESTIONS) {
                         if !command.show_in_suggestions { continue }
                         writeln!(&mut error, "- **{prefix}{command}** - *{}*", command.help)
                             .expect("oom");
