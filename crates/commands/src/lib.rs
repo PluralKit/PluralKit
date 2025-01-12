@@ -69,7 +69,7 @@ pub fn parse_command(prefix: String, input: String) -> CommandResult {
     loop {
         let possible_tokens = local_tree.possible_tokens().cloned().collect::<Vec<_>>();
         println!("possible: {:?}", possible_tokens);
-        let next = next_token(possible_tokens.clone(), input.clone(), current_pos);
+        let next = next_token(possible_tokens.clone(), &input, current_pos);
         println!("next: {:?}", next);
         match next {
             Some(Ok((found_token, arg, new_pos))) => {
@@ -157,39 +157,40 @@ pub fn parse_command(prefix: String, input: String) -> CommandResult {
 /// - error when matching
 fn next_token(
     possible_tokens: Vec<Token>,
-    input: SmolStr,
+    input: &str,
     current_pos: usize,
 ) -> Option<Result<(Token, Option<TokenMatchedValue>, usize), (Token, TokenMatchError)>> {
     // get next parameter, matching quotes
-    let param = crate::string::next_param(input.clone(), current_pos);
-    println!("matched: {param:?}\n---");
+    let matched = crate::string::next_param(&input, current_pos);
+    println!("matched: {matched:?}\n---");
 
     // try checking if this is a flag
     // todo!: this breaks full text matching if the full text starts with a flag
     // (but that's kinda already broken anyway)
-    if let Some((value, new_pos)) = param.clone()
-        && value.starts_with('-')
+    if let Some(param) = matched.as_ref()
+        && param.in_quotes.not()
+        && param.value.starts_with('-')
     {
         return Some(Ok((
             Token::Flag,
             Some(TokenMatchedValue {
-                raw: value,
+                raw: param.value.into(),
                 param: None,
             }),
-            new_pos,
+            param.next_pos,
         )));
     }
 
     // iterate over tokens and run try_match
     for token in possible_tokens {
         // for FullString just send the whole string
-        let input_to_match = param.clone().map(|v| v.0);
+        let input_to_match = matched.as_ref().map(|v| v.value);
         match token.try_match(input_to_match) {
             Some(Ok(value)) => {
                 return Some(Ok((
                     token,
                     value,
-                    param.map(|v| v.1).unwrap_or(current_pos),
+                    matched.map(|v| v.next_pos).unwrap_or(current_pos),
                 )))
             }
             Some(Err(err)) => {

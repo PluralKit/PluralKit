@@ -88,7 +88,7 @@ impl TokenMatchedValue {
 type TryMatchResult = Option<Result<Option<TokenMatchedValue>, TokenMatchError>>;
 
 impl Token {
-    pub fn try_match(&self, input: Option<SmolStr>) -> TryMatchResult {
+    pub fn try_match(&self, input: Option<&str>) -> TryMatchResult {
         let input = match input {
             Some(input) => input,
             None => {
@@ -305,6 +305,7 @@ impl FromStr for MemberPrivacyTarget {
     type Err = ();
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
+        // todo: this doesnt parse all the possible ways
         match s.to_lowercase().as_str() {
             "visibility" => Ok(Self::Visibility),
             "name" => Ok(Self::Name),
