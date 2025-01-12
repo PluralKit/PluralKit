@@ -165,8 +165,8 @@ fn next_token(
     println!("matched: {matched:?}\n---");
 
     // try checking if this is a flag
-    // todo!: this breaks full text matching if the full text starts with a flag
-    // (but that's kinda already broken anyway)
+    // note: if the param starts with - and if a "match remainder" token was going to be matched
+    // this is going to override that. to prevent that the param should be quoted
     if let Some(param) = matched.as_ref()
         && param.in_quotes.not()
         && param.value.starts_with('-')
@@ -183,8 +183,12 @@ fn next_token(
 
     // iterate over tokens and run try_match
     for token in possible_tokens {
+        let is_match_remaining_token = |token: &Token| matches!(token, Token::FullString(_));
         // check if this is a token that matches the rest of the input
-        let match_remaining = matches!(token, Token::FullString(_));
+        let match_remaining = is_match_remaining_token(&token)
+            // check for Any here if it has a "match remainder" token in it
+            // if there is a "match remainder" token in a command there shouldn't be a command descending from that
+            || matches!(token, Token::Any(ref tokens) if tokens.iter().any(is_match_remaining_token));
         // either use matched param or rest of the input if matching remaining
         let input_to_match = matched.as_ref().map(|v| {
             match_remaining
@@ -197,11 +201,7 @@ fn next_token(
                 // otherwise use matched param next pos,
                 // and if didnt match anything we stay where we are
                 let next_pos = matched
-                    .map(|v| {
-                        match_remaining
-                            .then_some(input.len())
-                            .unwrap_or(v.next_pos)
-                    })
+                    .map(|v| match_remaining.then_some(input.len()).unwrap_or(v.next_pos))
                     .unwrap_or(current_pos);
                 return Some(Ok((token, value, next_pos)));
             }
