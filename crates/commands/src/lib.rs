@@ -183,15 +183,27 @@ fn next_token(
 
     // iterate over tokens and run try_match
     for token in possible_tokens {
-        // for FullString just send the whole string
-        let input_to_match = matched.as_ref().map(|v| v.value);
+        // check if this is a token that matches the rest of the input
+        let match_remaining = matches!(token, Token::FullString(_));
+        // either use matched param or rest of the input if matching remaining
+        let input_to_match = matched.as_ref().map(|v| {
+            match_remaining
+                .then_some(&input[current_pos..])
+                .unwrap_or(v.value)
+        });
         match token.try_match(input_to_match) {
             Some(Ok(value)) => {
-                return Some(Ok((
-                    token,
-                    value,
-                    matched.map(|v| v.next_pos).unwrap_or(current_pos),
-                )))
+                // return last possible pos if we matched remaining,
+                // otherwise use matched param next pos,
+                // and if didnt match anything we stay where we are
+                let next_pos = matched
+                    .map(|v| {
+                        match_remaining
+                            .then_some(input.len())
+                            .unwrap_or(v.next_pos)
+                    })
+                    .unwrap_or(current_pos);
+                return Some(Ok((token, value, next_pos)));
             }
             Some(Err(err)) => {
                 return Some(Err((token, err)));
