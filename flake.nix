@@ -95,6 +95,10 @@
           devShells = {
             services = rustOutputs."pluralkit-services".devShell;
             bot = (mkBotEnv "bash").env;
+            docs = pkgs.mkShellNoCC {
+              buildInputs = with pkgs; [ nodejs yarn ];
+              NODE_OPTIONS = "--openssl-legacy-provider";
+            };
           };
 
           process-compose."dev" = let
