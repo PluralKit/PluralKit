@@ -19,7 +19,7 @@ public abstract record Parameter()
 public class Parameters
 {
     private string _cb { get; init; }
-    private Dictionary<string, string?> _flags { get; init; }
+    private Dictionary<string, uniffi.commands.Parameter?> _flags { get; init; }
     private Dictionary<string, uniffi.commands.Parameter> _params { get; init; }
 
     // just used for errors, temporarily
@@ -52,11 +52,9 @@ public class Parameters
         return potentialMatches.Any(_flags.ContainsKey);
     }
 
-    // resolves a single parameter
-    private async Task<Parameter?> ResolveParameter(Context ctx, string param_name)
+    private async Task<Parameter?> ResolveFfiParam(Context ctx, uniffi.commands.Parameter ffi_param)
     {
-        if (!_params.ContainsKey(param_name)) return null;
-        switch (_params[param_name])
+        switch (ffi_param)
         {
             case uniffi.commands.Parameter.MemberRef memberRef:
                 var byId = HasFlag("id", "by-id");
@@ -85,8 +83,40 @@ public class Parameters
             case uniffi.commands.Parameter.Reset _:
                 return new Parameter.Reset();
         }
-        // this should also never happen
-        throw new PKError($"Unknown parameter type for parameter {param_name}");
+        return null;
+    }
+
+    // resolves a single flag with value
+    private async Task<Parameter?> ResolveFlag(Context ctx, string flag_name)
+    {
+        if (!HasFlag(flag_name)) return null;
+        var flag_value = _flags[flag_name];
+        if (flag_value == null) return null;
+        var resolved = await ResolveFfiParam(ctx, flag_value);
+        if (resolved != null) return resolved;
+        // this should never happen, types are handled rust side
+        return null;
+    }
+
+    // resolves a single parameter
+    private async Task<Parameter?> ResolveParameter(Context ctx, string param_name)
+    {
+        if (!_params.ContainsKey(param_name)) return null;
+        var resolved = await ResolveFfiParam(ctx, _params[param_name]);
+        if (resolved != null) return resolved;
+        // this should never happen, types are handled rust side
+        return null;
+    }
+
+    public async Task<T?> ResolveFlag<T>(Context ctx, string flag_name, Func<Parameter, T?> extract_func)
+    {
+        var param = await ResolveFlag(ctx, flag_name);
+        // todo: i think this should return null for everything...?
+        if (param == null) return default;
+        return extract_func(param)
+            // this should never really happen (hopefully!), but in case the parameter names dont match up (typos...) between rust <-> c#...
+            // (it would be very cool to have this statically checked somehow..?)
+            ?? throw new PKError($"Flag {flag_name.AsCode()} was not found or did not have a value defined for command {Callback().AsCode()} -- this is a bug!!");
     }
 
     public async Task<T> ResolveParameter<T>(Context ctx, string param_name, Func<Parameter, T?> extract_func)
