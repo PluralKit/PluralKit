@@ -225,7 +225,7 @@ pub fn parse_command(prefix: String, input: String) -> CommandResult {
             return CommandResult::Ok {
                 command: ParsedCommand {
                     command_ref: command.cb.into(),
-                    params, 
+                    params,
                     flags,
                 },
             };
