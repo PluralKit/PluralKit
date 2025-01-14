@@ -1,33 +1,24 @@
-name: .NET Core
+name: .net checks
 
 on:
   push:
     paths:
+    - .github/workflows/dotnet.yml
     - 'Myriad/**'
     - 'PluralKit.API/**'
     - 'PluralKit.Bot/**'
     - 'PluralKit.Core/**'
   pull_request:
     paths:
+    - .github/workflows/dotnet.yml
     - 'Myriad/**'
     - 'PluralKit.API/**'
     - 'PluralKit.Bot/**'
     - 'PluralKit.Core/**'
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v1
-      with:
-        submodules: recursive
-    - name: Setup .NET Core
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: 8.0.x
-    - name: Build with dotnet
-      run: dotnet build --configuration Release
   test:
+    name: 'run .net tests'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
@@ -39,3 +30,17 @@ jobs:
         dotnet-version: 8.0.x
     - name: Run automated tests
       run: dotnet test --configuration Release
+  dotnet-format:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+
+      - name: Add dotnet-format problem matcher
+        uses: xt0rted/dotnet-format-problem-matcher@v1
+
+      - name: Restore dotnet tools
+        uses: xt0rted/dotnet-tool-restore@v1
+
+      - name: Run dotnet format
+        uses: PluralKit/dotnet-format@fix/net6
