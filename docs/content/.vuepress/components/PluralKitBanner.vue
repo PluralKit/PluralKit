@@ -31,15 +31,23 @@
     .navbar
       top 3rem
 
+    .sidebar
+      padding-top 2rem
+      .nav-links
+        padding-top 5rem
+
   .pkBanner
     position fixed
     top 0
     left 0
     right 0
     height 3rem
+    overflow-y hidden
     background var(--bgColor)
+    z-index 999
 
     .pkBannerText
+      box-sizing border-box
       padding 0.5rem 1rem
       min-width 100%
       height 3rem
