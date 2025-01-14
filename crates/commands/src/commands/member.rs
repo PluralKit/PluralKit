@@ -1,8 +1,6 @@
 use super::*;
 
 pub fn cmds() -> impl Iterator<Item = Command> {
-    use Token::*;
-
     let member = ["member", "m"];
     let description = ["description", "desc"];
     let privacy = ["privacy", "priv"];
@@ -10,49 +8,49 @@ pub fn cmds() -> impl Iterator<Item = Command> {
 
     [
         command!(
-            [member, new, OpaqueString("name")],
+            [member, new, ("name", OpaqueString::SINGLE)],
             "member_new",
             "Creates a new system member"
         ),
         command!(
-            [member, MemberRef("target")],
+            [member, MemberRef],
             "member_show",
             "Shows information about a member"
         )
-        .value_flag("pt", FlagValue::OpaqueString),
+        .value_flag("pt", Disable),
         command!(
-            [member, MemberRef("target"), description],
+            [member, MemberRef, description],
             "member_desc_show",
             "Shows a member's description"
         ),
         command!(
             [
                 member,
-                MemberRef("target"),
+                MemberRef,
                 description,
-                OpaqueRemainder("description")
+                ("description", OpaqueString::REMAINDER)
             ],
             "member_desc_update",
             "Changes a member's description"
         ),
         command!(
-            [member, MemberRef("target"), privacy],
+            [member, MemberRef, privacy],
             "member_privacy_show",
             "Displays a member's current privacy settings"
         ),
         command!(
             [
                 member,
-                MemberRef("target"),
+                MemberRef,
                 privacy,
-                MemberPrivacyTarget("privacy_target"),
-                PrivacyLevel("new_privacy_level")
+                MemberPrivacyTarget,
+                ("new_privacy_level", PrivacyLevel)
             ],
             "member_privacy_update",
             "Changes a member's privacy settings"
         ),
         command!(
-            [member, MemberRef("target"), "soulscream"],
+            [member, MemberRef, "soulscream"],
             "member_soulscream",
             "todo"
         )

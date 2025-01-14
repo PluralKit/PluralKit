@@ -1,8 +1,6 @@
 use super::*;
 
 pub fn cmds() -> impl Iterator<Item = Command> {
-    use Token::*;
-
     let system = ["system", "s"];
     let new = ["new", "n"];
 
@@ -14,7 +12,7 @@ pub fn cmds() -> impl Iterator<Item = Command> {
         ),
         command!([system, new], "system_new", "Creates a new system"),
         command!(
-            [system, new, OpaqueString("name")],
+            [system, new, ("name", OpaqueString::SINGLE)],
             "system_new",
             "Creates a new system"
         ),

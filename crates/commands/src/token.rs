@@ -1,12 +1,17 @@
-use std::{fmt::Display, ops::Not, str::FromStr};
+use std::{
+    fmt::{Debug, Display},
+    hash::Hash,
+    ops::Not,
+    sync::Arc,
+};
 
 use smol_str::{SmolStr, ToSmolStr};
 
-use crate::Parameter;
+use crate::{parameter::Parameter, Parameter as FfiParam};
 
-type ParamName = &'static str;
+pub type ParamName = &'static str;
 
-#[derive(Debug, Clone, Eq, Hash, PartialEq)]
+#[derive(Debug, Clone)]
 pub enum Token {
     /// Token used to represent a finished command (i.e. no more parameters required)
     // todo: this is likely not the right way to represent this
@@ -19,33 +24,45 @@ pub enum Token {
     /// A bot-defined command / subcommand (usually) (eg. "member" in `pk;member MyName`)
     Value(Vec<SmolStr>),
 
-    /// Opaque string (eg. "name" in `pk;member new name`)
-    OpaqueString(ParamName),
-    /// Remainder of a command (eg. "desc" in `pk;member <target> description [desc...]`)
-    OpaqueRemainder(ParamName),
+    /// A parameter that must be provided a value
+    Parameter(ParamName, Arc<dyn Parameter>),
+}
 
-    /// Member reference (hid or member name)
-    MemberRef(ParamName),
-    /// todo: doc
-    MemberPrivacyTarget(ParamName),
+#[macro_export]
+macro_rules! any {
+    ($($t:expr),+) => {
+        Token::Any(vec![$(Token::from($t)),+])
+    };
+}
 
-    /// System reference
-    SystemRef(ParamName),
+impl PartialEq for Token {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::Any(l0), Self::Any(r0)) => l0 == r0,
+            (Self::Value(l0), Self::Value(r0)) => l0 == r0,
+            (Self::Parameter(l0, _), Self::Parameter(r0, _)) => l0 == r0,
+            (Self::Empty, Self::Empty) => true,
+            _ => false,
+        }
+    }
+}
+impl Eq for Token {}
 
-    /// todo: doc
-    PrivacyLevel(ParamName),
-
-    /// on, off; yes, no; true, false
-    Enable(ParamName),
-    Disable(ParamName),
-    Toggle(ParamName),
-
-    /// reset, clear, default
-    Reset(ParamName),
+impl Hash for Token {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        core::mem::discriminant(self).hash(state);
+        match self {
+            Token::Empty => {}
+            Token::Any(vec) => vec.hash(state),
+            Token::Value(vec) => vec.hash(state),
+            Token::Parameter(name, _) => name.hash(state),
+        }
+    }
 }
 
 #[derive(Debug)]
 pub enum TokenMatchError {
+    ParameterMatchError { input: SmolStr, msg: SmolStr },
     MissingParameter { name: ParamName },
     MissingAny { tokens: Vec<Token> },
 }
@@ -53,7 +70,7 @@ pub enum TokenMatchError {
 #[derive(Debug)]
 pub struct TokenMatchValue {
     pub raw: SmolStr,
-    pub param: Option<(ParamName, Parameter)>,
+    pub param: Option<(ParamName, FfiParam)>,
 }
 
 impl TokenMatchValue {
@@ -67,7 +84,7 @@ impl TokenMatchValue {
     fn new_match_param(
         raw: impl Into<SmolStr>,
         param_name: ParamName,
-        param: Parameter,
+        param: FfiParam,
     ) -> TryMatchResult {
         Some(Ok(Some(Self {
             raw: raw.into(),
@@ -96,17 +113,8 @@ impl Token {
                     // empty token
                     Self::Empty => Some(Ok(None)),
                     // missing paramaters
-                    Self::OpaqueRemainder(param_name)
-                    | Self::OpaqueString(param_name)
-                    | Self::MemberRef(param_name)
-                    | Self::MemberPrivacyTarget(param_name)
-                    | Self::SystemRef(param_name)
-                    | Self::PrivacyLevel(param_name)
-                    | Self::Toggle(param_name)
-                    | Self::Enable(param_name)
-                    | Self::Disable(param_name)
-                    | Self::Reset(param_name) => {
-                        Some(Err(TokenMatchError::MissingParameter { name: param_name }))
+                    Self::Parameter(name, _) => {
+                        Some(Err(TokenMatchError::MissingParameter { name }))
                     }
                     Self::Any(tokens) => tokens.is_empty().then_some(None).unwrap_or_else(|| {
                         Some(Err(TokenMatchError::MissingAny {
@@ -134,83 +142,13 @@ impl Token {
                 .any(|v| v.eq(input))
                 .then(|| TokenMatchValue::new_match(input))
                 .unwrap_or(None),
-            Self::OpaqueRemainder(param_name) | Self::OpaqueString(param_name) => {
-                TokenMatchValue::new_match_param(
-                    input,
-                    param_name,
-                    Parameter::OpaqueString { raw: input.into() },
-                )
-            }
-            Self::SystemRef(param_name) => TokenMatchValue::new_match_param(
-                input,
-                param_name,
-                Parameter::SystemRef {
-                    system: input.into(),
-                },
-            ),
-            Self::MemberRef(param_name) => TokenMatchValue::new_match_param(
-                input,
-                param_name,
-                Parameter::MemberRef {
-                    member: input.into(),
-                },
-            ),
-            Self::MemberPrivacyTarget(param_name) => match MemberPrivacyTarget::from_str(input) {
-                Ok(target) => TokenMatchValue::new_match_param(
-                    input,
-                    param_name,
-                    Parameter::MemberPrivacyTarget {
-                        target: target.as_ref().into(),
-                    },
-                ),
-                Err(_) => None,
-            },
-            Self::PrivacyLevel(param_name) => match PrivacyLevel::from_str(input) {
-                Ok(level) => TokenMatchValue::new_match_param(
-                    input,
-                    param_name,
-                    Parameter::PrivacyLevel {
-                        level: level.as_ref().into(),
-                    },
-                ),
-                Err(_) => None,
-            },
-            Self::Toggle(param_name) => match Enable::from_str(input)
-                .map(Into::<bool>::into)
-                .or_else(|_| Disable::from_str(input).map(Into::<bool>::into))
-            {
-                Ok(toggle) => TokenMatchValue::new_match_param(
-                    input,
-                    param_name,
-                    Parameter::Toggle { toggle },
-                ),
-                Err(_) => None,
-            },
-            Self::Enable(param_name) => match Enable::from_str(input) {
-                Ok(t) => TokenMatchValue::new_match_param(
-                    input,
-                    param_name,
-                    Parameter::Toggle { toggle: t.into() },
-                ),
-                Err(_) => None,
-            },
-            Self::Disable(param_name) => match Disable::from_str(input) {
-                Ok(t) => TokenMatchValue::new_match_param(
-                    input,
-                    param_name,
-                    Parameter::Toggle { toggle: t.into() },
-                ),
-                Err(_) => None,
-            },
-            Self::Reset(param_name) => match Reset::from_str(input) {
-                Ok(_) => TokenMatchValue::new_match_param(
-                    input,
-                    param_name,
-                    Parameter::Toggle { toggle: true },
-                ),
-                Err(_) => None,
-            },
-            // don't add a _ match here!
+            Self::Parameter(name, param) => match param.match_value(input) {
+                Ok(matched) => TokenMatchValue::new_match_param(input, name, matched),
+                Err(err) => Some(Err(TokenMatchError::ParameterMatchError {
+                    input: input.into(),
+                    msg: err,
+                })),
+            }, // don't add a _ match here!
         }
     }
 }
@@ -231,17 +169,7 @@ impl Display for Token {
             }
             Token::Value(vec) if vec.is_empty().not() => write!(f, "{}", vec.first().unwrap()),
             Token::Value(_) => Ok(()), // if value token has no values (lol), don't print anything
-            // todo: it might not be the best idea to directly use param name here (what if we want to display something else but keep the name? or translations?)
-            Token::OpaqueRemainder(param_name) => write!(f, "[{}...]", param_name),
-            Token::OpaqueString(param_name) => write!(f, "[{}]", param_name),
-            Token::MemberRef(param_name) => write!(f, "<{}>", param_name),
-            Token::SystemRef(param_name) => write!(f, "<{}>", param_name),
-            Token::MemberPrivacyTarget(param_name) => write!(f, "<{}>", param_name),
-            Token::PrivacyLevel(param_name) => write!(f, "[{}]", param_name),
-            Token::Enable(_) => write!(f, "on"),
-            Token::Disable(_) => write!(f, "off"),
-            Token::Toggle(_) => write!(f, "on/off"),
-            Token::Reset(_) => write!(f, "reset"),
+            Token::Parameter(name, param) => param.format(f, name),
         }
     }
 }
@@ -252,163 +180,31 @@ impl From<&str> for Token {
     }
 }
 
-impl<const L: usize> From<[&str; L]> for Token {
-    fn from(value: [&str; L]) -> Self {
-        Token::Value(value.into_iter().map(|s| s.to_smolstr()).collect())
+impl<P: Parameter + 'static> From<P> for Token {
+    fn from(value: P) -> Self {
+        Token::Parameter(value.default_name(), Arc::new(value))
     }
 }
 
-impl<const L: usize> From<[Token; L]> for Token {
-    fn from(value: [Token; L]) -> Self {
-        Token::Any(value.into_iter().map(|s| s.clone()).collect())
+impl<P: Parameter + 'static> From<(ParamName, P)> for Token {
+    fn from(value: (ParamName, P)) -> Self {
+        Token::Parameter(value.0, Arc::new(value.1))
     }
 }
 
-#[derive(Debug, Clone, Eq, Hash, PartialEq)]
-pub enum MemberPrivacyTarget {
-    Visibility,
-    Name,
-    Description,
-    Banner,
-    Avatar,
-    Birthday,
-    Pronouns,
-    Proxy,
-    Metadata,
-}
-
-impl AsRef<str> for MemberPrivacyTarget {
-    fn as_ref(&self) -> &str {
-        match self {
-            Self::Visibility => "visibility",
-            Self::Name => "name",
-            Self::Description => "description",
-            Self::Banner => "banner",
-            Self::Avatar => "avatar",
-            Self::Birthday => "birthday",
-            Self::Pronouns => "pronouns",
-            Self::Proxy => "proxy",
-            Self::Metadata => "metadata",
+impl<const L: usize, T: Into<Token>> From<[T; L]> for Token {
+    fn from(value: [T; L]) -> Self {
+        let tokens = value.into_iter().map(|s| s.into()).collect::<Vec<_>>();
+        if tokens.iter().all(|t| matches!(t, Token::Value(_))) {
+            let values = tokens
+                .into_iter()
+                .flat_map(|t| match t {
+                    Token::Value(v) => v,
+                    _ => unreachable!(),
+                })
+                .collect::<Vec<_>>();
+            return Token::Value(values);
         }
-    }
-}
-
-impl FromStr for MemberPrivacyTarget {
-    // todo: figure out how to represent these errors best
-    type Err = ();
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        // todo: this doesnt parse all the possible ways
-        match s.to_lowercase().as_str() {
-            "visibility" => Ok(Self::Visibility),
-            "name" => Ok(Self::Name),
-            "description" => Ok(Self::Description),
-            "banner" => Ok(Self::Banner),
-            "avatar" => Ok(Self::Avatar),
-            "birthday" => Ok(Self::Birthday),
-            "pronouns" => Ok(Self::Pronouns),
-            "proxy" => Ok(Self::Proxy),
-            "metadata" => Ok(Self::Metadata),
-            _ => Err(()),
-        }
-    }
-}
-
-#[derive(Debug, Clone, Eq, Hash, PartialEq)]
-pub enum PrivacyLevel {
-    Public,
-    Private,
-}
-
-impl AsRef<str> for PrivacyLevel {
-    fn as_ref(&self) -> &str {
-        match self {
-            Self::Public => "public",
-            Self::Private => "private",
-        }
-    }
-}
-
-impl FromStr for PrivacyLevel {
-    type Err = (); // todo
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "public" => Ok(Self::Public),
-            "private" => Ok(Self::Private),
-            _ => Err(()),
-        }
-    }
-}
-
-#[derive(Debug, Clone, Eq, Hash, PartialEq)]
-pub struct Reset;
-
-impl AsRef<str> for Reset {
-    fn as_ref(&self) -> &str {
-        "reset"
-    }
-}
-
-impl FromStr for Reset {
-    type Err = ();
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "reset" | "clear" | "default" => Ok(Self),
-            _ => Err(()),
-        }
-    }
-}
-
-#[derive(Debug, Clone, Eq, Hash, PartialEq)]
-pub struct Enable;
-
-impl AsRef<str> for Enable {
-    fn as_ref(&self) -> &str {
-        "on"
-    }
-}
-
-impl FromStr for Enable {
-    type Err = ();
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "on" | "yes" | "true" | "enable" | "enabled" => Ok(Self),
-            _ => Err(()),
-        }
-    }
-}
-
-impl Into<bool> for Enable {
-    fn into(self) -> bool {
-        true
-    }
-}
-
-#[derive(Debug, Clone, Eq, Hash, PartialEq)]
-pub struct Disable;
-
-impl AsRef<str> for Disable {
-    fn as_ref(&self) -> &str {
-        "off"
-    }
-}
-
-impl FromStr for Disable {
-    type Err = ();
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "off" | "no" | "false" | "disable" | "disabled" => Ok(Self),
-            _ => Err(()),
-        }
-    }
-}
-
-impl Into<bool> for Disable {
-    fn into(self) -> bool {
-        false
+        Token::Any(tokens)
     }
 }

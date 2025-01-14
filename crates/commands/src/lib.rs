@@ -3,6 +3,7 @@
 
 pub mod commands;
 mod flag;
+mod parameter;
 mod string;
 mod token;
 mod tree;
@@ -91,7 +92,7 @@ pub fn parse_command(prefix: String, input: String) -> CommandResult {
                 if let Some(next_tree) = local_tree.get_branch(&found_token) {
                     local_tree = next_tree.clone();
                 } else {
-                    panic!("found token could not match tree, at {input}");
+                    panic!("found token {found_token:?} could not match tree, at {input}");
                 }
             }
             Some(Err((token, err))) => {
@@ -113,6 +114,9 @@ pub fn parse_command(prefix: String, input: String) -> CommandResult {
                         }
                         write!(&mut msg, " in command `{prefix}{input} {token}`.").expect("oom");
                         msg
+                    }
+                    TokenMatchError::ParameterMatchError { input: raw, msg } => {
+                        format!("Parameter `{raw}` in command `{prefix}{input}` could not be parsed: {msg}.")
                     }
                 };
                 return CommandResult::Err { error: error_msg };
@@ -163,17 +167,23 @@ pub fn parse_command(prefix: String, input: String) -> CommandResult {
                         flags.insert(name.into(), value);
                     }
                     Err((flag, err)) => {
-                        match err {
+                        let error = match err {
                             FlagMatchError::ValueMatchFailed(FlagValueMatchError::ValueMissing) => {
-                                return CommandResult::Err {
-                                    error: format!(
-                                        "Flag `-{name}` in command `{prefix}{input}` is missing a value, try passing `-{name}={value}`.",
-                                        name = flag.name(),
-                                        value = flag.value().expect("value missing error cant happen without a value"),
-                                    ),
-                                }
+                                format!(
+                                    "Flag `-{name}` in command `{prefix}{input}` is missing a value, try passing `{flag}`.",
+                                    name = flag.name()
+                                )
                             }
-                        }
+                            FlagMatchError::ValueMatchFailed(
+                                FlagValueMatchError::InvalidValue { msg, raw },
+                            ) => {
+                                format!(
+                                    "Flag `-{name}` in command `{prefix}{input}` has a value (`{raw}`) that could not be parsed: {msg}.",
+                                    name = flag.name()
+                                )
+                            }
+                        };
+                        return CommandResult::Err { error };
                     }
                 }
             }
@@ -282,7 +292,8 @@ fn next_token<'a>(
 
     // iterate over tokens and run try_match
     for token in possible_tokens {
-        let is_match_remaining_token = |token: &Token| matches!(token, Token::OpaqueRemainder(_));
+        let is_match_remaining_token =
+            |token: &Token| matches!(token, Token::Parameter(_, param) if param.remainder());
         // check if this is a token that matches the rest of the input
         let match_remaining = is_match_remaining_token(token)
             // check for Any here if it has a "match remainder" token in it
@@ -296,6 +307,7 @@ fn next_token<'a>(
         });
         match token.try_match(input_to_match) {
             Some(Ok(value)) => {
+                println!("matched token: {}", token);
                 let next_pos = match matched {
                     // return last possible pos if we matched remaining,
                     Some(_) if match_remaining => input.len(),

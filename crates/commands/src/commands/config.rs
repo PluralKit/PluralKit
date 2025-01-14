@@ -1,8 +1,6 @@
 use super::*;
 
 pub fn cmds() -> impl Iterator<Item = Command> {
-    use Token::*;
-
     let cfg = ["config", "cfg"];
     let autoproxy = ["autoproxy", "ap"];
 
@@ -13,7 +11,7 @@ pub fn cmds() -> impl Iterator<Item = Command> {
             "Shows autoproxy status for the account"
         ),
         command!(
-            [cfg, autoproxy, ["account", "ac"], Toggle("toggle")],
+            [cfg, autoproxy, ["account", "ac"], Toggle],
             "cfg_ap_account_update",
             "Toggles autoproxy for the account"
         ),
@@ -27,7 +25,7 @@ pub fn cmds() -> impl Iterator<Item = Command> {
                 cfg,
                 autoproxy,
                 ["timeout", "tm"],
-                [Disable("toggle"), Reset("reset"), OpaqueString("timeout")] // todo: we should parse duration / time values
+                any!(Disable, Reset, ("timeout", OpaqueString::SINGLE)) // todo: we should parse duration / time values
             ],
             "cfg_ap_timeout_update",
             "Sets the autoproxy timeout"

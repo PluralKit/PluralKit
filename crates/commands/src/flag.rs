@@ -1,50 +1,27 @@
-use std::fmt::Display;
+use std::{fmt::Display, sync::Arc};
 
 use smol_str::SmolStr;
 
-use crate::Parameter;
-
-#[derive(Debug, Clone)]
-pub enum FlagValue {
-    OpaqueString,
-}
-
-impl FlagValue {
-    fn try_match(&self, input: &str) -> Result<Parameter, FlagValueMatchError> {
-        if input.is_empty() {
-            return Err(FlagValueMatchError::ValueMissing);
-        }
-
-        match self {
-            Self::OpaqueString => Ok(Parameter::OpaqueString { raw: input.into() }),
-        }
-    }
-}
-
-impl Display for FlagValue {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            FlagValue::OpaqueString => write!(f, "value"),
-        }
-    }
-}
+use crate::{parameter::Parameter, Parameter as FfiParam};
 
 #[derive(Debug)]
 pub enum FlagValueMatchError {
     ValueMissing,
+    InvalidValue { raw: SmolStr, msg: SmolStr },
 }
 
 #[derive(Debug, Clone)]
 pub struct Flag {
     name: SmolStr,
-    value: Option<FlagValue>,
+    value: Option<Arc<dyn Parameter>>,
 }
 
 impl Display for Flag {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "-{}", self.name)?;
         if let Some(value) = self.value.as_ref() {
-            write!(f, "={value}")?;
+            write!(f, "=")?;
+            value.format(f, value.default_name())?;
         }
         Ok(())
     }
@@ -55,7 +32,7 @@ pub enum FlagMatchError {
     ValueMatchFailed(FlagValueMatchError),
 }
 
-type TryMatchFlagResult = Option<Result<Option<Parameter>, FlagMatchError>>;
+type TryMatchFlagResult = Option<Result<Option<FfiParam>, FlagMatchError>>;
 
 impl Flag {
     pub fn new(name: impl Into<SmolStr>) -> Self {
@@ -65,17 +42,13 @@ impl Flag {
         }
     }
 
-    pub fn with_value(mut self, value: FlagValue) -> Self {
-        self.value = Some(value);
+    pub fn with_value(mut self, param: impl Parameter + 'static) -> Self {
+        self.value = Some(Arc::new(param));
         self
     }
 
     pub fn name(&self) -> &str {
         &self.name
-    }
-
-    pub fn value(&self) -> Option<&FlagValue> {
-        self.value.as_ref()
     }
 
     pub fn try_match(&self, input_name: &str, input_value: Option<&str>) -> TryMatchFlagResult {
@@ -84,7 +57,7 @@ impl Flag {
             return None;
         }
         // get token to try matching with, if flag doesn't have one then that means it is matched (it is without any value)
-        let Some(value) = self.value() else {
+        let Some(value) = self.value.as_deref() else {
             return Some(Ok(None));
         };
         // check if we have a non-empty flag value, we return error if not (because flag requested a value)
@@ -94,9 +67,14 @@ impl Flag {
             )));
         };
         // try matching the value
-        match value.try_match(input_value) {
+        match value.match_value(input_value) {
             Ok(param) => Some(Ok(Some(param))),
-            Err(err) => Some(Err(FlagMatchError::ValueMatchFailed(err))),
+            Err(err) => Some(Err(FlagMatchError::ValueMatchFailed(
+                FlagValueMatchError::InvalidValue {
+                    raw: input_value.into(),
+                    msg: err,
+                },
+            ))),
         }
     }
 }

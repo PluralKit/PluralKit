@@ -22,11 +22,7 @@ use std::fmt::{Debug, Display};
 
 use smol_str::SmolStr;
 
-use crate::{
-    command,
-    flag::{Flag, FlagValue},
-    token::Token,
-};
+use crate::{any, command, flag::Flag, parameter::*, token::Token};
 
 #[derive(Debug, Clone)]
 pub struct Command {
@@ -51,17 +47,7 @@ impl Command {
         let mut was_parameter = true;
         for (idx, token) in tokens.iter().enumerate().rev() {
             match token {
-                Token::OpaqueRemainder(_)
-                | Token::OpaqueString(_)
-                | Token::MemberRef(_)
-                | Token::MemberPrivacyTarget(_)
-                | Token::SystemRef(_)
-                | Token::PrivacyLevel(_)
-                | Token::Toggle(_)
-                | Token::Enable(_)
-                | Token::Disable(_)
-                | Token::Reset(_)
-                | Token::Any(_) => {
+                Token::Parameter(_, _) | Token::Any(_) => {
                     parse_flags_before = idx;
                     was_parameter = true;
                 }
@@ -92,7 +78,7 @@ impl Command {
         self
     }
 
-    pub fn value_flag(mut self, name: impl Into<SmolStr>, value: FlagValue) -> Self {
+    pub fn value_flag(mut self, name: impl Into<SmolStr>, value: impl Parameter + 'static) -> Self {
         self.flags.push(Flag::new(name).with_value(value));
         self
     }
