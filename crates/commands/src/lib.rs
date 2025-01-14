@@ -282,7 +282,7 @@ fn next_token<'a>(
 
     // iterate over tokens and run try_match
     for token in possible_tokens {
-        let is_match_remaining_token = |token: &Token| matches!(token, Token::FullString(_));
+        let is_match_remaining_token = |token: &Token| matches!(token, Token::OpaqueRemainder(_));
         // check if this is a token that matches the rest of the input
         let match_remaining = is_match_remaining_token(token)
             // check for Any here if it has a "match remainder" token in it

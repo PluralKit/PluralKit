@@ -27,7 +27,7 @@ pub fn cmds() -> impl Iterator<Item = Command> {
                 cfg,
                 autoproxy,
                 ["timeout", "tm"],
-                [Disable("toggle"), Reset("reset"), FullString("timeout")] // todo: we should parse duration / time values
+                [Disable("toggle"), Reset("reset"), OpaqueString("timeout")] // todo: we should parse duration / time values
             ],
             "cfg_ap_timeout_update",
             "Sets the autoproxy timeout"

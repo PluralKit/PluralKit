@@ -51,7 +51,8 @@ impl Command {
         let mut was_parameter = true;
         for (idx, token) in tokens.iter().enumerate().rev() {
             match token {
-                Token::FullString(_)
+                Token::OpaqueRemainder(_)
+                | Token::OpaqueString(_)
                 | Token::MemberRef(_)
                 | Token::MemberPrivacyTarget(_)
                 | Token::SystemRef(_)

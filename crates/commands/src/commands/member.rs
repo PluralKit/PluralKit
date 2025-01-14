@@ -10,7 +10,7 @@ pub fn cmds() -> impl Iterator<Item = Command> {
 
     [
         command!(
-            [member, new, FullString("name")],
+            [member, new, OpaqueString("name")],
             "member_new",
             "Creates a new system member"
         ),
@@ -30,7 +30,7 @@ pub fn cmds() -> impl Iterator<Item = Command> {
                 member,
                 MemberRef("target"),
                 description,
-                FullString("description")
+                OpaqueRemainder("description")
             ],
             "member_desc_update",
             "Changes a member's description"

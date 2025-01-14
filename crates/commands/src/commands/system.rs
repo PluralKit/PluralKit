@@ -14,7 +14,7 @@ pub fn cmds() -> impl Iterator<Item = Command> {
         ),
         command!([system, new], "system_new", "Creates a new system"),
         command!(
-            [system, new, FullString("name")],
+            [system, new, OpaqueString("name")],
             "system_new",
             "Creates a new system"
         ),

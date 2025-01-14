@@ -20,7 +20,9 @@ pub enum Token {
     Value(Vec<SmolStr>),
 
     /// Opaque string (eg. "name" in `pk;member new name`)
-    FullString(ParamName),
+    OpaqueString(ParamName),
+    /// Remainder of a command (eg. "desc" in `pk;member <target> description [desc...]`)
+    OpaqueRemainder(ParamName),
 
     /// Member reference (hid or member name)
     MemberRef(ParamName),
@@ -94,7 +96,8 @@ impl Token {
                     // empty token
                     Self::Empty => Some(Ok(None)),
                     // missing paramaters
-                    Self::FullString(param_name)
+                    Self::OpaqueRemainder(param_name)
+                    | Self::OpaqueString(param_name)
                     | Self::MemberRef(param_name)
                     | Self::MemberPrivacyTarget(param_name)
                     | Self::SystemRef(param_name)
@@ -131,11 +134,13 @@ impl Token {
                 .any(|v| v.eq(input))
                 .then(|| TokenMatchValue::new_match(input))
                 .unwrap_or(None),
-            Self::FullString(param_name) => TokenMatchValue::new_match_param(
-                input,
-                param_name,
-                Parameter::OpaqueString { raw: input.into() },
-            ),
+            Self::OpaqueRemainder(param_name) | Self::OpaqueString(param_name) => {
+                TokenMatchValue::new_match_param(
+                    input,
+                    param_name,
+                    Parameter::OpaqueString { raw: input.into() },
+                )
+            }
             Self::SystemRef(param_name) => TokenMatchValue::new_match_param(
                 input,
                 param_name,
@@ -227,7 +232,8 @@ impl Display for Token {
             Token::Value(vec) if vec.is_empty().not() => write!(f, "{}", vec.first().unwrap()),
             Token::Value(_) => Ok(()), // if value token has no values (lol), don't print anything
             // todo: it might not be the best idea to directly use param name here (what if we want to display something else but keep the name? or translations?)
-            Token::FullString(param_name) => write!(f, "[{}]", param_name),
+            Token::OpaqueRemainder(param_name) => write!(f, "[{}...]", param_name),
+            Token::OpaqueString(param_name) => write!(f, "[{}]", param_name),
             Token::MemberRef(param_name) => write!(f, "<{}>", param_name),
             Token::SystemRef(param_name) => write!(f, "<{}>", param_name),
             Token::MemberPrivacyTarget(param_name) => write!(f, "<{}>", param_name),
