@@ -24,16 +24,19 @@ use smol_str::SmolStr;
 
 use crate::{
     command,
-    token::{ToToken, Token},
+    flag::{Flag, FlagValue},
+    token::Token,
 };
 
 #[derive(Debug, Clone)]
 pub struct Command {
     // TODO: fix hygiene
     pub tokens: Vec<Token>,
+    pub flags: Vec<Flag>,
     pub help: SmolStr,
     pub cb: SmolStr,
     pub show_in_suggestions: bool,
+    pub parse_flags_before: usize,
 }
 
 impl Command {
@@ -41,36 +44,88 @@ impl Command {
         tokens: impl IntoIterator<Item = Token>,
         help: impl Into<SmolStr>,
         cb: impl Into<SmolStr>,
-        show_in_suggestions: bool,
     ) -> Self {
+        let tokens = tokens.into_iter().collect::<Vec<_>>();
+        assert!(tokens.len() > 0);
+        let mut parse_flags_before = tokens.len();
+        let mut was_parameter = true;
+        for (idx, token) in tokens.iter().enumerate().rev() {
+            match token {
+                Token::FullString(_)
+                | Token::MemberRef(_)
+                | Token::MemberPrivacyTarget(_)
+                | Token::SystemRef(_)
+                | Token::PrivacyLevel(_)
+                | Token::Toggle(_)
+                | Token::Enable(_)
+                | Token::Disable(_)
+                | Token::Reset(_)
+                | Token::Any(_) => {
+                    parse_flags_before = idx;
+                    was_parameter = true;
+                }
+                Token::Empty | Token::Value(_) => {
+                    if was_parameter {
+                        break;
+                    }
+                }
+            }
+        }
         Self {
-            tokens: tokens.into_iter().collect(),
+            flags: Vec::new(),
             help: help.into(),
             cb: cb.into(),
-            show_in_suggestions,
+            show_in_suggestions: true,
+            parse_flags_before,
+            tokens,
         }
+    }
+
+    pub fn show_in_suggestions(mut self, v: bool) -> Self {
+        self.show_in_suggestions = v;
+        self
+    }
+
+    pub fn flag(mut self, name: impl Into<SmolStr>) -> Self {
+        self.flags.push(Flag::new(name));
+        self
+    }
+
+    pub fn value_flag(mut self, name: impl Into<SmolStr>, value: FlagValue) -> Self {
+        self.flags.push(Flag::new(name).with_value(value));
+        self
     }
 }
 
 impl Display for Command {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for (idx, token) in self.tokens.iter().enumerate() {
-            write!(f, "{}", token)?;
-            if idx < self.tokens.len() - 1 {
-                write!(f, " ")?;
+            if idx == self.parse_flags_before {
+                for flag in &self.flags {
+                    write!(f, "[{flag}] ")?;
+                }
+            }
+            write!(
+                f,
+                "{token}{}",
+                (idx < self.tokens.len() - 1).then_some(" ").unwrap_or("")
+            )?;
+        }
+        if self.tokens.len() == self.parse_flags_before {
+            for flag in &self.flags {
+                write!(f, " [{flag}]")?;
             }
         }
         Ok(())
     }
 }
 
+// a macro is required because generic cant be different types at the same time (which means you couldnt have ["member", MemberRef, "subcmd"] etc)
+// (and something like &dyn Trait would require everything to be referenced which doesnt look nice anyway)
 #[macro_export]
 macro_rules! command {
-    ([$($v:expr),+], $cb:expr, $help:expr, suggest = $suggest:expr) => {
-        $crate::commands::Command::new([$($v.to_token()),*], $help, $cb, $suggest)
-    };
     ([$($v:expr),+], $cb:expr, $help:expr) => {
-        $crate::command!([$($v),+], $cb, $help, suggest = true)
+        $crate::commands::Command::new([$(Token::from($v)),*], $help, $cb)
     };
 }
 

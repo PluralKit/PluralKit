@@ -13,6 +13,7 @@ pub enum Token {
     Empty,
 
     /// multi-token matching
+    /// todo: FullString tokens don't work properly in this (they don't get passed the rest of the input)
     Any(Vec<Token>),
 
     /// A bot-defined command / subcommand (usually) (eg. "member" in `pk;member MyName`)
@@ -39,10 +40,6 @@ pub enum Token {
 
     /// reset, clear, default
     Reset(ParamName),
-
-    // todo: currently not included in command definitions
-    // todo: flags with values
-    Flag,
 }
 
 #[derive(Debug)]
@@ -52,12 +49,12 @@ pub enum TokenMatchError {
 }
 
 #[derive(Debug)]
-pub struct TokenMatchedValue {
+pub struct TokenMatchValue {
     pub raw: SmolStr,
     pub param: Option<(ParamName, Parameter)>,
 }
 
-impl TokenMatchedValue {
+impl TokenMatchValue {
     fn new_match(raw: impl Into<SmolStr>) -> TryMatchResult {
         Some(Ok(Some(Self {
             raw: raw.into(),
@@ -85,7 +82,7 @@ impl TokenMatchedValue {
 // a: because we want to differentiate between no match and match failure (it matched with an error)
 //    "no match" has a different charecteristic because we want to continue matching other tokens...
 //    ...while "match failure" means we should stop matching and return the error
-type TryMatchResult = Option<Result<Option<TokenMatchedValue>, TokenMatchError>>;
+type TryMatchResult = Option<Result<Option<TokenMatchValue>, TokenMatchError>>;
 
 impl Token {
     pub fn try_match(&self, input: Option<&str>) -> TryMatchResult {
@@ -114,8 +111,7 @@ impl Token {
                         }))
                     }),
                     // everything else doesnt match if no input anyway
-                    Token::Value(_) => None,
-                    Token::Flag => None,
+                    Self::Value(_) => None,
                     // don't add a _ match here!
                 };
             }
@@ -125,30 +121,29 @@ impl Token {
         // try actually matching stuff
         match self {
             Self::Empty => None,
-            Self::Flag => unreachable!(), // matched upstream (dusk: i don't really like this tbh)
             Self::Any(tokens) => tokens
                 .iter()
-                .map(|t| t.try_match(Some(input.into())))
+                .map(|t| t.try_match(Some(input)))
                 .find(|r| !matches!(r, None))
                 .unwrap_or(None),
             Self::Value(values) => values
                 .iter()
                 .any(|v| v.eq(input))
-                .then(|| TokenMatchedValue::new_match(input))
+                .then(|| TokenMatchValue::new_match(input))
                 .unwrap_or(None),
-            Self::FullString(param_name) => TokenMatchedValue::new_match_param(
+            Self::FullString(param_name) => TokenMatchValue::new_match_param(
                 input,
                 param_name,
                 Parameter::OpaqueString { raw: input.into() },
             ),
-            Self::SystemRef(param_name) => TokenMatchedValue::new_match_param(
+            Self::SystemRef(param_name) => TokenMatchValue::new_match_param(
                 input,
                 param_name,
                 Parameter::SystemRef {
                     system: input.into(),
                 },
             ),
-            Self::MemberRef(param_name) => TokenMatchedValue::new_match_param(
+            Self::MemberRef(param_name) => TokenMatchValue::new_match_param(
                 input,
                 param_name,
                 Parameter::MemberRef {
@@ -156,7 +151,7 @@ impl Token {
                 },
             ),
             Self::MemberPrivacyTarget(param_name) => match MemberPrivacyTarget::from_str(input) {
-                Ok(target) => TokenMatchedValue::new_match_param(
+                Ok(target) => TokenMatchValue::new_match_param(
                     input,
                     param_name,
                     Parameter::MemberPrivacyTarget {
@@ -166,7 +161,7 @@ impl Token {
                 Err(_) => None,
             },
             Self::PrivacyLevel(param_name) => match PrivacyLevel::from_str(input) {
-                Ok(level) => TokenMatchedValue::new_match_param(
+                Ok(level) => TokenMatchValue::new_match_param(
                     input,
                     param_name,
                     Parameter::PrivacyLevel {
@@ -179,7 +174,7 @@ impl Token {
                 .map(Into::<bool>::into)
                 .or_else(|_| Disable::from_str(input).map(Into::<bool>::into))
             {
-                Ok(toggle) => TokenMatchedValue::new_match_param(
+                Ok(toggle) => TokenMatchValue::new_match_param(
                     input,
                     param_name,
                     Parameter::Toggle { toggle },
@@ -187,7 +182,7 @@ impl Token {
                 Err(_) => None,
             },
             Self::Enable(param_name) => match Enable::from_str(input) {
-                Ok(t) => TokenMatchedValue::new_match_param(
+                Ok(t) => TokenMatchValue::new_match_param(
                     input,
                     param_name,
                     Parameter::Toggle { toggle: t.into() },
@@ -195,7 +190,7 @@ impl Token {
                 Err(_) => None,
             },
             Self::Disable(param_name) => match Disable::from_str(input) {
-                Ok(t) => TokenMatchedValue::new_match_param(
+                Ok(t) => TokenMatchValue::new_match_param(
                     input,
                     param_name,
                     Parameter::Toggle { toggle: t.into() },
@@ -203,7 +198,7 @@ impl Token {
                 Err(_) => None,
             },
             Self::Reset(param_name) => match Reset::from_str(input) {
-                Ok(_) => TokenMatchedValue::new_match_param(input, param_name, Parameter::Reset),
+                Ok(_) => TokenMatchValue::new_match_param(input, param_name, Parameter::Reset),
                 Err(_) => None,
             },
             // don't add a _ match here!
@@ -219,7 +214,7 @@ impl Display for Token {
                 write!(f, "(")?;
                 for (i, token) in vec.iter().enumerate() {
                     if i != 0 {
-                        write!(f, " | ")?;
+                        write!(f, "|")?;
                     }
                     write!(f, "{}", token)?;
                 }
@@ -231,43 +226,31 @@ impl Display for Token {
             Token::FullString(param_name) => write!(f, "[{}]", param_name),
             Token::MemberRef(param_name) => write!(f, "<{}>", param_name),
             Token::SystemRef(param_name) => write!(f, "<{}>", param_name),
-            Token::MemberPrivacyTarget(param_name) => write!(f, "[{}]", param_name),
+            Token::MemberPrivacyTarget(param_name) => write!(f, "<{}>", param_name),
             Token::PrivacyLevel(param_name) => write!(f, "[{}]", param_name),
             Token::Enable(_) => write!(f, "on"),
             Token::Disable(_) => write!(f, "off"),
             Token::Toggle(_) => write!(f, "on/off"),
             Token::Reset(_) => write!(f, "reset"),
-            Token::Flag => unreachable!("flag tokens should never be in command definitions"),
         }
     }
 }
 
-/// Convenience trait to convert types into [`Token`]s.
-pub trait ToToken {
-    fn to_token(&self) -> Token;
-}
-
-impl ToToken for Token {
-    fn to_token(&self) -> Token {
-        self.clone()
+impl From<&str> for Token {
+    fn from(value: &str) -> Self {
+        Token::Value(vec![value.to_smolstr()])
     }
 }
 
-impl ToToken for &str {
-    fn to_token(&self) -> Token {
-        Token::Value(vec![self.to_smolstr()])
+impl<const L: usize> From<[&str; L]> for Token {
+    fn from(value: [&str; L]) -> Self {
+        Token::Value(value.into_iter().map(|s| s.to_smolstr()).collect())
     }
 }
 
-impl ToToken for [&str] {
-    fn to_token(&self) -> Token {
-        Token::Value(self.into_iter().map(|s| s.to_smolstr()).collect())
-    }
-}
-
-impl ToToken for [Token] {
-    fn to_token(&self) -> Token {
-        Token::Any(self.into_iter().map(|s| s.clone()).collect())
+impl<const L: usize> From<[Token; L]> for Token {
+    fn from(value: [Token; L]) -> Self {
+        Token::Any(value.into_iter().map(|s| s.clone()).collect())
     }
 }
 

@@ -2,6 +2,7 @@
 #![feature(anonymous_lifetime_in_impl_trait)]
 
 pub mod commands;
+mod flag;
 mod string;
 mod token;
 mod tree;
@@ -13,7 +14,9 @@ use std::collections::HashMap;
 use std::fmt::Write;
 use std::ops::Not;
 
+use flag::{Flag, FlagMatchError, FlagValueMatchError};
 use smol_str::SmolStr;
+use string::MatchedFlag;
 use tree::TreeBranch;
 
 pub use commands::Command;
@@ -53,7 +56,7 @@ pub enum Parameter {
 pub struct ParsedCommand {
     pub command_ref: String,
     pub params: HashMap<String, Parameter>,
-    pub flags: HashMap<String, Option<String>>,
+    pub flags: HashMap<String, Option<Parameter>>,
 }
 
 pub fn parse_command(prefix: String, input: String) -> CommandResult {
@@ -61,24 +64,23 @@ pub fn parse_command(prefix: String, input: String) -> CommandResult {
     let mut local_tree: TreeBranch = COMMAND_TREE.clone();
 
     // end position of all currently matched tokens
-    let mut current_pos = 0;
+    let mut current_pos: usize = 0;
+    let mut current_token_idx: usize = 0;
 
     let mut params: HashMap<String, Parameter> = HashMap::new();
-    let mut flags: HashMap<String, Option<String>> = HashMap::new();
+    let mut raw_flags: Vec<(usize, MatchedFlag)> = Vec::new();
 
     loop {
-        let possible_tokens = local_tree.possible_tokens().cloned().collect::<Vec<_>>();
-        println!("possible: {:?}", possible_tokens);
-        let next = next_token(possible_tokens.clone(), &input, current_pos);
+        println!(
+            "possible: {:?}",
+            local_tree.possible_tokens().collect::<Vec<_>>()
+        );
+        let next = next_token(local_tree.possible_tokens(), &input, current_pos);
         println!("next: {:?}", next);
         match next {
             Some(Ok((found_token, arg, new_pos))) => {
                 current_pos = new_pos;
-                if let Token::Flag = found_token {
-                    flags.insert(arg.unwrap().raw.into(), None);
-                    // don't try matching flags as tree elements
-                    continue;
-                }
+                current_token_idx += 1;
 
                 if let Some(arg) = arg.as_ref() {
                     // insert arg as paramater if this is a parameter
@@ -117,17 +119,7 @@ pub fn parse_command(prefix: String, input: String) -> CommandResult {
                 return CommandResult::Err { error: error_msg };
             }
             None => {
-                if let Some(command) = local_tree.command() {
-                    println!("{} {params:?}", command.cb);
-                    return CommandResult::Ok {
-                        command: ParsedCommand {
-                            command_ref: command.cb.into(),
-                            params,
-                            flags,
-                        },
-                    };
-                }
-
+                // if it said command not found on a flag, output better error message
                 let mut error = format!("Unknown command `{prefix}{input}`.");
 
                 if fmt_possible_commands(&mut error, &prefix, local_tree.possible_commands(2)).not()
@@ -144,7 +136,125 @@ pub fn parse_command(prefix: String, input: String) -> CommandResult {
                 return CommandResult::Err { error };
             }
         }
+        // match flags until there are none left
+        while let Some(matched_flag) = string::next_flag(&input, current_pos) {
+            current_pos = matched_flag.next_pos;
+            println!("flag matched {matched_flag:?}");
+            raw_flags.push((current_token_idx, matched_flag));
+        }
+        // if we have a command, stop parsing and return it
+        if let Some(command) = local_tree.command() {
+            // match the flags against this commands flags
+            let mut flags: HashMap<String, Option<Parameter>> = HashMap::new();
+            let mut misplaced_flags: Vec<MatchedFlag> = Vec::new();
+            let mut invalid_flags: Vec<MatchedFlag> = Vec::new();
+            for (token_idx, matched_flag) in raw_flags {
+                if token_idx != command.parse_flags_before {
+                    misplaced_flags.push(matched_flag);
+                    continue;
+                }
+                let Some(matched_flag) = match_flag(command.flags.iter(), matched_flag.clone())
+                else {
+                    invalid_flags.push(matched_flag);
+                    continue;
+                };
+                match matched_flag {
+                    // a flag was matched
+                    Ok((name, value)) => {
+                        flags.insert(name.into(), value);
+                    }
+                    Err((flag, err)) => {
+                        match err {
+                            FlagMatchError::ValueMatchFailed(FlagValueMatchError::ValueMissing) => {
+                                return CommandResult::Err {
+                                    error: format!(
+                                        "Flag `-{name}` in command `{prefix}{input}` is missing a value, try passing `-{name}={value}`.",
+                                        name = flag.name(),
+                                        value = flag.value().expect("value missing error cant happen without a value"),
+                                    ),
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            if misplaced_flags.is_empty().not() {
+                let mut error = format!(
+                    "Flag{} ",
+                    (misplaced_flags.len() > 1).then_some("s").unwrap_or("")
+                );
+                for (idx, matched_flag) in misplaced_flags.iter().enumerate() {
+                    write!(&mut error, "`-{}`", matched_flag.name).expect("oom");
+                    if idx < misplaced_flags.len() - 1 {
+                        error.push_str(", ");
+                    }
+                }
+                write!(
+                    &mut error,
+                    " in command `{prefix}{input}` {} misplaced. Try reordering to match the command usage `{prefix}{command}`.",
+                    (misplaced_flags.len() > 1).then_some("are").unwrap_or("is")
+                ).expect("oom");
+                return CommandResult::Err { error };
+            }
+            if invalid_flags.is_empty().not() {
+                let mut error = format!(
+                    "Flag{} ",
+                    (misplaced_flags.len() > 1).then_some("s").unwrap_or("")
+                );
+                for (idx, matched_flag) in invalid_flags.iter().enumerate() {
+                    write!(&mut error, "`-{}`", matched_flag.name).expect("oom");
+                    if idx < invalid_flags.len() - 1 {
+                        error.push_str(", ");
+                    }
+                }
+                write!(
+                    &mut error,
+                    " {} not applicable in this command (`{prefix}{input}`). Applicable flags are the following:",
+                    (invalid_flags.len() > 1).then_some("are").unwrap_or("is")
+                ).expect("oom");
+                for (idx, flag) in command.flags.iter().enumerate() {
+                    write!(&mut error, " `{flag}`").expect("oom");
+                    if idx < command.flags.len() - 1 {
+                        error.push_str(", ");
+                    }
+                }
+                error.push_str(".");
+                return CommandResult::Err { error };
+            }
+            println!("{} {flags:?} {params:?}", command.cb);
+            return CommandResult::Ok {
+                command: ParsedCommand {
+                    command_ref: command.cb.into(),
+                    params, 
+                    flags,
+                },
+            };
+        }
     }
+}
+
+fn match_flag<'a>(
+    possible_flags: impl Iterator<Item = &'a Flag>,
+    matched_flag: MatchedFlag<'a>,
+) -> Option<Result<(SmolStr, Option<Parameter>), (&'a Flag, FlagMatchError)>> {
+    // skip if 0 length (we could just take an array ref here and in next_token aswell but its nice to keep it flexible)
+    if let (_, Some(len)) = possible_flags.size_hint()
+        && len == 0
+    {
+        return None;
+    }
+
+    // check for all (possible) flags, see if token matches
+    for flag in possible_flags {
+        println!("matching flag {flag:?}");
+        match flag.try_match(matched_flag.name, matched_flag.value) {
+            Some(Ok(param)) => return Some(Ok((flag.name().into(), param))),
+            Some(Err(err)) => return Some(Err((flag, err))),
+            None => {}
+        }
+    }
+
+    None
 }
 
 /// Find the next token from an either raw or partially parsed command string
@@ -155,37 +265,27 @@ pub fn parse_command(prefix: String, input: String) -> CommandResult {
 /// - matched value (if this command matched an user-provided value such as a member name)
 /// - end position of matched token
 /// - error when matching
-fn next_token(
-    possible_tokens: Vec<Token>,
+fn next_token<'a>(
+    possible_tokens: impl Iterator<Item = &'a Token>,
     input: &str,
     current_pos: usize,
-) -> Option<Result<(Token, Option<TokenMatchedValue>, usize), (Token, TokenMatchError)>> {
-    // get next parameter, matching quotes
-    let matched = crate::string::next_param(&input, current_pos);
-    println!("matched: {matched:?}\n---");
-
-    // try checking if this is a flag
-    // note: if the param starts with - and if a "match remainder" token was going to be matched
-    // this is going to override that. to prevent that the param should be quoted
-    if let Some(param) = matched.as_ref()
-        && param.in_quotes.not()
-        && param.value.starts_with('-')
+) -> Option<Result<(&'a Token, Option<TokenMatchValue>, usize), (&'a Token, TokenMatchError)>> {
+    // skip if 0 length
+    if let (_, Some(len)) = possible_tokens.size_hint()
+        && len == 0
     {
-        return Some(Ok((
-            Token::Flag,
-            Some(TokenMatchedValue {
-                raw: param.value.into(),
-                param: None,
-            }),
-            param.next_pos,
-        )));
+        return None;
     }
+
+    // get next parameter, matching quotes
+    let matched = string::next_param(&input, current_pos);
+    println!("matched: {matched:?}\n---");
 
     // iterate over tokens and run try_match
     for token in possible_tokens {
         let is_match_remaining_token = |token: &Token| matches!(token, Token::FullString(_));
         // check if this is a token that matches the rest of the input
-        let match_remaining = is_match_remaining_token(&token)
+        let match_remaining = is_match_remaining_token(token)
             // check for Any here if it has a "match remainder" token in it
             // if there is a "match remainder" token in a command there shouldn't be a command descending from that
             || matches!(token, Token::Any(ref tokens) if tokens.iter().any(is_match_remaining_token));
@@ -197,12 +297,14 @@ fn next_token(
         });
         match token.try_match(input_to_match) {
             Some(Ok(value)) => {
-                // return last possible pos if we matched remaining,
-                // otherwise use matched param next pos,
-                // and if didnt match anything we stay where we are
-                let next_pos = matched
-                    .map(|v| match_remaining.then_some(input.len()).unwrap_or(v.next_pos))
-                    .unwrap_or(current_pos);
+                let next_pos = match matched {
+                    // return last possible pos if we matched remaining,
+                    Some(_) if match_remaining => input.len(),
+                    // otherwise use matched param next pos,
+                    Some(param) => param.next_pos,
+                    // and if didnt match anything we stay where we are
+                    None => current_pos,
+                };
                 return Some(Ok((token, value, next_pos)));
             }
             Some(Err(err)) => {
@@ -223,7 +325,7 @@ fn fmt_possible_commands(
     mut possible_commands: impl Iterator<Item = &Command>,
 ) -> bool {
     if let Some(first) = possible_commands.next() {
-        f.push_str(" Perhaps you meant to use one of the commands below:\n");
+        f.push_str(" Perhaps you meant one of the following commands:\n");
         for command in std::iter::once(first).chain(possible_commands.take(MAX_SUGGESTIONS - 1)) {
             if !command.show_in_suggestions {
                 continue;

@@ -18,7 +18,8 @@ pub fn cmds() -> impl Iterator<Item = Command> {
             [member, MemberRef("target")],
             "member_show",
             "Shows information about a member"
-        ),
+        )
+        .value_flag("pt", FlagValue::OpaqueString),
         command!(
             [member, MemberRef("target"), description],
             "member_desc_show",
@@ -53,9 +54,9 @@ pub fn cmds() -> impl Iterator<Item = Command> {
         command!(
             [member, MemberRef("target"), "soulscream"],
             "member_soulscream",
-            "todo",
-            suggest = false
-        ),
+            "todo"
+        )
+        .show_in_suggestions(false),
     ]
     .into_iter()
 }

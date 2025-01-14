@@ -21,17 +21,17 @@ impl TreeBranch {
         // iterate over tokens in command
         for token in command.tokens.clone() {
             // recursively get or create a sub-branch for each token
-            current_branch = current_branch.branches.entry(token).or_insert(TreeBranch {
-                current_command: None,
-                branches: OrderMap::new(),
-            });
+            current_branch = current_branch
+                .branches
+                .entry(token)
+                .or_insert_with(TreeBranch::empty);
         }
         // when we're out of tokens, add an Empty branch with the callback and no sub-branches
         current_branch.branches.insert(
             Token::Empty,
             TreeBranch {
-                current_command: Some(command),
                 branches: OrderMap::new(),
+                current_command: Some(command),
             },
         );
     }
