@@ -1,6 +1,5 @@
 ---
 title: Announcements & other posts
-permalink: /posts/
 ---
 
 # Announcements & other posts

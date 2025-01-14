@@ -35,6 +35,15 @@ module.exports = {
       "/",
       ["https://discord.com/oauth2/authorize?client_id=466378653216014359&scope=bot%20applications.commands&permissions=536995904", "Add to your server"],
       {
+        title: "Updates",
+        collapsable: false,
+        sidebarDepth: 1,
+        children: [
+          "/posts/",
+          "/changelog",
+        ]
+      },
+      {
         title: "Documentation",
         collapsable: false,
         sidebarDepth: 2,

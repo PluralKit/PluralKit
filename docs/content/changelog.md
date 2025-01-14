@@ -1,6 +1,6 @@
 ---
 title: Changelog
-permalink: /changelog/
+permalink: /changelog
 ---
 
 # Changelog
