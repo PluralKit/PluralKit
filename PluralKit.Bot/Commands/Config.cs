@@ -230,7 +230,7 @@ public class Config
     public async Task EditAutoproxyTimeout(Context ctx)
     {
         var _newTimeout = await ctx.ParamResolveOpaque("timeout");
-        var _reset = await ctx.ParamResolveReset("reset");
+        var _reset = await ctx.ParamResolveToggle("reset");
         var _toggle = await ctx.ParamResolveToggle("toggle");
 
         Duration? newTimeout;

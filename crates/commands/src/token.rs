@@ -198,7 +198,11 @@ impl Token {
                 Err(_) => None,
             },
             Self::Reset(param_name) => match Reset::from_str(input) {
-                Ok(_) => TokenMatchValue::new_match_param(input, param_name, Parameter::Reset),
+                Ok(_) => TokenMatchValue::new_match_param(
+                    input,
+                    param_name,
+                    Parameter::Toggle { toggle: true },
+                ),
                 Err(_) => None,
             },
             // don't add a _ match here!

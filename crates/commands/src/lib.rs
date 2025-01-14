@@ -49,7 +49,6 @@ pub enum Parameter {
     PrivacyLevel { level: String },
     OpaqueString { raw: String },
     Toggle { toggle: bool },
-    Reset,
 }
 
 #[derive(Debug)]

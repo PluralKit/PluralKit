@@ -51,14 +51,4 @@ public static class ContextParametersExt
             param => (param as Parameter.Toggle)?.value
         );
     }
-
-    // this can never really be false (either it's present and is true or it's not present)
-    // but we keep it nullable for consistency with the other methods
-    public static async Task<bool?> ParamResolveReset(this Context ctx, string param_name)
-    {
-        return await ctx.Parameters.ResolveParameter<bool?>(
-            ctx, param_name,
-            param => param is Parameter.Reset
-        );
-    }
 }

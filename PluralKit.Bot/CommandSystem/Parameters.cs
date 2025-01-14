@@ -13,7 +13,6 @@ public abstract record Parameter()
     public record PrivacyLevel(string level): Parameter;
     public record Toggle(bool value): Parameter;
     public record Opaque(string value): Parameter;
-    public record Reset(): Parameter;
 }
 
 public class Parameters
@@ -80,8 +79,6 @@ public class Parameters
                 return new Parameter.Toggle(toggle.toggle);
             case uniffi.commands.Parameter.OpaqueString opaque:
                 return new Parameter.Opaque(opaque.raw);
-            case uniffi.commands.Parameter.Reset _:
-                return new Parameter.Reset();
         }
         return null;
     }
