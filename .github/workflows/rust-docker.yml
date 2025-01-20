@@ -1,0 +1,47 @@
+name: Build and push Rust service Docker images
+on:
+  push:
+    paths:
+    - 'crates/**'
+    - '.github/workflows/rust.yml'
+    - 'ci/Dockerfile.rust'
+    - 'ci/rust-docker-target.sh'
+    - 'Cargo.toml'
+    - 'Cargo.lock'
+
+jobs:
+  build:
+    name: 'rust docker build'
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    if: github.repository == 'PluralKit/PluralKit'
+    steps:
+      - uses: docker/login-action@v1
+        if: ${{ !env.ACT }}
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.CR_PAT }}
+
+      - uses: actions/checkout@v2
+      - uses: docker/setup-buildx-action@v1
+
+      # main docker build
+      - run: echo "BRANCH_NAME=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
+      - uses: docker/build-push-action@v2
+        with:
+          # https://github.com/docker/build-push-action/issues/378
+          context: .
+          file: ci/Dockerfile.rust
+          push: false 
+          cache-from: type=registry,ref=ghcr.io/pluralkit/docker-cache:rust
+          cache-to: type=registry,ref=ghcr.io/pluralkit/docker-cache:rust,mode=max
+          outputs: .docker-bin
+
+      # add more binaries here
+      - run: |
+          tag=${{ github.sha }} \
+          branch=${{ env.BRANCH_NAME }} \
+          push=$([ "${{ github.repository }}" == "PluralKit/PluralKit" ] && echo true || echo false) \
+          ci/rust-docker-target.sh

@@ -3,11 +3,10 @@ using System.Diagnostics;
 using App.Metrics;
 
 using Myriad.Builders;
-using Myriad.Cache;
-using Myriad.Gateway;
-using Myriad.Rest;
 using Myriad.Rest.Types.Requests;
 using Myriad.Types;
+
+using Newtonsoft.Json;
 
 using NodaTime;
 
@@ -57,78 +56,98 @@ public class Misc
         var timeAfter = SystemClock.Instance.GetCurrentInstant();
         var apiLatency = timeAfter - timeBefore;
 
-        var embed = new EmbedBuilder();
-
-        // todo: these will be inaccurate when the bot is actually multi-process
-
-        var messagesReceived = _metrics.Snapshot.GetForContext("Bot").Meters
-            .FirstOrDefault(m => m.MultidimensionalName == BotMetrics.MessagesReceived.Name)?.Value;
-        if (messagesReceived != null)
-            embed.Field(new Embed.Field("Messages processed",
-                $"{messagesReceived.OneMinuteRate * 60:F1}/m ({messagesReceived.FifteenMinuteRate * 60:F1}/m over 15m)",
-                true));
-
-        var messagesProxied = _metrics.Snapshot.GetForContext("Bot").Meters
-            .FirstOrDefault(m => m.MultidimensionalName == BotMetrics.MessagesProxied.Name)?.Value;
-        if (messagesProxied != null)
-            embed.Field(new Embed.Field("Messages proxied",
-                $"{messagesProxied.OneMinuteRate * 60:F1}/m ({messagesProxied.FifteenMinuteRate * 60:F1}/m over 15m)",
-                true));
-
-        var commandsRun = _metrics.Snapshot.GetForContext("Bot").Meters
-            .FirstOrDefault(m => m.MultidimensionalName == BotMetrics.CommandsRun.Name)?.Value;
-        if (commandsRun != null)
-            embed.Field(new Embed.Field("Commands executed",
-                $"{commandsRun.OneMinuteRate * 60:F1}/m ({commandsRun.FifteenMinuteRate * 60:F1}/m over 15m)",
-                true));
-
-        var isCluster = _botConfig.Cluster != null && _botConfig.Cluster.TotalShards != ctx.Cluster.Shards.Count;
-
-        var counts = await _repo.GetStats();
+        var process = Process.GetCurrentProcess();
+        var stats = await GetStats(ctx);
         var shards = await _shards.GetShards();
 
         var shardInfo = shards.Where(s => s.ShardId == ctx.ShardId).FirstOrDefault();
+        var shardsUp = shards.Where(s => s.Up).Count();
 
-        // todo: if we're running multiple processes, it is not useful to get the CPU/RAM usage of just the current one
-        var process = Process.GetCurrentProcess();
-        var memoryUsage = process.WorkingSet64;
+        if (stats == null)
+        {
+            var content = $"Stats unavailable (is scheduled_tasks service running?)\n\n**Quick info:**"
+                        + $"\nPluralKit [{BuildInfoService.Version}](<https://github.com/pluralkit/pluralkit/commit/{BuildInfoService.FullVersion}>)"
+                        // + (BuildInfoService.IsDev ? ", **development build**" : "")
+                        + $"\nCurrently on shard {ctx.ShardId}, {shardsUp}/{shards.Count()} shards up,"
+                        + $" API latency: {apiLatency.TotalMilliseconds:F0}ms";
+            await ctx.Rest.EditMessage(msg.ChannelId, msg.Id,
+                new MessageEditRequest { Content = content });
+            return;
+        }
 
-        var now = SystemClock.Instance.GetCurrentInstant().ToUnixTimeSeconds();
-        var shardUptime = Duration.FromSeconds(now - shardInfo.LastConnection);
-
-        var shardTotal = _botConfig.Cluster?.TotalShards ?? shards.Count();
-        int shardClusterTotal = ctx.Cluster.Shards.Count;
-        var shardUpTotal = shards.Where(x => x.Up).Count();
-
-        embed
-            .Field(new Embed.Field("Current shard",
-                $"Shard #{ctx.ShardId} (of {shardTotal} total,"
-                    + (isCluster ? $" {shardClusterTotal} in this cluster," : "") + $" {shardUpTotal} are up)"
-                , true))
-            .Field(new Embed.Field("Shard uptime",
-                $"{shardUptime.FormatDuration()} ({shardInfo.DisconnectionCount} disconnections)", true))
-            .Field(new Embed.Field("CPU usage", $"{_cpu.LastCpuMeasure:P1}", true))
-            .Field(new Embed.Field("Memory usage", $"{memoryUsage / 1024 / 1024} MiB", true))
-            .Field(new Embed.Field("Latency",
-                $"API: {apiLatency.TotalMilliseconds:F0} ms, shard: {shardInfo.Latency} ms",
-                true));
-
-        embed.Field(new("Total numbers", $" {counts.SystemCount:N0} systems,"
-                                       + $" {counts.MemberCount:N0} members,"
-                                       + $" {counts.GroupCount:N0} groups,"
-                                       + $" {counts.SwitchCount:N0} switches,"
-                                       + $" {counts.MessageCount:N0} messages"));
+        var embed = new EmbedBuilder();
 
         embed
-            .Footer(new(String.Join(" \u2022 ", new[] {
-                $"PluralKit {BuildInfoService.Version}",
-                (isCluster ? $"Cluster {_botConfig.Cluster.NodeIndex}" : ""),
-                "https://github.com/PluralKit/PluralKit",
-                "Last restarted:",
-            })))
-            .Timestamp(process.StartTime.ToString("O"));
+            .Field(new("Connection status", $"**{shards.Count()}** shards across **{shards.Select(s => s.ClusterId).Distinct().Count()}** clusters (**{shardsUp} up**)\n"
+                                            + $"Current server is on **shard {ctx.ShardId} (cluster {shardInfo.ClusterId ?? 0})**\n"
+                                            + $"Latency: API **{apiLatency.TotalMilliseconds:F0}ms** (p90: {stats.prom.nirn_proxy_latency_p90 * 1000:F0}ms, p99: {stats.prom.nirn_proxy_latency_p99 * 1000:F0}ms), "
+                                            + $"shard **{shardInfo.Latency}ms** (avg: {stats.prom.shard_latency_average}ms)", true))
+            .Field(new("Resource usage", $"**CPU:** {stats.prom.cpu_used}% used / {stats.prom.cpu_total_cores} total cores ({stats.prom.cpu_total_threads} threads)\n"
+                                        + $"**Memory:** {(stats.prom.memory_used / 1_000_000_000):N1}GB used / {(stats.prom.memory_total / 1_000_000_000):N1}GB total", true))
+            .Field(new("Usage metrics", $"Messages received: **{stats.prom.messages_1m}/s** ({stats.prom.messages_15m}/s over 15m)\n" +
+                                        $"Messages proxied: **{stats.prom.proxy_1m}/s** ({stats.prom.proxy_15m}/s over 15m, {stats.db.messages_24h:N0} total in last 24h)\n" +
+                                        $"Commands executed: **{stats.prom.commands_1m}/m** ({stats.prom.commands_15m}/m over 15m)"));
+
+        embed.Field(new("Total numbers", $"**{stats.db.systems:N0}** systems, **{stats.db.members:N0}** members, **{stats.db.groups:N0}** groups, "
+                                       + $"**{stats.db.switches:N0}** switches, **{stats.db.messages:N0}** messages\n" +
+                                         $"**{stats.db.guilds:N0}** servers with **{stats.db.channels:N0}** channels"));
+
+        embed.Footer(Help.helpEmbed.Footer);
+
+        var uptime = ((DateTimeOffset)process.StartTime).ToUnixTimeSeconds();
+        embed.Description($"### PluralKit [{BuildInfoService.Version}](https://github.com/pluralkit/pluralkit/commit/{BuildInfoService.FullVersion})\n" +
+                          $"Built on <t:{BuildInfoService.Timestamp}> (<t:{BuildInfoService.Timestamp}:R>)"
+                        // + (BuildInfoService.IsDev ? ", **development build**" : "")
+                        + $"\nLast restart: <t:{uptime}:R>");
 
         await ctx.Rest.EditMessage(msg.ChannelId, msg.Id,
             new MessageEditRequest { Content = "", Embeds = new[] { embed.Build() } });
     }
+
+    private async Task<Stats?> GetStats(Context ctx)
+    {
+        var db = ctx.Redis.Connection.GetDatabase();
+        var data = await db.StringGetAsync("statsapi");
+        return data.HasValue ? JsonConvert.DeserializeObject<Stats>(data) : null;
+    }
 }
+
+// none of these fields are "assigned to" for some reason
+#pragma warning disable CS0649
+
+class Stats
+{
+    public DbStats db;
+    public PrometheusStats prom;
+};
+
+class DbStats
+{
+    public double systems;
+    public double members;
+    public double groups;
+    public double switches;
+    public double messages;
+    public double messages_24h;
+    public double guilds;
+    public double channels;
+};
+
+class PrometheusStats
+{
+    public double messages_1m;
+    public double messages_15m;
+    public double proxy_1m;
+    public double proxy_15m;
+    public double commands_1m;
+    public double commands_15m;
+    public double cpu_total_cores;
+    public double cpu_total_threads;
+    public double cpu_used;
+    public double memory_total;
+    public double memory_used;
+    public double nirn_proxy_rps;
+    public double nirn_proxy_latency_p90;
+    public double nirn_proxy_latency_p99;
+    public double shard_latency_average;
+};

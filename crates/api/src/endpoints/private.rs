@@ -31,29 +31,16 @@ pub async fn discord_state(State(ctx): State<ApiContext>) -> Json<Value> {
 }
 
 pub async fn meta(State(ctx): State<ApiContext>) -> Json<Value> {
-    let cluster_stats = ctx
-        .redis
-        .hgetall::<HashMap<String, String>, &str>("pluralkit:cluster_stats")
-        .await
-        .unwrap()
-        .values()
-        .map(|v| serde_json::from_str(v).unwrap())
-        .collect::<Vec<ClusterStats>>();
+    let stats = serde_json::from_str::<Value>(
+        ctx.redis
+            .get::<String, &'static str>("statsapi")
+            .await
+            .unwrap()
+            .as_str(),
+    )
+    .unwrap();
 
-    let db_stats = libpk::db::repository::get_stats(&ctx.db).await.unwrap();
-
-    let guild_count: i32 = cluster_stats.iter().map(|v| v.guild_count).sum();
-    let channel_count: i32 = cluster_stats.iter().map(|v| v.channel_count).sum();
-
-    Json(json!({
-        "system_count": db_stats.system_count,
-        "member_count": db_stats.member_count,
-        "group_count": db_stats.group_count,
-        "switch_count": db_stats.switch_count,
-        "message_count": db_stats.message_count,
-        "guild_count": guild_count,
-        "channel_count": channel_count,
-    }))
+    Json(stats)
 }
 
 use std::time::Duration;

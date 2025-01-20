@@ -80,7 +80,7 @@ async fn dispatch(
 ) -> String {
     // todo: fix
     if req.auth != std::env::var("HTTP_AUTH_TOKEN").unwrap() {
-        return "".to_string();
+        panic!("bad auth");
     }
 
     let uri = match req.url.parse::<Uri>() {

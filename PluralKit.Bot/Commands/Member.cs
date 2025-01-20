@@ -103,28 +103,23 @@ public class Member
         });
 
         // Send confirmation and space hint
-        await ctx.Reply(
-            $"{Emojis.Success} Member \"{memberName}\" (`{member.DisplayHid(ctx.Config)}`) registered! Check out the getting started page for how to get a member up and running: https://pluralkit.me/start#create-a-member");
+        var replyStr = $"{Emojis.Success} Member \"{memberName}\" (`{member.DisplayHid(ctx.Config)}`) registered! Check out the getting started page for how to get a member up and running: https://pluralkit.me/start#create-a-member";
         // todo: move this to ModelRepository
         if (await ctx.Database.Execute(conn => conn.QuerySingleAsync<bool>("select has_private_members(@System)",
                 new { System = ctx.System.Id })) && !ctx.Config.MemberDefaultPrivate) //if has private members
-            await ctx.Reply(
-                $"{Emojis.Warn} This member is currently **public**. To change this, use `{ctx.DefaultPrefix}member {member.DisplayHid(ctx.Config)} private`.");
+            replyStr += $"\n{Emojis.Warn} This member is currently **public**. To change this, use `{ctx.DefaultPrefix}member {member.DisplayHid(ctx.Config)} private`.";
         if (avatarArg != null)
             if (imageMatchError == null)
-                await ctx.Reply(
-                    $"{Emojis.Success} Member avatar set to attached image." + (img.Source == AvatarSource.Attachment ? $"\n{Emojis.Warn} If you delete the message containing the attachment, the avatar will stop working." : ""));
+                replyStr += $"\n{Emojis.Success} Member avatar set to attached image." + (img.Source == AvatarSource.Attachment ? $"\n{Emojis.Warn} If you delete the message containing the attachment, the avatar will stop working." : "");
             else
-                await ctx.Reply($"{Emojis.Error} Couldn't set avatar: {imageMatchError.Message}");
+                replyStr += $"\n{Emojis.Error} Couldn't set avatar: {imageMatchError.Message}";
         if (memberName.Contains(" "))
-            await ctx.Reply(
-                $"{Emojis.Note} Note that this member's name contains spaces. You will need to surround it with \"double quotes\" when using commands referring to it, or just use the member's short ID (which is `{member.DisplayHid(ctx.Config)}`).");
+            replyStr += $"\n{Emojis.Note} Note that this member's name contains spaces. You will need to surround it with \"double quotes\" when using commands referring to it, or just use the member's short ID (which is `{member.DisplayHid(ctx.Config)}`).";
         if (memberCount >= memberLimit)
-            await ctx.Reply(
-                $"{Emojis.Warn} You have reached the per-system member limit ({memberLimit}). If you need to add more members, you can either delete existing members, or ask for your limit to be raised in the PluralKit support server: <https://discord.gg/PczBt78>");
+            replyStr += $"\n{Emojis.Warn} You have reached the per-system member limit ({memberLimit}). If you need to add more members, you can either delete existing members, or ask for your limit to be raised in the PluralKit support server: <https://discord.gg/PczBt78>";
         else if (memberCount >= Limits.WarnThreshold(memberLimit))
-            await ctx.Reply(
-                $"{Emojis.Warn} You are approaching the per-system member limit ({memberCount} / {memberLimit} members). Once you reach this limit, you will be unable to create new members until existing members are deleted, or you can ask for your limit to be raised in the PluralKit support server: <https://discord.gg/PczBt78>");
+            replyStr += $"\n{Emojis.Warn} You are approaching the per-system member limit ({memberCount} / {memberLimit} members). Once you reach this limit, you will be unable to create new members until existing members are deleted, or you can ask for your limit to be raised in the PluralKit support server: <https://discord.gg/PczBt78>";
+        await ctx.Reply(replyStr);
     }
 
     public async Task ViewMember(Context ctx)

@@ -121,6 +121,10 @@
               name = "pk-devshell";
               nativeBuildInputs = bot.nativeBuildInputs ++ services.nativeBuildInputs;
             };
+            docs = pkgs.mkShellNoCC {
+              buildInputs = with pkgs; [ nodejs yarn ];
+              NODE_OPTIONS = "--openssl-legacy-provider";
+            };
           };
 
           process-compose."dev" =

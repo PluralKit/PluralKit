@@ -3098,6 +3098,7 @@ dependencies = [
  "num-format",
  "reqwest 0.12.8",
  "serde",
+ "serde_json",
  "sqlx",
  "tokio",
  "tracing",

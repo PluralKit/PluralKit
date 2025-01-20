@@ -23,6 +23,32 @@ public class MemberEdit
 
     public async Task Name(Context ctx, PKMember target)
     {
+        var format = ctx.MatchFormat();
+
+        if (!ctx.HasNext() || format != ReplyFormat.Standard)
+        {
+            var lctx = ctx.DirectLookupContextFor(target.System);
+            switch (format)
+            {
+                case ReplyFormat.Raw:
+                    await ctx.Reply($"```{target.NameFor(lctx)}```");
+                    break;
+                case ReplyFormat.Plaintext:
+                    var eb = new EmbedBuilder()
+                        .Description($"Showing name for member {target.NameFor(ctx)} (`{target.DisplayHid(ctx.Config)}`)");
+                    await ctx.Reply(target.NameFor(lctx), embed: eb.Build());
+                    break;
+                default:
+                    var replyStrQ = $"Name for member {target.DisplayHid(ctx.Config)} is **{target.NameFor(lctx)}**.";
+                    if (target.System == ctx.System?.Id)
+                        replyStrQ += $"\nTo rename {target.DisplayHid(ctx.Config)} type `{ctx.DefaultPrefix}member {target.NameFor(ctx)} rename <new name>`."
+                        + $" Using {target.NameFor(lctx).Length}/{Limits.MaxMemberNameLength} characters.";
+                    await ctx.Reply(replyStrQ);
+                    break;
+            }
+            return;
+        }
+
         ctx.CheckSystem().CheckOwnMember(target);
 
         var newName = ctx.RemainderOrNull() ?? throw new PKSyntaxError("You must pass a new name for the member.");
@@ -44,21 +70,19 @@ public class MemberEdit
         var patch = new MemberPatch { Name = Partial<string>.Present(newName) };
         await ctx.Repository.UpdateMember(target.Id, patch);
 
-        await ctx.Reply($"{Emojis.Success} Member renamed (using {newName.Length}/{Limits.MaxMemberNameLength} characters).");
+        var replyStr = $"{Emojis.Success} Member renamed (using {newName.Length}/{Limits.MaxMemberNameLength} characters).";
         if (newName.Contains(" "))
-            await ctx.Reply(
-                $"{Emojis.Note} Note that this member's name now contains spaces. You will need to surround it with \"double quotes\" when using commands referring to it, or just use the member's short ID (which is `{target.DisplayHid(ctx.Config)}`).");
+            replyStr += $"\n{Emojis.Note} Note that this member's name now contains spaces. You will need to surround it with \"double quotes\" when using commands referring to it, or just use the member's short ID (which is `{target.DisplayHid(ctx.Config)}`).";
         if (target.DisplayName != null)
-            await ctx.Reply(
-                $"{Emojis.Note} Note that this member has a display name set ({target.DisplayName}), and will be proxied using that name instead.");
+            replyStr += $"\n{Emojis.Note} Note that this member has a display name set ({target.DisplayName}), and will be proxied using that name instead.";
 
         if (ctx.Guild != null)
         {
             var memberGuildConfig = await ctx.Repository.GetMemberGuild(ctx.Guild.Id, target.Id);
             if (memberGuildConfig.DisplayName != null)
-                await ctx.Reply(
-                    $"{Emojis.Note} Note that this member has a server name set ({memberGuildConfig.DisplayName}) in this server ({ctx.Guild.Name}), and will be proxied using that name here.");
+                replyStr += $"\n{Emojis.Note} Note that this member has a server name set ({memberGuildConfig.DisplayName}) in this server ({ctx.Guild.Name}), and will be proxied using that name here.";
         }
+        await ctx.Reply(replyStr);
     }
 
     public async Task Description(Context ctx, PKMember target)
@@ -102,8 +126,8 @@ public class MemberEdit
                     $"To print the description with formatting, type `{ctx.DefaultPrefix}member {target.Reference(ctx)} description -raw`."
                     + (ctx.System?.Id == target.System
                         ? $" To clear it, type `{ctx.DefaultPrefix}member {target.Reference(ctx)} description -clear`."
-                        : "")
-                    + $" Using {target.Description.Length}/{Limits.MaxDescriptionLength} characters."))
+                        + $" Using {target.Description.Length}/{Limits.MaxDescriptionLength} characters."
+                        : "")))
                 .Build());
             return;
         }
@@ -166,8 +190,8 @@ public class MemberEdit
                 $"**{target.NameFor(ctx)}**'s pronouns are **{target.Pronouns}**.\nTo print the pronouns with formatting, type `{ctx.DefaultPrefix}member {target.Reference(ctx)} pronouns -raw`."
                 + (ctx.System?.Id == target.System
                     ? $" To clear them, type `{ctx.DefaultPrefix}member {target.Reference(ctx)} pronouns -clear`."
-                    : "")
-                + $" Using {target.Pronouns.Length}/{Limits.MaxPronounsLength} characters.");
+                    + $" Using {target.Pronouns.Length}/{Limits.MaxPronounsLength} characters."
+                    : ""));
             return;
         }
 
@@ -377,7 +401,7 @@ public class MemberEdit
             .Footer(new Embed.EmbedFooter(
                 $"Member ID: {target.DisplayHid(ctx.Config)} | Active name in bold. Server name overrides display name, which overrides base name."
                 + (target.DisplayName != null && ctx.System?.Id == target.System ? $" Using {target.DisplayName.Length}/{Limits.MaxMemberNameLength} characters for the display name." : "")
-                + (memberGuildConfig?.DisplayName != null ? $" Using {memberGuildConfig?.DisplayName.Length}/{Limits.MaxMemberNameLength} characters for the server name." : "")));
+                + (memberGuildConfig?.DisplayName != null && ctx.System?.Id == target.System ? $" Using {memberGuildConfig?.DisplayName.Length}/{Limits.MaxMemberNameLength} characters for the server name." : "")));
 
         var showDisplayName = target.NamePrivacy.CanAccess(lcx);
 
@@ -388,7 +412,7 @@ public class MemberEdit
 
         eb.Field(new Embed.Field("Display name", (target.DisplayName != null && showDisplayName)
             ? boldIf(target.DisplayName, memberGuildConfig?.DisplayName == null)
-            : "*(none)*"
+            : "*(no displayname set or name is private)*"
         ));
 
         if (ctx.Guild != null)
@@ -417,18 +441,18 @@ public class MemberEdit
             await ctx.Reply(successStr);
         }
 
-        var noDisplayNameSetMessage = "This member does not have a display name set.";
-        if (ctx.System?.Id == target.System)
-            noDisplayNameSetMessage +=
-                $" To set one, type `{ctx.DefaultPrefix}member {target.Reference(ctx)} displayname <display name>`.";
+        var isOwner = ctx.System?.Id == target.System;
+        var noDisplayNameSetMessage = $"This member does not have a display name set{(isOwner ? "" : " or name is private")}."
+            + (isOwner ? $" To set one, type `{ctx.DefaultPrefix}member {target.Reference(ctx)} displayname <display name>`." : "");
 
-        // No perms check, display name isn't covered by member privacy
+        // Whether displayname is shown or not should depend on if member name privacy is set.
+        // If name privacy is on then displayname should look like name.
 
         var format = ctx.MatchFormat();
 
         // if what's next is "raw"/"plaintext" we need to check for null
         if (format != ReplyFormat.Standard)
-            if (target.DisplayName == null)
+            if (target.DisplayName == null || !target.NamePrivacy.CanAccess(ctx.DirectLookupContextFor(target.System)))
             {
                 await ctx.Reply(noDisplayNameSetMessage);
                 return;
@@ -860,19 +884,18 @@ public class MemberEdit
                 _ => throw new InvalidOperationException($"Invalid subject/level tuple ({subject}, {level})")
             };
 
-            await ctx.Reply(
-                $"{Emojis.Success} {target.NameFor(ctx)}'s **{subjectName}** has been set to **{level.LevelName()}**. {explanation}");
+            var replyStr = $"{Emojis.Success} {target.NameFor(ctx)}'s **{subjectName}** has been set to **{level.LevelName()}**. {explanation}";
 
             // Name privacy only works given a display name
             if (subject == MemberPrivacySubject.Name && level == PrivacyLevel.Private && target.DisplayName == null)
-                await ctx.Reply(
-                    $"{Emojis.Warn} This member does not have a display name set, and name privacy **will not take effect**.");
+                replyStr += $"\n{Emojis.Warn} This member does not have a display name set, and name privacy **will not take effect**.";
 
             // Avatar privacy doesn't apply when proxying if no server avatar is set
             if (subject == MemberPrivacySubject.Avatar && level == PrivacyLevel.Private &&
                 guildSettings?.AvatarUrl == null)
-                await ctx.Reply(
-                    $"{Emojis.Warn} This member does not have a server avatar set, so *proxying* will **still show the member avatar**. If you want to hide your avatar when proxying here, set a server avatar: `{ctx.DefaultPrefix}member {target.Reference(ctx)} serveravatar`");
+                replyStr += $"\n{Emojis.Warn} This member does not have a server avatar set, so *proxying* will **still show the member avatar**. If you want to hide your avatar when proxying here, set a server avatar: `{ctx.DefaultPrefix}member {target.Reference(ctx)} serveravatar`";
+
+            await ctx.Reply(replyStr);
         }
 
         if (ctx.Match("all") || newValueFromCommand != null)

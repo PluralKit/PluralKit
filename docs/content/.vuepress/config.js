@@ -35,6 +35,15 @@ module.exports = {
       "/",
       ["https://discord.com/oauth2/authorize?client_id=466378653216014359&scope=bot%20applications.commands&permissions=536995904", "Add to your server"],
       {
+        title: "Updates",
+        collapsable: false,
+        sidebarDepth: 1,
+        children: [
+          "/posts/",
+          "/changelog",
+        ]
+      },
+      {
         title: "Documentation",
         collapsable: false,
         sidebarDepth: 2,
@@ -73,6 +82,7 @@ module.exports = {
       },
       ["https://discord.gg/PczBt78", "Join the support server"],
     ],
+    pkBannerContent: "PluralKit needs your help! <a href=\"/posts/2025-01-14-funding-update/\">Check out our latest funding update for details.</a>",
   },
 
   plugins: [
