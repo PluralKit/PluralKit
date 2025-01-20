@@ -16,7 +16,7 @@ fn main() {
         }
     } else {
         for command in cmds::all() {
-            println!("{}", command);
+            println!("{} - {}", command, command.help);
         }
     }
 }

@@ -5,7 +5,7 @@ use std::{
     sync::Arc,
 };
 
-use smol_str::{SmolStr, ToSmolStr};
+use smol_str::SmolStr;
 
 use crate::{parameter::Parameter, Parameter as FfiParam};
 
@@ -176,7 +176,13 @@ impl Display for Token {
 
 impl From<&str> for Token {
     fn from(value: &str) -> Self {
-        Token::Value(vec![value.to_smolstr()])
+        Token::Value(vec![SmolStr::new(value)])
+    }
+}
+
+impl<const L: usize> From<[&str; L]> for Token {
+    fn from(value: [&str; L]) -> Self {
+        Token::Value(value.into_iter().map(SmolStr::from).collect::<Vec<_>>())
     }
 }
 
@@ -189,22 +195,5 @@ impl<P: Parameter + 'static> From<P> for Token {
 impl<P: Parameter + 'static> From<(ParamName, P)> for Token {
     fn from(value: (ParamName, P)) -> Self {
         Token::Parameter(value.0, Arc::new(value.1))
-    }
-}
-
-impl<const L: usize, T: Into<Token>> From<[T; L]> for Token {
-    fn from(value: [T; L]) -> Self {
-        let tokens = value.into_iter().map(|s| s.into()).collect::<Vec<_>>();
-        if tokens.iter().all(|t| matches!(t, Token::Value(_))) {
-            let values = tokens
-                .into_iter()
-                .flat_map(|t| match t {
-                    Token::Value(v) => v,
-                    _ => unreachable!(),
-                })
-                .collect::<Vec<_>>();
-            return Token::Value(values);
-        }
-        Token::Any(tokens)
     }
 }

@@ -39,10 +39,13 @@ impl Command {
     pub fn new(tokens: impl IntoIterator<Item = Token>, cb: impl Into<SmolStr>) -> Self {
         let tokens = tokens.into_iter().collect::<Vec<_>>();
         assert!(tokens.len() > 0);
+        // figure out which token to parse / put flags after
+        // (by default, put flags after the last token)
         let mut parse_flags_before = tokens.len();
         let mut was_parameter = true;
         for (idx, token) in tokens.iter().enumerate().rev() {
             match token {
+                // we want flags to go before any parameters
                 Token::Parameter(_, _) | Token::Any(_) => {
                     parse_flags_before = idx;
                     was_parameter = true;
