@@ -36,11 +36,7 @@ pub struct Command {
 }
 
 impl Command {
-    pub fn new(
-        tokens: impl IntoIterator<Item = Token>,
-        help: impl Into<SmolStr>,
-        cb: impl Into<SmolStr>,
-    ) -> Self {
+    pub fn new(tokens: impl IntoIterator<Item = Token>, cb: impl Into<SmolStr>) -> Self {
         let tokens = tokens.into_iter().collect::<Vec<_>>();
         assert!(tokens.len() > 0);
         let mut parse_flags_before = tokens.len();
@@ -60,12 +56,17 @@ impl Command {
         }
         Self {
             flags: Vec::new(),
-            help: help.into(),
+            help: SmolStr::new_static("<no help text>"),
             cb: cb.into(),
             show_in_suggestions: true,
             parse_flags_before,
             tokens,
         }
+    }
+
+    pub fn help(mut self, v: impl Into<SmolStr>) -> Self {
+        self.help = v.into();
+        self
     }
 
     pub fn show_in_suggestions(mut self, v: bool) -> Self {
@@ -111,16 +112,15 @@ impl Display for Command {
 // (and something like &dyn Trait would require everything to be referenced which doesnt look nice anyway)
 #[macro_export]
 macro_rules! command {
-    ([$($v:expr),+], $cb:expr, $help:expr) => {
-        $crate::commands::Command::new([$(Token::from($v)),*], $help, $cb)
+    ([$($v:expr),+], $cb:expr$(,)*) => {
+        $crate::commands::Command::new([$(Token::from($v)),*], $cb)
     };
 }
 
-pub fn all() -> Vec<Command> {
+pub fn all() -> impl Iterator<Item = Command> {
     (help::cmds())
         .chain(system::cmds())
         .chain(member::cmds())
         .chain(config::cmds())
         .chain(fun::cmds())
-        .collect()
 }

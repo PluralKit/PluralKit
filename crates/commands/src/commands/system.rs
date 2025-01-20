@@ -5,17 +5,10 @@ pub fn cmds() -> impl Iterator<Item = Command> {
     let new = ["new", "n"];
 
     [
-        command!(
-            [system],
-            "system_show",
-            "Shows information about your system"
-        ),
-        command!([system, new], "system_new", "Creates a new system"),
-        command!(
-            [system, new, ("name", OpaqueString::SINGLE)],
-            "system_new",
-            "Creates a new system"
-        ),
+        command!([system], "system_show").help("Shows information about your system"),
+        command!([system, new], "system_new").help("Creates a new system"),
+        command!([system, new, ("name", OpaqueString::SINGLE)], "system_new")
+            .help("Creates a new system"),
     ]
     .into_iter()
 }

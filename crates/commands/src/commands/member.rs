@@ -7,22 +7,13 @@ pub fn cmds() -> impl Iterator<Item = Command> {
     let new = ["new", "n"];
 
     [
-        command!(
-            [member, new, ("name", OpaqueString::SINGLE)],
-            "member_new",
-            "Creates a new system member"
-        ),
-        command!(
-            [member, MemberRef],
-            "member_show",
-            "Shows information about a member"
-        )
-        .value_flag("pt", Disable),
-        command!(
-            [member, MemberRef, description],
-            "member_desc_show",
-            "Shows a member's description"
-        ),
+        command!([member, new, ("name", OpaqueString::SINGLE)], "member_new")
+            .help("Creates a new system member"),
+        command!([member, MemberRef], "member_show")
+            .help("Shows information about a member")
+            .value_flag("pt", Disable),
+        command!([member, MemberRef, description], "member_desc_show")
+            .help("Shows a member's description"),
         command!(
             [
                 member,
@@ -30,14 +21,11 @@ pub fn cmds() -> impl Iterator<Item = Command> {
                 description,
                 ("description", OpaqueString::REMAINDER)
             ],
-            "member_desc_update",
-            "Changes a member's description"
-        ),
-        command!(
-            [member, MemberRef, privacy],
-            "member_privacy_show",
-            "Displays a member's current privacy settings"
-        ),
+            "member_desc_update"
+        )
+        .help("Changes a member's description"),
+        command!([member, MemberRef, privacy], "member_privacy_show")
+            .help("Displays a member's current privacy settings"),
         command!(
             [
                 member,
@@ -46,15 +34,10 @@ pub fn cmds() -> impl Iterator<Item = Command> {
                 MemberPrivacyTarget,
                 ("new_privacy_level", PrivacyLevel)
             ],
-            "member_privacy_update",
-            "Changes a member's privacy settings"
-        ),
-        command!(
-            [member, MemberRef, "soulscream"],
-            "member_soulscream",
-            "todo"
+            "member_privacy_update"
         )
-        .show_in_suggestions(false),
+        .help("Changes a member's privacy settings"),
+        command!([member, MemberRef, "soulscream"], "member_soulscream").show_in_suggestions(false),
     ]
     .into_iter()
 }
