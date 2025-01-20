@@ -246,13 +246,6 @@ fn match_flag<'a>(
     possible_flags: impl Iterator<Item = &'a Flag>,
     matched_flag: MatchedFlag<'a>,
 ) -> Option<Result<(SmolStr, Option<Parameter>), (&'a Flag, FlagMatchError)>> {
-    // skip if 0 length (we could just take an array ref here and in next_token aswell but its nice to keep it flexible)
-    if let (_, Some(len)) = possible_flags.size_hint()
-        && len == 0
-    {
-        return None;
-    }
-
     // check for all (possible) flags, see if token matches
     for flag in possible_flags {
         println!("matching flag {flag:?}");
@@ -279,13 +272,6 @@ fn next_token<'a>(
     input: &str,
     current_pos: usize,
 ) -> Option<Result<(&'a Token, Option<TokenMatchValue>, usize), (&'a Token, TokenMatchError)>> {
-    // skip if 0 length
-    if let (_, Some(len)) = possible_tokens.size_hint()
-        && len == 0
-    {
-        return None;
-    }
-
     // get next parameter, matching quotes
     let matched = string::next_param(&input, current_pos);
     println!("matched: {matched:?}\n---");
