@@ -2,7 +2,7 @@ use std::{fmt::Display, sync::Arc};
 
 use smol_str::SmolStr;
 
-use crate::{parameter::Parameter, Parameter as FfiParam};
+use crate::parameter::{Parameter, ParameterValue};
 
 #[derive(Debug)]
 pub enum FlagValueMatchError {
@@ -32,7 +32,7 @@ pub enum FlagMatchError {
     ValueMatchFailed(FlagValueMatchError),
 }
 
-type TryMatchFlagResult = Option<Result<Option<FfiParam>, FlagMatchError>>;
+type TryMatchFlagResult = Option<Result<Option<ParameterValue>, FlagMatchError>>;
 
 impl Flag {
     pub fn new(name: impl Into<SmolStr>) -> Self {

@@ -1,28 +1,8 @@
-pub mod admin;
-pub mod api;
-pub mod autoproxy;
-pub mod checks;
-pub mod commands;
-pub mod config;
-pub mod dashboard;
-pub mod debug;
-pub mod fun;
-pub mod group;
-pub mod help;
-pub mod import_export;
-pub mod member;
-pub mod message;
-pub mod misc;
-pub mod random;
-pub mod server_config;
-pub mod switch;
-pub mod system;
-
 use std::fmt::{Debug, Display};
 
 use smol_str::SmolStr;
 
-use crate::{any, command, flag::Flag, parameter::*, token::Token};
+use crate::{flag::Flag, parameter::*, token::Token};
 
 #[derive(Debug, Clone)]
 pub struct Command {
@@ -116,14 +96,6 @@ impl Display for Command {
 #[macro_export]
 macro_rules! command {
     ([$($v:expr),+], $cb:expr$(,)*) => {
-        $crate::commands::Command::new([$(Token::from($v)),*], $cb)
+        $crate::command::Command::new([$($crate::token::Token::from($v)),*], $cb)
     };
-}
-
-pub fn all() -> impl Iterator<Item = Command> {
-    (help::cmds())
-        .chain(system::cmds())
-        .chain(member::cmds())
-        .chain(config::cmds())
-        .chain(fun::cmds())
 }

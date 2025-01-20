@@ -7,7 +7,7 @@ use std::{
 
 use smol_str::SmolStr;
 
-use crate::{parameter::Parameter, Parameter as FfiParam};
+use crate::parameter::{Parameter, ParameterValue};
 
 pub type ParamName = &'static str;
 
@@ -31,7 +31,7 @@ pub enum Token {
 #[macro_export]
 macro_rules! any {
     ($($t:expr),+) => {
-        Token::Any(vec![$(Token::from($t)),+])
+        $crate::token::Token::Any(vec![$($crate::token::Token::from($t)),+])
     };
 }
 
@@ -68,9 +68,9 @@ pub enum TokenMatchError {
 }
 
 #[derive(Debug)]
-pub struct TokenMatchValue {
+pub(super) struct TokenMatchValue {
     pub raw: SmolStr,
-    pub param: Option<(ParamName, FfiParam)>,
+    pub param: Option<(ParamName, ParameterValue)>,
 }
 
 impl TokenMatchValue {
@@ -84,7 +84,7 @@ impl TokenMatchValue {
     fn new_match_param(
         raw: impl Into<SmolStr>,
         param_name: ParamName,
-        param: FfiParam,
+        param: ParameterValue,
     ) -> TryMatchResult {
         Some(Ok(Some(Self {
             raw: raw.into(),
@@ -104,7 +104,7 @@ impl TokenMatchValue {
 type TryMatchResult = Option<Result<Option<TokenMatchValue>, TokenMatchError>>;
 
 impl Token {
-    pub fn try_match(&self, input: Option<&str>) -> TryMatchResult {
+    pub(super) fn try_match(&self, input: Option<&str>) -> TryMatchResult {
         let input = match input {
             Some(input) => input,
             None => {

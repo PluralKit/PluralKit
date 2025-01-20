@@ -8,10 +8,9 @@ crate-type = ["cdylib", "lib"]
 
 [dependencies]
 lazy_static = { workspace = true }
-
+command_parser = { path = "../command_parser"}
+command_definitions = { path = "../command_definitions"}
 uniffi = { version = "0.25" }
-smol_str = "0.3.2"
-ordermap = "0.5"
 
 [build-dependencies]
 uniffi = { version = "0.25", features = [ "build" ] }

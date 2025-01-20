@@ -1,7 +1,5 @@
 #![feature(iter_intersperse)]
 
-use commands::commands as cmds;
-
 fn main() {
     let cmd = std::env::args()
         .skip(1)
@@ -15,7 +13,7 @@ fn main() {
             CommandResult::Err { error } => println!("{error}"),
         }
     } else {
-        for command in cmds::all() {
+        for command in command_definitions::all() {
             println!("{} - {}", command, command.help);
         }
     }

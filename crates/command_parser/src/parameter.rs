@@ -2,7 +2,17 @@ use std::{fmt::Debug, str::FromStr};
 
 use smol_str::SmolStr;
 
-use crate::{ParamName, Parameter as FfiParam};
+use crate::token::ParamName;
+
+#[derive(Debug, Clone)]
+pub enum ParameterValue {
+    MemberRef(String),
+    SystemRef(String),
+    MemberPrivacyTarget(String),
+    PrivacyLevel(String),
+    OpaqueString(String),
+    Toggle(bool),
+}
 
 pub trait Parameter: Debug + Send + Sync {
     fn remainder(&self) -> bool {
@@ -10,7 +20,7 @@ pub trait Parameter: Debug + Send + Sync {
     }
     fn default_name(&self) -> ParamName;
     fn format(&self, f: &mut std::fmt::Formatter, name: &str) -> std::fmt::Result;
-    fn match_value(&self, input: &str) -> Result<FfiParam, SmolStr>;
+    fn match_value(&self, input: &str) -> Result<ParameterValue, SmolStr>;
 }
 
 #[derive(Debug, Clone, Eq, Hash, PartialEq)]
@@ -34,8 +44,8 @@ impl Parameter for OpaqueString {
         write!(f, "[{name}]")
     }
 
-    fn match_value(&self, input: &str) -> Result<FfiParam, SmolStr> {
-        Ok(FfiParam::OpaqueString { raw: input.into() })
+    fn match_value(&self, input: &str) -> Result<ParameterValue, SmolStr> {
+        Ok(ParameterValue::OpaqueString(input.into()))
     }
 }
 
@@ -51,10 +61,8 @@ impl Parameter for MemberRef {
         write!(f, "<target member>")
     }
 
-    fn match_value(&self, input: &str) -> Result<FfiParam, SmolStr> {
-        Ok(FfiParam::MemberRef {
-            member: input.into(),
-        })
+    fn match_value(&self, input: &str) -> Result<ParameterValue, SmolStr> {
+        Ok(ParameterValue::MemberRef(input.into()))
     }
 }
 
@@ -70,10 +78,8 @@ impl Parameter for SystemRef {
         write!(f, "<target system>")
     }
 
-    fn match_value(&self, input: &str) -> Result<FfiParam, SmolStr> {
-        Ok(FfiParam::SystemRef {
-            system: input.into(),
-        })
+    fn match_value(&self, input: &str) -> Result<ParameterValue, SmolStr> {
+        Ok(ParameterValue::SystemRef(input.into()))
     }
 }
 
@@ -138,10 +144,9 @@ impl Parameter for MemberPrivacyTarget {
         write!(f, "<privacy target>")
     }
 
-    fn match_value(&self, input: &str) -> Result<FfiParam, SmolStr> {
-        MemberPrivacyTargetKind::from_str(input).map(|target| FfiParam::MemberPrivacyTarget {
-            target: target.as_ref().into(),
-        })
+    fn match_value(&self, input: &str) -> Result<ParameterValue, SmolStr> {
+        MemberPrivacyTargetKind::from_str(input)
+            .map(|target| ParameterValue::MemberPrivacyTarget(target.as_ref().into()))
     }
 }
 
@@ -183,10 +188,9 @@ impl Parameter for PrivacyLevel {
         write!(f, "[privacy level]")
     }
 
-    fn match_value(&self, input: &str) -> Result<FfiParam, SmolStr> {
-        PrivacyLevelKind::from_str(input).map(|level| FfiParam::PrivacyLevel {
-            level: level.as_ref().into(),
-        })
+    fn match_value(&self, input: &str) -> Result<ParameterValue, SmolStr> {
+        PrivacyLevelKind::from_str(input)
+            .map(|level| ParameterValue::PrivacyLevel(level.as_ref().into()))
     }
 }
 
@@ -219,8 +223,8 @@ impl Parameter for Reset {
         write!(f, "reset")
     }
 
-    fn match_value(&self, input: &str) -> Result<FfiParam, SmolStr> {
-        Self::from_str(input).map(|_| FfiParam::Toggle { toggle: true })
+    fn match_value(&self, input: &str) -> Result<ParameterValue, SmolStr> {
+        Self::from_str(input).map(|_| ParameterValue::Toggle(true))
     }
 }
 
@@ -236,11 +240,11 @@ impl Parameter for Toggle {
         write!(f, "on/off")
     }
 
-    fn match_value(&self, input: &str) -> Result<FfiParam, SmolStr> {
+    fn match_value(&self, input: &str) -> Result<ParameterValue, SmolStr> {
         Enable::from_str(input)
             .map(Into::<bool>::into)
             .or_else(|_| Disable::from_str(input).map(Into::<bool>::into))
-            .map(|toggle| FfiParam::Toggle { toggle })
+            .map(ParameterValue::Toggle)
             .map_err(|_| "invalid toggle".into())
     }
 }
@@ -268,8 +272,8 @@ impl Parameter for Enable {
         write!(f, "on")
     }
 
-    fn match_value(&self, input: &str) -> Result<FfiParam, SmolStr> {
-        Self::from_str(input).map(|e| FfiParam::Toggle { toggle: e.into() })
+    fn match_value(&self, input: &str) -> Result<ParameterValue, SmolStr> {
+        Self::from_str(input).map(|e| ParameterValue::Toggle(e.into()))
     }
 }
 
@@ -308,7 +312,7 @@ impl Parameter for Disable {
         write!(f, "off")
     }
 
-    fn match_value(&self, input: &str) -> Result<FfiParam, SmolStr> {
-        Self::from_str(input).map(|e| FfiParam::Toggle { toggle: e.into() })
+    fn match_value(&self, input: &str) -> Result<ParameterValue, SmolStr> {
+        Self::from_str(input).map(|e| ParameterValue::Toggle(e.into()))
     }
 }

@@ -565,12 +565,28 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3d7b894f5411737b7867f4827955924d7c254fc9f4d91a6aad6b097804b1018b"
 
 [[package]]
-name = "commands"
+name = "command_definitions"
+version = "0.1.0"
+dependencies = [
+ "command_parser",
+]
+
+[[package]]
+name = "command_parser"
 version = "0.1.0"
 dependencies = [
  "lazy_static",
  "ordermap",
  "smol_str",
+]
+
+[[package]]
+name = "commands"
+version = "0.1.0"
+dependencies = [
+ "command_definitions",
+ "command_parser",
+ "lazy_static",
  "uniffi",
 ]
 
