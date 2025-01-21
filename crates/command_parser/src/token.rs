@@ -1,7 +1,4 @@
-use std::{
-    fmt::{Debug, Display},
-    ops::Not,
-};
+use std::fmt::{Debug, Display};
 
 use smol_str::SmolStr;
 
@@ -14,7 +11,10 @@ pub enum Token {
     Empty,
 
     /// A bot-defined command / subcommand (usually) (eg. "member" in `pk;member MyName`)
-    Value(Vec<SmolStr>),
+    Value {
+        name: SmolStr,
+        aliases: Vec<SmolStr>,
+    },
 
     /// A parameter that must be provided a value
     Parameter(Parameter),
@@ -76,7 +76,7 @@ impl Token {
                         name: param.name().into(),
                     })),
                     // everything else doesnt match if no input anyway
-                    Self::Value(_) => None,
+                    Self::Value { .. } => None,
                     // don't add a _ match here!
                 };
             }
@@ -86,8 +86,7 @@ impl Token {
         // try actually matching stuff
         match self {
             Self::Empty => None,
-            Self::Value(values) => values
-                .iter()
+            Self::Value { name, aliases } => (aliases.iter().chain(std::iter::once(name)))
                 .any(|v| v.eq(input))
                 .then(|| TokenMatchValue::new_match(input))
                 .unwrap_or(None),
@@ -106,22 +105,28 @@ impl Display for Token {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Token::Empty => write!(f, ""),
-            Token::Value(vec) if vec.is_empty().not() => write!(f, "{}", vec.first().unwrap()),
-            Token::Value(_) => Ok(()), // if value token has no values (lol), don't print anything
+            Token::Value { name, .. } => write!(f, "{name}"),
             Token::Parameter(param) => param.kind().format(f, param.name()),
         }
     }
 }
 
 impl From<&str> for Token {
-    fn from(value: &str) -> Self {
-        Token::Value(vec![SmolStr::new(value)])
+    fn from(name: &str) -> Self {
+        Token::Value {
+            name: SmolStr::new(name),
+            aliases: Vec::new(),
+        }
     }
 }
 
 impl<const L: usize> From<[&str; L]> for Token {
     fn from(value: [&str; L]) -> Self {
-        Token::Value(value.into_iter().map(SmolStr::from).collect::<Vec<_>>())
+        assert!(value.len() > 0, "can't create a Token::Value from nothing");
+        Token::Value {
+            name: value[0].into(),
+            aliases: value.into_iter().skip(1).map(SmolStr::new).collect::<Vec<_>>(),
+        }
     }
 }
 
