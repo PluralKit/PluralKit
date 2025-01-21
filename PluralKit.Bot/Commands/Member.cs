@@ -28,10 +28,8 @@ public class Member
         _avatarHosting = avatarHosting;
     }
 
-    public async Task NewMember(Context ctx)
+    public async Task NewMember(Context ctx, string? memberName)
     {
-        var memberName = await ctx.ParamResolveOpaque("name");
-
         if (ctx.System == null) throw Errors.NoSystemError(ctx.DefaultPrefix);
         memberName = memberName ?? throw new PKSyntaxError("You must pass a member name.");
 
@@ -122,19 +120,17 @@ public class Member
         await ctx.Reply(replyStr);
     }
 
-    public async Task ViewMember(Context ctx)
+    public async Task ViewMember(Context ctx, PKMember target)
     {
-        var target = await ctx.ParamResolveMember("target");
         var system = await ctx.Repository.GetSystem(target.System);
         await ctx.Reply(
             embed: await _embeds.CreateMemberEmbed(system, target, ctx.Guild, ctx.Config, ctx.LookupContextFor(system.Id), ctx.Zone));
     }
 
-    public async Task Soulscream(Context ctx)
+    public async Task Soulscream(Context ctx, PKMember target)
     {
         // this is for a meme, please don't take this code seriously. :)
 
-        var target = await ctx.ParamResolveMember("target");
         var name = target.NameFor(ctx.LookupContextFor(target.System));
         var encoded = HttpUtility.UrlEncode(name);
 

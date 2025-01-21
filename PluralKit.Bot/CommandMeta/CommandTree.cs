@@ -4,24 +4,26 @@ namespace PluralKit.Bot;
 
 public partial class CommandTree
 {
-    public Task ExecuteCommand(Context ctx)
+    public Task ExecuteCommand(Context ctx, Commands command)
     {
-        return ctx.Parameters.Callback() switch
+        return command switch
         {
-            "help" => ctx.Execute<Help>(Help, m => m.HelpRoot(ctx)),
-            "help_commands" => ctx.Reply(
+            Commands.Help => ctx.Execute<Help>(Help, m => m.HelpRoot(ctx)),
+            Commands.HelpCommands => ctx.Reply(
                     "For the list of commands, see the website: <https://pluralkit.me/commands>"),
-            "help_proxy" => ctx.Reply(
+            Commands.HelpProxy => ctx.Reply(
                     "The proxy help page has been moved! See the website: https://pluralkit.me/guide#proxying"),
-            "member_show" => ctx.Execute<Member>(MemberInfo, m => m.ViewMember(ctx)),
-            "member_new" => ctx.Execute<Member>(MemberNew, m => m.NewMember(ctx)),
-            "member_soulscream" => ctx.Execute<Member>(MemberInfo, m => m.Soulscream(ctx)),
-            "cfg_ap_account_show" => ctx.Execute<Config>(null, m => m.ViewAutoproxyAccount(ctx)),
-            "cfg_ap_account_update" => ctx.Execute<Config>(null, m => m.EditAutoproxyAccount(ctx)),
-            "cfg_ap_timeout_show" => ctx.Execute<Config>(null, m => m.ViewAutoproxyTimeout(ctx)),
-            "cfg_ap_timeout_update" => ctx.Execute<Config>(null, m => m.EditAutoproxyTimeout(ctx)),
-            "fun_thunder" => ctx.Execute<Fun>(null, m => m.Thunder(ctx)),
-            "fun_meow" => ctx.Execute<Fun>(null, m => m.Meow(ctx)),
+            Commands.MemberShow(MemberShowParams param, _) => ctx.Execute<Member>(MemberInfo, m => m.ViewMember(ctx, param.target)),
+            Commands.MemberNew(MemberNewParams param, _) => ctx.Execute<Member>(MemberNew, m => m.NewMember(ctx, param.name)),
+            Commands.MemberSoulscream(MemberSoulscreamParams param, _) => ctx.Execute<Member>(MemberInfo, m => m.Soulscream(ctx, param.target)),
+            Commands.CfgApAccountShow => ctx.Execute<Config>(null, m => m.ViewAutoproxyAccount(ctx)),
+            Commands.CfgApAccountUpdate(CfgApAccountUpdateParams param, _) => ctx.Execute<Config>(null, m => m.EditAutoproxyAccount(ctx, param.toggle)),
+            Commands.CfgApTimeoutShow => ctx.Execute<Config>(null, m => m.ViewAutoproxyTimeout(ctx)),
+            Commands.CfgApTimeoutOff => ctx.Execute<Config>(null, m => m.DisableAutoproxyTimeout(ctx)),
+            Commands.CfgApTimeoutReset => ctx.Execute<Config>(null, m => m.ResetAutoproxyTimeout(ctx)),
+            Commands.CfgApTimeoutUpdate(CfgApTimeoutUpdateParams param, _) => ctx.Execute<Config>(null, m => m.EditAutoproxyTimeout(ctx, param.timeout)),
+            Commands.FunThunder => ctx.Execute<Fun>(null, m => m.Thunder(ctx)),
+            Commands.FunMeow => ctx.Execute<Fun>(null, m => m.Meow(ctx)),
             _ =>
                 // this should only ever occur when deving if commands are not implemented...
                 ctx.Reply(

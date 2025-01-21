@@ -26,7 +26,7 @@ impl Command {
         for (idx, token) in tokens.iter().enumerate().rev() {
             match token {
                 // we want flags to go before any parameters
-                Token::Parameter(_, _) | Token::Any(_) => {
+                Token::Parameter(_) => {
                     parse_flags_before = idx;
                     was_parameter = true;
                 }
@@ -62,7 +62,7 @@ impl Command {
         self
     }
 
-    pub fn value_flag(mut self, name: impl Into<SmolStr>, value: impl Parameter + 'static) -> Self {
+    pub fn value_flag(mut self, name: impl Into<SmolStr>, value: ParameterKind) -> Self {
         self.flags.push(Flag::new(name).with_value(value));
         self
     }
@@ -95,7 +95,27 @@ impl Display for Command {
 // (and something like &dyn Trait would require everything to be referenced which doesnt look nice anyway)
 #[macro_export]
 macro_rules! command {
-    ([$($v:expr),+], $cb:expr$(,)*) => {
-        $crate::command::Command::new([$($crate::token::Token::from($v)),*], $cb)
+    ([$($v:expr),+] => $cb:expr$(,)*) => {
+        $crate::command::Command::new($crate::tokens!($($v),+), $cb)
+    };
+    ($tokens:expr => $cb:expr$(,)*) => {
+        $crate::command::Command::new($tokens.clone(), $cb)
+    };
+    ($tokens:expr, $($v:expr),+ => $cb:expr$(,)*) => {
+        $crate::command::Command::new($crate::concat_tokens!($tokens.clone(), [$($v),+]), $cb)
+    };
+}
+
+#[macro_export]
+macro_rules! tokens {
+    ($($v:expr),+$(,)*) => {
+        [$($crate::token::Token::from($v)),+]
+    };
+}
+
+#[macro_export]
+macro_rules! concat_tokens {
+    ($tokens:expr, [$($v:expr),+]$(,)*) => {
+        $tokens.clone().into_iter().chain($crate::tokens!($($v),+).into_iter()).collect::<Vec<_>>()
     };
 }

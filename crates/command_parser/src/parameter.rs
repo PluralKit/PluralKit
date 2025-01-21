@@ -2,89 +2,108 @@ use std::{fmt::Debug, str::FromStr};
 
 use smol_str::SmolStr;
 
-use crate::token::ParamName;
-
 #[derive(Debug, Clone)]
 pub enum ParameterValue {
+    OpaqueString(String),
     MemberRef(String),
     SystemRef(String),
     MemberPrivacyTarget(String),
     PrivacyLevel(String),
-    OpaqueString(String),
     Toggle(bool),
 }
 
-pub trait Parameter: Debug + Send + Sync {
-    fn remainder(&self) -> bool {
-        false
-    }
-    fn default_name(&self) -> ParamName;
-    fn format(&self, f: &mut std::fmt::Formatter, name: &str) -> std::fmt::Result;
-    fn match_value(&self, input: &str) -> Result<ParameterValue, SmolStr>;
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct Parameter {
+    name: SmolStr,
+    kind: ParameterKind,
 }
 
-#[derive(Debug, Clone, Eq, Hash, PartialEq)]
-pub struct OpaqueString(bool);
-
-impl OpaqueString {
-    pub const SINGLE: Self = Self(false);
-    pub const REMAINDER: Self = Self(true);
-}
-
-impl Parameter for OpaqueString {
-    fn remainder(&self) -> bool {
-        self.0
+impl Parameter {
+    pub fn name(&self) -> &str {
+        &self.name
     }
 
-    fn default_name(&self) -> ParamName {
-        "string"
-    }
-
-    fn format(&self, f: &mut std::fmt::Formatter, name: &str) -> std::fmt::Result {
-        write!(f, "[{name}]")
-    }
-
-    fn match_value(&self, input: &str) -> Result<ParameterValue, SmolStr> {
-        Ok(ParameterValue::OpaqueString(input.into()))
+    pub fn kind(&self) -> ParameterKind {
+        self.kind
     }
 }
 
-#[derive(Debug, Clone, Eq, Hash, PartialEq)]
-pub struct MemberRef;
-
-impl Parameter for MemberRef {
-    fn default_name(&self) -> ParamName {
-        "member"
-    }
-
-    fn format(&self, f: &mut std::fmt::Formatter, _: &str) -> std::fmt::Result {
-        write!(f, "<target member>")
-    }
-
-    fn match_value(&self, input: &str) -> Result<ParameterValue, SmolStr> {
-        Ok(ParameterValue::MemberRef(input.into()))
+impl From<ParameterKind> for Parameter {
+    fn from(value: ParameterKind) -> Self {
+        Parameter {
+            name: value.default_name().into(),
+            kind: value,
+        }
     }
 }
 
-#[derive(Debug, Clone, Eq, Hash, PartialEq)]
-pub struct SystemRef;
-
-impl Parameter for SystemRef {
-    fn default_name(&self) -> ParamName {
-        "system"
-    }
-
-    fn format(&self, f: &mut std::fmt::Formatter, _: &str) -> std::fmt::Result {
-        write!(f, "<target system>")
-    }
-
-    fn match_value(&self, input: &str) -> Result<ParameterValue, SmolStr> {
-        Ok(ParameterValue::SystemRef(input.into()))
+impl From<(&str, ParameterKind)> for Parameter {
+    fn from((name, kind): (&str, ParameterKind)) -> Self {
+        Parameter {
+            name: name.into(),
+            kind,
+        }
     }
 }
 
-#[derive(Debug, Clone, Eq, Hash, PartialEq)]
-pub struct MemberPrivacyTarget;
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum ParameterKind {
+    OpaqueString,
+    OpaqueStringRemainder,
+    MemberRef,
+    SystemRef,
+    MemberPrivacyTarget,
+    PrivacyLevel,
+    Toggle,
+}
+
+impl ParameterKind {
+    pub(crate) fn default_name(&self) -> &str {
+        match self {
+            ParameterKind::OpaqueString => "string",
+            ParameterKind::OpaqueStringRemainder => "string",
+            ParameterKind::MemberRef => "target",
+            ParameterKind::SystemRef => "target",
+            ParameterKind::MemberPrivacyTarget => "member_privacy_target",
+            ParameterKind::PrivacyLevel => "privacy_level",
+            ParameterKind::Toggle => "toggle",
+        }
+    }
+
+    pub(crate) fn remainder(&self) -> bool {
+        matches!(self, ParameterKind::OpaqueStringRemainder)
+    }
+
+    pub(crate) fn format(&self, f: &mut std::fmt::Formatter, param_name: &str) -> std::fmt::Result {
+        match self {
+            ParameterKind::OpaqueString | ParameterKind::OpaqueStringRemainder => {
+                write!(f, "[{param_name}]")
+            }
+            ParameterKind::MemberRef => write!(f, "<target member>"),
+            ParameterKind::SystemRef => write!(f, "<target system>"),
+            ParameterKind::MemberPrivacyTarget => write!(f, "<privacy target>"),
+            ParameterKind::PrivacyLevel => write!(f, "[privacy level]"),
+            ParameterKind::Toggle => write!(f, "on/off"),
+        }
+    }
+
+    pub(crate) fn match_value(&self, input: &str) -> Result<ParameterValue, SmolStr> {
+        match self {
+            ParameterKind::OpaqueString | ParameterKind::OpaqueStringRemainder => {
+                Ok(ParameterValue::OpaqueString(input.into()))
+            }
+            ParameterKind::MemberRef => Ok(ParameterValue::MemberRef(input.into())),
+            ParameterKind::SystemRef => Ok(ParameterValue::SystemRef(input.into())),
+            ParameterKind::MemberPrivacyTarget => MemberPrivacyTargetKind::from_str(input)
+                .map(|target| ParameterValue::MemberPrivacyTarget(target.as_ref().into())),
+            ParameterKind::PrivacyLevel => PrivacyLevelKind::from_str(input)
+                .map(|level| ParameterValue::PrivacyLevel(level.as_ref().into())),
+            ParameterKind::Toggle => {
+                Toggle::from_str(input).map(|t| ParameterValue::Toggle(t.into()))
+            }
+        }
+    }
+}
 
 pub enum MemberPrivacyTargetKind {
     Visibility,
@@ -135,24 +154,6 @@ impl FromStr for MemberPrivacyTargetKind {
     }
 }
 
-impl Parameter for MemberPrivacyTarget {
-    fn default_name(&self) -> ParamName {
-        "member_privacy_target"
-    }
-
-    fn format(&self, f: &mut std::fmt::Formatter, _: &str) -> std::fmt::Result {
-        write!(f, "<privacy target>")
-    }
-
-    fn match_value(&self, input: &str) -> Result<ParameterValue, SmolStr> {
-        MemberPrivacyTargetKind::from_str(input)
-            .map(|target| ParameterValue::MemberPrivacyTarget(target.as_ref().into()))
-    }
-}
-
-#[derive(Debug, Clone, Eq, Hash, PartialEq)]
-pub struct PrivacyLevel;
-
 pub enum PrivacyLevelKind {
     Public,
     Private,
@@ -179,140 +180,34 @@ impl FromStr for PrivacyLevelKind {
     }
 }
 
-impl Parameter for PrivacyLevel {
-    fn default_name(&self) -> ParamName {
-        "privacy_level"
-    }
-
-    fn format(&self, f: &mut std::fmt::Formatter, _: &str) -> std::fmt::Result {
-        write!(f, "[privacy level]")
-    }
-
-    fn match_value(&self, input: &str) -> Result<ParameterValue, SmolStr> {
-        PrivacyLevelKind::from_str(input)
-            .map(|level| ParameterValue::PrivacyLevel(level.as_ref().into()))
-    }
-}
+pub const ENABLE: [&str; 5] = ["on", "yes", "true", "enable", "enabled"];
+pub const DISABLE: [&str; 5] = ["off", "no", "false", "disable", "disabled"];
 
 #[derive(Debug, Clone, Eq, Hash, PartialEq)]
-pub struct Reset;
-
-impl AsRef<str> for Reset {
-    fn as_ref(&self) -> &str {
-        "reset"
-    }
+pub enum Toggle {
+    On,
+    Off,
 }
 
-impl FromStr for Reset {
+impl FromStr for Toggle {
     type Err = SmolStr;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "reset" | "clear" | "default" => Ok(Self),
-            _ => Err("not reset".into()),
+            ref s if ENABLE.contains(s) => Ok(Self::On),
+            ref s if DISABLE.contains(s) => Ok(Self::Off),
+            _ => Err("invalid toggle, must be on/off".into()),
         }
     }
 }
 
-impl Parameter for Reset {
-    fn default_name(&self) -> ParamName {
-        "reset"
-    }
-
-    fn format(&self, f: &mut std::fmt::Formatter, _: &str) -> std::fmt::Result {
-        write!(f, "reset")
-    }
-
-    fn match_value(&self, input: &str) -> Result<ParameterValue, SmolStr> {
-        Self::from_str(input).map(|_| ParameterValue::Toggle(true))
-    }
-}
-
-#[derive(Debug, Clone, Eq, Hash, PartialEq)]
-pub struct Toggle;
-
-impl Parameter for Toggle {
-    fn default_name(&self) -> ParamName {
-        "toggle"
-    }
-
-    fn format(&self, f: &mut std::fmt::Formatter, _: &str) -> std::fmt::Result {
-        write!(f, "on/off")
-    }
-
-    fn match_value(&self, input: &str) -> Result<ParameterValue, SmolStr> {
-        Enable::from_str(input)
-            .map(Into::<bool>::into)
-            .or_else(|_| Disable::from_str(input).map(Into::<bool>::into))
-            .map(ParameterValue::Toggle)
-            .map_err(|_| "invalid toggle".into())
-    }
-}
-
-#[derive(Debug, Clone, Eq, Hash, PartialEq)]
-pub struct Enable;
-
-impl FromStr for Enable {
-    type Err = SmolStr;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "on" | "yes" | "true" | "enable" | "enabled" => Ok(Self),
-            _ => Err("invalid enable".into()),
-        }
-    }
-}
-
-impl Parameter for Enable {
-    fn default_name(&self) -> ParamName {
-        "enable"
-    }
-
-    fn format(&self, f: &mut std::fmt::Formatter, _: &str) -> std::fmt::Result {
-        write!(f, "on")
-    }
-
-    fn match_value(&self, input: &str) -> Result<ParameterValue, SmolStr> {
-        Self::from_str(input).map(|e| ParameterValue::Toggle(e.into()))
-    }
-}
-
-impl Into<bool> for Enable {
+impl Into<bool> for Toggle {
     fn into(self) -> bool {
-        true
-    }
-}
-
-#[derive(Debug, Clone, Eq, Hash, PartialEq)]
-pub struct Disable;
-
-impl FromStr for Disable {
-    type Err = SmolStr;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "off" | "no" | "false" | "disable" | "disabled" => Ok(Self),
-            _ => Err("invalid disable".into()),
+        match self {
+            Toggle::On => true,
+            Toggle::Off => false,
         }
     }
 }
 
-impl Into<bool> for Disable {
-    fn into(self) -> bool {
-        false
-    }
-}
-
-impl Parameter for Disable {
-    fn default_name(&self) -> ParamName {
-        "disable"
-    }
-
-    fn format(&self, f: &mut std::fmt::Formatter, _: &str) -> std::fmt::Result {
-        write!(f, "off")
-    }
-
-    fn match_value(&self, input: &str) -> Result<ParameterValue, SmolStr> {
-        Self::from_str(input).map(|e| ParameterValue::Toggle(e.into()))
-    }
-}
+pub const RESET: [&str; 3] = ["reset", "clear", "default"];

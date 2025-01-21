@@ -159,7 +159,19 @@ public class MessageCreated: IEventHandler<MessageCreateEvent>
             }
 
             var ctx = new Context(_services, shardId, guild, channel, evt, cmdStart, system, config, guildConfig, _config.Prefixes ?? BotConfig.DefaultPrefixes, parameters);
-            await _tree.ExecuteCommand(ctx);
+
+            Commands command;
+            try
+            {
+                command = await Commands.FromContext(ctx);
+            }
+            catch (PKError e)
+            {
+                await ctx.Reply($"{Emojis.Error} {e.Message}");
+                throw;
+            }
+
+            await _tree.ExecuteCommand(ctx, command);
         }
         catch (PKError)
         {

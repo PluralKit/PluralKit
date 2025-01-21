@@ -197,10 +197,9 @@ public class Config
         await ctx.Reply($"Autoproxy is currently **{EnabledDisabled(allowAutoproxy)}** for account <@{ctx.Author.Id}>.");
     }
 
-    public async Task EditAutoproxyAccount(Context ctx)
+    public async Task EditAutoproxyAccount(Context ctx, bool allow)
     {
         var allowAutoproxy = await ctx.Repository.GetAutoproxyEnabled(ctx.Author.Id);
-        var allow = await ctx.ParamResolveToggle("toggle") ?? throw new PKSyntaxError("You need to specify whether to enable or disable autoproxy for this account.");
 
         var statusString = EnabledDisabled(allow);
         if (allowAutoproxy == allow)
@@ -227,41 +226,44 @@ public class Config
             await ctx.Reply($"The current latch timeout duration for your system is {timeout.Value.ToTimeSpan().Humanize(4)}.");
     }
 
-    public async Task EditAutoproxyTimeout(Context ctx)
+    public async Task DisableAutoproxyTimeout(Context ctx)
     {
-        var _newTimeout = await ctx.ParamResolveOpaque("timeout");
-        var _reset = await ctx.ParamResolveToggle("reset");
-        var _toggle = await ctx.ParamResolveToggle("toggle");
+        await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { LatchTimeout = (int)Duration.Zero.TotalSeconds });
 
-        Duration? newTimeout;
+        await ctx.Reply($"{Emojis.Success} Latch timeout disabled. Latch mode autoproxy will never time out.");
+    }
+
+    public async Task ResetAutoproxyTimeout(Context ctx)
+    {
+        await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { LatchTimeout = null });
+
+        await ctx.Reply($"{Emojis.Success} Latch timeout reset to default ({ProxyMatcher.DefaultLatchExpiryTime.ToTimeSpan().Humanize(4)}).");
+    }
+
+    public async Task EditAutoproxyTimeout(Context ctx, string timeout)
+    {
+        Duration newTimeout;
         Duration overflow = Duration.Zero;
-        if (_toggle == false) newTimeout = Duration.Zero;
-        else if (_reset == true) newTimeout = null;
-        else
+        // todo: we should parse date in the command parser
+        var timeoutStr = timeout;
+        var timeoutPeriod = DateUtils.ParsePeriod(timeoutStr)
+            ?? throw new PKError($"Could not parse '{timeoutStr}' as a valid duration. Try using a syntax such as \"3h5m\" (i.e. 3 hours and 5 minutes).");
+        if (timeoutPeriod.TotalHours > 100000)
         {
-            // todo: we should parse date in the command parser
-            var timeoutStr = _newTimeout;
-            var timeoutPeriod = DateUtils.ParsePeriod(timeoutStr);
-            if (timeoutPeriod == null) throw new PKError($"Could not parse '{timeoutStr}' as a valid duration. Try using a syntax such as \"3h5m\" (i.e. 3 hours and 5 minutes).");
-            if (timeoutPeriod.Value.TotalHours > 100000)
-            {
-                // sanity check to prevent seconds overflow if someone types in 999999999
-                overflow = timeoutPeriod.Value;
-                newTimeout = Duration.Zero;
-            }
-            else newTimeout = timeoutPeriod;
+            // sanity check to prevent seconds overflow if someone types in 999999999
+            overflow = timeoutPeriod;
+            newTimeout = Duration.Zero;
         }
+        else newTimeout = timeoutPeriod;
 
-        await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { LatchTimeout = (int?)newTimeout?.TotalSeconds });
+        await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { LatchTimeout = (int?)newTimeout.TotalSeconds });
 
-        if (newTimeout == null)
-            await ctx.Reply($"{Emojis.Success} Latch timeout reset to default ({ProxyMatcher.DefaultLatchExpiryTime.ToTimeSpan().Humanize(4)}).");
-        else if (newTimeout == Duration.Zero && overflow != Duration.Zero)
+        if (newTimeout == Duration.Zero && overflow != Duration.Zero)
             await ctx.Reply($"{Emojis.Success} Latch timeout disabled. Latch mode autoproxy will never time out. ({overflow.ToTimeSpan().Humanize(4)} is too long)");
         else if (newTimeout == Duration.Zero)
             await ctx.Reply($"{Emojis.Success} Latch timeout disabled. Latch mode autoproxy will never time out.");
         else
-            await ctx.Reply($"{Emojis.Success} Latch timeout set to {newTimeout.Value!.ToTimeSpan().Humanize(4)}.");
+            await ctx.Reply($"{Emojis.Success} Latch timeout set to {newTimeout.ToTimeSpan().Humanize(4)}.");
     }
 
     public async Task SystemTimezone(Context ctx)

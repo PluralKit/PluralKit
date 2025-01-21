@@ -18,7 +18,9 @@ pub mod server_config;
 pub mod switch;
 pub mod system;
 
-use command_parser::{any, command, command::Command, parameter::*};
+use command_parser::{
+    command, command::Command, concat_tokens, parameter::ParameterKind::*, tokens,
+};
 
 pub fn all() -> impl Iterator<Item = Command> {
     (help::cmds())

@@ -38,15 +38,15 @@ impl TreeBranch {
         );
     }
 
-    pub(super) fn command(&self) -> Option<Command> {
+    pub fn command(&self) -> Option<Command> {
         self.current_command.clone()
     }
 
-    pub(super) fn possible_tokens(&self) -> impl Iterator<Item = &Token> {
+    pub fn possible_tokens(&self) -> impl Iterator<Item = &Token> {
         self.branches.keys()
     }
 
-    pub(super) fn possible_commands(&self, max_depth: usize) -> impl Iterator<Item = &Command> {
+    pub fn possible_commands(&self, max_depth: usize) -> impl Iterator<Item = &Command> {
         // dusk: i am too lazy to write an iterator for this without using recursion so we box everything
         fn box_iter<'a>(
             iter: impl Iterator<Item = &'a Command> + 'a,
@@ -69,7 +69,11 @@ impl TreeBranch {
         commands
     }
 
-    pub(super) fn get_branch(&self, token: &Token) -> Option<&TreeBranch> {
+    pub fn get_branch(&self, token: &Token) -> Option<&Self> {
         self.branches.get(token)
+    }
+
+    pub fn branches(&self) -> impl Iterator<Item = (&Token, &Self)> {
+        self.branches.iter()
     }
 }

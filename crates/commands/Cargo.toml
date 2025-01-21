@@ -2,6 +2,11 @@
 name = "commands"
 version = "0.1.0"
 edition = "2021"
+default-run = "commands"
+
+[[bin]]
+name = "write_cs_glue"
+path = "src/bin/write_cs_glue.rs"
 
 [lib]
 crate-type = ["cdylib", "lib"]

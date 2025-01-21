@@ -1,8 +1,8 @@
-use std::{fmt::Display, sync::Arc};
+use std::fmt::Display;
 
 use smol_str::SmolStr;
 
-use crate::parameter::{Parameter, ParameterValue};
+use crate::parameter::{ParameterKind, ParameterValue};
 
 #[derive(Debug)]
 pub enum FlagValueMatchError {
@@ -13,7 +13,7 @@ pub enum FlagValueMatchError {
 #[derive(Debug, Clone)]
 pub struct Flag {
     name: SmolStr,
-    value: Option<Arc<dyn Parameter>>,
+    value: Option<ParameterKind>,
 }
 
 impl Display for Flag {
@@ -42,13 +42,17 @@ impl Flag {
         }
     }
 
-    pub fn with_value(mut self, param: impl Parameter + 'static) -> Self {
-        self.value = Some(Arc::new(param));
+    pub fn with_value(mut self, param: ParameterKind) -> Self {
+        self.value = Some(param);
         self
     }
 
     pub fn name(&self) -> &str {
         &self.name
+    }
+
+    pub fn value_kind(&self) -> Option<ParameterKind> {
+        self.value
     }
 
     pub fn try_match(&self, input_name: &str, input_value: Option<&str>) -> TryMatchFlagResult {
@@ -57,7 +61,7 @@ impl Flag {
             return None;
         }
         // get token to try matching with, if flag doesn't have one then that means it is matched (it is without any value)
-        let Some(value) = self.value.as_deref() else {
+        let Some(value) = self.value.as_ref() else {
             return Some(Ok(None));
         };
         // check if we have a non-empty flag value, we return error if not (because flag requested a value)

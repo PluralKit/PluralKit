@@ -77,21 +77,6 @@ pub fn parse_command(
                     TokenMatchError::MissingParameter { name } => {
                         format!("Expected parameter `{name}` in command `{prefix}{input} {token}`.")
                     }
-                    TokenMatchError::MissingAny { tokens } => {
-                        let mut msg = format!("Expected one of ");
-                        for (idx, token) in tokens.iter().enumerate() {
-                            write!(&mut msg, "`{token}`").expect("oom");
-                            if idx < tokens.len() - 1 {
-                                if tokens.len() > 2 && idx == tokens.len() - 2 {
-                                    msg.push_str(" or ");
-                                } else {
-                                    msg.push_str(", ");
-                                }
-                            }
-                        }
-                        write!(&mut msg, " in command `{prefix}{input} {token}`.").expect("oom");
-                        msg
-                    }
                     TokenMatchError::ParameterMatchError { input: raw, msg } => {
                         format!("Parameter `{raw}` in command `{prefix}{input}` could not be parsed: {msg}.")
                     }
@@ -254,12 +239,9 @@ fn next_token<'a>(
     // iterate over tokens and run try_match
     for token in possible_tokens {
         let is_match_remaining_token =
-            |token: &Token| matches!(token, Token::Parameter(_, param) if param.remainder());
+            |token: &Token| matches!(token, Token::Parameter(param) if param.kind().remainder());
         // check if this is a token that matches the rest of the input
-        let match_remaining = is_match_remaining_token(token)
-            // check for Any here if it has a "match remainder" token in it
-            // if there is a "match remainder" token in a command there shouldn't be a command descending from that
-            || matches!(token, Token::Any(ref tokens) if tokens.iter().any(is_match_remaining_token));
+        let match_remaining = is_match_remaining_token(token);
         // either use matched param or rest of the input if matching remaining
         let input_to_match = matched.as_ref().map(|v| {
             match_remaining
