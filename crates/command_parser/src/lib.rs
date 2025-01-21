@@ -133,7 +133,7 @@ pub fn parse_command(
                             FlagMatchError::ValueMatchFailed(FlagValueMatchError::ValueMissing) => {
                                 format!(
                                     "Flag `-{name}` in command `{prefix}{input}` is missing a value, try passing `{flag}`.",
-                                    name = flag.name()
+                                    name = flag.get_name()
                                 )
                             }
                             FlagMatchError::ValueMatchFailed(
@@ -141,7 +141,7 @@ pub fn parse_command(
                             ) => {
                                 format!(
                                     "Flag `-{name}` in command `{prefix}{input}` has a value (`{raw}`) that could not be parsed: {msg}.",
-                                    name = flag.name()
+                                    name = flag.get_name()
                                 )
                             }
                         };
@@ -210,7 +210,7 @@ fn match_flag<'a>(
     for flag in possible_flags {
         println!("matching flag {flag:?}");
         match flag.try_match(matched_flag.name, matched_flag.value) {
-            Some(Ok(param)) => return Some(Ok((flag.name().into(), param))),
+            Some(Ok(param)) => return Some(Ok((flag.get_name().into(), param))),
             Some(Err(err)) => return Some(Err((flag, err))),
             None => {}
         }

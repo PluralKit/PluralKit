@@ -2,7 +2,7 @@ use std::fmt::{Debug, Display};
 
 use smol_str::SmolStr;
 
-use crate::{flag::Flag, parameter::*, token::Token};
+use crate::{flag::Flag, token::Token};
 
 #[derive(Debug, Clone)]
 pub struct Command {
@@ -57,13 +57,8 @@ impl Command {
         self
     }
 
-    pub fn flag(mut self, name: impl Into<SmolStr>) -> Self {
-        self.flags.push(Flag::new(name));
-        self
-    }
-
-    pub fn value_flag(mut self, name: impl Into<SmolStr>, value: ParameterKind) -> Self {
-        self.flags.push(Flag::new(name).with_value(value));
+    pub fn flag(mut self, flag: impl Into<Flag>) -> Self {
+        self.flags.push(flag.into());
         self
     }
 }

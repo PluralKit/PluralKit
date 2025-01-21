@@ -13,6 +13,7 @@ pub enum FlagValueMatchError {
 #[derive(Debug, Clone)]
 pub struct Flag {
     name: SmolStr,
+    aliases: Vec<SmolStr>,
     value: Option<ParameterKind>,
 }
 
@@ -38,26 +39,36 @@ impl Flag {
     pub fn new(name: impl Into<SmolStr>) -> Self {
         Self {
             name: name.into(),
+            aliases: Vec::new(),
             value: None,
         }
     }
 
-    pub fn with_value(mut self, param: ParameterKind) -> Self {
+    pub fn value(mut self, param: ParameterKind) -> Self {
         self.value = Some(param);
         self
     }
 
-    pub fn name(&self) -> &str {
+    pub fn alias(mut self, alias: impl Into<SmolStr>) -> Self {
+        self.aliases.push(alias.into());
+        self
+    }
+
+    pub fn get_name(&self) -> &str {
         &self.name
     }
 
-    pub fn value_kind(&self) -> Option<ParameterKind> {
+    pub fn get_value(&self) -> Option<ParameterKind> {
         self.value
     }
 
+    pub fn get_aliases(&self) -> impl Iterator<Item = &str> {
+        self.aliases.iter().map(|s| s.as_str())
+    }
+
     pub fn try_match(&self, input_name: &str, input_value: Option<&str>) -> TryMatchFlagResult {
-        // if not matching flag then skip anymore matching
-        if self.name != input_name {
+        // if not matching the name or any aliases then skip anymore matching
+        if self.name != input_name && self.get_aliases().all(|s| s.ne(input_name)) {
             return None;
         }
         // get token to try matching with, if flag doesn't have one then that means it is matched (it is without any value)
@@ -80,5 +91,33 @@ impl Flag {
                 },
             ))),
         }
+    }
+}
+
+impl From<&str> for Flag {
+    fn from(name: &str) -> Self {
+        Flag::new(name)
+    }
+}
+
+impl From<(&str, ParameterKind)> for Flag {
+    fn from((name, value): (&str, ParameterKind)) -> Self {
+        Flag::new(name).value(value)
+    }
+}
+
+impl<const L: usize> From<[&str; L]> for Flag {
+    fn from(value: [&str; L]) -> Self {
+        let mut flag = Flag::new(value[0]);
+        for alias in &value[1..] {
+            flag = flag.alias(*alias);
+        }
+        flag
+    }
+}
+
+impl<const L: usize> From<([&str; L], ParameterKind)> for Flag {
+    fn from((names, value): ([&str; L], ParameterKind)) -> Self {
+        Flag::from(names).value(value)
     }
 }
