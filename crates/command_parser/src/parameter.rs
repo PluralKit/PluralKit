@@ -2,7 +2,7 @@ use std::{fmt::Debug, str::FromStr};
 
 use smol_str::SmolStr;
 
-use crate::token::Token;
+use crate::token::{Token, TokenMatchResult};
 
 #[derive(Debug, Clone)]
 pub enum ParameterValue {
@@ -192,8 +192,12 @@ impl FromStr for Toggle {
     type Err = SmolStr;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let matches_self =
-            |toggle: &Self| matches!(Token::from(*toggle).try_match(Some(s)), Some(Ok(None)));
+        let matches_self = |toggle: &Self| {
+            matches!(
+                Token::from(*toggle).try_match(Some(s)),
+                Some(TokenMatchResult::MatchedValue)
+            )
+        };
         [Self::On, Self::Off]
             .into_iter()
             .find(matches_self)

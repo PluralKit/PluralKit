@@ -17,46 +17,26 @@ pub enum Token {
 }
 
 #[derive(Debug)]
-pub enum TokenMatchError {
-    ParameterMatchError { input: SmolStr, msg: SmolStr },
-    MissingParameter { name: SmolStr },
+pub enum TokenMatchResult {
+    MatchedValue,
+    MatchedParameter {
+        name: SmolStr,
+        value: ParameterValue,
+    },
+    ParameterMatchError {
+        input: SmolStr,
+        msg: SmolStr,
+    },
+    MissingParameter {
+        name: SmolStr,
+    },
 }
 
-#[derive(Debug)]
-pub(super) struct TokenMatchValue {
-    pub raw: SmolStr,
-    pub param: Option<(SmolStr, ParameterValue)>,
-}
-
-impl TokenMatchValue {
-    fn new_match(raw: impl Into<SmolStr>) -> TryMatchResult {
-        Some(Ok(Some(Self {
-            raw: raw.into(),
-            param: None,
-        })))
-    }
-
-    fn new_match_param(
-        raw: impl Into<SmolStr>,
-        param_name: impl Into<SmolStr>,
-        param: ParameterValue,
-    ) -> TryMatchResult {
-        Some(Ok(Some(Self {
-            raw: raw.into(),
-            param: Some((param_name.into(), param)),
-        })))
-    }
-}
-
-/// None -> no match
-/// Some(Ok(None)) -> match, no value
-/// Some(Ok(Some(_))) -> match, with value
-/// Some(Err(_)) -> error while matching
-// q: why do this while we could have a NoMatch in TokenMatchError?
+// q: why not have a NoMatch variant in TokenMatchResult?
 // a: because we want to differentiate between no match and match failure (it matched with an error)
 //    "no match" has a different charecteristic because we want to continue matching other tokens...
 //    ...while "match failure" means we should stop matching and return the error
-type TryMatchResult = Option<Result<Option<TokenMatchValue>, TokenMatchError>>;
+type TryMatchResult = Option<TokenMatchResult>;
 
 impl Token {
     pub(super) fn try_match(&self, input: Option<&str>) -> TryMatchResult {
@@ -66,9 +46,9 @@ impl Token {
                 // short circuit on:
                 return match self {
                     // missing paramaters
-                    Self::Parameter(param) => Some(Err(TokenMatchError::MissingParameter {
+                    Self::Parameter(param) => Some(TokenMatchResult::MissingParameter {
                         name: param.name().into(),
-                    })),
+                    }),
                     // everything else doesnt match if no input anyway
                     Self::Value { .. } => None,
                     // don't add a _ match here!
@@ -81,15 +61,18 @@ impl Token {
         match self {
             Self::Value { name, aliases } => (aliases.iter().chain(std::iter::once(name)))
                 .any(|v| v.eq(input))
-                .then(|| TokenMatchValue::new_match(input))
-                .unwrap_or(None),
-            Self::Parameter(param) => match param.kind().match_value(input) {
-                Ok(matched) => TokenMatchValue::new_match_param(input, param.name(), matched),
-                Err(err) => Some(Err(TokenMatchError::ParameterMatchError {
+                .then(|| TokenMatchResult::MatchedValue),
+            Self::Parameter(param) => Some(match param.kind().match_value(input) {
+                Ok(matched) => TokenMatchResult::MatchedParameter {
+                    name: param.name().into(),
+                    value: matched,
+                },
+                Err(err) => TokenMatchResult::ParameterMatchError {
                     input: input.into(),
                     msg: err,
-                })),
-            }, // don't add a _ match here!
+                },
+            }),
+            // don't add a _ match here!
         }
     }
 }

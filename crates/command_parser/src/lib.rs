@@ -18,7 +18,7 @@ use flag::{Flag, FlagMatchError, FlagValueMatchError};
 use parameter::ParameterValue;
 use smol_str::SmolStr;
 use string::MatchedFlag;
-use token::{Token, TokenMatchError, TokenMatchValue};
+use token::{Token, TokenMatchResult};
 
 // todo: this should come from the bot probably
 const MAX_SUGGESTIONS: usize = 7;
@@ -55,40 +55,42 @@ pub fn parse_command(
         let next = next_token(local_tree.possible_tokens(), &input, current_pos);
         println!("next: {:?}", next);
         match next {
-            Some(Ok((found_token, arg, new_pos))) => {
-                current_pos = new_pos;
-                current_token_idx += 1;
-
-                if let Some(arg) = arg.as_ref() {
-                    // insert arg as paramater if this is a parameter
-                    if let Some((param_name, param)) = arg.param.as_ref() {
-                        params.insert(param_name.to_string(), param.clone());
+            Some((found_token, result, new_pos)) => {
+                match &result {
+                    // todo: better error messages for these?
+                    TokenMatchResult::MissingParameter { name } => {
+                        return Err(format!("Expected parameter `{name}` in command `{prefix}{input} {found_token}`."));
                     }
+                    TokenMatchResult::ParameterMatchError { input: raw, msg } => {
+                        return Err(format!("Parameter `{raw}` in command `{prefix}{input}` could not be parsed: {msg}."));
+                    }
+                    // don't use a catch-all here, we want to make sure compiler errors when new errors are added
+                    TokenMatchResult::MatchedParameter { .. } | TokenMatchResult::MatchedValue => {}
                 }
 
+                // add parameter if any
+                if let TokenMatchResult::MatchedParameter { name, value } = result {
+                    params.insert(name.to_string(), value);
+                }
+
+                // move to the next branch
                 if let Some(next_tree) = local_tree.get_branch(&found_token) {
                     local_tree = next_tree.clone();
                 } else {
                     panic!("found token {found_token:?} could not match tree, at {input}");
                 }
-            }
-            Some(Err((token, err))) => {
-                let error_msg = match err {
-                    TokenMatchError::MissingParameter { name } => {
-                        format!("Expected parameter `{name}` in command `{prefix}{input} {token}`.")
-                    }
-                    TokenMatchError::ParameterMatchError { input: raw, msg } => {
-                        format!("Parameter `{raw}` in command `{prefix}{input}` could not be parsed: {msg}.")
-                    }
-                };
-                return Err(error_msg);
+
+                // advance our position on the input
+                current_pos = new_pos;
+                current_token_idx += 1;
             }
             None => {
-                // if it said command not found on a flag, output better error message
                 let mut error = format!("Unknown command `{prefix}{input}`.");
 
-                if fmt_possible_commands(&mut error, &prefix, local_tree.possible_commands(2)).not()
+                if fmt_possible_commands(&mut error, &prefix, local_tree.possible_commands(1)).not()
                 {
+                    // add a space between the unknown command and "for a list of all possible commands"
+                    // message if we didn't add any possible suggestions
                     error.push_str(" ");
                 }
 
@@ -231,7 +233,7 @@ fn next_token<'a>(
     possible_tokens: impl Iterator<Item = &'a Token>,
     input: &str,
     current_pos: usize,
-) -> Option<Result<(&'a Token, Option<TokenMatchValue>, usize), (&'a Token, TokenMatchError)>> {
+) -> Option<(&'a Token, TokenMatchResult, usize)> {
     // get next parameter, matching quotes
     let matched = string::next_param(&input, current_pos);
     println!("matched: {matched:?}\n---");
@@ -248,21 +250,18 @@ fn next_token<'a>(
                 .then_some(&input[current_pos..])
                 .unwrap_or(v.value)
         });
+        let next_pos = match matched {
+            // return last possible pos if we matched remaining,
+            Some(_) if match_remaining => input.len(),
+            // otherwise use matched param next pos,
+            Some(ref param) => param.next_pos,
+            // and if didnt match anything we stay where we are
+            None => current_pos,
+        };
         match token.try_match(input_to_match) {
-            Some(Ok(value)) => {
-                println!("matched token: {}", token);
-                let next_pos = match matched {
-                    // return last possible pos if we matched remaining,
-                    Some(_) if match_remaining => input.len(),
-                    // otherwise use matched param next pos,
-                    Some(param) => param.next_pos,
-                    // and if didnt match anything we stay where we are
-                    None => current_pos,
-                };
-                return Some(Ok((token, value, next_pos)));
-            }
-            Some(Err(err)) => {
-                return Some(Err((token, err)));
+            Some(result) => {
+                //println!("matched token: {}", token);
+                return Some((token, result, next_pos));
             }
             None => {} // continue matching until we exhaust all tokens
         }
