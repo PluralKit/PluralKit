@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use smol_str::SmolStr;
 
-use crate::parameter::{ParameterKind, ParameterValue};
+use crate::parameter::{Parameter, ParameterKind, ParameterValue};
 
 #[derive(Debug)]
 pub enum FlagValueMatchError {
@@ -22,7 +22,7 @@ impl Display for Flag {
         write!(f, "-{}", self.name)?;
         if let Some(value) = self.value.as_ref() {
             write!(f, "=")?;
-            value.format(f, value.default_name())?;
+            Parameter::from(*value).fmt(f)?;
         }
         Ok(())
     }

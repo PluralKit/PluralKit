@@ -1,4 +1,7 @@
-use std::{fmt::Debug, str::FromStr};
+use std::{
+    fmt::{Debug, Display},
+    str::FromStr,
+};
 
 use smol_str::SmolStr;
 
@@ -27,6 +30,21 @@ impl Parameter {
 
     pub fn kind(&self) -> ParameterKind {
         self.kind
+    }
+}
+
+impl Display for Parameter {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self.kind {
+            ParameterKind::OpaqueString | ParameterKind::OpaqueStringRemainder => {
+                write!(f, "[{}]", self.name)
+            }
+            ParameterKind::MemberRef => write!(f, "<target member>"),
+            ParameterKind::SystemRef => write!(f, "<target system>"),
+            ParameterKind::MemberPrivacyTarget => write!(f, "<privacy target>"),
+            ParameterKind::PrivacyLevel => write!(f, "[privacy level]"),
+            ParameterKind::Toggle => write!(f, "on/off"),
+        }
     }
 }
 
@@ -74,19 +92,6 @@ impl ParameterKind {
 
     pub(crate) fn remainder(&self) -> bool {
         matches!(self, ParameterKind::OpaqueStringRemainder)
-    }
-
-    pub(crate) fn format(&self, f: &mut std::fmt::Formatter, param_name: &str) -> std::fmt::Result {
-        match self {
-            ParameterKind::OpaqueString | ParameterKind::OpaqueStringRemainder => {
-                write!(f, "[{param_name}]")
-            }
-            ParameterKind::MemberRef => write!(f, "<target member>"),
-            ParameterKind::SystemRef => write!(f, "<target system>"),
-            ParameterKind::MemberPrivacyTarget => write!(f, "<privacy target>"),
-            ParameterKind::PrivacyLevel => write!(f, "[privacy level]"),
-            ParameterKind::Toggle => write!(f, "on/off"),
-        }
     }
 
     pub(crate) fn match_value(&self, input: &str) -> Result<ParameterValue, SmolStr> {

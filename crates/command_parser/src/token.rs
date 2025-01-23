@@ -81,11 +81,12 @@ impl Display for Token {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Value { name, .. } => write!(f, "{name}"),
-            Self::Parameter(param) => param.kind().format(f, param.name()),
+            Self::Parameter(param) => write!(f, "{param}"),
         }
     }
 }
 
+// (name, aliases) -> Token::Value
 impl<const L: usize> From<(&str, [&str; L])> for Token {
     fn from((name, aliases): (&str, [&str; L])) -> Self {
         Self::Value {
@@ -95,6 +96,7 @@ impl<const L: usize> From<(&str, [&str; L])> for Token {
     }
 }
 
+// name -> Token::Value
 impl From<&str> for Token {
     fn from(value: &str) -> Self {
         Self::from((value, []))
@@ -119,9 +121,19 @@ impl From<(&str, ParameterKind)> for Token {
     }
 }
 
+/// Iterator that produces [`Token`]s.
+///
+/// This is more of a convenience type that the [`tokens!`] macro uses in order
+/// to more easily combine tokens together.
 #[derive(Debug, Clone)]
 pub struct TokensIterator {
     inner: Vec<Token>,
+}
+
+impl TokensIterator {
+    pub(crate) fn new(tokens: Vec<Token>) -> Self {
+        Self { inner: tokens }
+    }
 }
 
 impl Iterator for TokensIterator {
@@ -132,37 +144,27 @@ impl Iterator for TokensIterator {
     }
 }
 
+impl From<Vec<Token>> for TokensIterator {
+    fn from(value: Vec<Token>) -> Self {
+        Self::new(value)
+    }
+}
+
 impl<T: Into<Token>> From<T> for TokensIterator {
     fn from(value: T) -> Self {
-        Self {
-            inner: vec![value.into()],
-        }
+        Self::new(vec![value.into()])
     }
 }
 
 impl<const L: usize> From<[Token; L]> for TokensIterator {
     fn from(value: [Token; L]) -> Self {
-        Self {
-            inner: value.into_iter().collect(),
-        }
+        Self::new(value.into_iter().collect())
     }
 }
 
 impl<const L: usize> From<[Self; L]> for TokensIterator {
     fn from(value: [Self; L]) -> Self {
-        Self {
-            inner: value
-                .into_iter()
-                .map(|t| t.collect::<Vec<_>>())
-                .flatten()
-                .collect(),
-        }
-    }
-}
-
-impl From<Vec<Token>> for TokensIterator {
-    fn from(value: Vec<Token>) -> Self {
-        Self { inner: value }
+        Self::new(value.into_iter().map(|t| t.inner).flatten().collect())
     }
 }
 
