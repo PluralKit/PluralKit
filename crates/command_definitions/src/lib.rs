@@ -18,9 +18,7 @@ pub mod server_config;
 pub mod switch;
 pub mod system;
 
-use command_parser::{
-    command, command::Command, concat_tokens, parameter::ParameterKind::*, tokens,
-};
+use command_parser::{command, command::Command, parameter::ParameterKind::*, tokens};
 
 pub fn all() -> impl Iterator<Item = Command> {
     (help::cmds())
@@ -29,3 +27,5 @@ pub fn all() -> impl Iterator<Item = Command> {
         .chain(config::cmds())
         .chain(fun::cmds())
 }
+
+pub const RESET: (&str, [&str; 2]) = ("reset", ["clear", "default"]);

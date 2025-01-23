@@ -2,6 +2,8 @@ use std::{fmt::Debug, str::FromStr};
 
 use smol_str::SmolStr;
 
+use crate::token::Token;
+
 #[derive(Debug, Clone)]
 pub enum ParameterValue {
     OpaqueString(String),
@@ -180,10 +182,7 @@ impl FromStr for PrivacyLevelKind {
     }
 }
 
-pub const ENABLE: [&str; 5] = ["on", "yes", "true", "enable", "enabled"];
-pub const DISABLE: [&str; 5] = ["off", "no", "false", "disable", "disabled"];
-
-#[derive(Debug, Clone, Eq, Hash, PartialEq)]
+#[derive(Debug, Clone, Copy, Eq, Hash, PartialEq)]
 pub enum Toggle {
     On,
     Off,
@@ -193,10 +192,20 @@ impl FromStr for Toggle {
     type Err = SmolStr;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            ref s if ENABLE.contains(s) => Ok(Self::On),
-            ref s if DISABLE.contains(s) => Ok(Self::Off),
-            _ => Err("invalid toggle, must be on/off".into()),
+        let matches_self =
+            |toggle: &Self| matches!(Token::from(*toggle).try_match(Some(s)), Some(Ok(None)));
+        [Self::On, Self::Off]
+            .into_iter()
+            .find(matches_self)
+            .ok_or_else(|| SmolStr::new("invalid toggle, must be on/off"))
+    }
+}
+
+impl From<Toggle> for Token {
+    fn from(toggle: Toggle) -> Self {
+        match toggle {
+            Toggle::On => Self::from(("on", ["yes", "true", "enable", "enabled"])),
+            Toggle::Off => Self::from(("off", ["no", "false", "disable", "disabled"])),
         }
     }
 }
@@ -209,5 +218,3 @@ impl Into<bool> for Toggle {
         }
     }
 }
-
-pub const RESET: [&str; 3] = ["reset", "clear", "default"];

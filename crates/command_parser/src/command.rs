@@ -90,27 +90,7 @@ impl Display for Command {
 // (and something like &dyn Trait would require everything to be referenced which doesnt look nice anyway)
 #[macro_export]
 macro_rules! command {
-    ([$($v:expr),+] => $cb:expr$(,)*) => {
+    ($($v:expr),+ => $cb:expr$(,)*) => {
         $crate::command::Command::new($crate::tokens!($($v),+), $cb)
-    };
-    ($tokens:expr => $cb:expr$(,)*) => {
-        $crate::command::Command::new($tokens.clone(), $cb)
-    };
-    ($tokens:expr, $($v:expr),+ => $cb:expr$(,)*) => {
-        $crate::command::Command::new($crate::concat_tokens!($tokens.clone(), [$($v),+]), $cb)
-    };
-}
-
-#[macro_export]
-macro_rules! tokens {
-    ($($v:expr),+$(,)*) => {
-        [$($crate::token::Token::from($v)),+]
-    };
-}
-
-#[macro_export]
-macro_rules! concat_tokens {
-    ($tokens:expr, [$($v:expr),+]$(,)*) => {
-        $tokens.clone().into_iter().chain($crate::tokens!($($v),+).into_iter()).collect::<Vec<_>>()
     };
 }

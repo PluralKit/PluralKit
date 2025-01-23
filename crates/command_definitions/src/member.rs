@@ -1,17 +1,17 @@
 use super::*;
 
 pub fn cmds() -> impl Iterator<Item = Command> {
-    let member = ["member", "m"];
-    let description = ["description", "desc"];
-    let privacy = ["privacy", "priv"];
-    let new = ["new", "n"];
+    let member = ("member", ["m"]);
+    let description = ("description", ["desc"]);
+    let privacy = ("privacy", ["priv"]);
+    let new = ("new", ["n"]);
 
     let member_target = tokens!(member, MemberRef);
-    let member_desc = concat_tokens!(member_target, [description]);
-    let member_privacy = concat_tokens!(member_target, [privacy]);
+    let member_desc = tokens!(member_target, description);
+    let member_privacy = tokens!(member_target, privacy);
 
     [
-        command!([member, new, ("name", OpaqueString)] => "member_new")
+        command!(member, new, ("name", OpaqueString) => "member_new")
             .help("Creates a new system member"),
         command!(member_target => "member_show")
             .flag("pt")

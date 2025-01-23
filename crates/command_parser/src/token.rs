@@ -104,46 +104,96 @@ impl Token {
 impl Display for Token {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Token::Empty => write!(f, ""),
-            Token::Value { name, .. } => write!(f, "{name}"),
-            Token::Parameter(param) => param.kind().format(f, param.name()),
+            Self::Empty => write!(f, ""),
+            Self::Value { name, .. } => write!(f, "{name}"),
+            Self::Parameter(param) => param.kind().format(f, param.name()),
+        }
+    }
+}
+
+impl<const L: usize> From<(&str, [&str; L])> for Token {
+    fn from((name, aliases): (&str, [&str; L])) -> Self {
+        Self::Value {
+            name: name.into(),
+            aliases: aliases.into_iter().map(SmolStr::new).collect::<Vec<_>>(),
         }
     }
 }
 
 impl From<&str> for Token {
-    fn from(name: &str) -> Self {
-        Token::Value {
-            name: SmolStr::new(name),
-            aliases: Vec::new(),
-        }
-    }
-}
-
-impl<const L: usize> From<[&str; L]> for Token {
-    fn from(value: [&str; L]) -> Self {
-        assert!(value.len() > 0, "can't create a Token::Value from nothing");
-        Token::Value {
-            name: value[0].into(),
-            aliases: value.into_iter().skip(1).map(SmolStr::new).collect::<Vec<_>>(),
-        }
+    fn from(value: &str) -> Self {
+        Self::from((value, []))
     }
 }
 
 impl From<Parameter> for Token {
     fn from(value: Parameter) -> Self {
-        Token::Parameter(value)
+        Self::Parameter(value)
     }
 }
 
 impl From<ParameterKind> for Token {
     fn from(value: ParameterKind) -> Self {
-        Token::from(Parameter::from(value))
+        Self::from(Parameter::from(value))
     }
 }
 
 impl From<(&str, ParameterKind)> for Token {
     fn from(value: (&str, ParameterKind)) -> Self {
-        Token::from(Parameter::from(value))
+        Self::from(Parameter::from(value))
     }
+}
+
+#[derive(Debug, Clone)]
+pub struct TokensIterator {
+    inner: Vec<Token>,
+}
+
+impl Iterator for TokensIterator {
+    type Item = Token;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        (self.inner.len() > 0).then(|| self.inner.remove(0))
+    }
+}
+
+impl<T: Into<Token>> From<T> for TokensIterator {
+    fn from(value: T) -> Self {
+        Self {
+            inner: vec![value.into()],
+        }
+    }
+}
+
+impl<const L: usize> From<[Token; L]> for TokensIterator {
+    fn from(value: [Token; L]) -> Self {
+        Self {
+            inner: value.into_iter().collect(),
+        }
+    }
+}
+
+impl<const L: usize> From<[Self; L]> for TokensIterator {
+    fn from(value: [Self; L]) -> Self {
+        Self {
+            inner: value
+                .into_iter()
+                .map(|t| t.collect::<Vec<_>>())
+                .flatten()
+                .collect(),
+        }
+    }
+}
+
+impl From<Vec<Token>> for TokensIterator {
+    fn from(value: Vec<Token>) -> Self {
+        Self { inner: value }
+    }
+}
+
+#[macro_export]
+macro_rules! tokens {
+    ($($v:expr),+$(,)*) => {
+        $crate::token::TokensIterator::from([$($crate::token::TokensIterator::from($v.clone())),+])
+    };
 }
