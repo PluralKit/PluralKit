@@ -15,8 +15,7 @@ pub fn cmds() -> impl Iterator<Item = Command> {
         command!(ap_account, Toggle => "cfg_ap_account_update")
             .help("Toggles autoproxy for the account"),
         command!(ap_timeout => "cfg_ap_timeout_show").help("Shows the autoproxy timeout"),
-        command!(ap_timeout, ("reset", ["clear", "default"]) => "cfg_ap_timeout_reset")
-            .help("Resets the autoproxy timeout"),
+        command!(ap_timeout, RESET => "cfg_ap_timeout_reset").help("Resets the autoproxy timeout"),
         command!(ap_timeout, parameter::Toggle::Off => "cfg_ap_timeout_off")
             .help("Disables the autoproxy timeout"),
         command!(ap_timeout, ("timeout", OpaqueString) => "cfg_ap_timeout_update")
