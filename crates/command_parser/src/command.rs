@@ -30,7 +30,7 @@ impl Command {
                     parse_flags_before = idx;
                     was_parameter = true;
                 }
-                Token::Empty | Token::Value { .. } => {
+                Token::Value { .. } => {
                     if was_parameter {
                         break;
                     }

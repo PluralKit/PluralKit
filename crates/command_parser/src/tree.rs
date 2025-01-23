@@ -28,14 +28,8 @@ impl TreeBranch {
                 .entry(token)
                 .or_insert_with(TreeBranch::default);
         }
-        // when we're out of tokens, add an Empty branch with the callback and no sub-branches
-        current_branch.branches.insert(
-            Token::Empty,
-            TreeBranch {
-                branches: OrderMap::new(),
-                current_command: Some(command),
-            },
-        );
+        // when we're out of tokens add the command to the last branch
+        current_branch.current_command = Some(command);
     }
 
     pub fn command(&self) -> Option<Command> {
@@ -61,7 +55,7 @@ impl TreeBranch {
         for branch in self.branches.values() {
             if let Some(command) = branch.current_command.as_ref() {
                 commands = box_iter(commands.chain(std::iter::once(command)));
-                // we dont need to look further if we found a command (only Empty tokens have commands)
+                // we dont need to look further if we found a command
                 continue;
             }
             commands = box_iter(commands.chain(branch.possible_commands(max_depth - 1)));

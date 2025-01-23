@@ -6,10 +6,6 @@ use crate::parameter::{Parameter, ParameterKind, ParameterValue};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Token {
-    /// Token used to represent a finished command (i.e. no more parameters required)
-    // todo: this is likely not the right way to represent this
-    Empty,
-
     /// A bot-defined command / subcommand (usually) (eg. "member" in `pk;member MyName`)
     Value {
         name: SmolStr,
@@ -69,8 +65,6 @@ impl Token {
             None => {
                 // short circuit on:
                 return match self {
-                    // empty token
-                    Self::Empty => Some(Ok(None)),
                     // missing paramaters
                     Self::Parameter(param) => Some(Err(TokenMatchError::MissingParameter {
                         name: param.name().into(),
@@ -85,7 +79,6 @@ impl Token {
 
         // try actually matching stuff
         match self {
-            Self::Empty => None,
             Self::Value { name, aliases } => (aliases.iter().chain(std::iter::once(name)))
                 .any(|v| v.eq(input))
                 .then(|| TokenMatchValue::new_match(input))
@@ -104,7 +97,6 @@ impl Token {
 impl Display for Token {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Empty => write!(f, ""),
             Self::Value { name, .. } => write!(f, "{name}"),
             Self::Parameter(param) => param.kind().format(f, param.name()),
         }
