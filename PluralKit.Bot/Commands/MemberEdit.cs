@@ -254,6 +254,8 @@ public class MemberEdit
 
         async Task ShowBannerImage()
         {
+            ctx.CheckSystemPrivacy(target.System, target.BannerPrivacy);
+
             if ((target.BannerImage?.Trim() ?? "").Length > 0)
                 switch (ctx.MatchFormat())
                 {
