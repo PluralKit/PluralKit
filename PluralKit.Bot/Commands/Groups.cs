@@ -354,8 +354,8 @@ public class Groups
     {
         async Task ClearBannerImage()
         {
-            await ctx.ConfirmClear("this group's banner image");
             ctx.CheckOwnGroup(target);
+            await ctx.ConfirmClear("this group's banner image");
 
             await ctx.Repository.UpdateGroup(target.Id, new GroupPatch { BannerImage = null });
             await ctx.Reply($"{Emojis.Success} Group banner image cleared.");
@@ -391,7 +391,7 @@ public class Groups
         {
             ctx.CheckSystemPrivacy(target.System, target.BannerPrivacy);
 
-            if ((target.Icon?.Trim() ?? "").Length > 0)
+            if ((target.BannerImage?.Trim() ?? "").Length > 0)
                 switch (ctx.MatchFormat())
                 {
                     case ReplyFormat.Raw:
