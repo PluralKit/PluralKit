@@ -18,6 +18,44 @@ public class AvatarHostingService
         };
     }
 
+    public async Task VerifyAvatarOrThrow(string url, bool isBanner = false)
+    {
+        if (url.Length > Limits.MaxUriLength)
+            throw Errors.UrlTooLong(url);
+
+        if (!PluralKit.Core.MiscUtils.TryMatchUri(url, out var uri))
+            throw Errors.InvalidUrl;
+
+        if (uri.Host.Contains("toyhou.se"))
+            throw new PKError("Due to server issues, PluralKit is unable to read images hosted on toyhou.se.");
+
+        if (uri.Host == "cdn.pluralkit.me") return;
+
+        if (_config.AvatarServiceUrl == null)
+            return;
+
+        var kind = isBanner ? "banner" : "avatar";
+
+        try
+        {
+            var response = await _client.PostAsJsonAsync(_config.AvatarServiceUrl + "/verify",
+                new { url, kind });
+
+            if (response.StatusCode != HttpStatusCode.OK)
+            {
+                var error = await response.Content.ReadFromJsonAsync<ErrorResponse>();
+                throw new PKError($"{error.Error}");
+            }
+        }
+        catch (TaskCanceledException e)
+        {
+            // don't show an internal error to users
+            if (e.Message.Contains("HttpClient.Timeout"))
+                throw new PKError("Temporary error setting image, please try again later");
+            throw;
+        }
+    }
+
     public async Task<ParsedImage> TryRehostImage(ParsedImage input, RehostedImageType type, ulong userId, PKSystem? system)
     {
         try

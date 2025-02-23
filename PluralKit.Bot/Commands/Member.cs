@@ -83,7 +83,7 @@ public class Member
 
                 img = await _avatarHosting.TryRehostImage(img, AvatarHostingService.RehostedImageType.Avatar, ctx.Author.Id, ctx.System);
 
-                await AvatarUtils.VerifyAvatarOrThrow(_client, img.Url);
+                await _avatarHosting.VerifyAvatarOrThrow(img.Url);
                 await ctx.Repository.UpdateMember(member.Id, new MemberPatch { AvatarUrl = img.CleanUrl ?? img.Url }, conn);
 
                 dispatchData.Add("avatar_url", img.CleanUrl);

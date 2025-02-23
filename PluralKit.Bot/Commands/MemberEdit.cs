@@ -231,7 +231,7 @@ public class MemberEdit
         {
             ctx.CheckOwnMember(target);
             img = await _avatarHosting.TryRehostImage(img, AvatarHostingService.RehostedImageType.Banner, ctx.Author.Id, ctx.System);
-            await AvatarUtils.VerifyAvatarOrThrow(_client, img.Url, true);
+            await _avatarHosting.VerifyAvatarOrThrow(img.Url, true);
 
             await ctx.Repository.UpdateMember(target.Id, new MemberPatch { BannerImage = img.CleanUrl ?? img.Url });
 
