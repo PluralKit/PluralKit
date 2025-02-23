@@ -238,25 +238,33 @@ public class ProxyService
         if (trigger.Flags.HasFlag(Message.MessageFlags.VoiceMessage))
             flags |= Message.MessageFlags.VoiceMessage;
 
-        var proxyMessage = await _webhookExecutor.ExecuteWebhook(new ProxyRequest
+        try
         {
-            GuildId = trigger.GuildId!.Value,
-            ChannelId = rootChannel.Id,
-            ThreadId = threadId,
-            MessageId = trigger.Id,
-            Name = await FixSameName(messageChannel.Id, ctx, match.Member),
-            AvatarUrl = AvatarUtils.TryRewriteCdnUrl(match.Member.ProxyAvatar(ctx)),
-            Content = content,
-            Attachments = trigger.Attachments,
-            FileSizeLimit = guild.FileSizeLimit(),
-            Embeds = embeds.ToArray(),
-            Stickers = trigger.StickerItems,
-            AllowEveryone = allowEveryone,
-            Flags = flags,
-            Tts = tts,
-            Poll = trigger.Poll,
-        });
-        await HandleProxyExecutedActions(ctx, autoproxySettings, trigger, proxyMessage, match);
+            var proxyMessage = await _webhookExecutor.ExecuteWebhook(new ProxyRequest
+            {
+                GuildId = trigger.GuildId!.Value,
+                ChannelId = rootChannel.Id,
+                ThreadId = threadId,
+                MessageId = trigger.Id,
+                Name = await FixSameName(messageChannel.Id, ctx, match.Member),
+                AvatarUrl = AvatarUtils.TryRewriteCdnUrl(match.Member.ProxyAvatar(ctx)),
+                Content = content,
+                Attachments = trigger.Attachments,
+                FileSizeLimit = guild.FileSizeLimit(),
+                Embeds = embeds.ToArray(),
+                Stickers = trigger.StickerItems,
+                AllowEveryone = allowEveryone,
+                Flags = flags,
+                Tts = tts,
+                Poll = trigger.Poll,
+            });
+            await HandleProxyExecutedActions(ctx, autoproxySettings, trigger, proxyMessage, match);
+        }
+        catch (PKError)
+        {
+            if (ctx.ProxyErrorMessageEnabled)
+                throw;
+        }
     }
 
     public async Task ExecuteReproxy(Message trigger, PKMessage msg, List<ProxyMember> members, ProxyMember member, string prefix)

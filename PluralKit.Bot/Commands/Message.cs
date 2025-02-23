@@ -241,6 +241,12 @@ public class ProxiedMessage
         {
             throw new PKError("Could not edit message.");
         }
+        catch (BadRequestException e)
+        {
+            if (e.Message == "Voice messages cannot be edited")
+                throw new PKError($"{e.Message}.");
+            throw;
+        }
     }
 
     private async Task<(PKMessage, SystemId)> GetMessageToEdit(Context ctx, Duration timeout, bool isReproxy)
