@@ -62,7 +62,12 @@ public class Startup
                 await ctx.Response.WriteJSON(400, "{\"message\":\"400: Bad Request\",\"code\":0}");
 
             else if (exc.Error is not PKError)
+            {
                 await ctx.Response.WriteJSON(500, "{\"message\":\"500: Internal Server Error\",\"code\":0}");
+
+                var sentryEvent = new SentryEvent(exc.Error);
+                SentrySdk.CaptureEvent(sentryEvent);
+            }
 
             // for some reason, if we don't specifically cast to ModelParseError, it uses the base's ToJson method
             else if (exc.Error is ModelParseError fe)

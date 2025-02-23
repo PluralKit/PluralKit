@@ -5,6 +5,8 @@ use metrics_exporter_prometheus::PrometheusBuilder;
 use sentry::IntoDsn;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
+use sentry_tracing::event_from_event;
+
 pub mod db;
 pub mod state;
 pub mod util;
@@ -14,8 +16,20 @@ pub use crate::_config::CONFIG as config;
 
 // functions in this file are only used by the main function below
 
-pub fn init_logging(component: &str) -> anyhow::Result<()> {
+pub fn init_logging(component: &str) {
+    // todo: clean up the sentry duplication
     if config.json_log {
+        let sentry_layer =
+            sentry_tracing::layer().event_mapper(|md, ctx| match md.metadata().level() {
+                &tracing::Level::ERROR => {
+                    // for some reason this works, but letting the library handle it doesn't
+                    let event = event_from_event(md, ctx);
+                    sentry::capture_event(event);
+                    sentry_tracing::EventMapping::Ignore
+                }
+                _ => sentry_tracing::EventMapping::Ignore,
+            });
+
         let mut layer = json_subscriber::layer();
         layer.inner_layer_mut().add_static_field(
             "component",
@@ -23,15 +37,26 @@ pub fn init_logging(component: &str) -> anyhow::Result<()> {
         );
         tracing_subscriber::registry()
             .with(layer)
+            .with(sentry_layer)
             .with(EnvFilter::from_default_env())
             .init();
     } else {
-        tracing_subscriber::fmt()
-            .with_env_filter(EnvFilter::from_default_env())
+        let sentry_layer =
+            sentry_tracing::layer().event_mapper(|md, ctx| match md.metadata().level() {
+                &tracing::Level::ERROR => {
+                    // for some reason this works, but letting the library handle it doesn't
+                    let event = event_from_event(md, ctx);
+                    sentry::capture_event(event);
+                    sentry_tracing::EventMapping::Ignore
+                }
+                _ => sentry_tracing::EventMapping::Ignore,
+            });
+
+        tracing_subscriber::registry()
+            .with(tracing_subscriber::fmt::layer())
+            .with(sentry_layer)
             .init();
     }
-
-    Ok(())
 }
 
 pub fn init_metrics() -> anyhow::Result<()> {
@@ -61,7 +86,7 @@ macro_rules! main {
         fn main() -> anyhow::Result<()> {
             let _sentry_guard = libpk::init_sentry();
             // we might also be able to use env!("CARGO_CRATE_NAME") here
-            libpk::init_logging($component)?;
+            libpk::init_logging($component);
             tokio::runtime::Builder::new_multi_thread()
                 .enable_all()
                 .build()
