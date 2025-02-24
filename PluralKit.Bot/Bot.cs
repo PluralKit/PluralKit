@@ -213,6 +213,13 @@ public class Bot
     {
         _metrics.Measure.Meter.Mark(BotMetrics.BotErrors, exc.GetType().FullName);
 
+        if (exc is Myriad.Extensions.NotFoundInCacheException ce)
+        {
+            var scope = serviceScope.Resolve<Scope>();
+            scope.SetTag("entity.id", ce.EntityId.ToString());
+            scope.SetTag("entity.type", ce.EntityType);
+        }
+
         // Make this beforehand so we can access the event ID for logging
         var sentryEvent = new SentryEvent(exc);
 

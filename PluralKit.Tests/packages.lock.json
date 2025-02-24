@@ -949,6 +949,7 @@
           "Microsoft.AspNetCore.Mvc.Versioning": "[5.1.0, )",
           "Microsoft.AspNetCore.Mvc.Versioning.ApiExplorer": "[5.1.0, )",
           "PluralKit.Core": "[1.0.0, )",
+          "Sentry": "[4.13.0, )",
           "Serilog.AspNetCore": "[9.0.0, )"
         }
       },
