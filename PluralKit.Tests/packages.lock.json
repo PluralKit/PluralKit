@@ -654,11 +654,6 @@
           "Serilog.Sinks.File": "5.0.0"
         }
       },
-      "SixLabors.ImageSharp": {
-        "type": "Transitive",
-        "resolved": "3.1.6",
-        "contentHash": "dHQ5jugF9v+5/LCVHCWVzaaIL6WOehqJy6eju/0VFYFPEj2WtqkGPoEV9EVQP83dHsdoqYaTuWpZdwAd37UwfA=="
-      },
       "SqlKata": {
         "type": "Transitive",
         "resolved": "2.4.0",
@@ -959,8 +954,7 @@
           "Humanizer.Core": "[2.14.1, )",
           "Myriad": "[1.0.0, )",
           "PluralKit.Core": "[1.0.0, )",
-          "Sentry": "[4.13.0, )",
-          "SixLabors.ImageSharp": "[3.1.6, )"
+          "Sentry": "[4.13.0, )"
         }
       },
       "pluralkit.core": {

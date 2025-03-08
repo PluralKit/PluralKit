@@ -2,8 +2,6 @@ using System.Text.RegularExpressions;
 
 using PluralKit.Core;
 
-using SixLabors.ImageSharp;
-
 namespace PluralKit.Bot;
 
 public static class AvatarUtils
