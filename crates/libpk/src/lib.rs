@@ -16,44 +16,32 @@ pub use crate::_config::CONFIG as config;
 // functions in this file are only used by the main function below
 
 pub fn init_logging(component: &str) {
-    // todo: clean up the sentry duplication
-    if config.json_log {
-        let sentry_layer =
-            sentry_tracing::layer().event_mapper(|md, ctx| match md.metadata().level() {
-                &tracing::Level::ERROR => {
-                    // for some reason this works, but letting the library handle it doesn't
-                    let event = event_from_event(md, ctx);
-                    sentry::capture_event(event);
-                    sentry_tracing::EventMapping::Ignore
-                }
-                _ => sentry_tracing::EventMapping::Ignore,
-            });
+    let sentry_layer =
+        sentry_tracing::layer().event_mapper(|md, ctx| match md.metadata().level() {
+            &tracing::Level::ERROR => {
+                // for some reason this works, but letting the library handle it doesn't
+                let event = event_from_event(md, ctx);
+                sentry::capture_event(event);
+                sentry_tracing::EventMapping::Ignore
+            }
+            _ => sentry_tracing::EventMapping::Ignore,
+        });
 
+    if config.json_log {
         let mut layer = json_subscriber::layer();
         layer.inner_layer_mut().add_static_field(
             "component",
             serde_json::Value::String(component.to_string()),
         );
         tracing_subscriber::registry()
-            .with(layer)
             .with(sentry_layer)
+            .with(layer)
             .with(EnvFilter::from_default_env())
             .init();
     } else {
-        let sentry_layer =
-            sentry_tracing::layer().event_mapper(|md, ctx| match md.metadata().level() {
-                &tracing::Level::ERROR => {
-                    // for some reason this works, but letting the library handle it doesn't
-                    let event = event_from_event(md, ctx);
-                    sentry::capture_event(event);
-                    sentry_tracing::EventMapping::Ignore
-                }
-                _ => sentry_tracing::EventMapping::Ignore,
-            });
-
         tracing_subscriber::registry()
-            .with(tracing_subscriber::fmt::layer())
             .with(sentry_layer)
+            .with(tracing_subscriber::fmt::layer())
             .init();
     }
 }
