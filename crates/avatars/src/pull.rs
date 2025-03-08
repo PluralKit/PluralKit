@@ -33,10 +33,10 @@ pub async fn pull(
         // terrible
         let mut s = format!("{}", e);
         if let Some(src) = e.source() {
-            let _ = write!(s, "\n\nCaused by: {}", src);
+            let _ = write!(s, ": {}", src);
             let mut err = src;
             while let Some(src) = err.source() {
-                let _ = write!(s, "\n\nCaused by: {}", src);
+                let _ = write!(s, ": {}", src);
                 err = src;
             }
         }
