@@ -2929,6 +2929,7 @@ dependencies = [
  "sqlx",
  "tokio",
  "tracing",
+ "twilight-http",
 ]
 
 [[package]]
