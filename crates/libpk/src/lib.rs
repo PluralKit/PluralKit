@@ -9,7 +9,6 @@ use sentry_tracing::event_from_event;
 
 pub mod db;
 pub mod state;
-pub mod util;
 
 pub mod _config;
 pub use crate::_config::CONFIG as config;

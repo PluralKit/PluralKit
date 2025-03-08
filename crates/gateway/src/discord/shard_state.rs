@@ -3,7 +3,7 @@ use metrics::{counter, gauge};
 use tracing::info;
 use twilight_gateway::{Event, Latency};
 
-use libpk::{state::*, util::redis::*};
+use libpk::state::ShardState;
 
 #[derive(Clone)]
 pub struct ShardStateManager {
@@ -24,11 +24,7 @@ impl ShardStateManager {
     }
 
     async fn get_shard(&self, shard_id: u32) -> anyhow::Result<ShardState> {
-        let data: Option<String> = self
-            .redis
-            .hget("pluralkit:shardstatus", shard_id)
-            .await
-            .to_option_or_error()?;
+        let data: Option<String> = self.redis.hget("pluralkit:shardstatus", shard_id).await?;
         match data {
             Some(buf) => Ok(serde_json::from_str(&buf).expect("could not decode shard data!")),
             None => Ok(ShardState::default()),
