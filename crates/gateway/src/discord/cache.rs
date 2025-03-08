@@ -105,7 +105,7 @@ pub fn new() -> DiscordCache {
         .api_base_url
         .clone()
     {
-        client_builder = client_builder.proxy(base_url, true);
+        client_builder = client_builder.proxy(base_url, true).ratelimiter(None);
     }
 
     let client = Arc::new(client_builder.build());

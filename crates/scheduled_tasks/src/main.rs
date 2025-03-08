@@ -38,7 +38,7 @@ async fn real_main() -> anyhow::Result<()> {
         .api_base_url
         .clone()
     {
-        client_builder = client_builder.proxy(base_url, true);
+        client_builder = client_builder.proxy(base_url, true).ratelimiter(None);
     }
 
     let ctx = AppCtx {
