@@ -24,7 +24,7 @@ use std::error::Error;
 use std::sync::Arc;
 use std::time::Duration;
 use thiserror::Error;
-use tracing::{error, info};
+use tracing::{error, info, warn};
 use uuid::Uuid;
 
 #[derive(Error, Debug)]
@@ -262,7 +262,12 @@ impl IntoResponse for PKAvatarError {
         };
 
         // print inner error if otherwise hidden
-        error!("error: {}", self.source().unwrap_or(&self));
+        // `error!` calls go to sentry, so only use that if it's our error
+        if matches!(self, PKAvatarError::InternalError(_)) {
+            error!("error: {}", self.source().unwrap_or(&self));
+        } else {
+            warn!("error: {}", self.source().unwrap_or(&self));
+        }
 
         (
             status_code,
