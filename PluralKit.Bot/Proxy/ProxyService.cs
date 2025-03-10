@@ -399,6 +399,10 @@ public class ProxyService
         if (hasContent)
         {
             var msg = repliedTo.Content;
+
+            // strip out overly excessive line breaks
+            msg = Regex.Replace(msg, @"(?:(?:([_\*]) \1)?\n){2,}", "\n");
+
             if (msg.Length > 100)
             {
                 msg = repliedTo.Content.Substring(0, 100);
