@@ -1,3 +1,5 @@
+using Newtonsoft.Json;
+
 using Serilog;
 
 using StackExchange.Redis;
@@ -29,12 +31,16 @@ public class RuntimeConfigService
         var redisConfig = await _redis.Connection.GetDatabase().HashGetAllAsync(RedisKey);
         foreach (var entry in redisConfig)
             settings.Add(entry.Name, entry.Value);
+
+        var configStr = JsonConvert.SerializeObject(settings);
+        _logger.Information($"starting with runtime config: {configStr}");
     }
 
     public async Task Set(string key, string value)
     {
         await _redis.Connection.GetDatabase().HashSetAsync(RedisKey, new[] { new HashEntry(key, new RedisValue(value)) });
         settings.Add(key, value);
+        _logger.Information($"updated runtime config: {key}={value}");
     }
 
     public object? Get(string key) => settings.GetValueOrDefault(key);
