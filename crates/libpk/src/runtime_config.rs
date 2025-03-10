@@ -49,6 +49,15 @@ impl RuntimeConfig {
         Ok(())
     }
 
+    pub async fn delete(&self, key: String) -> anyhow::Result<()> {
+        self.redis
+            .hdel::<(), &str, String>(&self.redis_key, key.clone())
+            .await?;
+        self.settings.write().await.remove(&key.clone());
+        info!("updated runtime config: {key} removed");
+        Ok(())
+    }
+
     pub async fn get(&self, key: String) -> Option<String> {
         self.settings.read().await.get(&key).cloned()
     }

@@ -2,7 +2,7 @@ use axum::{
     extract::{Path, State},
     http::StatusCode,
     response::{IntoResponse, Response},
-    routing::{get, post},
+    routing::{delete, get, post},
     Router,
 };
 use libpk::runtime_config::RuntimeConfig;
@@ -25,6 +25,7 @@ fn status_code(code: StatusCode, body: String) -> Response {
 pub async fn run_server(cache: Arc<DiscordCache>, runtime_config: Arc<RuntimeConfig>) -> anyhow::Result<()> {
     // hacky fix for `move`
     let runtime_config_for_post = runtime_config.clone();
+    let runtime_config_for_delete = runtime_config.clone();
 
     let app = Router::new()
         .route(
@@ -181,6 +182,11 @@ pub async fn run_server(cache: Arc<DiscordCache>, runtime_config: Arc<RuntimeCon
         .route("/runtime_config/:key", post(|Path(key): Path<String>, body: String| async move {
             let runtime_config = runtime_config_for_post;
             runtime_config.set(key, body).await.expect("failed to update runtime config");
+            status_code(StatusCode::FOUND, to_string(&runtime_config.get_all().await).unwrap())
+        }))
+        .route("/runtime_config/:key", delete(|Path(key): Path<String>| async move {
+            let runtime_config = runtime_config_for_delete;
+            runtime_config.delete(key).await.expect("failed to update runtime config");
             status_code(StatusCode::FOUND, to_string(&runtime_config.get_all().await).unwrap())
         }))
 

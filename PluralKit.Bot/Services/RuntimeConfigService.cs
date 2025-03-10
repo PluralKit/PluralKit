@@ -43,6 +43,13 @@ public class RuntimeConfigService
         _logger.Information($"updated runtime config: {key}={value}");
     }
 
+    public async Task Delete(string key)
+    {
+        await _redis.Connection.GetDatabase().HashDeleteAsync(RedisKey, key);
+        settings.Remove(key);
+        _logger.Information($"updated runtime config: {key} removed");
+    }
+
     public object? Get(string key) => settings.GetValueOrDefault(key);
 
     public bool Exists(string key) => settings.ContainsKey(key);
