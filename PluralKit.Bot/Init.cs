@@ -76,6 +76,13 @@ public class Init
             // Init the bot instance itself, register handlers and such to the client before beginning to connect
             bot.Init();
 
+            // load runtime config from redis
+            await services.Resolve<RuntimeConfigService>().LoadConfig();
+
+            // Start HTTP server
+            if (config.HttpListenerAddr != null)
+                services.Resolve<HttpListenerService>().Start(config.HttpListenerAddr);
+
             // Start the Discord shards themselves (handlers already set up)
             logger.Information("Connecting to Discord");
             await StartCluster(services);

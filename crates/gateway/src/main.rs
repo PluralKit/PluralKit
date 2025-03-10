@@ -2,7 +2,9 @@
 #![feature(if_let_guard)]
 
 use chrono::Timelike;
+use discord::gateway::cluster_config;
 use fred::{clients::RedisPool, interfaces::*};
+use libpk::runtime_config::RuntimeConfig;
 use signal_hook::{
     consts::{SIGINT, SIGTERM},
     iterator::Signals,
@@ -27,6 +29,14 @@ async fn real_main() -> anyhow::Result<()> {
     let shutdown_tx = Arc::new(shutdown_tx);
 
     let redis = libpk::db::init_redis().await?;
+
+    let runtime_config = Arc::new(
+        RuntimeConfig::new(
+            redis.clone(),
+            format!("gateway:{}", cluster_config().node_id),
+        )
+        .await?,
+    );
 
     let shard_state = discord::shard_state::new(redis.clone());
     let cache = Arc::new(discord::cache::new());
@@ -57,7 +67,7 @@ async fn real_main() -> anyhow::Result<()> {
     // todo: probably don't do it this way
     let api_shutdown_tx = shutdown_tx.clone();
     set.spawn(tokio::spawn(async move {
-        match cache_api::run_server(cache).await {
+        match cache_api::run_server(cache, runtime_config).await {
             Err(error) => {
                 tracing::error!(?error, "failed to serve cache api");
                 let _ = api_shutdown_tx.send(());

@@ -2,9 +2,10 @@ use axum::{
     extract::{Path, State},
     http::StatusCode,
     response::{IntoResponse, Response},
-    routing::get,
+    routing::{delete, get, post},
     Router,
 };
+use libpk::runtime_config::RuntimeConfig;
 use serde_json::{json, to_string};
 use tracing::{error, info};
 use twilight_model::id::Id;
@@ -21,7 +22,11 @@ fn status_code(code: StatusCode, body: String) -> Response {
 
 // this function is manually formatted for easier legibility of route_services
 #[rustfmt::skip]
-pub async fn run_server(cache: Arc<DiscordCache>) -> anyhow::Result<()> {
+pub async fn run_server(cache: Arc<DiscordCache>, runtime_config: Arc<RuntimeConfig>) -> anyhow::Result<()> {
+    // hacky fix for `move`
+    let runtime_config_for_post = runtime_config.clone();
+    let runtime_config_for_delete = runtime_config.clone();
+
     let app = Router::new()
         .route(
             "/guilds/:guild_id",
@@ -169,6 +174,20 @@ pub async fn run_server(cache: Arc<DiscordCache>) -> anyhow::Result<()> {
                 "up": has_been_up,
             });
             status_code(StatusCode::FOUND, to_string(&stats).unwrap())
+        }))
+
+        .route("/runtime_config", get(|| async move {
+            status_code(StatusCode::FOUND, to_string(&runtime_config.get_all().await).unwrap())
+        }))
+        .route("/runtime_config/:key", post(|Path(key): Path<String>, body: String| async move {
+            let runtime_config = runtime_config_for_post;
+            runtime_config.set(key, body).await.expect("failed to update runtime config");
+            status_code(StatusCode::FOUND, to_string(&runtime_config.get_all().await).unwrap())
+        }))
+        .route("/runtime_config/:key", delete(|Path(key): Path<String>| async move {
+            let runtime_config = runtime_config_for_delete;
+            runtime_config.delete(key).await.expect("failed to update runtime config");
+            status_code(StatusCode::FOUND, to_string(&runtime_config.get_all().await).unwrap())
         }))
 
         .layer(axum::middleware::from_fn(crate::logger::logger))

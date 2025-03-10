@@ -8,6 +8,7 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilte
 use sentry_tracing::event_from_event;
 
 pub mod db;
+pub mod runtime_config;
 pub mod state;
 
 pub mod _config;
