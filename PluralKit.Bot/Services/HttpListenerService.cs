@@ -22,8 +22,8 @@ public class HttpListenerService
     {
         var server = new WebserverLite(new WebserverSettings(host, 5002), DefaultRoute);
 
-        server.Routes.PreAuthentication.Static.Add(WatsonWebserver.Core.HttpMethod.GET, "/dynamic_config", GetDynamicConfig);
-        server.Routes.PreAuthentication.Parameter.Add(WatsonWebserver.Core.HttpMethod.POST, "/dynamic_config/{key}", UpdateDynamicConfig);
+        server.Routes.PreAuthentication.Static.Add(WatsonWebserver.Core.HttpMethod.GET, "/runtime_config", GetDynamicConfig);
+        server.Routes.PreAuthentication.Parameter.Add(WatsonWebserver.Core.HttpMethod.POST, "/runtime_config/{key}", UpdateDynamicConfig);
 
         server.Start();
     }
