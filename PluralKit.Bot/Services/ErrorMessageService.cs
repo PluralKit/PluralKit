@@ -116,7 +116,7 @@ public class ErrorMessageService
         return new EmbedBuilder()
             .Color(0xE74C3C)
             .Title("Internal error occurred")
-            .Description($"For support, please send the error code above in {channelInfo} with a description of what you were doing at the time.")
+            .Description($"For support, please send the error code above as text in {channelInfo} with a description of what you were doing at the time.")
             .Footer(new Embed.EmbedFooter(errorId))
             .Timestamp(now.ToDateTimeOffset().ToString("O"))
             .Build();
