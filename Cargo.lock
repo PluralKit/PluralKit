@@ -1088,6 +1088,7 @@ dependencies = [
  "lazy_static",
  "libpk",
  "metrics",
+ "reqwest 0.12.8",
  "serde_json",
  "serde_variant",
  "signal-hook",

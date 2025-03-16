@@ -43,6 +43,7 @@ pub fn init_logging(component: &str) {
         tracing_subscriber::registry()
             .with(sentry_layer)
             .with(tracing_subscriber::fmt::layer())
+            .with(EnvFilter::from_default_env())
             .init();
     }
 }
