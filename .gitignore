@@ -31,6 +31,8 @@ logs/
 .version
 recipe.json
 .docker-bin/
+PluralKit.Bot/commands.cs
+PluralKit.Bot/commandtypes.cs
 
 # nix
 .nix-process-compose

@@ -104,11 +104,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1734953472,
-        "narHash": "sha256-zWPAJFo7NNhSXbOc6YRAXbrWzcJGxNPtutKTTZz46Bs=",
+        "lastModified": 1735917398,
+        "narHash": "sha256-RkwVkqozmbYvwX63Q4GNkNCsPuHR8sUIax40J5A4l3A=",
         "owner": "yusdacra",
         "repo": "nix-cargo-integration",
-        "rev": "e71c873cf3b0dfa52e9550d580531e41eb4b4c6a",
+        "rev": "aff54b572b75af13a6b31108ff7732d17674ad43",
         "type": "github"
       },
       "original": {
@@ -227,7 +227,8 @@
         "process-compose": "process-compose",
         "services": "services",
         "systems": "systems",
-        "treefmt": "treefmt"
+        "treefmt": "treefmt",
+        "uniffi-bindgen-cs": "uniffi-bindgen-cs"
       }
     },
     "rust-overlay": {
@@ -238,11 +239,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1734834660,
-        "narHash": "sha256-bm8V+Cu8rWJA+vKQnc94mXTpSDgvedyoDKxTVi/uJfw=",
+        "lastModified": 1735871325,
+        "narHash": "sha256-6Ta5E4mhSfCP6LdkzkG2+BciLOCPeLKuYTJ6lOHW+mI=",
         "owner": "oxalica",
         "repo": "rust-overlay",
-        "rev": "b070e6030118680977bc2388868c4b3963872134",
+        "rev": "a599f011db521766cbaf7c2f5874182485554f00",
         "type": "github"
       },
       "original": {
@@ -321,6 +322,24 @@
         "owner": "numtide",
         "repo": "treefmt-nix",
         "type": "github"
+      }
+    },
+    "uniffi-bindgen-cs": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1732196488,
+        "narHash": "sha256-zqNUUFd3OSAwmMh+hnN6AVpGnwu+ZJ1jjivbzN1k5Io=",
+        "ref": "refs/heads/main",
+        "rev": "fe5cd23943fd3aec335e2bb8f709ec1956992ae9",
+        "revCount": 115,
+        "submodules": true,
+        "type": "git",
+        "url": "https://github.com/NordSecurity/uniffi-bindgen-cs?tag=v0.8.3%2Bv0.25.0"
+      },
+      "original": {
+        "submodules": true,
+        "type": "git",
+        "url": "https://github.com/NordSecurity/uniffi-bindgen-cs?tag=v0.8.3%2Bv0.25.0"
       }
     }
   },
