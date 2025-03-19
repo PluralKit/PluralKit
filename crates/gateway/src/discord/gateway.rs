@@ -182,7 +182,7 @@ pub async fn runner(
         // and the default match skips the next block (continues to the next event)
         match event {
             Event::InteractionCreate(_) => {}
-            Event::MessageCreate(m) if m.author.id != our_user_id && !m.author.bot => {}
+            Event::MessageCreate(m) if m.author.id != our_user_id => {}
             Event::MessageUpdate(m)
                 if let Some(author) = m.author.clone()
                     && author.id != our_user_id
