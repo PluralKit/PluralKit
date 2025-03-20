@@ -64,23 +64,28 @@ async fn real_main() -> anyhow::Result<()> {
     set.spawn(tokio::spawn({
         let runtime_config = runtime_config.clone();
         async move {
-            let client = ClientBuilder::new()
+            let client = Arc::new(ClientBuilder::new()
                 .connect_timeout(Duration::from_secs(1))
                 .timeout(Duration::from_secs(1))
                 .build()
-                .expect("error making client");
+                .expect("error making client"));
 
             while let Some((shard_id, event)) = event_rx.recv().await {
                 let target = runtime_config.get(RUNTIME_CONFIG_KEY_EVENT_TARGET).await;
                 if let Some(target) = target {
-                    if let Err(error) = client
-                        .post(format!("{target}/{}", shard_id.number()))
-                        .body(event)
-                        .send()
-                        .await
-                    {
-                        error!(error = ?error, "failed to request event target")
-                    }
+                    tokio::spawn({
+                        let client = client.clone();
+                        async move {
+                            if let Err(error) = client
+                                .post(format!("{target}/{}", shard_id.number()))
+                                .body(event)
+                                .send()
+                                .await
+                            {
+                                error!(error = ?error, "failed to request event target")
+                            }
+                        }
+                    });
                 }
             }
         }
