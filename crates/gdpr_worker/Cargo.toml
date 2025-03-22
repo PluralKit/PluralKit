@@ -1,0 +1,15 @@
+[package]
+name = "gdpr_worker"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+libpk = { path = "../libpk" }
+anyhow = { workspace = true }
+axum = { workspace = true }
+futures = { workspace = true }
+sqlx = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+twilight-http = { workspace = true }
+twilight-model = { workspace = true }
