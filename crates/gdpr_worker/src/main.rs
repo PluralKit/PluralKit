@@ -117,6 +117,16 @@ async fn run_job(pool: sqlx::PgPool, discord: Arc<twilight_http::Client>) -> any
                     .execute(&mut *tx)
                     .await?;
             }
+            (_, 50083) => {
+                warn!(
+                    "could not delete message in thread {}: thread is archived, failing fast",
+                    message.channel_id
+                );
+                sqlx::query("delete from messages_gdpr_jobs where channel_id = $1")
+                    .bind(message.channel_id)
+                    .execute(&mut *tx)
+                    .await?;
+            }
             _ => {
                 error!(
                     "got unknown error deleting message {}: status={status}, code={code}",
