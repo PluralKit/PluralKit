@@ -1,6 +1,9 @@
+#![feature(let_chains)]
+
 use sqlx::prelude::FromRow;
 use std::sync::Arc;
-use tracing::{error, info};
+use tracing::{error, info, warn};
+use twilight_http::api_error::{ApiError, GeneralApiError};
 use twilight_model::id::{
     marker::{ChannelMarker, MessageMarker},
     Id,
@@ -68,14 +71,60 @@ async fn run_job(pool: sqlx::PgPool, discord: Arc<twilight_http::Client>) -> any
     info!("got mid={}, cleaning up...", message.mid);
 
     // naively delete message on discord's end
-    // todo: might need something to handle 403s
-
-    discord
+    let res = discord
         .delete_message(
             Id::<ChannelMarker>::new(message.channel_id as u64),
             Id::<MessageMarker>::new(message.mid as u64),
         )
-        .await?;
+        .await;
 
-    Ok(())
+    if res.is_ok() {
+        sqlx::query("delete from messages_gdpr_jobs where mid = $1")
+            .bind(message.mid)
+            .execute(&mut *tx)
+            .await?;
+    }
+
+    if let Err(err) = res
+        && let twilight_http::error::ErrorType::Response { error, status, .. } = err.kind()
+        && let ApiError::General(GeneralApiError { code, .. }) = error
+    {
+        match (status.get(), code) {
+            (403, _) => {
+                warn!(
+                    "got 403 while deleting message in channel {}, failing fast",
+                    message.channel_id
+                );
+                sqlx::query("delete from messages_gdpr_jobs where channel_id = $1")
+                    .bind(message.channel_id)
+                    .execute(&mut *tx)
+                    .await?;
+            }
+            (_, 10003) => {
+                warn!(
+                    "deleting message in channel {}: channel not found, failing fast",
+                    message.channel_id
+                );
+                sqlx::query("delete from messages_gdpr_jobs where channel_id = $1")
+                    .bind(message.channel_id)
+                    .execute(&mut *tx)
+                    .await?;
+            }
+            (_, 10008) => {
+                warn!("deleting message {}: message not found", message.mid);
+                sqlx::query("delete from messages_gdpr_jobs where mid = $1")
+                    .bind(message.mid)
+                    .execute(&mut *tx)
+                    .await?;
+            }
+            _ => {
+                error!(
+                    "got unknown error deleting message {}: status={status}, code={code}",
+                    message.mid
+                );
+            }
+        }
+    }
+
+    return Ok(());
 }
