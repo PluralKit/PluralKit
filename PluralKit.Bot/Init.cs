@@ -84,9 +84,11 @@ public class Init
                 services.Resolve<HttpListenerService>().Start(config.HttpListenerAddr);
 
             // Start the Discord shards themselves (handlers already set up)
-            logger.Information("Connecting to Discord");
-            await StartCluster(services);
-
+            if (!config.DisableGateway)
+            {
+                logger.Information("Connecting to Discord");
+                await StartCluster(services);
+            }
             logger.Information("Connected! All is good (probably).");
 
             // Lastly, we just... wait. Everything else is handled in the DiscordClient event loop
