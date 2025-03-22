@@ -126,5 +126,7 @@ async fn run_job(pool: sqlx::PgPool, discord: Arc<twilight_http::Client>) -> any
         }
     }
 
+    tx.commit().await?;
+
     return Ok(());
 }
