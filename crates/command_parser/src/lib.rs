@@ -172,7 +172,7 @@ pub fn parse_command(
             if invalid_flags.is_empty().not() {
                 let mut error = format!(
                     "Flag{} ",
-                    (misplaced_flags.len() > 1).then_some("s").unwrap_or("")
+                    (invalid_flags.len() > 1).then_some("s").unwrap_or("")
                 );
                 for (idx, matched_flag) in invalid_flags.iter().enumerate() {
                     write!(&mut error, "`-{}`", matched_flag.name).expect("oom");
