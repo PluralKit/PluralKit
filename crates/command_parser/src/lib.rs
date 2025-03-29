@@ -182,16 +182,9 @@ pub fn parse_command(
                 }
                 write!(
                     &mut error,
-                    " {} not applicable in this command (`{prefix}{input}`). Applicable flags are the following:",
-                    (invalid_flags.len() > 1).then_some("are").unwrap_or("is")
+                    " {} seem to be applicable in this command (`{prefix}{command}`).",
+                    (invalid_flags.len() > 1).then_some("don't").unwrap_or("doesn't")
                 ).expect("oom");
-                for (idx, flag) in command.flags.iter().enumerate() {
-                    write!(&mut error, " `{flag}`").expect("oom");
-                    if idx < command.flags.len() - 1 {
-                        error.push_str(", ");
-                    }
-                }
-                error.push_str(".");
                 return Err(error);
             }
             println!("{} {flags:?} {params:?}", command.cb);
