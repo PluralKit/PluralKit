@@ -109,8 +109,8 @@ pub fn parse_command(
             println!("flag matched {matched_flag:?}");
             raw_flags.push((current_token_idx, matched_flag));
         }
-        // if we have a command, stop parsing and return it
-        if let Some(command) = local_tree.command() {
+        // if we have a command, stop parsing and return it (only if there is no remaining input)
+        if current_pos >= input.len() && let Some(command) = local_tree.command() {
             // match the flags against this commands flags
             let mut flags: HashMap<String, Option<ParameterValue>> = HashMap::new();
             let mut misplaced_flags: Vec<MatchedFlag> = Vec::new();
