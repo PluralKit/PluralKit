@@ -27,12 +27,18 @@ public class CommandMessageService
             messageId, authorId, channelId
         );
 
-        await _redis.Connection.GetDatabase().StringSetAsync(messageId.ToString(), $"{authorId}-{channelId}-{guildId}", expiry: CommandMessageRetention);
+        await _redis.Connection.GetDatabase().StringSetAsync("command_message:" + messageId.ToString(), $"{authorId}-{channelId}-{guildId}", expiry: CommandMessageRetention);
     }
 
     public async Task<CommandMessage?> GetCommandMessage(ulong messageId)
     {
         var str = await _redis.Connection.GetDatabase().StringGetAsync(messageId.ToString());
+        if (str.HasValue)
+        {
+            var split = ((string)str).Split("-");
+            return new CommandMessage(ulong.Parse(split[0]), ulong.Parse(split[1]), ulong.Parse(split[2]));
+        }
+        str = await _redis.Connection.GetDatabase().StringGetAsync("command_message:" + messageId.ToString());
         if (str.HasValue)
         {
             var split = ((string)str).Split("-");
