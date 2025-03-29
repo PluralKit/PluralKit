@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use chrono::Utc;
 use croner::Cron;
 use fred::prelude::RedisPool;
@@ -14,15 +16,38 @@ pub struct AppCtx {
     pub messages: PgPool,
     pub stats: PgPool,
     pub redis: RedisPool,
+
+    pub discord: Arc<twilight_http::Client>,
 }
 
 libpk::main!("scheduled_tasks");
 async fn real_main() -> anyhow::Result<()> {
+    let mut client_builder = twilight_http::Client::builder().token(
+        libpk::config
+            .discord
+            .as_ref()
+            .expect("missing discord config")
+            .bot_token
+            .clone(),
+    );
+
+    if let Some(base_url) = libpk::config
+        .discord
+        .as_ref()
+        .expect("missing discord config")
+        .api_base_url
+        .clone()
+    {
+        client_builder = client_builder.proxy(base_url, true).ratelimiter(None);
+    }
+
     let ctx = AppCtx {
         data: libpk::db::init_data_db().await?,
         messages: libpk::db::init_messages_db().await?,
         stats: libpk::db::init_stats_db().await?,
         redis: libpk::db::init_redis().await?,
+
+        discord: Arc::new(client_builder.build()),
     };
 
     info!("starting scheduled tasks runner");

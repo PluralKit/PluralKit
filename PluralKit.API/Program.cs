@@ -14,6 +14,16 @@ public class Program
         await BuildInfoService.LoadVersion();
         var host = CreateHostBuilder(args).Build();
         var config = host.Services.GetRequiredService<CoreConfig>();
+
+        // Initialize Sentry SDK, and make sure it gets dropped at the end
+        using var _ = SentrySdk.Init(opts =>
+        {
+            opts.Dsn = config.SentryUrl ?? "";
+            opts.Release = BuildInfoService.FullVersion;
+            opts.AutoSessionTracking = true;
+            //                opts.DisableTaskUnobservedTaskExceptionCapture();
+        });
+
         await host.Services.GetRequiredService<RedisService>().InitAsync(config);
         await host.RunAsync();
     }

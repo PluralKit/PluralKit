@@ -3,6 +3,8 @@ use std::{str::FromStr, sync::Arc};
 use crate::PKAvatarError;
 use anyhow::Context;
 use reqwest::{Client, StatusCode, Url};
+use std::error::Error;
+use std::fmt::Write;
 use std::time::Instant;
 use tracing::{error, instrument};
 
@@ -28,14 +30,29 @@ pub async fn pull(
             .expect("set_host should not fail");
     }
     let response = client.get(trimmed_url.clone()).send().await.map_err(|e| {
-        error!("network error for {}: {}", parsed_url.full_url, e);
-        PKAvatarError::NetworkError(e)
+        // terrible
+        let mut s = format!("{}", e);
+        if let Some(src) = e.source() {
+            let _ = write!(s, ": {}", src);
+            let mut err = src;
+            while let Some(src) = err.source() {
+                let _ = write!(s, ": {}", src);
+                err = src;
+            }
+        }
+
+        error!("network error for {}: {}", parsed_url.full_url, s);
+        PKAvatarError::NetworkErrorString(s)
     })?;
     let time_after_headers = Instant::now();
     let status = response.status();
 
     if status != StatusCode::OK {
-        return Err(PKAvatarError::BadCdnResponse(status));
+        if trimmed_url.host_str() == Some("cdn.discordapp.com") {
+            return Err(PKAvatarError::BadCdnResponse(status));
+        } else {
+            return Err(PKAvatarError::BadServerResponse(status));
+        }
     }
 
     let size = match response.content_length() {

@@ -9,14 +9,14 @@ public static class CacheExtensions
     public static async Task<Guild> GetGuild(this IDiscordCache cache, ulong guildId)
     {
         if (!(await cache.TryGetGuild(guildId) is Guild guild))
-            throw new KeyNotFoundException($"Guild {guildId} not found in cache");
+            throw new NotFoundInCacheException(guildId, "guild");
         return guild;
     }
 
     public static async Task<Channel> GetChannel(this IDiscordCache cache, ulong guildId, ulong channelId)
     {
         if (!(await cache.TryGetChannel(guildId, channelId) is Channel channel))
-            throw new KeyNotFoundException($"Channel {channelId} not found in cache");
+            throw new NotFoundInCacheException(channelId, "channel");
         return channel;
     }
 
@@ -53,5 +53,17 @@ public static class CacheExtensions
         var parent = await cache.TryGetChannel(guildId, channel.ParentId!.Value);
         if (parent == null) throw new Exception($"failed to find parent channel for thread {channelOrThread} in cache");
         return parent;
+    }
+}
+
+public class NotFoundInCacheException: Exception
+{
+    public ulong EntityId { get; init; }
+    public string EntityType { get; init; }
+
+    public NotFoundInCacheException(ulong id, string type) : base("expected entity in discord cache but was not found")
+    {
+        EntityId = id;
+        EntityType = type;
     }
 }

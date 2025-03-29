@@ -16,6 +16,7 @@ use axum::{
 use libpk::_config::AvatarsConfig;
 use libpk::db::repository::avatars as db;
 use libpk::db::types::avatars::*;
+use pull::ParsedUrl;
 use reqwest::{Client, ClientBuilder};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
@@ -23,7 +24,7 @@ use std::error::Error;
 use std::sync::Arc;
 use std::time::Duration;
 use thiserror::Error;
-use tracing::{error, info};
+use tracing::{error, info, warn};
 use uuid::Uuid;
 
 #[derive(Error, Debug)]
@@ -35,8 +36,14 @@ pub enum PKAvatarError {
     #[error("discord cdn responded with status code: {0}")]
     BadCdnResponse(reqwest::StatusCode),
 
+    #[error("server responded with status code: {0}")]
+    BadServerResponse(reqwest::StatusCode),
+
     #[error("network error: {0}")]
     NetworkError(reqwest::Error),
+
+    #[error("network error: {0}")]
+    NetworkErrorString(String),
 
     #[error("response is missing header: {0}")]
     MissingHeader(&'static str),
@@ -86,7 +93,6 @@ async fn pull(
 ) -> Result<Json<PullResponse>, PKAvatarError> {
     let parsed = pull::parse_url(&req.url) // parsing beforehand to "normalize"
         .map_err(|_| PKAvatarError::InvalidCdnUrl)?;
-
     if !req.force {
         if let Some(existing) = db::get_by_attachment_id(&state.pool, parsed.attachment_id).await? {
             // remove any pending image cleanup
@@ -130,6 +136,26 @@ async fn pull(
         url: final_url,
         new: is_new,
     }))
+}
+
+async fn verify(
+    State(state): State<AppState>,
+    Json(req): Json<PullRequest>,
+) -> Result<(), PKAvatarError> {
+    let result = crate::pull::pull(
+        state.pull_client,
+        &ParsedUrl {
+            full_url: req.url.clone(),
+            channel_id: 0,
+            attachment_id: 0,
+            filename: "".to_string(),
+        },
+    )
+    .await?;
+
+    let encoded = process::process_async(result.data, req.kind).await?;
+
+    Ok(())
 }
 
 pub async fn stats(State(state): State<AppState>) -> Result<Json<Stats>, PKAvatarError> {
@@ -193,6 +219,7 @@ async fn real_main() -> anyhow::Result<()> {
     // migrate::spawn_migrate_workers(Arc::new(state.clone()), state.config.migrate_worker_count);
 
     let app = Router::new()
+        .route("/verify", post(verify))
         .route("/pull", post(pull))
         .route("/stats", get(stats))
         .with_state(state);
@@ -235,7 +262,12 @@ impl IntoResponse for PKAvatarError {
         };
 
         // print inner error if otherwise hidden
-        error!("error: {}", self.source().unwrap_or(&self));
+        // `error!` calls go to sentry, so only use that if it's our error
+        if matches!(self, PKAvatarError::InternalError(_)) {
+            error!("error: {}", self.source().unwrap_or(&self));
+        } else {
+            warn!("error: {}", self.source().unwrap_or(&self));
+        }
 
         (
             status_code,

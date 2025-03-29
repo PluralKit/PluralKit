@@ -191,6 +191,9 @@ public class WebhookExecutorService
             }
             catch (BadRequestException e)
             {
+                if (e.Message == "Cannot use one or more emoji included with this poll")
+                    throw new PKError($"Discord rejected proxy message: {e.Message}");
+
                 // explanation for hacky: I don't care if this code fails, it just means it wasn't a username error
                 try
                 {

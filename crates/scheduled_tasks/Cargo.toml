@@ -16,6 +16,7 @@ serde_json = { workspace = true }
 sqlx = { workspace = true }
 tokio = { workspace = true }
 tracing = { workspace = true }
+twilight-http = { workspace = true }
 
 croner = "2.1.0"
 num-format = "0.4.4"

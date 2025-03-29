@@ -12,10 +12,11 @@ public class Help
                 "If PluralKit is useful to you, please consider donating on [Patreon](https://patreon.com/pluralkit) or [Buy Me A Coffee](https://buymeacoffee.com/pluralkit).\n" +
                 "## Use the buttons below to see more info!";
 
+    public static string EmbedFooter = "-# PluralKit by @ske and contributors | Myriad design by @layl, icon by @tedkalashnikov, banner by @fulmine | GitHub: https://github.com/PluralKit/PluralKit/ | Website: https://pluralkit.me/";
+
     public static Embed helpEmbed = new()
     {
         Title = "PluralKit",
-        Footer = new("PluralKit by @ske and contributors | Myriad design by @layl, icon by @tedkalashnikov, banner by @fulmine | GitHub: https://github.com/PluralKit/PluralKit/ | Website: https://pluralkit.me/"),
         Color = DiscordUtils.Blue,
     };
 
@@ -142,7 +143,7 @@ public class Help
         => ctx.Rest.CreateMessage(ctx.Channel.Id, new MessageRequest
         {
             Content = $"{Emojis.Warn} If you cannot see the rest of this message see [the FAQ](<https://pluralkit.me/faq/#why-do-most-of-pluralkit-s-messages-look-blank-or-empty>)",
-            Embeds = new[] { helpEmbed with { Description = Help.Description.Replace("{prefix}", ctx.DefaultPrefix) } },
+            Embeds = new[] { helpEmbed with { Description = Help.Description.Replace("{prefix}", ctx.DefaultPrefix), Fields = new Embed.Field[] { new("", EmbedFooter) } } },
             Components = new[] { helpPageButtons(ctx.Author.Id) },
         });
 
@@ -156,7 +157,7 @@ public class Help
         if (ctx.Event.Message.Components.First().Components.Where(x => x.CustomId == ctx.CustomId).First().Style == ButtonStyle.Primary)
             return ctx.Respond(InteractionResponse.ResponseType.UpdateMessage, new()
             {
-                Embeds = new[] { helpEmbed with { Description = Help.Description.Replace("{prefix}", prefix) } },
+                Embeds = new[] { helpEmbed with { Description = Help.Description.Replace("{prefix}", prefix), Fields = new Embed.Field[] { new("", EmbedFooter) } } },
                 Components = new[] { buttons }
             });
 
@@ -164,8 +165,9 @@ public class Help
 
         return ctx.Respond(InteractionResponse.ResponseType.UpdateMessage, new()
         {
-            Embeds = new[] { helpEmbed with { Fields = helpEmbedPages.GetValueOrDefault(ctx.CustomId.Split("-")[2]).Select((item, index) =>
-                                                    new Embed.Field(item.Name.Replace("{prefix}", prefix), item.Value.Replace("{prefix}", prefix))).ToArray() } },
+            Embeds = new[] { helpEmbed with { Fields = helpEmbedPages.GetValueOrDefault(ctx.CustomId.Split("-")[2]).Select(
+                (item, index) => new Embed.Field(item.Name.Replace("{prefix}", prefix), item.Value.Replace("{prefix}", prefix))
+            ).Append(new("", EmbedFooter)).ToArray() } },
             Components = new[] { buttons }
         });
     }

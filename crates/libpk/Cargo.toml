@@ -21,3 +21,4 @@ uuid = { workspace = true }
 config = "0.14.0"
 json-subscriber = { version = "0.2.2", features = ["env-filter"] }
 metrics-exporter-prometheus = { version = "0.15.3", default-features = false, features = ["tokio", "http-listener", "tracing"] }
+sentry-tracing = "0.36.0"
