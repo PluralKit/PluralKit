@@ -1,8 +1,10 @@
 #![feature(let_chains)]
 #![feature(if_let_guard)]
+#![feature(duration_constructors)]
 
 use chrono::Timelike;
 use discord::gateway::cluster_config;
+use event_awaiter::EventAwaiter;
 use fred::{clients::RedisPool, interfaces::*};
 use libpk::runtime_config::RuntimeConfig;
 use reqwest::ClientBuilder;
@@ -12,12 +14,13 @@ use signal_hook::{
 };
 use std::{sync::Arc, time::Duration, vec::Vec};
 use tokio::{sync::mpsc::channel, task::JoinSet};
-use tracing::{error, info, warn};
+use tracing::{debug, error, info, warn};
 use twilight_gateway::{MessageSender, ShardId};
 use twilight_model::gateway::payload::outgoing::UpdatePresence;
 
 mod cache_api;
 mod discord;
+mod event_awaiter;
 mod logger;
 
 const RUNTIME_CONFIG_KEY_EVENT_TARGET: &'static str = "event_target";
@@ -39,6 +42,11 @@ async fn real_main() -> anyhow::Result<()> {
 
     let shard_state = discord::shard_state::new(redis.clone());
     let cache = Arc::new(discord::cache::new());
+    let awaiter = Arc::new(EventAwaiter::new());
+    tokio::spawn({
+        let awaiter = awaiter.clone();
+        async move { awaiter.cleanup_loop().await }
+    });
 
     let shards = discord::gateway::create_shards(redis.clone())?;
 
@@ -63,22 +71,36 @@ async fn real_main() -> anyhow::Result<()> {
 
     set.spawn(tokio::spawn({
         let runtime_config = runtime_config.clone();
-        async move {
-            let client = Arc::new(ClientBuilder::new()
-                .connect_timeout(Duration::from_secs(1))
-                .timeout(Duration::from_secs(1))
-                .build()
-                .expect("error making client"));
+        let awaiter = awaiter.clone();
 
-            while let Some((shard_id, event)) = event_rx.recv().await {
-                let target = runtime_config.get(RUNTIME_CONFIG_KEY_EVENT_TARGET).await;
+        async move {
+            let client = Arc::new(
+                ClientBuilder::new()
+                    .connect_timeout(Duration::from_secs(1))
+                    .timeout(Duration::from_secs(1))
+                    .build()
+                    .expect("error making client"),
+            );
+
+            while let Some((shard_id, parsed_event, raw_event)) = event_rx.recv().await {
+                let target = if let Some(target) = awaiter.target_for_event(parsed_event).await {
+                    debug!("sending event to awaiter");
+                    Some(target)
+                } else if let Some(target) =
+                    runtime_config.get(RUNTIME_CONFIG_KEY_EVENT_TARGET).await
+                {
+                    Some(target)
+                } else {
+                    None
+                };
+
                 if let Some(target) = target {
                     tokio::spawn({
                         let client = client.clone();
                         async move {
                             if let Err(error) = client
                                 .post(format!("{target}/{}", shard_id.number()))
-                                .body(event)
+                                .body(raw_event)
                                 .send()
                                 .await
                             {
@@ -98,7 +120,7 @@ async fn real_main() -> anyhow::Result<()> {
     // todo: probably don't do it this way
     let api_shutdown_tx = shutdown_tx.clone();
     set.spawn(tokio::spawn(async move {
-        match cache_api::run_server(cache, runtime_config).await {
+        match cache_api::run_server(cache, runtime_config, awaiter.clone()).await {
             Err(error) => {
                 tracing::error!(?error, "failed to serve cache api");
                 let _ = api_shutdown_tx.send(());

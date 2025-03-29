@@ -10,9 +10,12 @@ use serde_json::{json, to_string};
 use tracing::{error, info};
 use twilight_model::id::Id;
 
-use crate::discord::{
-    cache::{dm_channel, DiscordCache, DM_PERMISSIONS},
-    gateway::cluster_config,
+use crate::{
+    discord::{
+        cache::{dm_channel, DiscordCache, DM_PERMISSIONS},
+        gateway::cluster_config,
+    },
+    event_awaiter::{AwaitEventRequest, EventAwaiter},
 };
 use std::sync::Arc;
 
@@ -22,10 +25,11 @@ fn status_code(code: StatusCode, body: String) -> Response {
 
 // this function is manually formatted for easier legibility of route_services
 #[rustfmt::skip]
-pub async fn run_server(cache: Arc<DiscordCache>, runtime_config: Arc<RuntimeConfig>) -> anyhow::Result<()> {
+pub async fn run_server(cache: Arc<DiscordCache>, runtime_config: Arc<RuntimeConfig>, awaiter: Arc<EventAwaiter>) -> anyhow::Result<()> {
     // hacky fix for `move`
     let runtime_config_for_post = runtime_config.clone();
     let runtime_config_for_delete = runtime_config.clone();
+    let awaiter_for_clear = awaiter.clone();
 
     let app = Router::new()
         .route(
@@ -188,6 +192,19 @@ pub async fn run_server(cache: Arc<DiscordCache>, runtime_config: Arc<RuntimeCon
             let runtime_config = runtime_config_for_delete;
             runtime_config.delete(key).await.expect("failed to update runtime config");
             status_code(StatusCode::FOUND, to_string(&runtime_config.get_all().await).unwrap())
+        }))
+
+        .route("/await_event", post(|body: String| async move {
+            info!("got request: {body}");
+            let Ok(req) = serde_json::from_str::<AwaitEventRequest>(&body) else {
+                return status_code(StatusCode::BAD_REQUEST, "".to_string());
+            };
+            awaiter.handle_request(req).await;
+            status_code(StatusCode::NO_CONTENT, "".to_string())
+        }))
+        .route("/clear_awaiter", post(|| async move {
+            awaiter_for_clear.clear().await;
+            status_code(StatusCode::NO_CONTENT, "".to_string())
         }))
 
         .layer(axum::middleware::from_fn(crate::logger::logger))

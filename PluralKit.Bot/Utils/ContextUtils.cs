@@ -1,6 +1,7 @@
 using Autofac;
 
 using Myriad.Builders;
+using Myriad.Cache;
 using Myriad.Gateway;
 using Myriad.Rest.Exceptions;
 using Myriad.Rest.Types.Requests;
@@ -40,8 +41,12 @@ public static class ContextUtils
     }
 
     public static async Task<MessageReactionAddEvent> AwaitReaction(this Context ctx, Message message,
-            User user = null, Func<MessageReactionAddEvent, bool> predicate = null, Duration? timeout = null)
+            User user, Func<MessageReactionAddEvent, bool> predicate = null, Duration? timeout = null)
     {
+        // check if http gateway and set listener
+        if (ctx.Cache is HttpDiscordCache)
+            await (ctx.Cache as HttpDiscordCache).AwaitReaction(ctx.Guild?.Id ?? 0, message.Id, user!.Id, timeout);
+
         bool ReactionPredicate(MessageReactionAddEvent evt)
         {
             if (message.Id != evt.MessageId) return false; // Ignore reactions for different messages
@@ -57,11 +62,17 @@ public static class ContextUtils
 
     public static async Task<bool> ConfirmWithReply(this Context ctx, string expectedReply, bool treatAsHid = false)
     {
+        var timeout = Duration.FromMinutes(1);
+
+        // check if http gateway and set listener
+        if (ctx.Cache is HttpDiscordCache)
+            await (ctx.Cache as HttpDiscordCache).AwaitMessage(ctx.Guild?.Id ?? 0, ctx.Channel.Id, ctx.Author.Id, timeout);
+
         bool Predicate(MessageCreateEvent e) =>
             e.Author.Id == ctx.Author.Id && e.ChannelId == ctx.Channel.Id;
 
         var msg = await ctx.Services.Resolve<HandlerQueue<MessageCreateEvent>>()
-            .WaitFor(Predicate, Duration.FromMinutes(1));
+            .WaitFor(Predicate, timeout);
 
         var content = msg.Content;
         if (treatAsHid)
@@ -96,11 +107,17 @@ public static class ContextUtils
 
         async Task<int> PromptPageNumber()
         {
+            var timeout = Duration.FromMinutes(0.5);
+
+            // check if http gateway and set listener
+            if (ctx.Cache is HttpDiscordCache)
+                await (ctx.Cache as HttpDiscordCache).AwaitMessage(ctx.Guild?.Id ?? 0, ctx.Channel.Id, ctx.Author.Id, timeout);
+
             bool Predicate(MessageCreateEvent e) =>
                 e.Author.Id == ctx.Author.Id && e.ChannelId == ctx.Channel.Id;
 
             var msg = await ctx.Services.Resolve<HandlerQueue<MessageCreateEvent>>()
-                .WaitFor(Predicate, Duration.FromMinutes(0.5));
+                .WaitFor(Predicate, timeout);
 
             int.TryParse(msg.Content, out var num);
 

@@ -82,7 +82,7 @@ pub fn create_shards(redis: fred::clients::RedisPool) -> anyhow::Result<Vec<Shar
 
 pub async fn runner(
     mut shard: Shard<RedisQueue>,
-    tx: Sender<(ShardId, String)>,
+    tx: Sender<(ShardId, Event, String)>,
     shard_state: ShardStateManager,
     cache: Arc<DiscordCache>,
     runtime_config: Arc<RuntimeConfig>,
@@ -182,21 +182,21 @@ pub async fn runner(
         // and the default match skips the next block (continues to the next event)
         match event {
             Event::InteractionCreate(_) => {}
-            Event::MessageCreate(m) if m.author.id != our_user_id => {}
-            Event::MessageUpdate(m)
+            Event::MessageCreate(ref m) if m.author.id != our_user_id => {}
+            Event::MessageUpdate(ref m)
                 if let Some(author) = m.author.clone()
                     && author.id != our_user_id
                     && !author.bot => {}
             Event::MessageDelete(_) => {}
             Event::MessageDeleteBulk(_) => {}
-            Event::ReactionAdd(r) if r.user_id != our_user_id => {}
+            Event::ReactionAdd(ref r) if r.user_id != our_user_id => {}
             _ => {
                 continue;
             }
         }
 
         if runtime_config.exists(RUNTIME_CONFIG_KEY_EVENT_TARGET).await {
-            tx.send((shard.id(), raw_event)).await.unwrap();
+            tx.send((shard.id(), event, raw_event)).await.unwrap();
         }
     }
 }

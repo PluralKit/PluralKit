@@ -1089,6 +1089,7 @@ dependencies = [
  "libpk",
  "metrics",
  "reqwest 0.12.8",
+ "serde",
  "serde_json",
  "serde_variant",
  "signal-hook",

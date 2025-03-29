@@ -976,6 +976,8 @@
       "myriad": {
         "type": "Project",
         "dependencies": {
+          "NodaTime": "[3.2.0, )",
+          "NodaTime.Serialization.JsonNet": "[3.1.0, )",
           "Polly": "[8.5.0, )",
           "Polly.Contrib.WaitAndRetry": "[1.1.1, )",
           "Serilog": "[4.2.0, )",
