@@ -29,7 +29,7 @@ public class SystemEdit
         _avatarHosting = avatarHosting;
     }
 
-    public async Task Name(Context ctx, PKSystem target)
+    public async Task ShowName(Context ctx, PKSystem target, ReplyFormat format)
     {
         ctx.CheckSystemPrivacy(target.Id, target.NamePrivacy);
         var isOwnSystem = target.Id == ctx.System?.Id;
@@ -38,15 +38,11 @@ public class SystemEdit
         if (isOwnSystem)
             noNameSetMessage += $" Type `{ctx.DefaultPrefix}system name <name>` to set one.";
 
-        var format = ctx.MatchFormat();
-
-        // if there's nothing next or what's next is "raw"/"plaintext" we're doing a query, so check for null
-        if (!ctx.HasNext(false) || format != ReplyFormat.Standard)
-            if (target.Name == null)
-            {
-                await ctx.Reply(noNameSetMessage);
-                return;
-            }
+        if (target.Name == null)
+        {
+            await ctx.Reply(noNameSetMessage);
+            return;
+        }
 
         if (format == ReplyFormat.Raw)
         {
@@ -61,37 +57,40 @@ public class SystemEdit
             return;
         }
 
-        if (!ctx.HasNext(false))
-        {
-            await ctx.Reply(
-                $"{(isOwnSystem ? "Your" : "This")} system's name is currently **{target.Name}**."
-                + (isOwnSystem ? $" Type `{ctx.DefaultPrefix}system name -clear` to clear it."
-                + $" Using {target.Name.Length}/{Limits.MaxSystemNameLength} characters." : ""));
-            return;
-        }
+        await ctx.Reply(
+            $"{(isOwnSystem ? "Your" : "This")} system's name is currently **{target.Name}**."
+            + (isOwnSystem ? $" Type `{ctx.DefaultPrefix}system name -clear` to clear it."
+            + $" Using {target.Name.Length}/{Limits.MaxSystemNameLength} characters." : ""));
+        return;
+    }
 
+    public async Task ClearName(Context ctx, PKSystem target)
+    {
+        ctx.CheckSystemPrivacy(target.Id, target.NamePrivacy);
         ctx.CheckSystem().CheckOwnSystem(target);
 
-        if (ctx.MatchClear() && await ctx.ConfirmClear("your system's name"))
+        if (await ctx.ConfirmClear("your system's name"))
         {
             await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { Name = null });
 
             await ctx.Reply($"{Emojis.Success} System name cleared.");
         }
-        else
-        {
-            var newSystemName = ctx.RemainderOrNull(false).NormalizeLineEndSpacing();
-
-            if (newSystemName.Length > Limits.MaxSystemNameLength)
-                throw Errors.StringTooLongError("System name", newSystemName.Length, Limits.MaxSystemNameLength);
-
-            await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { Name = newSystemName });
-
-            await ctx.Reply($"{Emojis.Success} System name changed (using {newSystemName.Length}/{Limits.MaxSystemNameLength} characters).");
-        }
     }
 
-    public async Task ServerName(Context ctx, PKSystem target)
+    public async Task Rename(Context ctx, PKSystem target, string newSystemName)
+    {
+        ctx.CheckSystemPrivacy(target.Id, target.NamePrivacy);
+        ctx.CheckSystem().CheckOwnSystem(target);
+
+        if (newSystemName.Length > Limits.MaxSystemNameLength)
+            throw Errors.StringTooLongError("System name", newSystemName.Length, Limits.MaxSystemNameLength);
+
+        await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { Name = newSystemName });
+
+        await ctx.Reply($"{Emojis.Success} System name changed (using {newSystemName.Length}/{Limits.MaxSystemNameLength} characters).");
+    }
+
+    public async Task ShowServerName(Context ctx, PKSystem target, ReplyFormat format)
     {
         ctx.CheckGuildContext();
 
@@ -103,15 +102,11 @@ public class SystemEdit
 
         var settings = await ctx.Repository.GetSystemGuild(ctx.Guild.Id, target.Id);
 
-        var format = ctx.MatchFormat();
-
-        // if there's nothing next or what's next is "raw"/"plaintext" we're doing a query, so check for null
-        if (!ctx.HasNext(false) || format != ReplyFormat.Standard)
-            if (settings.DisplayName == null)
-            {
-                await ctx.Reply(noNameSetMessage);
-                return;
-            }
+        if (settings.DisplayName == null)
+        {
+            await ctx.Reply(noNameSetMessage);
+            return;
+        }
 
         if (format == ReplyFormat.Raw)
         {
@@ -126,34 +121,37 @@ public class SystemEdit
             return;
         }
 
-        if (!ctx.HasNext(false))
-        {
-            await ctx.Reply(
-                $"{(isOwnSystem ? "Your" : "This")} system's name for this server is currently **{settings.DisplayName}**."
-                + (isOwnSystem ? $" Type `{ctx.DefaultPrefix}system servername -clear` to clear it."
-                + $" Using {settings.DisplayName.Length}/{Limits.MaxSystemNameLength} characters." : ""));
-            return;
-        }
+        await ctx.Reply(
+            $"{(isOwnSystem ? "Your" : "This")} system's name for this server is currently **{settings.DisplayName}**."
+            + (isOwnSystem ? $" Type `{ctx.DefaultPrefix}system servername -clear` to clear it."
+            + $" Using {settings.DisplayName.Length}/{Limits.MaxSystemNameLength} characters." : ""));
+        return;
+    }
 
+    public async Task ClearServerName(Context ctx, PKSystem target)
+    {
+        ctx.CheckGuildContext();
         ctx.CheckSystem().CheckOwnSystem(target);
 
-        if (ctx.MatchClear() && await ctx.ConfirmClear("your system's name for this server"))
+        if (await ctx.ConfirmClear("your system's name for this server"))
         {
             await ctx.Repository.UpdateSystemGuild(target.Id, ctx.Guild.Id, new SystemGuildPatch { DisplayName = null });
 
             await ctx.Reply($"{Emojis.Success} System name for this server cleared.");
         }
-        else
-        {
-            var newSystemGuildName = ctx.RemainderOrNull(false).NormalizeLineEndSpacing();
+    }
 
-            if (newSystemGuildName.Length > Limits.MaxSystemNameLength)
-                throw Errors.StringTooLongError("System name for this server", newSystemGuildName.Length, Limits.MaxSystemNameLength);
+    public async Task RenameServerName(Context ctx, PKSystem target, string newSystemGuildName)
+    {
+        ctx.CheckGuildContext();
+        ctx.CheckSystem().CheckOwnSystem(target);
 
-            await ctx.Repository.UpdateSystemGuild(target.Id, ctx.Guild.Id, new SystemGuildPatch { DisplayName = newSystemGuildName });
+        if (newSystemGuildName.Length > Limits.MaxSystemNameLength)
+            throw Errors.StringTooLongError("System name for this server", newSystemGuildName.Length, Limits.MaxSystemNameLength);
 
-            await ctx.Reply($"{Emojis.Success} System name for this server changed (using {newSystemGuildName.Length}/{Limits.MaxSystemNameLength} characters).");
-        }
+        await ctx.Repository.UpdateSystemGuild(target.Id, ctx.Guild.Id, new SystemGuildPatch { DisplayName = newSystemGuildName });
+
+        await ctx.Reply($"{Emojis.Success} System name for this server changed (using {newSystemGuildName.Length}/{Limits.MaxSystemNameLength} characters).");
     }
 
     public async Task Description(Context ctx, PKSystem target)

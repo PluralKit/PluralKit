@@ -24,6 +24,16 @@ public partial class CommandTree
             Commands.CfgApTimeoutUpdate(CfgApTimeoutUpdateParams param, _) => ctx.Execute<Config>(null, m => m.EditAutoproxyTimeout(ctx, param.timeout)),
             Commands.FunThunder => ctx.Execute<Fun>(null, m => m.Thunder(ctx)),
             Commands.FunMeow => ctx.Execute<Fun>(null, m => m.Meow(ctx)),
+            Commands.SystemInfo(SystemInfoParams param, SystemInfoFlags flags) => ctx.Execute<System>(SystemInfo, m => m.Query(ctx, param.target, flags.all, flags.@public, flags.@private)),
+            Commands.SystemInfoSelf(_, SystemInfoSelfFlags flags) => ctx.Execute<System>(SystemInfo, m => m.Query(ctx, ctx.System, flags.all, flags.@public, flags.@private)),
+            Commands.SystemNew(SystemNewParams param, _) => ctx.Execute<System>(SystemNew, m => m.New(ctx, null)),
+            Commands.SystemNewName(SystemNewNameParams param, _) => ctx.Execute<System>(SystemNew, m => m.New(ctx, param.name)),
+            Commands.SystemShowName(SystemShowNameParams param, SystemShowNameFlags flags) => ctx.Execute<SystemEdit>(SystemRename, m => m.ShowName(ctx, param.target, flags.GetReplyFormat())),
+            Commands.SystemRename(SystemRenameParams param, _) => ctx.Execute<SystemEdit>(SystemRename, m => m.Rename(ctx, param.target, param.name)),
+            Commands.SystemClearName(SystemClearNameParams param, _) => ctx.Execute<SystemEdit>(SystemRename, m => m.ClearName(ctx, param.target)),
+            Commands.SystemShowServerName(SystemShowServerNameParams param, SystemShowServerNameFlags flags) => ctx.Execute<SystemEdit>(SystemServerName, m => m.ShowServerName(ctx, param.target, flags.GetReplyFormat())),
+            Commands.SystemClearServerName(SystemClearServerNameParams param, _) => ctx.Execute<SystemEdit>(SystemServerName, m => m.ClearServerName(ctx, param.target)),
+            Commands.SystemRenameServerName(SystemRenameServerNameParams param, _) => ctx.Execute<SystemEdit>(SystemServerName, m => m.RenameServerName(ctx, param.target, param.name)),
             _ =>
                 // this should only ever occur when deving if commands are not implemented...
                 ctx.Reply(
@@ -217,10 +227,7 @@ public partial class CommandTree
 
     private async Task HandleSystemCommand(Context ctx)
     {
-        // these commands never take a system target
-        if (ctx.Match("new", "create", "make", "add", "register", "init", "n"))
-            await ctx.Execute<System>(SystemNew, m => m.New(ctx));
-        else if (ctx.Match("commands", "help"))
+        if (ctx.Match("commands", "help"))
             await PrintCommandList(ctx, "systems", SystemCommands);
 
         // todo: these aren't deprecated but also shouldn't be here
@@ -275,12 +282,7 @@ public partial class CommandTree
 
     private async Task HandleSystemCommandTargeted(Context ctx, PKSystem target)
     {
-        if (ctx.Match("name", "rename", "changename", "rn"))
-            await ctx.CheckSystem(target).Execute<SystemEdit>(SystemRename, m => m.Name(ctx, target));
-        else if (ctx.Match("servername", "sn", "sname", "snick", "snickname", "servernick", "servernickname",
-                     "serverdisplayname", "guildname", "guildnick", "guildnickname", "serverdn"))
-            await ctx.Execute<SystemEdit>(SystemServerName, m => m.ServerName(ctx, target));
-        else if (ctx.Match("tag", "t"))
+        if (ctx.Match("tag", "t"))
             await ctx.CheckSystem(target).Execute<SystemEdit>(SystemTag, m => m.Tag(ctx, target));
         else if (ctx.Match("servertag", "st", "stag", "deer"))
             await ctx.CheckSystem(target).Execute<SystemEdit>(SystemServerTag, m => m.ServerTag(ctx, target));
@@ -314,8 +316,6 @@ public partial class CommandTree
             await ctx.CheckSystem(target).Execute<SystemFront>(SystemFrontHistory, m => m.SystemFrontHistory(ctx, target));
         else if (ctx.Match("fp", "frontpercent", "front%", "frontbreakdown"))
             await ctx.CheckSystem(target).Execute<SystemFront>(SystemFrontPercent, m => m.FrontPercent(ctx, system: target));
-        else if (ctx.Match("info", "view", "show"))
-            await ctx.CheckSystem(target).Execute<System>(SystemInfo, m => m.Query(ctx, target));
         else if (ctx.Match("groups", "gs"))
             await ctx.CheckSystem(target).Execute<Groups>(GroupList, g => g.ListSystemGroups(ctx, target));
         else if (ctx.Match("privacy"))

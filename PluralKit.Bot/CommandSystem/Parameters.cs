@@ -111,8 +111,7 @@ public class Parameters
         // todo: i think this should return null for everything...?
         if (param == null) return default;
         return extract_func(param)
-            // this should never really happen (hopefully!), but in case the parameter names dont match up (typos...) between rust <-> c#...
-            // (it would be very cool to have this statically checked somehow..?)
+            // this should never happen unless codegen somehow uses a wrong name
             ?? throw new PKError($"Flag {flag_name.AsCode()} was not found or did not have a value defined for command {Callback().AsCode()} -- this is a bug!!");
     }
 
@@ -122,8 +121,7 @@ public class Parameters
         // todo: i think this should return null for everything...?
         if (param == null) return default;
         return extract_func(param)
-            // this should never really happen (hopefully!), but in case the parameter names dont match up (typos...) between rust <-> c#...
-            // (it would be very cool to have this statically checked somehow..?)
+            // this should never happen unless codegen somehow uses a wrong name
             ?? throw new PKError($"Parameter {param_name.AsCode()} was not found for command {Callback().AsCode()} -- this is a bug!!");
     }
 }

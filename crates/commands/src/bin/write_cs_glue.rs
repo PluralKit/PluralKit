@@ -1,8 +1,7 @@
 use std::{env, fmt::Write, fs, path::PathBuf, str::FromStr};
 
 use command_parser::{
-    parameter::{Parameter, ParameterKind},
-    token::Token,
+    command, parameter::{Parameter, ParameterKind}, token::Token
 };
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -34,7 +33,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         for param in &command_params {
             writeln!(
                 &mut command_params_init,
-                r#"{name} = await ctx.ParamResolve{extract_fn_name}("{name}") ?? throw new PKError("this is a bug"),"#,
+                r#"@{name} = await ctx.ParamResolve{extract_fn_name}("{name}") ?? throw new PKError("this is a bug"),"#,
                 name = param.name(),
                 extract_fn_name = get_param_param_ty(param.kind()),
             )?;
@@ -44,14 +43,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             if let Some(kind) = flag.get_value() {
                 writeln!(
                     &mut command_flags_init,
-                    r#"{name} = await ctx.FlagResolve{extract_fn_name}("{name}"),"#,
+                    r#"@{name} = await ctx.FlagResolve{extract_fn_name}("{name}"),"#,
                     name = flag.get_name(),
                     extract_fn_name = get_param_param_ty(kind),
                 )?;
             } else {
                 writeln!(
                     &mut command_flags_init,
-                    r#"{name} = ctx.Parameters.HasFlag("{name}"),"#,
+                    r#"@{name} = ctx.Parameters.HasFlag("{name}"),"#,
                     name = flag.get_name(),
                 )?;
             }
@@ -92,7 +91,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         for param in &command_params {
             writeln!(
                 &mut command_params_fields,
-                r#"public required {ty} {name};"#,
+                r#"public required {ty} @{name};"#,
                 name = param.name(),
                 ty = get_param_ty(param.kind()),
             )?;
@@ -102,18 +101,32 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             if let Some(kind) = flag.get_value() {
                 writeln!(
                     &mut command_flags_fields,
-                    r#"public {ty}? {name};"#,
+                    r#"public {ty}? @{name};"#,
                     name = flag.get_name(),
                     ty = get_param_ty(kind),
                 )?;
             } else {
                 writeln!(
                     &mut command_flags_fields,
-                    r#"public required bool {name};"#,
+                    r#"public required bool @{name};"#,
                     name = flag.get_name(),
                 )?;
             }
         }
+        let mut command_reply_format = String::new();
+        if command.flags.iter().any(|flag| flag.get_name() == "plaintext") {
+            writeln!(
+                &mut command_reply_format,
+                r#"if (plaintext) return ReplyFormat.Plaintext;"#,
+            )?;
+        }
+        if command.flags.iter().any(|flag| flag.get_name() == "raw") {
+            writeln!(
+                &mut command_reply_format,
+                r#"if (raw) return ReplyFormat.Raw;"#,
+            )?;
+        }
+        command_reply_format.push_str("return ReplyFormat.Standard;\n");
         write!(
             &mut glue,
             r#"
@@ -124,6 +137,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             public class {command_name}Flags
             {{
                 {command_flags_fields}
+
+                public ReplyFormat GetReplyFormat()
+                {{
+                    {command_reply_format}
+                }}
             }}
             "#,
             command_name = command_callback_to_name(&command.cb),

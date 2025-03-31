@@ -149,10 +149,11 @@ public class Context
     public LookupContext DirectLookupContextFor(SystemId systemId)
         => System?.Id == systemId ? LookupContext.ByOwner : LookupContext.ByNonOwner;
 
-    public LookupContext LookupContextFor(SystemId systemId)
+    public LookupContext LookupContextFor(SystemId systemId, bool? _hasPrivateOverride = null, bool? _hasPublicOverride = null)
     {
-        var hasPrivateOverride = Parameters.HasFlag("private", "priv");
-        var hasPublicOverride = Parameters.HasFlag("public", "pub");
+        // TODO(yusdacra): these should be passed as a parameter to this method all the way from command tree
+        bool hasPrivateOverride = _hasPrivateOverride ?? Parameters.HasFlag("private", "priv");
+        bool hasPublicOverride = _hasPublicOverride ?? Parameters.HasFlag("public", "pub");
 
         if (hasPrivateOverride && hasPublicOverride)
             throw new PKError("Cannot match both public and private flags at the same time.");

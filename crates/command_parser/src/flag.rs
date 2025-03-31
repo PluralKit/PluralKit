@@ -106,18 +106,18 @@ impl From<(&str, ParameterKind)> for Flag {
     }
 }
 
-impl<const L: usize> From<[&str; L]> for Flag {
-    fn from(value: [&str; L]) -> Self {
-        let mut flag = Flag::new(value[0]);
-        for alias in &value[1..] {
-            flag = flag.alias(*alias);
+impl<const L: usize> From<(&str, [&str; L])> for Flag {
+    fn from((name, aliases): (&str, [&str; L])) -> Self {
+        let mut flag = Flag::new(name);
+        for alias in aliases {
+            flag = flag.alias(alias);
         }
         flag
     }
 }
 
-impl<const L: usize> From<([&str; L], ParameterKind)> for Flag {
-    fn from((names, value): ([&str; L], ParameterKind)) -> Self {
-        Flag::from(names).value(value)
+impl<const L: usize> From<((&str, [&str; L]), ParameterKind)> for Flag {
+    fn from(((name, aliases), value): ((&str, [&str; L]), ParameterKind)) -> Self {
+        Flag::from((name, aliases)).value(value)
     }
 }
