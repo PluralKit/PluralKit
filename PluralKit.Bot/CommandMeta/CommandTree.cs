@@ -13,27 +13,45 @@ public partial class CommandTree
                     "For the list of commands, see the website: <https://pluralkit.me/commands>"),
             Commands.HelpProxy => ctx.Reply(
                     "The proxy help page has been moved! See the website: https://pluralkit.me/guide#proxying"),
-            Commands.MemberShow(MemberShowParams param, _) => ctx.Execute<Member>(MemberInfo, m => m.ViewMember(ctx, param.target)),
-            Commands.MemberNew(MemberNewParams param, _) => ctx.Execute<Member>(MemberNew, m => m.NewMember(ctx, param.name)),
-            Commands.MemberSoulscream(MemberSoulscreamParams param, _) => ctx.Execute<Member>(MemberInfo, m => m.Soulscream(ctx, param.target)),
+            Commands.MemberShow(var param, _) => ctx.Execute<Member>(MemberInfo, m => m.ViewMember(ctx, param.target)),
+            Commands.MemberNew(var param, _) => ctx.Execute<Member>(MemberNew, m => m.NewMember(ctx, param.name)),
+            Commands.MemberSoulscream(var param, _) => ctx.Execute<Member>(MemberInfo, m => m.Soulscream(ctx, param.target)),
             Commands.CfgApAccountShow => ctx.Execute<Config>(null, m => m.ViewAutoproxyAccount(ctx)),
-            Commands.CfgApAccountUpdate(CfgApAccountUpdateParams param, _) => ctx.Execute<Config>(null, m => m.EditAutoproxyAccount(ctx, param.toggle)),
+            Commands.CfgApAccountUpdate(var param, _) => ctx.Execute<Config>(null, m => m.EditAutoproxyAccount(ctx, param.toggle)),
             Commands.CfgApTimeoutShow => ctx.Execute<Config>(null, m => m.ViewAutoproxyTimeout(ctx)),
             Commands.CfgApTimeoutOff => ctx.Execute<Config>(null, m => m.DisableAutoproxyTimeout(ctx)),
             Commands.CfgApTimeoutReset => ctx.Execute<Config>(null, m => m.ResetAutoproxyTimeout(ctx)),
-            Commands.CfgApTimeoutUpdate(CfgApTimeoutUpdateParams param, _) => ctx.Execute<Config>(null, m => m.EditAutoproxyTimeout(ctx, param.timeout)),
+            Commands.CfgApTimeoutUpdate(var param, _) => ctx.Execute<Config>(null, m => m.EditAutoproxyTimeout(ctx, param.timeout)),
             Commands.FunThunder => ctx.Execute<Fun>(null, m => m.Thunder(ctx)),
             Commands.FunMeow => ctx.Execute<Fun>(null, m => m.Meow(ctx)),
-            Commands.SystemInfo(SystemInfoParams param, SystemInfoFlags flags) => ctx.Execute<System>(SystemInfo, m => m.Query(ctx, param.target, flags.all, flags.@public, flags.@private)),
-            Commands.SystemInfoSelf(_, SystemInfoSelfFlags flags) => ctx.Execute<System>(SystemInfo, m => m.Query(ctx, ctx.System, flags.all, flags.@public, flags.@private)),
-            Commands.SystemNew(SystemNewParams param, _) => ctx.Execute<System>(SystemNew, m => m.New(ctx, null)),
-            Commands.SystemNewName(SystemNewNameParams param, _) => ctx.Execute<System>(SystemNew, m => m.New(ctx, param.name)),
-            Commands.SystemShowName(SystemShowNameParams param, SystemShowNameFlags flags) => ctx.Execute<SystemEdit>(SystemRename, m => m.ShowName(ctx, param.target, flags.GetReplyFormat())),
-            Commands.SystemRename(SystemRenameParams param, _) => ctx.Execute<SystemEdit>(SystemRename, m => m.Rename(ctx, param.target, param.name)),
-            Commands.SystemClearName(SystemClearNameParams param, _) => ctx.Execute<SystemEdit>(SystemRename, m => m.ClearName(ctx, param.target)),
-            Commands.SystemShowServerName(SystemShowServerNameParams param, SystemShowServerNameFlags flags) => ctx.Execute<SystemEdit>(SystemServerName, m => m.ShowServerName(ctx, param.target, flags.GetReplyFormat())),
-            Commands.SystemClearServerName(SystemClearServerNameParams param, _) => ctx.Execute<SystemEdit>(SystemServerName, m => m.ClearServerName(ctx, param.target)),
-            Commands.SystemRenameServerName(SystemRenameServerNameParams param, _) => ctx.Execute<SystemEdit>(SystemServerName, m => m.RenameServerName(ctx, param.target, param.name)),
+            Commands.SystemInfo(var param, var flags) => ctx.Execute<System>(SystemInfo, m => m.Query(ctx, param.target, flags.all, flags.@public, flags.@private)),
+            Commands.SystemInfoSelf(_, var flags) => ctx.Execute<System>(SystemInfo, m => m.Query(ctx, ctx.System, flags.all, flags.@public, flags.@private)),
+            Commands.SystemNew(var param, _) => ctx.Execute<System>(SystemNew, m => m.New(ctx, null)),
+            Commands.SystemNewName(var param, _) => ctx.Execute<System>(SystemNew, m => m.New(ctx, param.name)),
+            Commands.SystemShowNameSelf(_, var flags) => ctx.Execute<SystemEdit>(SystemRename, m => m.ShowName(ctx, ctx.System, flags.GetReplyFormat())),
+            Commands.SystemShowName(var param, var flags) => ctx.Execute<SystemEdit>(SystemRename, m => m.ShowName(ctx, param.target, flags.GetReplyFormat())),
+            Commands.SystemRename(var param, _) => ctx.Execute<SystemEdit>(SystemRename, m => m.Rename(ctx, ctx.System, param.name)),
+            Commands.SystemClearName(var param, _) => ctx.Execute<SystemEdit>(SystemRename, m => m.ClearName(ctx, ctx.System)),
+            Commands.SystemShowServerNameSelf(_, var flags) => ctx.Execute<SystemEdit>(SystemServerName, m => m.ShowServerName(ctx, ctx.System, flags.GetReplyFormat())),
+            Commands.SystemShowServerName(var param, var flags) => ctx.Execute<SystemEdit>(SystemServerName, m => m.ShowServerName(ctx, param.target, flags.GetReplyFormat())),
+            Commands.SystemClearServerName(var param, _) => ctx.Execute<SystemEdit>(SystemServerName, m => m.ClearServerName(ctx, ctx.System)),
+            Commands.SystemRenameServerName(var param, _) => ctx.Execute<SystemEdit>(SystemServerName, m => m.RenameServerName(ctx, ctx.System, param.name)),
+            Commands.SystemShowDescriptionSelf(_, var flags) => ctx.Execute<SystemEdit>(SystemDesc, m => m.ShowDescription(ctx, ctx.System, flags.GetReplyFormat())),
+            Commands.SystemShowDescription(var param, var flags) => ctx.Execute<SystemEdit>(SystemDesc, m => m.ShowDescription(ctx, param.target, flags.GetReplyFormat())),
+            Commands.SystemClearDescription(var param, _) => ctx.Execute<SystemEdit>(SystemDesc, m => m.ClearDescription(ctx, ctx.System)),
+            Commands.SystemChangeDescription(var param, _) => ctx.Execute<SystemEdit>(SystemDesc, m => m.ChangeDescription(ctx, ctx.System, param.description)),
+            Commands.SystemShowColorSelf(_, var flags) => ctx.Execute<SystemEdit>(SystemColor, m => m.ShowColor(ctx, ctx.System, flags.GetReplyFormat())),
+            Commands.SystemShowColor(var param, var flags) => ctx.Execute<SystemEdit>(SystemColor, m => m.ShowColor(ctx, param.target, flags.GetReplyFormat())),
+            Commands.SystemClearColor(var param, _) => ctx.Execute<SystemEdit>(SystemColor, m => m.ClearColor(ctx, ctx.System)),
+            Commands.SystemChangeColor(var param, _) => ctx.Execute<SystemEdit>(SystemColor, m => m.ChangeColor(ctx, ctx.System, param.color)),
+            Commands.SystemShowTagSelf(_, var flags) => ctx.Execute<SystemEdit>(SystemTag, m => m.ShowTag(ctx, ctx.System, flags.GetReplyFormat())),
+            Commands.SystemShowTag(var param, var flags) => ctx.Execute<SystemEdit>(SystemTag, m => m.ShowTag(ctx, param.target, flags.GetReplyFormat())),
+            Commands.SystemClearTag(var param, _) => ctx.Execute<SystemEdit>(SystemTag, m => m.ClearTag(ctx, ctx.System)),
+            Commands.SystemChangeTag(var param, _) => ctx.Execute<SystemEdit>(SystemTag, m => m.ChangeTag(ctx, ctx.System, param.tag)),
+            Commands.SystemShowServerTagSelf(_, var flags) => ctx.Execute<SystemEdit>(SystemServerTag, m => m.ShowServerTag(ctx, ctx.System, flags.GetReplyFormat())),
+            Commands.SystemShowServerTag(var param, var flags) => ctx.Execute<SystemEdit>(SystemServerTag, m => m.ShowServerTag(ctx, param.target, flags.GetReplyFormat())),
+            Commands.SystemClearServerTag(var param, _) => ctx.Execute<SystemEdit>(SystemServerTag, m => m.ClearServerTag(ctx, ctx.System)),
+            Commands.SystemChangeServerTag(var param, _) => ctx.Execute<SystemEdit>(SystemServerTag, m => m.ChangeServerTag(ctx, ctx.System, param.tag)),
             _ =>
                 // this should only ever occur when deving if commands are not implemented...
                 ctx.Reply(
@@ -282,16 +300,8 @@ public partial class CommandTree
 
     private async Task HandleSystemCommandTargeted(Context ctx, PKSystem target)
     {
-        if (ctx.Match("tag", "t"))
-            await ctx.CheckSystem(target).Execute<SystemEdit>(SystemTag, m => m.Tag(ctx, target));
-        else if (ctx.Match("servertag", "st", "stag", "deer"))
-            await ctx.CheckSystem(target).Execute<SystemEdit>(SystemServerTag, m => m.ServerTag(ctx, target));
-        else if (ctx.Match("description", "desc", "describe", "d", "bio", "info", "text", "intro"))
-            await ctx.CheckSystem(target).Execute<SystemEdit>(SystemDesc, m => m.Description(ctx, target));
-        else if (ctx.Match("pronouns", "pronoun", "prns", "pn"))
+        if (ctx.Match("pronouns", "pronoun", "prns", "pn"))
             await ctx.CheckSystem(target).Execute<SystemEdit>(SystemPronouns, m => m.Pronouns(ctx, target));
-        else if (ctx.Match("color", "colour"))
-            await ctx.CheckSystem(target).Execute<SystemEdit>(SystemColor, m => m.Color(ctx, target));
         else if (ctx.Match("banner", "splash", "cover"))
             await ctx.CheckSystem(target).Execute<SystemEdit>(SystemBannerImage, m => m.BannerImage(ctx, target));
         else if (ctx.Match("avatar", "picture", "icon", "image", "pic", "pfp"))
