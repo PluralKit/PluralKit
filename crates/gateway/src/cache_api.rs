@@ -8,7 +8,7 @@ use axum::{
 use libpk::runtime_config::RuntimeConfig;
 use serde_json::{json, to_string};
 use tracing::{error, info};
-use twilight_model::id::Id;
+use twilight_model::id::{marker::ChannelMarker, Id};
 
 use crate::{
     discord::{
@@ -136,7 +136,10 @@ pub async fn run_server(cache: Arc<DiscordCache>, runtime_config: Arc<RuntimeCon
         )
         .route(
             "/guilds/:guild_id/channels/:channel_id/last_message",
-            get(|| async { status_code(StatusCode::NOT_IMPLEMENTED, "".to_string()) }),
+            get(|State(cache): State<Arc<DiscordCache>>, Path((_guild_id, channel_id)): Path<(u64, Id<ChannelMarker>)>| async move {
+                let lm = cache.get_last_message(channel_id).await;
+                status_code(StatusCode::FOUND, to_string(&lm).unwrap())
+            }),
         )
 
         .route(

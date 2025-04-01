@@ -70,6 +70,9 @@ public class HttpDiscordCache: IDiscordCache
         return JsonSerializer.Deserialize<T>(plaintext, _jsonSerializerOptions);
     }
 
+    public Task<T> GetLastMessage<T>(ulong guildId, ulong channelId)
+        => QueryCache<T>($"/guilds/{guildId}/channels/{channelId}/last_message", guildId);
+
     private Task AwaitEvent(ulong guildId, object data)
         => AwaitEventShard((int)((guildId >> 22) % (ulong)_shardCount), data);
 

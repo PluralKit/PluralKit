@@ -115,7 +115,7 @@ impl EventAwaiter {
                     .remove(&(message.channel_id, message.author.id))
                     .map(|(timeout, target, options)| {
                         if let Some(options) = options
-                            && !options.contains(&message.content)
+                            && !options.contains(&message.content.to_lowercase())
                         {
                             messages.insert(
                                 (message.channel_id, message.author.id),

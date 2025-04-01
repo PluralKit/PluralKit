@@ -305,7 +305,7 @@ public class ProxiedMessage
                 throw new PKError(error);
         }
 
-        var lastMessage = _lastMessageCache.GetLastMessage(ctx.Message.ChannelId);
+        var lastMessage = await _lastMessageCache.GetLastMessage(ctx.Message.GuildId ?? 0, ctx.Message.ChannelId);
 
         var isLatestMessage = lastMessage?.Current.Id == ctx.Message.Id
             ? lastMessage?.Previous?.Id == msg.Mid

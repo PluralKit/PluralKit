@@ -246,7 +246,7 @@ public class ProxyService
                 ChannelId = rootChannel.Id,
                 ThreadId = threadId,
                 MessageId = trigger.Id,
-                Name = await FixSameName(messageChannel.Id, ctx, match.Member),
+                Name = await FixSameName(trigger.GuildId!.Value, messageChannel.Id, ctx, match.Member),
                 AvatarUrl = AvatarUtils.TryRewriteCdnUrl(match.Member.ProxyAvatar(ctx)),
                 Content = content,
                 Attachments = trigger.Attachments,
@@ -458,11 +458,11 @@ public class ProxyService
         };
     }
 
-    private async Task<string> FixSameName(ulong channelId, MessageContext ctx, ProxyMember member)
+    private async Task<string> FixSameName(ulong guildId, ulong channelId, MessageContext ctx, ProxyMember member)
     {
         var proxyName = member.ProxyName(ctx);
 
-        var lastMessage = _lastMessage.GetLastMessage(channelId)?.Previous;
+        var lastMessage = (await _lastMessage.GetLastMessage(guildId, channelId))?.Previous;
         if (lastMessage == null)
             // cache is out of date or channel is empty.
             return proxyName;

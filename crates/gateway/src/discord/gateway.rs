@@ -173,7 +173,7 @@ pub async fn runner(
                 cache.2.write().await.push(shard_id);
             }
         }
-        cache.0.update(&event);
+        cache.update(&event).await;
 
         // okay, we've handled the event internally, let's send it to consumers
 
