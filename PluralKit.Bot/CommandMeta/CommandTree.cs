@@ -31,35 +31,35 @@ public partial class CommandTree
             Commands.SystemShowNameSelf(_, var flags) => ctx.Execute<SystemEdit>(SystemRename, m => m.ShowName(ctx, ctx.System, flags.GetReplyFormat())),
             Commands.SystemShowName(var param, var flags) => ctx.Execute<SystemEdit>(SystemRename, m => m.ShowName(ctx, param.target, flags.GetReplyFormat())),
             Commands.SystemRename(var param, _) => ctx.Execute<SystemEdit>(SystemRename, m => m.Rename(ctx, ctx.System, param.name)),
-            Commands.SystemClearName(var param, _) => ctx.Execute<SystemEdit>(SystemRename, m => m.ClearName(ctx, ctx.System)),
+            Commands.SystemClearName(var param, var flags) => ctx.Execute<SystemEdit>(SystemRename, m => m.ClearName(ctx, ctx.System, flags.yes)),
             Commands.SystemShowServerNameSelf(_, var flags) => ctx.Execute<SystemEdit>(SystemServerName, m => m.ShowServerName(ctx, ctx.System, flags.GetReplyFormat())),
             Commands.SystemShowServerName(var param, var flags) => ctx.Execute<SystemEdit>(SystemServerName, m => m.ShowServerName(ctx, param.target, flags.GetReplyFormat())),
-            Commands.SystemClearServerName(var param, _) => ctx.Execute<SystemEdit>(SystemServerName, m => m.ClearServerName(ctx, ctx.System)),
+            Commands.SystemClearServerName(var param, var flags) => ctx.Execute<SystemEdit>(SystemServerName, m => m.ClearServerName(ctx, ctx.System, flags.yes)),
             Commands.SystemRenameServerName(var param, _) => ctx.Execute<SystemEdit>(SystemServerName, m => m.RenameServerName(ctx, ctx.System, param.name)),
             Commands.SystemShowDescriptionSelf(_, var flags) => ctx.Execute<SystemEdit>(SystemDesc, m => m.ShowDescription(ctx, ctx.System, flags.GetReplyFormat())),
             Commands.SystemShowDescription(var param, var flags) => ctx.Execute<SystemEdit>(SystemDesc, m => m.ShowDescription(ctx, param.target, flags.GetReplyFormat())),
-            Commands.SystemClearDescription(var param, _) => ctx.Execute<SystemEdit>(SystemDesc, m => m.ClearDescription(ctx, ctx.System)),
+            Commands.SystemClearDescription(var param, var flags) => ctx.Execute<SystemEdit>(SystemDesc, m => m.ClearDescription(ctx, ctx.System, flags.yes)),
             Commands.SystemChangeDescription(var param, _) => ctx.Execute<SystemEdit>(SystemDesc, m => m.ChangeDescription(ctx, ctx.System, param.description)),
             Commands.SystemShowColorSelf(_, var flags) => ctx.Execute<SystemEdit>(SystemColor, m => m.ShowColor(ctx, ctx.System, flags.GetReplyFormat())),
             Commands.SystemShowColor(var param, var flags) => ctx.Execute<SystemEdit>(SystemColor, m => m.ShowColor(ctx, param.target, flags.GetReplyFormat())),
-            Commands.SystemClearColor(var param, _) => ctx.Execute<SystemEdit>(SystemColor, m => m.ClearColor(ctx, ctx.System)),
+            Commands.SystemClearColor(var param, var flags) => ctx.Execute<SystemEdit>(SystemColor, m => m.ClearColor(ctx, ctx.System, flags.yes)),
             Commands.SystemChangeColor(var param, _) => ctx.Execute<SystemEdit>(SystemColor, m => m.ChangeColor(ctx, ctx.System, param.color)),
             Commands.SystemShowTagSelf(_, var flags) => ctx.Execute<SystemEdit>(SystemTag, m => m.ShowTag(ctx, ctx.System, flags.GetReplyFormat())),
             Commands.SystemShowTag(var param, var flags) => ctx.Execute<SystemEdit>(SystemTag, m => m.ShowTag(ctx, param.target, flags.GetReplyFormat())),
-            Commands.SystemClearTag(var param, _) => ctx.Execute<SystemEdit>(SystemTag, m => m.ClearTag(ctx, ctx.System)),
+            Commands.SystemClearTag(var param, var flags) => ctx.Execute<SystemEdit>(SystemTag, m => m.ClearTag(ctx, ctx.System, flags.yes)),
             Commands.SystemChangeTag(var param, _) => ctx.Execute<SystemEdit>(SystemTag, m => m.ChangeTag(ctx, ctx.System, param.tag)),
             Commands.SystemShowServerTagSelf(_, var flags) => ctx.Execute<SystemEdit>(SystemServerTag, m => m.ShowServerTag(ctx, ctx.System, flags.GetReplyFormat())),
             Commands.SystemShowServerTag(var param, var flags) => ctx.Execute<SystemEdit>(SystemServerTag, m => m.ShowServerTag(ctx, param.target, flags.GetReplyFormat())),
-            Commands.SystemClearServerTag(var param, _) => ctx.Execute<SystemEdit>(SystemServerTag, m => m.ClearServerTag(ctx, ctx.System)),
+            Commands.SystemClearServerTag(var param, var flags) => ctx.Execute<SystemEdit>(SystemServerTag, m => m.ClearServerTag(ctx, ctx.System, flags.yes)),
             Commands.SystemChangeServerTag(var param, _) => ctx.Execute<SystemEdit>(SystemServerTag, m => m.ChangeServerTag(ctx, ctx.System, param.tag)),
             Commands.SystemShowPronounsSelf(_, var flags) => ctx.Execute<SystemEdit>(SystemPronouns, m => m.ShowPronouns(ctx, ctx.System, flags.GetReplyFormat())),
             Commands.SystemShowPronouns(var param, var flags) => ctx.Execute<SystemEdit>(SystemPronouns, m => m.ShowPronouns(ctx, param.target, flags.GetReplyFormat())),
             Commands.SystemClearPronouns(var param, var flags) => ctx.Execute<SystemEdit>(SystemPronouns, m => m.ClearPronouns(ctx, ctx.System, flags.yes)),
             Commands.SystemChangePronouns(var param, _) => ctx.Execute<SystemEdit>(SystemPronouns, m => m.ChangePronouns(ctx, ctx.System, param.pronouns)),
             _ =>
-                // this should only ever occur when deving if commands are not implemented...
-                ctx.Reply(
-                    $"{Emojis.Error} Parsed command {ctx.Parameters.Callback().AsCode()} not implemented in PluralKit.Bot!"),
+            // this should only ever occur when deving if commands are not implemented...
+            ctx.Reply(
+                $"{Emojis.Error} Parsed command {ctx.Parameters.Callback().AsCode()} not implemented in PluralKit.Bot!"),
         };
         if (ctx.Match("system", "s"))
             return HandleSystemCommand(ctx);

@@ -64,12 +64,12 @@ public class SystemEdit
         return;
     }
 
-    public async Task ClearName(Context ctx, PKSystem target)
+    public async Task ClearName(Context ctx, PKSystem target, bool flagConfirmYes)
     {
         ctx.CheckSystemPrivacy(target.Id, target.NamePrivacy);
         ctx.CheckSystem().CheckOwnSystem(target);
 
-        if (await ctx.ConfirmClear("your system's name"))
+        if (await ctx.ConfirmClear("your system's name", flagConfirmYes))
         {
             await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { Name = null });
 
@@ -128,12 +128,12 @@ public class SystemEdit
         return;
     }
 
-    public async Task ClearServerName(Context ctx, PKSystem target)
+    public async Task ClearServerName(Context ctx, PKSystem target, bool flagConfirmYes)
     {
         ctx.CheckGuildContext();
         ctx.CheckSystem().CheckOwnSystem(target);
 
-        if (await ctx.ConfirmClear("your system's name for this server"))
+        if (await ctx.ConfirmClear("your system's name for this server", flagConfirmYes))
         {
             await ctx.Repository.UpdateSystemGuild(target.Id, ctx.Guild.Id, new SystemGuildPatch { DisplayName = null });
 
@@ -154,12 +154,12 @@ public class SystemEdit
         await ctx.Reply($"{Emojis.Success} System name for this server changed (using {newSystemGuildName.Length}/{Limits.MaxSystemNameLength} characters).");
     }
 
-    public async Task ClearDescription(Context ctx, PKSystem target)
+    public async Task ClearDescription(Context ctx, PKSystem target, bool flagConfirmYes)
     {
         ctx.CheckSystemPrivacy(target.Id, target.DescriptionPrivacy);
         ctx.CheckSystem().CheckOwnSystem(target);
 
-        if (await ctx.ConfirmClear("your system's description"))
+        if (await ctx.ConfirmClear("your system's description", flagConfirmYes))
         {
             await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { Description = null });
 
@@ -237,12 +237,15 @@ public class SystemEdit
             .Build());
     }
 
-    public async Task ClearColor(Context ctx, PKSystem target)
+    public async Task ClearColor(Context ctx, PKSystem target, bool flagConfirmYes)
     {
         ctx.CheckSystem().CheckOwnSystem(target);
 
-        await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { Color = Partial<string>.Null() });
-        await ctx.Reply($"{Emojis.Success} System color cleared.");
+        if (await ctx.ConfirmClear("your system's color", flagConfirmYes))
+        {
+            await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { Color = Partial<string>.Null() });
+            await ctx.Reply($"{Emojis.Success} System color cleared.");
+        }
     }
 
     public async Task ShowColor(Context ctx, PKSystem target, ReplyFormat format)
@@ -277,11 +280,11 @@ public class SystemEdit
             .Build());
     }
 
-    public async Task ClearTag(Context ctx, PKSystem target)
+    public async Task ClearTag(Context ctx, PKSystem target, bool flagConfirmYes)
     {
         ctx.CheckSystem().CheckOwnSystem(target);
 
-        if (await ctx.ConfirmClear("your system's tag"))
+        if (await ctx.ConfirmClear("your system's tag", flagConfirmYes))
         {
             await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { Tag = null });
 
@@ -402,11 +405,11 @@ public class SystemEdit
                 $"You currently have no system tag specific to the server '{ctx.Guild.Name}'. To set one, type `{ctx.DefaultPrefix}s servertag <tag>`. To disable the system tag in the current server, type `{ctx.DefaultPrefix}s servertag -disable`.");
     }
 
-    public async Task ClearServerTag(Context ctx, PKSystem target)
+    public async Task ClearServerTag(Context ctx, PKSystem target, bool flagConfirmYes)
     {
         ctx.CheckSystem().CheckOwnSystem(target).CheckGuildContext();
 
-        if (!await ctx.ConfirmClear("your system's server tag"))
+        if (!await ctx.ConfirmClear("your system's server tag", flagConfirmYes))
             return;
 
         var settings = await ctx.Repository.GetSystemGuild(ctx.Guild.Id, target.Id);
