@@ -52,6 +52,10 @@ public partial class CommandTree
             Commands.SystemShowServerTag(var param, var flags) => ctx.Execute<SystemEdit>(SystemServerTag, m => m.ShowServerTag(ctx, param.target, flags.GetReplyFormat())),
             Commands.SystemClearServerTag(var param, _) => ctx.Execute<SystemEdit>(SystemServerTag, m => m.ClearServerTag(ctx, ctx.System)),
             Commands.SystemChangeServerTag(var param, _) => ctx.Execute<SystemEdit>(SystemServerTag, m => m.ChangeServerTag(ctx, ctx.System, param.tag)),
+            Commands.SystemShowPronounsSelf(_, var flags) => ctx.Execute<SystemEdit>(SystemPronouns, m => m.ShowPronouns(ctx, ctx.System, flags.GetReplyFormat())),
+            Commands.SystemShowPronouns(var param, var flags) => ctx.Execute<SystemEdit>(SystemPronouns, m => m.ShowPronouns(ctx, param.target, flags.GetReplyFormat())),
+            Commands.SystemClearPronouns(var param, var flags) => ctx.Execute<SystemEdit>(SystemPronouns, m => m.ClearPronouns(ctx, ctx.System, flags.yes)),
+            Commands.SystemChangePronouns(var param, _) => ctx.Execute<SystemEdit>(SystemPronouns, m => m.ChangePronouns(ctx, ctx.System, param.pronouns)),
             _ =>
                 // this should only ever occur when deving if commands are not implemented...
                 ctx.Reply(
@@ -300,9 +304,7 @@ public partial class CommandTree
 
     private async Task HandleSystemCommandTargeted(Context ctx, PKSystem target)
     {
-        if (ctx.Match("pronouns", "pronoun", "prns", "pn"))
-            await ctx.CheckSystem(target).Execute<SystemEdit>(SystemPronouns, m => m.Pronouns(ctx, target));
-        else if (ctx.Match("banner", "splash", "cover"))
+        if (ctx.Match("banner", "splash", "cover"))
             await ctx.CheckSystem(target).Execute<SystemEdit>(SystemBannerImage, m => m.BannerImage(ctx, target));
         else if (ctx.Match("avatar", "picture", "icon", "image", "pic", "pfp"))
             await ctx.CheckSystem(target).Execute<SystemEdit>(SystemAvatar, m => m.Avatar(ctx, target));

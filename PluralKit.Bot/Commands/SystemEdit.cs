@@ -479,25 +479,47 @@ public class SystemEdit
         await ctx.Reply(str);
     }
 
-    public async Task Pronouns(Context ctx, PKSystem target)
+    public async Task ClearPronouns(Context ctx, PKSystem target, bool flagConfirmYes)
+    {
+        ctx.CheckSystemPrivacy(target.Id, target.PronounPrivacy);
+        ctx.CheckSystem().CheckOwnSystem(target);
+
+        if (await ctx.ConfirmClear("your system's pronouns", flagConfirmYes))
+        {
+            await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { Pronouns = null });
+            await ctx.Reply($"{Emojis.Success} System pronouns cleared.");
+        }
+    }
+
+    public async Task ChangePronouns(Context ctx, PKSystem target, string newPronouns)
+    {
+        ctx.CheckSystemPrivacy(target.Id, target.PronounPrivacy);
+        ctx.CheckSystem().CheckOwnSystem(target);
+
+        newPronouns = newPronouns.NormalizeLineEndSpacing();
+        if (newPronouns.Length > Limits.MaxPronounsLength)
+            throw Errors.StringTooLongError("Pronouns", newPronouns.Length, Limits.MaxPronounsLength);
+
+        await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { Pronouns = newPronouns });
+
+        await ctx.Reply($"{Emojis.Success} System pronouns changed (using {newPronouns.Length}/{Limits.MaxPronounsLength} characters).");
+    }
+
+    public async Task ShowPronouns(Context ctx, PKSystem target, ReplyFormat format)
     {
         ctx.CheckSystemPrivacy(target.Id, target.PronounPrivacy);
 
         var isOwnSystem = ctx.System.Id == target.Id;
 
-        var noPronounsSetMessage = "This system does not have pronouns set.";
-        if (isOwnSystem)
-            noPronounsSetMessage += $" To set some, type `{ctx.DefaultPrefix}system pronouns <pronouns>`";
+        if (target.Pronouns == null)
+        {
+            var noPronounsSetMessage = "This system does not have pronouns set.";
+            if (isOwnSystem)
+                noPronounsSetMessage += $" To set some, type `{ctx.DefaultPrefix}system pronouns <pronouns>`";
 
-        var format = ctx.MatchFormat();
-
-        // if there's nothing next or what's next is "raw"/"plaintext" we're doing a query, so check for null
-        if (!ctx.HasNext(false) || format != ReplyFormat.Standard)
-            if (target.Pronouns == null)
-            {
-                await ctx.Reply(noPronounsSetMessage);
-                return;
-            }
+            await ctx.Reply(noPronounsSetMessage);
+            return;
+        }
 
         if (format == ReplyFormat.Raw)
         {
@@ -512,34 +534,9 @@ public class SystemEdit
             return;
         }
 
-        if (!ctx.HasNext(false))
-        {
-            await ctx.Reply($"{(isOwnSystem ? "Your" : "This system's")} current pronouns are **{target.Pronouns}**.\nTo print the pronouns with formatting, type `{ctx.DefaultPrefix}system pronouns -raw`."
+        await ctx.Reply($"{(isOwnSystem ? "Your" : "This system's")} current pronouns are **{target.Pronouns}**.\nTo print the pronouns with formatting, type `{ctx.DefaultPrefix}system pronouns -raw`."
             + (isOwnSystem ? $" To clear them, type `{ctx.DefaultPrefix}system pronouns -clear`."
             + $" Using {target.Pronouns.Length}/{Limits.MaxPronounsLength} characters." : ""));
-            return;
-        }
-
-        ctx.CheckSystem().CheckOwnSystem(target);
-
-        if (ctx.MatchClear() && await ctx.ConfirmClear("your system's pronouns"))
-        {
-            await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { Pronouns = null });
-
-            await ctx.Reply($"{Emojis.Success} System pronouns cleared.");
-        }
-        else
-        {
-            var newPronouns = ctx.RemainderOrNull(false).NormalizeLineEndSpacing();
-            if (newPronouns != null)
-                if (newPronouns.Length > Limits.MaxPronounsLength)
-                    throw Errors.StringTooLongError("Pronouns", newPronouns.Length, Limits.MaxPronounsLength);
-
-            await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { Pronouns = newPronouns });
-
-            await ctx.Reply(
-                $"{Emojis.Success} System pronouns changed (using {newPronouns.Length}/{Limits.MaxPronounsLength} characters).");
-        }
     }
 
     public async Task Avatar(Context ctx, PKSystem target)

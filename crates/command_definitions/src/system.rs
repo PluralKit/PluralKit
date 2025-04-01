@@ -126,6 +126,23 @@ pub fn edit() -> impl Iterator<Item = Command> {
     ]
     .into_iter();
 
+    let system_pronouns = tokens!(system_target, ("pronouns", ["prns"]));
+    let system_pronouns_cmd = [
+        command!(system_pronouns => "system_show_pronouns").help("Shows the system's pronouns"),
+    ]
+    .into_iter();
+
+    let system_pronouns_self = tokens!(system, ("pronouns", ["prns"]));
+    let system_pronouns_self_cmd = [
+        command!(system_pronouns_self => "system_show_pronouns_self").help("Shows your system's pronouns"),
+        command!(system_pronouns_self, ("clear", ["c"]) => "system_clear_pronouns")
+            .flag(("yes", ["y"]))
+            .help("Clears your system's pronouns"),
+        command!(system_pronouns_self, ("pronouns", OpaqueString) => "system_change_pronouns")
+            .help("Changes your system's pronouns"),
+    ]
+    .into_iter();
+
     system_new_cmd
         .chain(system_name_self_cmd)
         .chain(system_server_name_self_cmd)
@@ -133,11 +150,13 @@ pub fn edit() -> impl Iterator<Item = Command> {
         .chain(system_color_self_cmd)
         .chain(system_tag_self_cmd)
         .chain(system_server_tag_self_cmd)
+        .chain(system_pronouns_self_cmd)
         .chain(system_name_cmd)
         .chain(system_server_name_cmd)
         .chain(system_description_cmd)
         .chain(system_color_cmd)
         .chain(system_tag_cmd)
         .chain(system_server_tag_cmd)
+        .chain(system_pronouns_cmd)
         .chain(system_info_cmd)
 }
