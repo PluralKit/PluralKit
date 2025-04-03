@@ -774,10 +774,9 @@ public class SystemEdit
             : ctx.Reply(msg));
     }
 
-    public async Task Delete(Context ctx, PKSystem target)
+    public async Task Delete(Context ctx, PKSystem target, bool noExport)
     {
         ctx.CheckSystem().CheckOwnSystem(target);
-        var noExport = ctx.MatchFlag("ne", "no-export");
 
         var warnMsg = $"{Emojis.Warn} Are you sure you want to delete your system? If so, reply to this message with your system's ID (`{target.DisplayHid(ctx.Config)}`).\n";
         if (!noExport)

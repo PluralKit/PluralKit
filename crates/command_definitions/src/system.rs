@@ -159,8 +159,10 @@ pub fn edit() -> impl Iterator<Item = Command> {
     .into_iter();
 
     let system_server_avatar = tokens!(system_target, ("serveravatar", ["spfp"]));
-    let system_server_avatar_cmd = [command!(system_server_avatar => "system_show_server_avatar")
-        .help("Shows the system's server avatar")]
+    let system_server_avatar_cmd = [
+        command!(system_server_avatar => "system_show_server_avatar")
+            .help("Shows the system's server avatar"),
+    ]
     .into_iter();
 
     let system_server_avatar_self = tokens!(system, ("serveravatar", ["spfp"]));
@@ -192,6 +194,12 @@ pub fn edit() -> impl Iterator<Item = Command> {
     ]
     .into_iter();
 
+    let system_delete = std::iter::once(
+        command!(system, ("delete", ["erase", "remove", "yeet"]) => "system_delete")
+            .flag(("no-export", ["ne"]))
+            .help("Deletes the system"),
+    );
+
     system_new_cmd
         .chain(system_name_self_cmd)
         .chain(system_server_name_self_cmd)
@@ -203,6 +211,7 @@ pub fn edit() -> impl Iterator<Item = Command> {
         .chain(system_avatar_self_cmd)
         .chain(system_server_avatar_self_cmd)
         .chain(system_banner_self_cmd)
+        .chain(system_delete)
         .chain(system_name_cmd)
         .chain(system_server_name_cmd)
         .chain(system_description_cmd)

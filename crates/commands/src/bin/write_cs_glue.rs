@@ -34,7 +34,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             writeln!(
                 &mut command_params_init,
                 r#"@{name} = await ctx.ParamResolve{extract_fn_name}("{name}") ?? throw new PKError("this is a bug"),"#,
-                name = param.name(),
+                name = param.name().replace("-", "_"),
                 extract_fn_name = get_param_param_ty(param.kind()),
             )?;
         }
@@ -44,14 +44,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 writeln!(
                     &mut command_flags_init,
                     r#"@{name} = await ctx.FlagResolve{extract_fn_name}("{name}"),"#,
-                    name = flag.get_name(),
+                    name = flag.get_name().replace("-", "_"),
                     extract_fn_name = get_param_param_ty(kind),
                 )?;
             } else {
                 writeln!(
                     &mut command_flags_init,
                     r#"@{name} = ctx.Parameters.HasFlag("{name}"),"#,
-                    name = flag.get_name(),
+                    name = flag.get_name().replace("-", "_"),
                 )?;
             }
         }
@@ -92,7 +92,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             writeln!(
                 &mut command_params_fields,
                 r#"public required {ty} @{name};"#,
-                name = param.name(),
+                name = param.name().replace("-", "_"),
                 ty = get_param_ty(param.kind()),
             )?;
         }
@@ -102,14 +102,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 writeln!(
                     &mut command_flags_fields,
                     r#"public {ty}? @{name};"#,
-                    name = flag.get_name(),
+                    name = flag.get_name().replace("-", "_"),
                     ty = get_param_ty(kind),
                 )?;
             } else {
                 writeln!(
                     &mut command_flags_fields,
                     r#"public required bool @{name};"#,
-                    name = flag.get_name(),
+                    name = flag.get_name().replace("-", "_"),
                 )?;
             }
         }

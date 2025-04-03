@@ -95,6 +95,7 @@ public partial class CommandTree
             Commands.SystemShowBanner(var param, var flags) => ctx.Execute<SystemEdit>(SystemBannerImage, m => m.ShowBannerImage(ctx, param.target, flags.GetReplyFormat())),
             Commands.SystemClearBanner(var param, var flags) => ctx.Execute<SystemEdit>(SystemBannerImage, m => m.ClearBannerImage(ctx, ctx.System, flags.yes)),
             Commands.SystemChangeBanner(var param, _) => ctx.Execute<SystemEdit>(SystemBannerImage, m => m.ChangeBannerImage(ctx, ctx.System, param.banner)),
+            Commands.SystemDelete(_, var flags) => ctx.Execute<SystemEdit>(SystemDelete, m => m.Delete(ctx, ctx.System, flags.no_export)),
             _ =>
             // this should only ever occur when deving if commands are not implemented...
             ctx.Reply(
@@ -364,8 +365,6 @@ public partial class CommandTree
             await ctx.CheckSystem(target).Execute<Groups>(GroupList, g => g.ListSystemGroups(ctx, target));
         else if (ctx.Match("privacy"))
             await ctx.CheckSystem(target).Execute<SystemEdit>(SystemPrivacy, m => m.SystemPrivacy(ctx, target));
-        else if (ctx.Match("delete", "remove", "destroy", "erase", "yeet"))
-            await ctx.CheckSystem(target).Execute<SystemEdit>(SystemDelete, m => m.Delete(ctx, target));
         else if (ctx.Match("id"))
             await ctx.CheckSystem(target).Execute<System>(SystemId, m => m.DisplayId(ctx, target));
         else if (ctx.Match("random", "rand", "r"))
