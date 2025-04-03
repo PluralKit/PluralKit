@@ -620,96 +620,85 @@ public class SystemEdit
             : ctx.Reply(msg));
     }
 
-    public async Task ServerAvatar(Context ctx, PKSystem target)
+    public async Task ClearServerAvatar(Context ctx, PKSystem target, bool flagConfirmYes)
     {
-
-        async Task ClearIcon()
-        {
-            ctx.CheckOwnSystem(target);
-
-            await ctx.Repository.UpdateSystemGuild(target.Id, ctx.Guild.Id, new SystemGuildPatch { AvatarUrl = null });
-            await ctx.Reply($"{Emojis.Success} System server avatar cleared.");
-        }
-
-        async Task SetIcon(ParsedImage img)
-        {
-            ctx.CheckOwnSystem(target);
-
-            img = await _avatarHosting.TryRehostImage(img, AvatarHostingService.RehostedImageType.Avatar, ctx.Author.Id, ctx.System);
-            await _avatarHosting.VerifyAvatarOrThrow(img.Url);
-
-            await ctx.Repository.UpdateSystemGuild(target.Id, ctx.Guild.Id, new SystemGuildPatch { AvatarUrl = img.CleanUrl ?? img.Url });
-
-            var msg = img.Source switch
-            {
-                AvatarSource.User =>
-                    $"{Emojis.Success} System icon for this server changed to {img.SourceUser?.Username}'s avatar! It will now be used for anything that uses system avatar in this server.\n{Emojis.Warn} If {img.SourceUser?.Username} changes their avatar, the system icon for this server will need to be re-set.",
-                AvatarSource.Url =>
-                    $"{Emojis.Success} System icon for this server changed to the image at the given URL. It will now be used for anything that uses system avatar in this server.",
-                AvatarSource.HostedCdn => $"{Emojis.Success} System icon for this server changed to attached image.",
-                AvatarSource.Attachment =>
-                    $"{Emojis.Success} System icon for this server changed to attached image. It will now be used for anything that uses system avatar in this server.\n{Emojis.Warn} If you delete the message containing the attachment, the system icon for this server will stop working.",
-                _ => throw new ArgumentOutOfRangeException()
-            };
-
-            // The attachment's already right there, no need to preview it.
-            var hasEmbed = img.Source != AvatarSource.Attachment && img.Source != AvatarSource.HostedCdn;
-            await (hasEmbed
-                ? ctx.Reply(msg, new EmbedBuilder().Image(new Embed.EmbedImage(img.Url)).Build())
-                : ctx.Reply(msg));
-        }
-
-        async Task ShowIcon()
-        {
-            var settings = await ctx.Repository.GetSystemGuild(ctx.Guild.Id, target.Id);
-
-            if ((settings.AvatarUrl?.Trim() ?? "").Length > 0)
-            {
-                if (!target.AvatarPrivacy.CanAccess(ctx.DirectLookupContextFor(target.Id)))
-                    throw new PKSyntaxError("This system does not have a icon specific to this server or it is private.");
-                switch (ctx.MatchFormat())
-                {
-                    case ReplyFormat.Raw:
-                        await ctx.Reply($"`{settings.AvatarUrl.TryGetCleanCdnUrl()}`");
-                        break;
-                    case ReplyFormat.Plaintext:
-                        var ebP = new EmbedBuilder()
-                            .Description($"Showing icon for system {target.NameFor(ctx)} (`{target.DisplayHid(ctx.Config)}`)");
-                        await ctx.Reply(text: $"<{settings.AvatarUrl.TryGetCleanCdnUrl()}>", embed: ebP.Build());
-                        break;
-                    default:
-                        var ebS = new EmbedBuilder()
-                            .Title("System server icon")
-                            .Image(new Embed.EmbedImage(settings.AvatarUrl.TryGetCleanCdnUrl()));
-                        if (target.Id == ctx.System?.Id)
-                            ebS.Description($"To clear, use `{ctx.DefaultPrefix}system servericon clear`.");
-                        await ctx.Reply(embed: ebS.Build());
-                        break;
-                }
-            }
-            else
-            {
-                var isOwner = target.Id == ctx.System?.Id;
-                throw new PKSyntaxError(
-                    $"This system does not have a icon specific to this server{(isOwner ? "" : " or it is private")}."
-                    + (isOwner ? " Set one by attaching an image to this command, or by passing an image URL or @mention." : ""));
-            }
-        }
-
         ctx.CheckGuildContext();
+        ctx.CheckSystem().CheckOwnSystem(target);
 
-        if (target != null && target?.Id != ctx.System?.Id)
+        if (await ctx.ConfirmClear("your system's icon for this server", flagConfirmYes))
         {
-            await ShowIcon();
-            return;
+            await ctx.Repository.UpdateSystemGuild(target.Id, ctx.Guild.Id, new SystemGuildPatch { AvatarUrl = null });
+            await ctx.Reply($"{Emojis.Success} System server icon cleared.");
         }
+    }
 
-        if (ctx.MatchClear() && await ctx.ConfirmClear("your system's icon for this server"))
-            await ClearIcon();
-        else if (await ctx.MatchImage() is { } img)
-            await SetIcon(img);
+    public async Task ShowServerAvatar(Context ctx, PKSystem target, ReplyFormat format)
+    {
+        ctx.CheckGuildContext();
+        var isOwnSystem = target.Id == ctx.System?.Id;
+
+        var settings = await ctx.Repository.GetSystemGuild(ctx.Guild.Id, target.Id);
+
+        if ((settings.AvatarUrl?.Trim() ?? "").Length > 0)
+        {
+            if (!target.AvatarPrivacy.CanAccess(ctx.DirectLookupContextFor(target.Id)))
+                throw new PKSyntaxError("This system does not have a icon specific to this server or it is private.");
+
+            switch (format)
+            {
+                case ReplyFormat.Raw:
+                    await ctx.Reply($"`{settings.AvatarUrl.TryGetCleanCdnUrl()}`");
+                    break;
+                case ReplyFormat.Plaintext:
+                    var ebP = new EmbedBuilder()
+                        .Description($"Showing icon for system {target.NameFor(ctx)} (`{target.DisplayHid(ctx.Config)}`)");
+                    await ctx.Reply(text: $"<{settings.AvatarUrl.TryGetCleanCdnUrl()}>", embed: ebP.Build());
+                    break;
+                default:
+                    var ebS = new EmbedBuilder()
+                        .Title("System server icon")
+                        .Image(new Embed.EmbedImage(settings.AvatarUrl.TryGetCleanCdnUrl()));
+                    if (target.Id == ctx.System?.Id)
+                        ebS.Description($"To clear, use `{ctx.DefaultPrefix}system servericon clear`.");
+                    await ctx.Reply(embed: ebS.Build());
+                    break;
+            }
+        }
         else
-            await ShowIcon();
+        {
+            throw new PKSyntaxError(
+                $"This system does not have a icon specific to this server{(isOwnSystem ? "" : " or it is private")}."
+                + (isOwnSystem ? " Set one by attaching an image to this command, or by passing an image URL or @mention." : ""));
+        }
+    }
+
+    public async Task ChangeServerAvatar(Context ctx, PKSystem target, ParsedImage img)
+    {
+        ctx.CheckGuildContext();
+        ctx.CheckSystem().CheckOwnSystem(target);
+
+        img = await _avatarHosting.TryRehostImage(img, AvatarHostingService.RehostedImageType.Avatar, ctx.Author.Id, ctx.System);
+        await _avatarHosting.VerifyAvatarOrThrow(img.Url);
+
+        await ctx.Repository.UpdateSystemGuild(target.Id, ctx.Guild.Id, new SystemGuildPatch { AvatarUrl = img.CleanUrl ?? img.Url });
+
+        var msg = img.Source switch
+        {
+            AvatarSource.User =>
+                $"{Emojis.Success} System icon for this server changed to {img.SourceUser?.Username}'s avatar! It will now be used for anything that uses system avatar in this server.\n{Emojis.Warn} If {img.SourceUser?.Username} changes their avatar, the system icon for this server will need to be re-set.",
+            AvatarSource.Url =>
+                $"{Emojis.Success} System icon for this server changed to the image at the given URL. It will now be used for anything that uses system avatar in this server.",
+            AvatarSource.HostedCdn => $"{Emojis.Success} System icon for this server changed to attached image.",
+            AvatarSource.Attachment =>
+                $"{Emojis.Success} System icon for this server changed to attached image. It will now be used for anything that uses system avatar in this server.\n{Emojis.Warn} If you delete the message containing the attachment, the system icon for this server will stop working.",
+            _ => throw new ArgumentOutOfRangeException()
+        };
+
+        // The attachment's already right there, no need to preview it.
+        var hasEmbed = img.Source != AvatarSource.Attachment && img.Source != AvatarSource.HostedCdn;
+        await (hasEmbed
+            ? ctx.Reply(msg, new EmbedBuilder().Image(new Embed.EmbedImage(img.Url)).Build())
+            : ctx.Reply(msg));
     }
 
     public async Task BannerImage(Context ctx, PKSystem target)
