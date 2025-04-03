@@ -165,6 +165,7 @@ fn get_param_ty(kind: ParameterKind) -> &'static str {
         ParameterKind::MemberPrivacyTarget => "MemberPrivacySubject",
         ParameterKind::PrivacyLevel => "string",
         ParameterKind::Toggle => "bool",
+        ParameterKind::Avatar => "ParsedImage",
     }
 }
 
@@ -176,6 +177,7 @@ fn get_param_param_ty(kind: ParameterKind) -> &'static str {
         ParameterKind::MemberPrivacyTarget => "MemberPrivacyTarget",
         ParameterKind::PrivacyLevel => "PrivacyLevel",
         ParameterKind::Toggle => "Toggle",
+        ParameterKind::Avatar => "Avatar",
     }
 }
 

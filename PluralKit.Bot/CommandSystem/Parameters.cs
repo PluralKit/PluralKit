@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Myriad.Types;
 using PluralKit.Core;
 using uniffi.commands;
 
@@ -13,6 +14,7 @@ public abstract record Parameter()
     public record PrivacyLevel(string level): Parameter;
     public record Toggle(bool value): Parameter;
     public record Opaque(string value): Parameter;
+    public record Avatar(ParsedImage avatar): Parameter;
 }
 
 public class Parameters
@@ -79,6 +81,8 @@ public class Parameters
                 return new Parameter.Toggle(toggle.toggle);
             case uniffi.commands.Parameter.OpaqueString opaque:
                 return new Parameter.Opaque(opaque.raw);
+            case uniffi.commands.Parameter.Avatar avatar:
+                return new Parameter.Avatar(await ctx.GetUserPfp(avatar.avatar) ?? ctx.ParseImage(avatar.avatar));
         }
         return null;
     }

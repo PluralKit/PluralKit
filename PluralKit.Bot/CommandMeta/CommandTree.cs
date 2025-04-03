@@ -56,6 +56,19 @@ public partial class CommandTree
             Commands.SystemShowPronouns(var param, var flags) => ctx.Execute<SystemEdit>(SystemPronouns, m => m.ShowPronouns(ctx, param.target, flags.GetReplyFormat())),
             Commands.SystemClearPronouns(var param, var flags) => ctx.Execute<SystemEdit>(SystemPronouns, m => m.ClearPronouns(ctx, ctx.System, flags.yes)),
             Commands.SystemChangePronouns(var param, _) => ctx.Execute<SystemEdit>(SystemPronouns, m => m.ChangePronouns(ctx, ctx.System, param.pronouns)),
+            Commands.SystemShowAvatarSelf(_, var flags) => ((Func<Task>)(() =>
+            {
+                // we want to change avatar if an attached image is passed
+                // we can't have a separate parsed command for this since the parser can't be aware of any attachments
+                var attachedImage = ctx.ExtractImageFromAttachment();
+                if (attachedImage is { } image)
+                    return ctx.Execute<SystemEdit>(SystemAvatar, m => m.ChangeAvatar(ctx, ctx.System, image));
+                // if no attachment show the avatar like intended
+                return ctx.Execute<SystemEdit>(SystemAvatar, m => m.ShowAvatar(ctx, ctx.System, flags.GetReplyFormat()));
+            }))(),
+            Commands.SystemShowAvatar(var param, var flags) => ctx.Execute<SystemEdit>(SystemAvatar, m => m.ShowAvatar(ctx, param.target, flags.GetReplyFormat())),
+            Commands.SystemClearAvatar(var param, var flags) => ctx.Execute<SystemEdit>(SystemAvatar, m => m.ClearAvatar(ctx, ctx.System, flags.yes)),
+            Commands.SystemChangeAvatar(var param, _) => ctx.Execute<SystemEdit>(SystemAvatar, m => m.ChangeAvatar(ctx, ctx.System, param.avatar)),
             _ =>
             // this should only ever occur when deving if commands are not implemented...
             ctx.Reply(
@@ -306,8 +319,6 @@ public partial class CommandTree
     {
         if (ctx.Match("banner", "splash", "cover"))
             await ctx.CheckSystem(target).Execute<SystemEdit>(SystemBannerImage, m => m.BannerImage(ctx, target));
-        else if (ctx.Match("avatar", "picture", "icon", "image", "pic", "pfp"))
-            await ctx.CheckSystem(target).Execute<SystemEdit>(SystemAvatar, m => m.Avatar(ctx, target));
         else if (ctx.Match("serveravatar", "sa", "servericon", "serverimage", "serverpfp", "serverpic", "savatar", "spic",
                      "guildavatar", "guildpic", "guildicon", "sicon", "spfp"))
             await ctx.CheckSystem(target).Execute<SystemEdit>(SystemServerAvatar, m => m.ServerAvatar(ctx, target));

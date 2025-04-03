@@ -51,4 +51,12 @@ public static class ContextParametersExt
             param => (param as Parameter.Toggle)?.value
         );
     }
+
+    public static async Task<ParsedImage?> ParamResolveAvatar(this Context ctx, string param_name)
+    {
+        return await ctx.Parameters.ResolveParameter(
+            ctx, param_name,
+            param => (param as Parameter.Avatar)?.avatar
+        );
+    }
 }

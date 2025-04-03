@@ -28,6 +28,7 @@ pub enum Parameter {
     PrivacyLevel { level: String },
     OpaqueString { raw: String },
     Toggle { toggle: bool },
+    Avatar { avatar: String },
 }
 
 impl From<ParameterValue> for Parameter {
@@ -39,6 +40,7 @@ impl From<ParameterValue> for Parameter {
             ParameterValue::PrivacyLevel(level) => Self::PrivacyLevel { level },
             ParameterValue::OpaqueString(raw) => Self::OpaqueString { raw },
             ParameterValue::Toggle(toggle) => Self::Toggle { toggle },
+            ParameterValue::Avatar(avatar) => Self::Avatar { avatar },
         }
     }
 }

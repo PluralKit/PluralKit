@@ -15,6 +15,7 @@ pub enum ParameterValue {
     MemberPrivacyTarget(String),
     PrivacyLevel(String),
     Toggle(bool),
+    Avatar(String),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -44,6 +45,7 @@ impl Display for Parameter {
             ParameterKind::MemberPrivacyTarget => write!(f, "<privacy target>"),
             ParameterKind::PrivacyLevel => write!(f, "[privacy level]"),
             ParameterKind::Toggle => write!(f, "on/off"),
+            ParameterKind::Avatar => write!(f, "<url|@mention>"),
         }
     }
 }
@@ -75,6 +77,7 @@ pub enum ParameterKind {
     MemberPrivacyTarget,
     PrivacyLevel,
     Toggle,
+    Avatar,
 }
 
 impl ParameterKind {
@@ -87,6 +90,7 @@ impl ParameterKind {
             ParameterKind::MemberPrivacyTarget => "member_privacy_target",
             ParameterKind::PrivacyLevel => "privacy_level",
             ParameterKind::Toggle => "toggle",
+            ParameterKind::Avatar => "avatar",
         }
     }
 
@@ -96,6 +100,7 @@ impl ParameterKind {
 
     pub(crate) fn match_value(&self, input: &str) -> Result<ParameterValue, SmolStr> {
         match self {
+            // TODO: actually parse image url
             ParameterKind::OpaqueString | ParameterKind::OpaqueStringRemainder => {
                 Ok(ParameterValue::OpaqueString(input.into()))
             }
@@ -108,6 +113,7 @@ impl ParameterKind {
             ParameterKind::Toggle => {
                 Toggle::from_str(input).map(|t| ParameterValue::Toggle(t.into()))
             }
+            ParameterKind::Avatar => Ok(ParameterValue::Avatar(input.into())),
         }
     }
 }

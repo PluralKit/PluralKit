@@ -10,6 +10,14 @@ namespace PluralKit.Bot;
 
 public static class ContextEntityArgumentsExt
 {
+    public static async Task<User> ParseUser(this Context ctx, string arg)
+    {
+        if (arg.TryParseMention(out var id))
+            return await ctx.Cache.GetOrFetchUser(ctx.Rest, id);
+
+        return null;
+    }
+
     public static async Task<User> MatchUser(this Context ctx)
     {
         var text = ctx.PeekArgument();

@@ -141,6 +141,23 @@ pub fn edit() -> impl Iterator<Item = Command> {
     ]
     .into_iter();
 
+    let system_avatar = tokens!(system_target, ("avatar", ["pfp"]));
+    let system_avatar_cmd =
+        [command!(system_avatar => "system_show_avatar").help("Shows the system's avatar")]
+            .into_iter();
+
+    let system_avatar_self = tokens!(system, ("avatar", ["pfp"]));
+    let system_avatar_self_cmd = [
+        command!(system_avatar_self => "system_show_avatar_self")
+            .help("Shows your system's avatar"),
+        command!(system_avatar_self, ("clear", ["c"]) => "system_clear_avatar")
+            .flag(("yes", ["y"]))
+            .help("Clears your system's avatar"),
+        command!(system_avatar_self, ("avatar", Avatar) => "system_change_avatar")
+            .help("Changes your system's avatar"),
+    ]
+    .into_iter();
+
     system_new_cmd
         .chain(system_name_self_cmd)
         .chain(system_server_name_self_cmd)
@@ -149,6 +166,7 @@ pub fn edit() -> impl Iterator<Item = Command> {
         .chain(system_tag_self_cmd)
         .chain(system_server_tag_self_cmd)
         .chain(system_pronouns_self_cmd)
+        .chain(system_avatar_self_cmd)
         .chain(system_name_cmd)
         .chain(system_server_name_cmd)
         .chain(system_description_cmd)
@@ -156,5 +174,6 @@ pub fn edit() -> impl Iterator<Item = Command> {
         .chain(system_tag_cmd)
         .chain(system_server_tag_cmd)
         .chain(system_pronouns_cmd)
+        .chain(system_avatar_cmd)
         .chain(system_info_cmd)
 }

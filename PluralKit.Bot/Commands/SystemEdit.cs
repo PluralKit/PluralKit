@@ -542,90 +542,82 @@ public class SystemEdit
             + $" Using {target.Pronouns.Length}/{Limits.MaxPronounsLength} characters." : ""));
     }
 
-    public async Task Avatar(Context ctx, PKSystem target)
+    public async Task ClearAvatar(Context ctx, PKSystem target, bool flagConfirmYes)
     {
-        async Task ClearIcon()
-        {
-            ctx.CheckOwnSystem(target);
+        ctx.CheckSystemPrivacy(target.Id, target.AvatarPrivacy);
+        ctx.CheckSystem().CheckOwnSystem(target);
 
+        if (await ctx.ConfirmClear("your system's icon", flagConfirmYes))
+        {
             await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { AvatarUrl = null });
             await ctx.Reply($"{Emojis.Success} System icon cleared.");
         }
+    }
 
-        async Task SetIcon(ParsedImage img)
+    public async Task ShowAvatar(Context ctx, PKSystem target, ReplyFormat format)
+    {
+        ctx.CheckSystemPrivacy(target.Id, target.AvatarPrivacy);
+        var isOwnSystem = target.Id == ctx.System?.Id;
+
+        if ((target.AvatarUrl?.Trim() ?? "").Length > 0)
         {
-            ctx.CheckOwnSystem(target);
+            if (!target.AvatarPrivacy.CanAccess(ctx.DirectLookupContextFor(target.Id)))
+                throw new PKSyntaxError("This system does not have an icon set or it is private.");
 
-            img = await _avatarHosting.TryRehostImage(img, AvatarHostingService.RehostedImageType.Avatar, ctx.Author.Id, ctx.System);
-            await _avatarHosting.VerifyAvatarOrThrow(img.Url);
-
-            await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { AvatarUrl = img.CleanUrl ?? img.Url });
-
-            var msg = img.Source switch
+            switch (format)
             {
-                AvatarSource.User =>
-                    $"{Emojis.Success} System icon changed to {img.SourceUser?.Username}'s avatar!\n{Emojis.Warn} If {img.SourceUser?.Username} changes their avatar, the system icon will need to be re-set.",
-                AvatarSource.Url => $"{Emojis.Success} System icon changed to the image at the given URL.",
-                AvatarSource.HostedCdn => $"{Emojis.Success} System icon changed to attached image.",
-                AvatarSource.Attachment =>
-                    $"{Emojis.Success} System icon changed to attached image.\n{Emojis.Warn} If you delete the message containing the attachment, the system icon will stop working.",
-                _ => throw new ArgumentOutOfRangeException()
-            };
-
-            // The attachment's already right there, no need to preview it.
-            var hasEmbed = img.Source != AvatarSource.Attachment && img.Source != AvatarSource.HostedCdn;
-            await (hasEmbed
-                ? ctx.Reply(msg, new EmbedBuilder().Image(new Embed.EmbedImage(img.Url)).Build())
-                : ctx.Reply(msg));
-        }
-
-        async Task ShowIcon()
-        {
-            if ((target.AvatarUrl?.Trim() ?? "").Length > 0)
-            {
-                if (!target.AvatarPrivacy.CanAccess(ctx.DirectLookupContextFor(target.Id)))
-                    throw new PKSyntaxError("This system does not have an icon set or it is private.");
-                switch (ctx.MatchFormat())
-                {
-                    case ReplyFormat.Raw:
-                        await ctx.Reply($"`{target.AvatarUrl.TryGetCleanCdnUrl()}`");
-                        break;
-                    case ReplyFormat.Plaintext:
-                        var ebP = new EmbedBuilder()
-                            .Description($"Showing icon for system {target.NameFor(ctx)} (`{target.DisplayHid(ctx.Config)}`)");
-                        await ctx.Reply(text: $"<{target.AvatarUrl.TryGetCleanCdnUrl()}>", embed: ebP.Build());
-                        break;
-                    default:
-                        var ebS = new EmbedBuilder()
-                            .Title("System icon")
-                            .Image(new Embed.EmbedImage(target.AvatarUrl.TryGetCleanCdnUrl()));
-                        if (target.Id == ctx.System?.Id)
-                            ebS.Description($"To clear, use `{ctx.DefaultPrefix}system icon clear`.");
-                        await ctx.Reply(embed: ebS.Build());
-                        break;
-                }
-            }
-            else
-            {
-                var isOwner = target.Id == ctx.System?.Id;
-                throw new PKSyntaxError(
-                    $"This system does not have an icon set{(isOwner ? "" : " or it is private")}."
-                    + (isOwner ? " Set one by attaching an image to this command, or by passing an image URL or @mention." : ""));
+                case ReplyFormat.Raw:
+                    await ctx.Reply($"`{target.AvatarUrl.TryGetCleanCdnUrl()}`");
+                    break;
+                case ReplyFormat.Plaintext:
+                    var ebP = new EmbedBuilder()
+                        .Description($"Showing icon for system {target.NameFor(ctx)} (`{target.DisplayHid(ctx.Config)}`)");
+                    await ctx.Reply(text: $"<{target.AvatarUrl.TryGetCleanCdnUrl()}>", embed: ebP.Build());
+                    break;
+                default:
+                    var ebS = new EmbedBuilder()
+                        .Title("System icon")
+                        .Image(new Embed.EmbedImage(target.AvatarUrl.TryGetCleanCdnUrl()));
+                    if (target.Id == ctx.System?.Id)
+                        ebS.Description($"To clear, use `{ctx.DefaultPrefix}system icon clear`.");
+                    await ctx.Reply(embed: ebS.Build());
+                    break;
             }
         }
-
-        if (target != null && target?.Id != ctx.System?.Id)
-        {
-            await ShowIcon();
-            return;
-        }
-
-        if (ctx.MatchClear() && await ctx.ConfirmClear("your system's icon"))
-            await ClearIcon();
-        else if (await ctx.MatchImage() is { } img)
-            await SetIcon(img);
         else
-            await ShowIcon();
+        {
+            throw new PKSyntaxError(
+                $"This system does not have an icon set{(isOwnSystem ? "" : " or it is private")}."
+                + (isOwnSystem ? " Set one by attaching an image to this command, or by passing an image URL or @mention." : ""));
+        }
+    }
+
+    public async Task ChangeAvatar(Context ctx, PKSystem target, ParsedImage img)
+    {
+        ctx.CheckSystemPrivacy(target.Id, target.AvatarPrivacy);
+        ctx.CheckSystem().CheckOwnSystem(target);
+
+        img = await _avatarHosting.TryRehostImage(img, AvatarHostingService.RehostedImageType.Avatar, ctx.Author.Id, ctx.System);
+        await _avatarHosting.VerifyAvatarOrThrow(img.Url);
+
+        await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { AvatarUrl = img.CleanUrl ?? img.Url });
+
+        var msg = img.Source switch
+        {
+            AvatarSource.User =>
+                $"{Emojis.Success} System icon changed to {img.SourceUser?.Username}'s avatar!\n{Emojis.Warn} If {img.SourceUser?.Username} changes their avatar, the system icon will need to be re-set.",
+            AvatarSource.Url => $"{Emojis.Success} System icon changed to the image at the given URL.",
+            AvatarSource.HostedCdn => $"{Emojis.Success} System icon changed to attached image.",
+            AvatarSource.Attachment =>
+                $"{Emojis.Success} System icon changed to attached image.\n{Emojis.Warn} If you delete the message containing the attachment, the system icon will stop working.",
+            _ => throw new ArgumentOutOfRangeException()
+        };
+
+        // The attachment's already right there, no need to preview it.
+        var hasEmbed = img.Source != AvatarSource.Attachment && img.Source != AvatarSource.HostedCdn;
+        await (hasEmbed
+            ? ctx.Reply(msg, new EmbedBuilder().Image(new Embed.EmbedImage(img.Url)).Build())
+            : ctx.Reply(msg));
     }
 
     public async Task ServerAvatar(Context ctx, PKSystem target)
