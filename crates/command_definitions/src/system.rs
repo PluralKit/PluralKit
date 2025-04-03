@@ -200,6 +200,16 @@ pub fn edit() -> impl Iterator<Item = Command> {
             .help("Deletes the system"),
     );
 
+    let system_proxy = tokens!(system, "proxy");
+    let system_proxy_cmd = [
+        command!(system_proxy => "system_show_proxy_current").help("Shows your system's proxy setting for the guild you are in"),
+        command!(system_proxy, Toggle => "system_toggle_proxy_current")
+            .help("Toggle your system's proxy for the guild you are in"),
+        command!(system_proxy, GuildRef => "system_show_proxy").help("Shows your system's proxy setting for a guild"),
+        command!(system_proxy, GuildRef, Toggle => "system_toggle_proxy")
+            .help("Toggle your system's proxy for a guild"),
+    ].into_iter();
+
     system_new_cmd
         .chain(system_name_self_cmd)
         .chain(system_server_name_self_cmd)
@@ -212,6 +222,7 @@ pub fn edit() -> impl Iterator<Item = Command> {
         .chain(system_server_avatar_self_cmd)
         .chain(system_banner_self_cmd)
         .chain(system_delete)
+        .chain(system_proxy_cmd)
         .chain(system_name_cmd)
         .chain(system_server_name_cmd)
         .chain(system_description_cmd)

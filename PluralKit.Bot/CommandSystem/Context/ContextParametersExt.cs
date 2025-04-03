@@ -59,4 +59,12 @@ public static class ContextParametersExt
             param => (param as Parameter.Avatar)?.avatar
         );
     }
+
+    public static async Task<Myriad.Types.Guild?> ParamResolveGuild(this Context ctx, string param_name)
+    {
+        return await ctx.Parameters.ResolveParameter(
+            ctx, param_name,
+            param => (param as Parameter.GuildRef)?.guild
+        );
+    }
 }

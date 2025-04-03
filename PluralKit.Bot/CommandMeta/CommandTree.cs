@@ -96,6 +96,10 @@ public partial class CommandTree
             Commands.SystemClearBanner(var param, var flags) => ctx.Execute<SystemEdit>(SystemBannerImage, m => m.ClearBannerImage(ctx, ctx.System, flags.yes)),
             Commands.SystemChangeBanner(var param, _) => ctx.Execute<SystemEdit>(SystemBannerImage, m => m.ChangeBannerImage(ctx, ctx.System, param.banner)),
             Commands.SystemDelete(_, var flags) => ctx.Execute<SystemEdit>(SystemDelete, m => m.Delete(ctx, ctx.System, flags.no_export)),
+            Commands.SystemShowProxyCurrent(_, _) => ctx.Execute<SystemEdit>(SystemProxy, m => m.ShowSystemProxy(ctx, ctx.Guild)),
+            Commands.SystemShowProxy(var param, _) => ctx.Execute<SystemEdit>(SystemProxy, m => m.ShowSystemProxy(ctx, param.target)),
+            Commands.SystemToggleProxyCurrent(var param, _) => ctx.Execute<SystemEdit>(SystemProxy, m => m.ToggleSystemProxy(ctx, ctx.Guild, param.toggle)),
+            Commands.SystemToggleProxy(var param, _) => ctx.Execute<SystemEdit>(SystemProxy, m => m.ToggleSystemProxy(ctx, param.target, param.toggle)),
             _ =>
             // this should only ever occur when deving if commands are not implemented...
             ctx.Reply(
@@ -167,8 +171,6 @@ public partial class CommandTree
         if (ctx.Match("proxy"))
             if (ctx.Match("debug"))
                 return ctx.Execute<Checks>(ProxyCheck, m => m.MessageProxyCheck(ctx));
-            else
-                return ctx.Execute<SystemEdit>(SystemProxy, m => m.SystemProxy(ctx));
         if (ctx.Match("invite")) return ctx.Execute<Misc>(Invite, m => m.Invite(ctx));
         if (ctx.Match("mn")) return ctx.Execute<Fun>(null, m => m.Mn(ctx));
         if (ctx.Match("fire")) return ctx.Execute<Fun>(null, m => m.Fire(ctx));
@@ -295,8 +297,6 @@ public partial class CommandTree
         // todo: these aren't deprecated but also shouldn't be here
         else if (ctx.Match("webhook", "hook"))
             await ctx.Execute<Api>(null, m => m.SystemWebhook(ctx));
-        else if (ctx.Match("proxy"))
-            await ctx.Execute<SystemEdit>(SystemProxy, m => m.SystemProxy(ctx));
 
         // finally, parse commands that *can* take a system target
         else

@@ -830,11 +830,32 @@ public class SystemEdit
         await ctx.Repository.DeleteSystem(target.Id);
     }
 
-    public async Task SystemProxy(Context ctx)
+    public async Task ToggleSystemProxy(Context ctx, Guild guildArg, bool newValue)
     {
         ctx.CheckSystem();
 
-        var guild = await ctx.MatchGuild() ?? ctx.Guild ??
+        var guild = guildArg ??
+            throw new PKError("You must run this command in a server or pass a server ID.");
+
+        string serverText;
+        if (guild.Id == ctx.Guild?.Id)
+            serverText = $"this server ({guild.Name.EscapeMarkdown()})";
+        else
+            serverText = $"the server {guild.Name.EscapeMarkdown()}";
+
+        await ctx.Repository.UpdateSystemGuild(ctx.System.Id, guild.Id, new SystemGuildPatch { ProxyEnabled = newValue });
+
+        if (newValue)
+            await ctx.Reply($"Message proxying in {serverText} is now **enabled** for your system.");
+        else
+            await ctx.Reply($"Message proxying in {serverText} is now **disabled** for your system.");
+    }
+
+    public async Task ShowSystemProxy(Context ctx, Guild guildArg)
+    {
+        ctx.CheckSystem();
+
+        var guild = guildArg ??
             throw new PKError("You must run this command in a server or pass a server ID.");
 
         var gs = await ctx.Repository.GetSystemGuild(guild.Id, ctx.System.Id);
@@ -845,25 +866,12 @@ public class SystemEdit
         else
             serverText = $"the server {guild.Name.EscapeMarkdown()}";
 
-        if (!ctx.HasNext())
-        {
-            if (gs.ProxyEnabled)
-                await ctx.Reply(
-                    $"Proxying in {serverText} is currently **enabled** for your system. To disable it, type `{ctx.DefaultPrefix}system proxy off`.");
-            else
-                await ctx.Reply(
-                    $"Proxying in {serverText} is currently **disabled** for your system. To enable it, type `{ctx.DefaultPrefix}system proxy on`.");
-            return;
-        }
-
-        var newValue = ctx.MatchToggle();
-
-        await ctx.Repository.UpdateSystemGuild(ctx.System.Id, guild.Id, new SystemGuildPatch { ProxyEnabled = newValue });
-
-        if (newValue)
-            await ctx.Reply($"Message proxying in {serverText} is now **enabled** for your system.");
+        if (gs.ProxyEnabled)
+            await ctx.Reply(
+                $"Proxying in {serverText} is currently **enabled** for your system. To disable it, type `{ctx.DefaultPrefix}system proxy off`.");
         else
-            await ctx.Reply($"Message proxying in {serverText} is now **disabled** for your system.");
+            await ctx.Reply(
+                $"Proxying in {serverText} is currently **disabled** for your system. To enable it, type `{ctx.DefaultPrefix}system proxy on`.");
     }
 
     public async Task SystemPrivacy(Context ctx, PKSystem target)

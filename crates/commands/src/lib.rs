@@ -24,6 +24,7 @@ pub enum CommandResult {
 pub enum Parameter {
     MemberRef { member: String },
     SystemRef { system: String },
+    GuildRef { guild: String },
     MemberPrivacyTarget { target: String },
     PrivacyLevel { level: String },
     OpaqueString { raw: String },
@@ -41,6 +42,7 @@ impl From<ParameterValue> for Parameter {
             ParameterValue::OpaqueString(raw) => Self::OpaqueString { raw },
             ParameterValue::Toggle(toggle) => Self::Toggle { toggle },
             ParameterValue::Avatar(avatar) => Self::Avatar { avatar },
+            ParameterValue::GuildRef(guild) => Self::GuildRef { guild },
         }
     }
 }

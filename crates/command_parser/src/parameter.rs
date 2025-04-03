@@ -12,6 +12,7 @@ pub enum ParameterValue {
     OpaqueString(String),
     MemberRef(String),
     SystemRef(String),
+    GuildRef(String),
     MemberPrivacyTarget(String),
     PrivacyLevel(String),
     Toggle(bool),
@@ -42,6 +43,7 @@ impl Display for Parameter {
             }
             ParameterKind::MemberRef => write!(f, "<target member>"),
             ParameterKind::SystemRef => write!(f, "<target system>"),
+            ParameterKind::GuildRef => write!(f, "<target guild>"),
             ParameterKind::MemberPrivacyTarget => write!(f, "<privacy target>"),
             ParameterKind::PrivacyLevel => write!(f, "[privacy level]"),
             ParameterKind::Toggle => write!(f, "on/off"),
@@ -74,6 +76,7 @@ pub enum ParameterKind {
     OpaqueStringRemainder,
     MemberRef,
     SystemRef,
+    GuildRef,
     MemberPrivacyTarget,
     PrivacyLevel,
     Toggle,
@@ -87,6 +90,7 @@ impl ParameterKind {
             ParameterKind::OpaqueStringRemainder => "string",
             ParameterKind::MemberRef => "target",
             ParameterKind::SystemRef => "target",
+            ParameterKind::GuildRef => "target",
             ParameterKind::MemberPrivacyTarget => "member_privacy_target",
             ParameterKind::PrivacyLevel => "privacy_level",
             ParameterKind::Toggle => "toggle",
@@ -114,7 +118,12 @@ impl ParameterKind {
                 Toggle::from_str(input).map(|t| ParameterValue::Toggle(t.into()))
             }
             ParameterKind::Avatar => Ok(ParameterValue::Avatar(input.into())),
+            ParameterKind::GuildRef => Ok(ParameterValue::GuildRef(input.into())),
         }
+    }
+
+    pub(crate) fn skip_if_cant_match(&self) -> bool {
+        matches!(self, ParameterKind::Toggle)
     }
 }
 

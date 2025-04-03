@@ -1,7 +1,8 @@
 use std::{env, fmt::Write, fs, path::PathBuf, str::FromStr};
 
 use command_parser::{
-    command, parameter::{Parameter, ParameterKind}, token::Token
+    parameter::{Parameter, ParameterKind},
+    token::Token,
 };
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -16,6 +17,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     writeln!(&mut glue, "#nullable enable\n")?;
     writeln!(&mut glue, "using PluralKit.Core;\n")?;
+    writeln!(&mut glue, "using Myriad.Types;")?;
     writeln!(&mut glue, "namespace PluralKit.Bot;\n")?;
 
     let mut record_fields = String::new();
@@ -114,7 +116,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
         let mut command_reply_format = String::new();
-        if command.flags.iter().any(|flag| flag.get_name() == "plaintext") {
+        if command
+            .flags
+            .iter()
+            .any(|flag| flag.get_name() == "plaintext")
+        {
             writeln!(
                 &mut command_reply_format,
                 r#"if (plaintext) return ReplyFormat.Plaintext;"#,
@@ -166,6 +172,7 @@ fn get_param_ty(kind: ParameterKind) -> &'static str {
         ParameterKind::PrivacyLevel => "string",
         ParameterKind::Toggle => "bool",
         ParameterKind::Avatar => "ParsedImage",
+        ParameterKind::GuildRef => "Guild",
     }
 }
 
@@ -178,6 +185,7 @@ fn get_param_param_ty(kind: ParameterKind) -> &'static str {
         ParameterKind::PrivacyLevel => "PrivacyLevel",
         ParameterKind::Toggle => "Toggle",
         ParameterKind::Avatar => "Avatar",
+        ParameterKind::GuildRef => "Guild",
     }
 }
 

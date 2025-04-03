@@ -10,6 +10,7 @@ public abstract record Parameter()
 {
     public record MemberRef(PKMember member): Parameter;
     public record SystemRef(PKSystem system): Parameter;
+    public record GuildRef(Guild guild): Parameter;
     public record MemberPrivacyTarget(MemberPrivacySubject target): Parameter;
     public record PrivacyLevel(string level): Parameter;
     public record Toggle(bool value): Parameter;
@@ -83,6 +84,8 @@ public class Parameters
                 return new Parameter.Opaque(opaque.raw);
             case uniffi.commands.Parameter.Avatar avatar:
                 return new Parameter.Avatar(await ctx.GetUserPfp(avatar.avatar) ?? ctx.ParseImage(avatar.avatar));
+            case uniffi.commands.Parameter.GuildRef guildRef:
+                return new Parameter.GuildRef(await ctx.ParseGuild(guildRef.guild) ?? throw new PKError($"Guild {guildRef.guild} not found"));
         }
         return null;
     }

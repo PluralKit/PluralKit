@@ -10,6 +10,7 @@ interface CommandResult {
 interface Parameter {
 	MemberRef(string member);
 	SystemRef(string system);
+	GuildRef(string guild);
 	MemberPrivacyTarget(string target);
 	PrivacyLevel(string level);
 	OpaqueString(string raw);
