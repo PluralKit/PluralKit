@@ -175,6 +175,23 @@ pub fn edit() -> impl Iterator<Item = Command> {
     ]
     .into_iter();
 
+    let system_banner = tokens!(system_target, ("banner", ["cover"]));
+    let system_banner_cmd =
+        [command!(system_banner => "system_show_banner").help("Shows the system's banner")]
+            .into_iter();
+
+    let system_banner_self = tokens!(system, ("banner", ["cover"]));
+    let system_banner_self_cmd = [
+        command!(system_banner_self => "system_show_banner_self")
+            .help("Shows your system's banner"),
+        command!(system_banner_self, ("clear", ["c"]) => "system_clear_banner")
+            .flag(("yes", ["y"]))
+            .help("Clears your system's banner"),
+        command!(system_banner_self, ("banner", Avatar) => "system_change_banner")
+            .help("Changes your system's banner"),
+    ]
+    .into_iter();
+
     system_new_cmd
         .chain(system_name_self_cmd)
         .chain(system_server_name_self_cmd)
@@ -185,6 +202,7 @@ pub fn edit() -> impl Iterator<Item = Command> {
         .chain(system_pronouns_self_cmd)
         .chain(system_avatar_self_cmd)
         .chain(system_server_avatar_self_cmd)
+        .chain(system_banner_self_cmd)
         .chain(system_name_cmd)
         .chain(system_server_name_cmd)
         .chain(system_description_cmd)
@@ -194,5 +212,6 @@ pub fn edit() -> impl Iterator<Item = Command> {
         .chain(system_pronouns_cmd)
         .chain(system_avatar_cmd)
         .chain(system_server_avatar_cmd)
+        .chain(system_banner_cmd)
         .chain(system_info_cmd)
 }

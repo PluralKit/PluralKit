@@ -82,6 +82,19 @@ public partial class CommandTree
             Commands.SystemShowServerAvatar(var param, var flags) => ctx.Execute<SystemEdit>(SystemServerAvatar, m => m.ShowServerAvatar(ctx, param.target, flags.GetReplyFormat())),
             Commands.SystemClearServerAvatar(var param, var flags) => ctx.Execute<SystemEdit>(SystemServerAvatar, m => m.ClearServerAvatar(ctx, ctx.System, flags.yes)),
             Commands.SystemChangeServerAvatar(var param, _) => ctx.Execute<SystemEdit>(SystemServerAvatar, m => m.ChangeServerAvatar(ctx, ctx.System, param.avatar)),
+            Commands.SystemShowBannerSelf(_, var flags) => ((Func<Task>)(() =>
+            {
+                // we want to change banner if an attached image is passed
+                // we can't have a separate parsed command for this since the parser can't be aware of any attachments
+                var attachedImage = ctx.ExtractImageFromAttachment();
+                if (attachedImage is { } image)
+                    return ctx.Execute<SystemEdit>(SystemBannerImage, m => m.ChangeBannerImage(ctx, ctx.System, image));
+                // if no attachment show the banner like intended
+                return ctx.Execute<SystemEdit>(SystemBannerImage, m => m.ShowBannerImage(ctx, ctx.System, flags.GetReplyFormat()));
+            }))(),
+            Commands.SystemShowBanner(var param, var flags) => ctx.Execute<SystemEdit>(SystemBannerImage, m => m.ShowBannerImage(ctx, param.target, flags.GetReplyFormat())),
+            Commands.SystemClearBanner(var param, var flags) => ctx.Execute<SystemEdit>(SystemBannerImage, m => m.ClearBannerImage(ctx, ctx.System, flags.yes)),
+            Commands.SystemChangeBanner(var param, _) => ctx.Execute<SystemEdit>(SystemBannerImage, m => m.ChangeBannerImage(ctx, ctx.System, param.banner)),
             _ =>
             // this should only ever occur when deving if commands are not implemented...
             ctx.Reply(
@@ -330,9 +343,7 @@ public partial class CommandTree
 
     private async Task HandleSystemCommandTargeted(Context ctx, PKSystem target)
     {
-        if (ctx.Match("banner", "splash", "cover"))
-            await ctx.CheckSystem(target).Execute<SystemEdit>(SystemBannerImage, m => m.BannerImage(ctx, target));
-        else if (ctx.Match("list", "l", "members", "ls"))
+        if (ctx.Match("list", "l", "members", "ls"))
             await ctx.CheckSystem(target).Execute<SystemList>(SystemList, m => m.MemberList(ctx, target));
         else if (ctx.Match("find", "search", "query", "fd", "s"))
             await ctx.CheckSystem(target).Execute<SystemList>(SystemFind, m => m.MemberList(ctx, target));

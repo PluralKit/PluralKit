@@ -701,72 +701,77 @@ public class SystemEdit
             : ctx.Reply(msg));
     }
 
-    public async Task BannerImage(Context ctx, PKSystem target)
+    public async Task ClearBannerImage(Context ctx, PKSystem target, bool flagConfirmYes)
     {
         ctx.CheckSystemPrivacy(target.Id, target.BannerPrivacy);
-
-        var isOwnSystem = target.Id == ctx.System?.Id;
-
-        if ((!ctx.HasNext() && ctx.Message.Attachments.Length == 0) || ctx.PeekMatchFormat() != ReplyFormat.Standard)
-        {
-            if ((target.BannerImage?.Trim() ?? "").Length > 0)
-                switch (ctx.MatchFormat())
-                {
-                    case ReplyFormat.Raw:
-                        await ctx.Reply($"`{target.BannerImage.TryGetCleanCdnUrl()}`");
-                        break;
-                    case ReplyFormat.Plaintext:
-                        var ebP = new EmbedBuilder()
-                            .Description($"Showing banner for system {target.NameFor(ctx)} (`{target.DisplayHid(ctx.Config)}`)");
-                        await ctx.Reply(text: $"<{target.BannerImage.TryGetCleanCdnUrl()}>", embed: ebP.Build());
-                        break;
-                    default:
-                        var ebS = new EmbedBuilder()
-                            .Title("System banner image")
-                            .Image(new Embed.EmbedImage(target.BannerImage.TryGetCleanCdnUrl()));
-                        if (target.Id == ctx.System?.Id)
-                            ebS.Description($"To clear, use `{ctx.DefaultPrefix}system banner clear`.");
-                        await ctx.Reply(embed: ebS.Build());
-                        break;
-                }
-            else
-                throw new PKSyntaxError("This system does not have a banner image set."
-                    + (isOwnSystem ? "Set one by attaching an image to this command, or by passing an image URL or @mention." : ""));
-
-            return;
-        }
-
         ctx.CheckSystem().CheckOwnSystem(target);
 
-        if (ctx.MatchClear() && await ctx.ConfirmClear("your system's banner image"))
+        if (await ctx.ConfirmClear("your system's banner image", flagConfirmYes))
         {
             await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { BannerImage = null });
             await ctx.Reply($"{Emojis.Success} System banner image cleared.");
         }
+    }
 
-        else if (await ctx.MatchImage() is { } img)
+    public async Task ShowBannerImage(Context ctx, PKSystem target, ReplyFormat format)
+    {
+        ctx.CheckSystemPrivacy(target.Id, target.BannerPrivacy);
+        var isOwnSystem = target.Id == ctx.System?.Id;
+
+        if ((target.BannerImage?.Trim() ?? "").Length > 0)
         {
-            img = await _avatarHosting.TryRehostImage(img, AvatarHostingService.RehostedImageType.Banner, ctx.Author.Id, ctx.System);
-            await _avatarHosting.VerifyAvatarOrThrow(img.Url, true);
-
-            await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { BannerImage = img.CleanUrl ?? img.Url });
-
-            var msg = img.Source switch
+            switch (format)
             {
-                AvatarSource.Url => $"{Emojis.Success} System banner image changed to the image at the given URL.",
-                AvatarSource.HostedCdn => $"{Emojis.Success} System banner image changed to attached image.",
-                AvatarSource.Attachment =>
-                    $"{Emojis.Success} System banner image changed to attached image.\n{Emojis.Warn} If you delete the message containing the attachment, the banner image will stop working.",
-                AvatarSource.User => throw new PKError("Cannot set a banner image to an user's avatar."),
-                _ => throw new ArgumentOutOfRangeException()
-            };
-
-            // The attachment's already right there, no need to preview it.
-            var hasEmbed = img.Source != AvatarSource.Attachment && img.Source != AvatarSource.HostedCdn;
-            await (hasEmbed
-                ? ctx.Reply(msg, new EmbedBuilder().Image(new Embed.EmbedImage(img.Url)).Build())
-                : ctx.Reply(msg));
+                case ReplyFormat.Raw:
+                    await ctx.Reply($"`{target.BannerImage.TryGetCleanCdnUrl()}`");
+                    break;
+                case ReplyFormat.Plaintext:
+                    var ebP = new EmbedBuilder()
+                        .Description($"Showing banner for system {target.NameFor(ctx)} (`{target.DisplayHid(ctx.Config)}`)");
+                    await ctx.Reply(text: $"<{target.BannerImage.TryGetCleanCdnUrl()}>", embed: ebP.Build());
+                    break;
+                default:
+                    var ebS = new EmbedBuilder()
+                        .Title("System banner image")
+                        .Image(new Embed.EmbedImage(target.BannerImage.TryGetCleanCdnUrl()));
+                    if (target.Id == ctx.System?.Id)
+                        ebS.Description($"To clear, use `{ctx.DefaultPrefix}system banner clear`.");
+                    await ctx.Reply(embed: ebS.Build());
+                    break;
+            }
         }
+        else
+        {
+            throw new PKSyntaxError("This system does not have a banner image set."
+                + (isOwnSystem ? " Set one by attaching an image to this command, or by passing an image URL or @mention." : ""));
+        }
+    }
+
+    public async Task ChangeBannerImage(Context ctx, PKSystem target, ParsedImage img)
+    {
+        ctx.CheckSystemPrivacy(target.Id, target.BannerPrivacy);
+        ctx.CheckSystem().CheckOwnSystem(target);
+
+        img = await _avatarHosting.TryRehostImage(img, AvatarHostingService.RehostedImageType.Banner, ctx.Author.Id, ctx.System);
+        await _avatarHosting.VerifyAvatarOrThrow(img.Url, true);
+
+        await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { BannerImage = img.CleanUrl ?? img.Url });
+
+        var msg = img.Source switch
+        {
+            AvatarSource.Url => $"{Emojis.Success} System banner image changed to the image at the given URL.",
+            AvatarSource.HostedCdn => $"{Emojis.Success} System banner image changed to attached image.",
+            AvatarSource.Attachment =>
+                $"{Emojis.Success} System banner image changed to attached image.\n{Emojis.Warn} If you delete the message containing the attachment, the banner image will stop working.",
+            AvatarSource.User => throw new PKError("Cannot set a banner image to an user's avatar."),
+            _ => throw new ArgumentOutOfRangeException()
+        };
+
+        // The attachment's already right there, no need to preview it.
+        var hasEmbed = img.Source != AvatarSource.Attachment && img.Source != AvatarSource.HostedCdn;
+        await (hasEmbed
+            ? ctx.Reply(msg, new EmbedBuilder().Image(new Embed.EmbedImage(img.Url)).Build())
+            : ctx.Reply(msg));
     }
 
     public async Task Delete(Context ctx, PKSystem target)
