@@ -100,6 +100,9 @@ public partial class CommandTree
             Commands.SystemShowProxy(var param, _) => ctx.Execute<SystemEdit>(SystemProxy, m => m.ShowSystemProxy(ctx, param.target)),
             Commands.SystemToggleProxyCurrent(var param, _) => ctx.Execute<SystemEdit>(SystemProxy, m => m.ToggleSystemProxy(ctx, ctx.Guild, param.toggle)),
             Commands.SystemToggleProxy(var param, _) => ctx.Execute<SystemEdit>(SystemProxy, m => m.ToggleSystemProxy(ctx, param.target, param.toggle)),
+            Commands.SystemShowPrivacy(var param, _) => ctx.Execute<SystemEdit>(SystemPrivacy, m => m.ShowSystemPrivacy(ctx, ctx.System)),
+            Commands.SystemChangePrivacyAll(var param, _) => ctx.Execute<SystemEdit>(SystemPrivacy, m => m.ChangeSystemPrivacyAll(ctx, ctx.System, param.level)),
+            Commands.SystemChangePrivacy(var param, _) => ctx.Execute<SystemEdit>(SystemPrivacy, m => m.ChangeSystemPrivacy(ctx, ctx.System, param.privacy, param.level)),
             _ =>
             // this should only ever occur when deving if commands are not implemented...
             ctx.Reply(
@@ -363,8 +366,6 @@ public partial class CommandTree
             await ctx.CheckSystem(target).Execute<SystemFront>(SystemFrontPercent, m => m.FrontPercent(ctx, system: target));
         else if (ctx.Match("groups", "gs"))
             await ctx.CheckSystem(target).Execute<Groups>(GroupList, g => g.ListSystemGroups(ctx, target));
-        else if (ctx.Match("privacy"))
-            await ctx.CheckSystem(target).Execute<SystemEdit>(SystemPrivacy, m => m.SystemPrivacy(ctx, target));
         else if (ctx.Match("id"))
             await ctx.CheckSystem(target).Execute<System>(SystemId, m => m.DisplayId(ctx, target));
         else if (ctx.Match("random", "rand", "r"))

@@ -12,6 +12,7 @@ interface Parameter {
 	SystemRef(string system);
 	GuildRef(string guild);
 	MemberPrivacyTarget(string target);
+	SystemPrivacyTarget(string target);
 	PrivacyLevel(string level);
 	OpaqueString(string raw);
 	Toggle(boolean toggle);

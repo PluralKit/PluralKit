@@ -874,79 +874,72 @@ public class SystemEdit
                 $"Proxying in {serverText} is currently **disabled** for your system. To enable it, type `{ctx.DefaultPrefix}system proxy on`.");
     }
 
-    public async Task SystemPrivacy(Context ctx, PKSystem target)
+    public async Task ShowSystemPrivacy(Context ctx, PKSystem target)
     {
         ctx.CheckSystem().CheckOwnSystem(target);
 
-        Task PrintEmbed()
+        var eb = new EmbedBuilder()
+            .Title("Current privacy settings for your system")
+            .Field(new Embed.Field("Name", target.NamePrivacy.Explanation()))
+            .Field(new Embed.Field("Avatar", target.AvatarPrivacy.Explanation()))
+            .Field(new Embed.Field("Description", target.DescriptionPrivacy.Explanation()))
+            .Field(new Embed.Field("Banner", target.BannerPrivacy.Explanation()))
+            .Field(new Embed.Field("Pronouns", target.PronounPrivacy.Explanation()))
+            .Field(new Embed.Field("Member list", target.MemberListPrivacy.Explanation()))
+            .Field(new Embed.Field("Group list", target.GroupListPrivacy.Explanation()))
+            .Field(new Embed.Field("Current fronter(s)", target.FrontPrivacy.Explanation()))
+            .Field(new Embed.Field("Front/switch history", target.FrontHistoryPrivacy.Explanation()))
+            .Description(
+                $"To edit privacy settings, use the command:\n`{ctx.DefaultPrefix}system privacy <subject> <level>`\n\n- `subject` is one of `name`, `avatar`, `description`, `banner`, `pronouns`, `list`, `front`, `fronthistory`, `groups`, or `all` \n- `level` is either `public` or `private`.");
+        await ctx.Reply(embed: eb.Build());
+    }
+
+    public async Task ChangeSystemPrivacy(Context ctx, PKSystem target, SystemPrivacySubject subject, PrivacyLevel level)
+    {
+        ctx.CheckSystem().CheckOwnSystem(target);
+
+        await ctx.Repository.UpdateSystem(target.Id, new SystemPatch().WithPrivacy(subject, level));
+
+        var levelExplanation = level switch
         {
-            var eb = new EmbedBuilder()
-                .Title("Current privacy settings for your system")
-                .Field(new Embed.Field("Name", target.NamePrivacy.Explanation()))
-                .Field(new Embed.Field("Avatar", target.AvatarPrivacy.Explanation()))
-                .Field(new Embed.Field("Description", target.DescriptionPrivacy.Explanation()))
-                .Field(new Embed.Field("Banner", target.BannerPrivacy.Explanation()))
-                .Field(new Embed.Field("Pronouns", target.PronounPrivacy.Explanation()))
-                .Field(new Embed.Field("Member list", target.MemberListPrivacy.Explanation()))
-                .Field(new Embed.Field("Group list", target.GroupListPrivacy.Explanation()))
-                .Field(new Embed.Field("Current fronter(s)", target.FrontPrivacy.Explanation()))
-                .Field(new Embed.Field("Front/switch history", target.FrontHistoryPrivacy.Explanation()))
-                .Description(
-                    $"To edit privacy settings, use the command:\n`{ctx.DefaultPrefix}system privacy <subject> <level>`\n\n- `subject` is one of `name`, `avatar`, `description`, `banner`, `pronouns`, `list`, `front`, `fronthistory`, `groups`, or `all` \n- `level` is either `public` or `private`.");
-            return ctx.Reply(embed: eb.Build());
-        }
+            PrivacyLevel.Public => "be able to query",
+            PrivacyLevel.Private => "*not* be able to query",
+            _ => ""
+        };
 
-        async Task SetLevel(SystemPrivacySubject subject, PrivacyLevel level)
+        var subjectStr = subject switch
         {
-            await ctx.Repository.UpdateSystem(target.Id, new SystemPatch().WithPrivacy(subject, level));
+            SystemPrivacySubject.Name => "name",
+            SystemPrivacySubject.Avatar => "avatar",
+            SystemPrivacySubject.Description => "description",
+            SystemPrivacySubject.Banner => "banner",
+            SystemPrivacySubject.Pronouns => "pronouns",
+            SystemPrivacySubject.Front => "front",
+            SystemPrivacySubject.FrontHistory => "front history",
+            SystemPrivacySubject.MemberList => "member list",
+            SystemPrivacySubject.GroupList => "group list",
+            _ => ""
+        };
 
-            var levelExplanation = level switch
-            {
-                PrivacyLevel.Public => "be able to query",
-                PrivacyLevel.Private => "*not* be able to query",
-                _ => ""
-            };
+        var msg = $"System {subjectStr} privacy has been set to **{level.LevelName()}**. Other accounts will now {levelExplanation} your system {subjectStr}.";
+        await ctx.Reply($"{Emojis.Success} {msg}");
+    }
 
-            var subjectStr = subject switch
-            {
-                SystemPrivacySubject.Name => "name",
-                SystemPrivacySubject.Avatar => "avatar",
-                SystemPrivacySubject.Description => "description",
-                SystemPrivacySubject.Banner => "banner",
-                SystemPrivacySubject.Pronouns => "pronouns",
-                SystemPrivacySubject.Front => "front",
-                SystemPrivacySubject.FrontHistory => "front history",
-                SystemPrivacySubject.MemberList => "member list",
-                SystemPrivacySubject.GroupList => "group list",
-                _ => ""
-            };
+    public async Task ChangeSystemPrivacyAll(Context ctx, PKSystem target, PrivacyLevel level)
+    {
+        ctx.CheckSystem().CheckOwnSystem(target);
 
-            var msg =
-                $"System {subjectStr} privacy has been set to **{level.LevelName()}**. Other accounts will now {levelExplanation} your system {subjectStr}.";
-            await ctx.Reply($"{Emojis.Success} {msg}");
-        }
+        await ctx.Repository.UpdateSystem(target.Id, new SystemPatch().WithAllPrivacy(level));
 
-        async Task SetAll(PrivacyLevel level)
+        var msg = level switch
         {
-            await ctx.Repository.UpdateSystem(target.Id, new SystemPatch().WithAllPrivacy(level));
+            PrivacyLevel.Private =>
+                $"All system privacy settings have been set to **{level.LevelName()}**. Other accounts will now not be able to view your member list, group list, front history, or system description.",
+            PrivacyLevel.Public =>
+                $"All system privacy settings have been set to **{level.LevelName()}**. Other accounts will now be able to view everything.",
+            _ => ""
+        };
 
-            var msg = level switch
-            {
-                PrivacyLevel.Private =>
-                    $"All system privacy settings have been set to **{level.LevelName()}**. Other accounts will now not be able to view your member list, group list, front history, or system description.",
-                PrivacyLevel.Public =>
-                    $"All system privacy settings have been set to **{level.LevelName()}**. Other accounts will now be able to view everything.",
-                _ => ""
-            };
-
-            await ctx.Reply($"{Emojis.Success} {msg}");
-        }
-
-        if (!ctx.HasNext())
-            await PrintEmbed();
-        else if (ctx.Match("all"))
-            await SetAll(ctx.PopPrivacyLevel());
-        else
-            await SetLevel(ctx.PopSystemPrivacySubject(), ctx.PopPrivacyLevel());
+        await ctx.Reply($"{Emojis.Success} {msg}");
     }
 }

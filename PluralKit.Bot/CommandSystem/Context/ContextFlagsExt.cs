@@ -36,7 +36,7 @@ public static class ContextFlagsExt
         );
     }
 
-    public static async Task<string?> FlagResolvePrivacyLevel(this Context ctx, string param_name)
+    public static async Task<PrivacyLevel?> FlagResolvePrivacyLevel(this Context ctx, string param_name)
     {
         return await ctx.Parameters.ResolveFlag(
             ctx, param_name,

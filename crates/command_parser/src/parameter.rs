@@ -14,6 +14,7 @@ pub enum ParameterValue {
     SystemRef(String),
     GuildRef(String),
     MemberPrivacyTarget(String),
+    SystemPrivacyTarget(String),
     PrivacyLevel(String),
     Toggle(bool),
     Avatar(String),
@@ -45,6 +46,7 @@ impl Display for Parameter {
             ParameterKind::SystemRef => write!(f, "<target system>"),
             ParameterKind::GuildRef => write!(f, "<target guild>"),
             ParameterKind::MemberPrivacyTarget => write!(f, "<privacy target>"),
+            ParameterKind::SystemPrivacyTarget => write!(f, "<privacy target>"),
             ParameterKind::PrivacyLevel => write!(f, "[privacy level]"),
             ParameterKind::Toggle => write!(f, "on/off"),
             ParameterKind::Avatar => write!(f, "<url|@mention>"),
@@ -78,6 +80,7 @@ pub enum ParameterKind {
     SystemRef,
     GuildRef,
     MemberPrivacyTarget,
+    SystemPrivacyTarget,
     PrivacyLevel,
     Toggle,
     Avatar,
@@ -92,6 +95,7 @@ impl ParameterKind {
             ParameterKind::SystemRef => "target",
             ParameterKind::GuildRef => "target",
             ParameterKind::MemberPrivacyTarget => "member_privacy_target",
+            ParameterKind::SystemPrivacyTarget => "system_privacy_target",
             ParameterKind::PrivacyLevel => "privacy_level",
             ParameterKind::Toggle => "toggle",
             ParameterKind::Avatar => "avatar",
@@ -112,6 +116,9 @@ impl ParameterKind {
             ParameterKind::SystemRef => Ok(ParameterValue::SystemRef(input.into())),
             ParameterKind::MemberPrivacyTarget => MemberPrivacyTargetKind::from_str(input)
                 .map(|target| ParameterValue::MemberPrivacyTarget(target.as_ref().into())),
+            ParameterKind::SystemPrivacyTarget => SystemPrivacyTargetKind::from_str(input).map(
+                |target| ParameterValue::SystemPrivacyTarget(target.as_ref().into()),
+            ),
             ParameterKind::PrivacyLevel => PrivacyLevelKind::from_str(input)
                 .map(|level| ParameterValue::PrivacyLevel(level.as_ref().into())),
             ParameterKind::Toggle => {
@@ -172,6 +179,53 @@ impl FromStr for MemberPrivacyTargetKind {
             "proxy" => Ok(Self::Proxy),
             "metadata" => Ok(Self::Metadata),
             _ => Err("invalid member privacy target".into()),
+        }
+    }
+}
+
+pub enum SystemPrivacyTargetKind {
+    Name,
+    Avatar,
+    Description,
+    Banner,
+    Pronouns,
+    MemberList,
+    GroupList,
+    Front,
+    FrontHistory,
+}
+
+impl AsRef<str> for SystemPrivacyTargetKind {
+    fn as_ref(&self) -> &str {
+        match self {
+            Self::Name => "name",
+            Self::Avatar => "avatar",
+            Self::Description => "description",
+            Self::Banner => "banner",
+            Self::Pronouns => "pronouns",
+            Self::MemberList => "members",
+            Self::GroupList => "groups",
+            Self::Front => "front",
+            Self::FrontHistory => "fronthistory",
+        }
+    }
+}
+
+impl FromStr for SystemPrivacyTargetKind {
+    type Err = SmolStr;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "name" => Ok(Self::Name),
+            "avatar" | "pfp" | "pic" | "icon" => Ok(Self::Avatar),
+            "description" | "desc" | "bio" | "info" => Ok(Self::Description),
+            "banner" | "splash" | "cover" => Ok(Self::Banner),
+            "pronouns" | "prns" | "pn" => Ok(Self::Pronouns),
+            "members" | "memberlist" | "list" => Ok(Self::MemberList),
+            "groups" | "gs" => Ok(Self::GroupList),
+            "front" | "fronter" | "fronters" => Ok(Self::Front),
+            "fronthistory" | "fh" | "switches" => Ok(Self::FrontHistory),
+            _ => Err("invalid system privacy target".into()),
         }
     }
 }

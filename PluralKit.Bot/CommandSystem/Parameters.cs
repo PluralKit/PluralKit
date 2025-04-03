@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using Myriad.Types;
 using PluralKit.Core;
 using uniffi.commands;
@@ -12,7 +11,8 @@ public abstract record Parameter()
     public record SystemRef(PKSystem system): Parameter;
     public record GuildRef(Guild guild): Parameter;
     public record MemberPrivacyTarget(MemberPrivacySubject target): Parameter;
-    public record PrivacyLevel(string level): Parameter;
+    public record SystemPrivacyTarget(SystemPrivacySubject target): Parameter;
+    public record PrivacyLevel(Core.PrivacyLevel level): Parameter;
     public record Toggle(bool value): Parameter;
     public record Opaque(string value): Parameter;
     public record Avatar(ParsedImage avatar): Parameter;
@@ -72,12 +72,16 @@ public class Parameters
                 );
             case uniffi.commands.Parameter.MemberPrivacyTarget memberPrivacyTarget:
                 // this should never really fail...
-                // todo: we shouldn't have *three* different MemberPrivacyTarget types (rust, ffi, c#) syncing the cases will be annoying...
-                if (!MemberPrivacyUtils.TryParseMemberPrivacy(memberPrivacyTarget.target, out var target))
+                if (!MemberPrivacyUtils.TryParseMemberPrivacy(memberPrivacyTarget.target, out var memberPrivacy))
                     throw new PKError($"Invalid member privacy target {memberPrivacyTarget.target}");
-                return new Parameter.MemberPrivacyTarget(target);
+                return new Parameter.MemberPrivacyTarget(memberPrivacy);
+            case uniffi.commands.Parameter.SystemPrivacyTarget systemPrivacyTarget:
+                // this should never really fail...
+                if (!SystemPrivacyUtils.TryParseSystemPrivacy(systemPrivacyTarget.target, out var systemPrivacy))
+                    throw new PKError($"Invalid system privacy target {systemPrivacyTarget.target}");
+                return new Parameter.SystemPrivacyTarget(systemPrivacy);
             case uniffi.commands.Parameter.PrivacyLevel privacyLevel:
-                return new Parameter.PrivacyLevel(privacyLevel.level);
+                return new Parameter.PrivacyLevel(privacyLevel.level == "public" ? PrivacyLevel.Public : privacyLevel.level == "private" ? PrivacyLevel.Private : throw new PKError($"Invalid privacy level {privacyLevel.level}"));
             case uniffi.commands.Parameter.Toggle toggle:
                 return new Parameter.Toggle(toggle.toggle);
             case uniffi.commands.Parameter.OpaqueString opaque:
