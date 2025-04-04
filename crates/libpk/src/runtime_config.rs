@@ -33,7 +33,7 @@ impl RuntimeConfig {
             settings.insert(key, value);
         }
 
-        info!("starting with runtime config: {:?}", self.settings);
+        info!("starting with runtime config: {:?}", settings);
         Ok(())
     }
 
@@ -58,8 +58,8 @@ impl RuntimeConfig {
         Ok(())
     }
 
-    pub async fn get(&self, key: String) -> Option<String> {
-        self.settings.read().await.get(&key).cloned()
+    pub async fn get(&self, key: &str) -> Option<String> {
+        self.settings.read().await.get(key).cloned()
     }
 
     pub async fn exists(&self, key: &str) -> bool {

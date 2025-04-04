@@ -1,9 +1,12 @@
-using Serilog;
+using System.Text.Json;
 
-using Newtonsoft.Json;
+using Serilog;
 
 using WatsonWebserver.Lite;
 using WatsonWebserver.Core;
+
+using Myriad.Gateway;
+using Myriad.Serialization;
 
 namespace PluralKit.Bot;
 
@@ -11,11 +14,13 @@ public class HttpListenerService
 {
     private readonly ILogger _logger;
     private readonly RuntimeConfigService _runtimeConfig;
+    private readonly Bot _bot;
 
-    public HttpListenerService(ILogger logger, RuntimeConfigService runtimeConfig)
+    public HttpListenerService(ILogger logger, RuntimeConfigService runtimeConfig, Bot bot)
     {
         _logger = logger.ForContext<HttpListenerService>();
         _runtimeConfig = runtimeConfig;
+        _bot = bot;
     }
 
     public void Start(string host)
@@ -25,6 +30,8 @@ public class HttpListenerService
         server.Routes.PreAuthentication.Static.Add(WatsonWebserver.Core.HttpMethod.GET, "/runtime_config", RuntimeConfigGet);
         server.Routes.PreAuthentication.Parameter.Add(WatsonWebserver.Core.HttpMethod.POST, "/runtime_config/{key}", RuntimeConfigSet);
         server.Routes.PreAuthentication.Parameter.Add(WatsonWebserver.Core.HttpMethod.DELETE, "/runtime_config/{key}", RuntimeConfigDelete);
+
+        server.Routes.PreAuthentication.Parameter.Add(WatsonWebserver.Core.HttpMethod.POST, "/events/{shard_id}", GatewayEvent);
 
         server.Start();
     }
@@ -36,7 +43,7 @@ public class HttpListenerService
     {
         var config = _runtimeConfig.GetAll();
         ctx.Response.Headers.Add("content-type", "application/json");
-        await ctx.Response.Send(JsonConvert.SerializeObject(config));
+        await ctx.Response.Send(JsonSerializer.Serialize(config));
     }
 
     private async Task RuntimeConfigSet(HttpContextBase ctx)
@@ -52,5 +59,44 @@ public class HttpListenerService
         var key = ctx.Request.Url.Parameters["key"];
         await _runtimeConfig.Delete(key);
         await RuntimeConfigGet(ctx);
+    }
+
+    private JsonSerializerOptions _jsonSerializerOptions = new JsonSerializerOptions().ConfigureForMyriad();
+
+    private async Task GatewayEvent(HttpContextBase ctx)
+    {
+        var shardIdString = ctx.Request.Url.Parameters["shard_id"];
+        if (!int.TryParse(shardIdString, out var shardId)) return;
+
+        var packet = JsonSerializer.Deserialize<GatewayPacket>(ctx.Request.DataAsString, _jsonSerializerOptions);
+        var evt = DeserializeEvent(shardId, packet.EventType!, (JsonElement)packet.Payload!);
+        if (evt != null)
+        {
+            await _bot.OnEventReceivedInner(shardId, evt);
+        }
+        await ctx.Response.Send("a");
+    }
+
+    private IGatewayEvent? DeserializeEvent(int shardId, string eventType, JsonElement payload)
+    {
+        if (!IGatewayEvent.EventTypes.TryGetValue(eventType, out var clrType))
+        {
+            _logger.Debug("Shard {ShardId}: Received unknown event type {EventType}", shardId, eventType);
+            return null;
+        }
+
+        try
+        {
+            _logger.Verbose("Shard {ShardId}: Deserializing {EventType} to {ClrType}", shardId, eventType,
+                clrType);
+            return JsonSerializer.Deserialize(payload.GetRawText(), clrType, _jsonSerializerOptions)
+                as IGatewayEvent;
+        }
+        catch (JsonException e)
+        {
+            _logger.Error(e, "Shard {ShardId}: Error deserializing event {EventType} to {ClrType}", shardId,
+                eventType, clrType);
+            return null;
+        }
     }
 }

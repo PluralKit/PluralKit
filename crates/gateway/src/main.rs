@@ -5,6 +5,7 @@ use chrono::Timelike;
 use discord::gateway::cluster_config;
 use fred::{clients::RedisPool, interfaces::*};
 use libpk::runtime_config::RuntimeConfig;
+use reqwest::ClientBuilder;
 use signal_hook::{
     consts::{SIGINT, SIGTERM},
     iterator::Signals,
@@ -15,13 +16,15 @@ use std::{
     vec::Vec,
 };
 use tokio::task::JoinSet;
-use tracing::{info, warn};
+use tracing::{error, info, warn};
 use twilight_gateway::{MessageSender, ShardId};
 use twilight_model::gateway::payload::outgoing::UpdatePresence;
 
 mod cache_api;
 mod discord;
 mod logger;
+
+const RUNTIME_CONFIG_KEY_EVENT_TARGET: &'static str = "event_target";
 
 libpk::main!("gateway");
 async fn real_main() -> anyhow::Result<()> {
@@ -57,8 +60,39 @@ async fn real_main() -> anyhow::Result<()> {
             event_tx.clone(),
             shard_state.clone(),
             cache.clone(),
+            runtime_config.clone(),
         )));
     }
+
+    set.spawn(tokio::spawn({
+        let runtime_config = runtime_config.clone();
+        async move {
+            let client = Arc::new(ClientBuilder::new()
+                .connect_timeout(Duration::from_secs(1))
+                .timeout(Duration::from_secs(1))
+                .build()
+                .expect("error making client"));
+
+            while let Some((shard_id, event)) = event_rx.recv().await {
+                let target = runtime_config.get(RUNTIME_CONFIG_KEY_EVENT_TARGET).await;
+                if let Some(target) = target {
+                    tokio::spawn({
+                        let client = client.clone();
+                        async move {
+                            if let Err(error) = client
+                                .post(format!("{target}/{}", shard_id.number()))
+                                .body(event)
+                                .send()
+                                .await
+                            {
+                                error!(error = ?error, "failed to request event target")
+                            }
+                        }
+                    });
+                }
+            }
+        }
+    }));
 
     set.spawn(tokio::spawn(
         async move { scheduled_task(redis, senders).await },

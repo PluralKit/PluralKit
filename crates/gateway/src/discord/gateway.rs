@@ -1,7 +1,8 @@
 use futures::StreamExt;
-use libpk::_config::ClusterSettings;
+use libpk::{_config::ClusterSettings, runtime_config::RuntimeConfig};
 use metrics::counter;
-use std::sync::{mpsc::Sender, Arc};
+use std::sync::Arc;
+use tokio::sync::mpsc::Sender;
 use tracing::{error, info, warn};
 use twilight_gateway::{
     create_iterator, ConfigBuilder, Event, EventTypeFlags, Message, Shard, ShardId,
@@ -12,7 +13,10 @@ use twilight_model::gateway::{
     Intents,
 };
 
-use crate::discord::identify_queue::{self, RedisQueue};
+use crate::{
+    discord::identify_queue::{self, RedisQueue},
+    RUNTIME_CONFIG_KEY_EVENT_TARGET,
+};
 
 use super::{cache::DiscordCache, shard_state::ShardStateManager};
 
@@ -78,12 +82,19 @@ pub fn create_shards(redis: fred::clients::RedisPool) -> anyhow::Result<Vec<Shar
 
 pub async fn runner(
     mut shard: Shard<RedisQueue>,
-    _tx: Sender<(ShardId, String)>,
+    tx: Sender<(ShardId, String)>,
     shard_state: ShardStateManager,
     cache: Arc<DiscordCache>,
+    runtime_config: Arc<RuntimeConfig>,
 ) {
     // let _span = info_span!("shard_runner", shard_id = shard.id().number()).entered();
     let shard_id = shard.id().number();
+
+    let our_user_id = libpk::config
+        .discord
+        .as_ref()
+        .expect("missing discord config")
+        .client_id;
 
     info!("waiting for events");
     while let Some(item) = shard.next().await {
@@ -165,7 +176,28 @@ pub async fn runner(
         cache.0.update(&event);
 
         // okay, we've handled the event internally, let's send it to consumers
-        // tx.send((shard.id(), raw_event)).unwrap();
+
+        // some basic filtering here is useful
+        // we can't use if matching using the | operator, so anything matched does nothing
+        // and the default match skips the next block (continues to the next event)
+        match event {
+            Event::InteractionCreate(_) => {}
+            Event::MessageCreate(m) if m.author.id != our_user_id => {}
+            Event::MessageUpdate(m)
+                if let Some(author) = m.author.clone()
+                    && author.id != our_user_id
+                    && !author.bot => {}
+            Event::MessageDelete(_) => {}
+            Event::MessageDeleteBulk(_) => {}
+            Event::ReactionAdd(r) if r.user_id != our_user_id => {}
+            _ => {
+                continue;
+            }
+        }
+
+        if runtime_config.exists(RUNTIME_CONFIG_KEY_EVENT_TARGET).await {
+            tx.send((shard.id(), raw_event)).await.unwrap();
+        }
     }
 }
 
