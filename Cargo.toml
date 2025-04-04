@@ -25,14 +25,14 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3.16", features = ["env-filter", "json"] }
 uuid = { version = "1.7.0", features = ["serde"] }
 
-twilight-gateway = { git = "https://github.com/pluralkit/twilight" }
-twilight-cache-inmemory = { git = "https://github.com/pluralkit/twilight", features = ["permission-calculator"] }
-twilight-util = { git = "https://github.com/pluralkit/twilight", features = ["permission-calculator"] }
-twilight-model = { git = "https://github.com/pluralkit/twilight" }
-twilight-http = { git = "https://github.com/pluralkit/twilight", default-features = false, features = ["rustls-native-roots"] }
+twilight-gateway = { git = "https://github.com/pluralkit/twilight", branch = "pluralkit-fb4f590" }
+twilight-cache-inmemory = { git = "https://github.com/pluralkit/twilight", branch = "pluralkit-fb4f590", features = ["permission-calculator"] }
+twilight-util = { git = "https://github.com/pluralkit/twilight", branch = "pluralkit-fb4f590", features = ["permission-calculator"] }
+twilight-model = { git = "https://github.com/pluralkit/twilight", branch = "pluralkit-fb4f590" }
+twilight-http = { git = "https://github.com/pluralkit/twilight", branch = "pluralkit-fb4f590", default-features = false, features = ["rustls-aws_lc_rs", "rustls-native-roots"] }
 
-#twilight-gateway = { path = "../twilight/twilight-gateway" }
-#twilight-cache-inmemory = { path = "../twilight/twilight-cache-inmemory", features = ["permission-calculator"] }
-#twilight-util = { path = "../twilight/twilight-util", features = ["permission-calculator"] }
-#twilight-model = { path = "../twilight/twilight-model" }
-#twilight-http = { path = "../twilight/twilight-http", default-features = false, features = ["rustls-native-roots"] }
+# twilight-gateway = { path = "../twilight/twilight-gateway" }
+# twilight-cache-inmemory = { path = "../twilight/twilight-cache-inmemory", features = ["permission-calculator"] }
+# twilight-util = { path = "../twilight/twilight-util", features = ["permission-calculator"] }
+# twilight-model = { path = "../twilight/twilight-model" }
+# twilight-http = { path = "../twilight/twilight-http", default-features = false, features = ["rustls-aws_lc_rs", "rustls-native-roots"] }

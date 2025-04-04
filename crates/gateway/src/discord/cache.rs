@@ -476,12 +476,14 @@ impl DiscordCache {
                 system_channel_flags: guild.system_channel_flags(),
                 system_channel_id: guild.system_channel_id(),
                 threads: vec![],
-                unavailable: false,
+                unavailable: Some(false),
                 vanity_url_code: guild.vanity_url_code().map(ToString::to_string),
                 verification_level: guild.verification_level(),
                 voice_states: vec![],
                 widget_channel_id: guild.widget_channel_id(),
                 widget_enabled: guild.widget_enabled(),
+                guild_scheduled_events: guild.guild_scheduled_events().to_vec(),
+                max_stage_video_channel_users: guild.max_stage_video_channel_users(),
             }
         })
     }

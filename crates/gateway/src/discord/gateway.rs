@@ -183,10 +183,7 @@ pub async fn runner(
         match event {
             Event::InteractionCreate(_) => {}
             Event::MessageCreate(ref m) if m.author.id != our_user_id => {}
-            Event::MessageUpdate(ref m)
-                if let Some(author) = m.author.clone()
-                    && author.id != our_user_id
-                    && !author.bot => {}
+            Event::MessageUpdate(ref m) if m.author.id != our_user_id && !m.author.bot => {}
             Event::MessageDelete(_) => {}
             Event::MessageDeleteBulk(_) => {}
             Event::ReactionAdd(ref r) if r.user_id != our_user_id => {}
