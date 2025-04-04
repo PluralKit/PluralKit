@@ -10,12 +10,8 @@ use signal_hook::{
     consts::{SIGINT, SIGTERM},
     iterator::Signals,
 };
-use std::{
-    sync::{mpsc::channel, Arc},
-    time::Duration,
-    vec::Vec,
-};
-use tokio::task::JoinSet;
+use std::{sync::Arc, time::Duration, vec::Vec};
+use tokio::{sync::mpsc::channel, task::JoinSet};
 use tracing::{error, info, warn};
 use twilight_gateway::{MessageSender, ShardId};
 use twilight_model::gateway::payload::outgoing::UpdatePresence;
@@ -28,7 +24,7 @@ const RUNTIME_CONFIG_KEY_EVENT_TARGET: &'static str = "event_target";
 
 libpk::main!("gateway");
 async fn real_main() -> anyhow::Result<()> {
-    let (shutdown_tx, shutdown_rx) = channel::<()>();
+    let (shutdown_tx, mut shutdown_rx) = channel::<()>(1);
     let shutdown_tx = Arc::new(shutdown_tx);
 
     let redis = libpk::db::init_redis().await?;
@@ -46,7 +42,8 @@ async fn real_main() -> anyhow::Result<()> {
 
     let shards = discord::gateway::create_shards(redis.clone())?;
 
-    let (event_tx, _event_rx) = channel();
+    // arbitrary
+    let (event_tx, mut event_rx) = channel(1000);
 
     let mut senders = Vec::new();
     let mut signal_senders = Vec::new();
@@ -126,19 +123,19 @@ async fn real_main() -> anyhow::Result<()> {
                 let _ = sender.command(&presence);
             }
 
-            let _ = shutdown_tx.send(());
+            let _ = shutdown_tx.send(()).await;
             break;
         }
     }));
 
-    let _ = shutdown_rx.recv();
+    let _ = shutdown_rx.recv().await;
 
-    // sleep 500ms to allow everything to clean up properly
-    tokio::time::sleep(Duration::from_millis(500)).await;
+    info!("gateway exiting, have a nice day!");
 
     set.abort_all();
 
-    info!("gateway exiting, have a nice day!");
+    // sleep 500ms to allow everything to clean up properly
+    tokio::time::sleep(Duration::from_millis(500)).await;
 
     Ok(())
 }
