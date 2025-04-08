@@ -10,7 +10,6 @@ use metrics::gauge;
 use num_format::{Locale, ToFormattedString};
 use reqwest::ClientBuilder;
 use sqlx::Executor;
-use tracing::error;
 
 use crate::AppCtx;
 
@@ -190,28 +189,25 @@ pub async fn update_stats_api(ctx: AppCtx) -> anyhow::Result<()> {
             let data = resp.json::<PrometheusResult>().await?;
 
             let error_handler = || {
-                error!("missing data at {}", $q);
+                anyhow::anyhow!("missing data at {}", $q)
             };
 
             data.data
                 .result
                 .get(0)
-                .ok_or_else(error_handler)
-                .unwrap()
+                .ok_or_else(error_handler)?
                 .value
                 .clone()
                 .get(1)
-                .ok_or_else(error_handler)
-                .unwrap()
+                .ok_or_else(error_handler)?
                 .as_str()
-                .ok_or_else(error_handler)
-                .unwrap()
+                .ok_or_else(error_handler)?
                 .parse::<$t>()?
         }};
         ($t:ty, $q:expr, $wrap:expr) => {{
             let val = prom_instant_query!($t, $q);
             let val = (val * $wrap).round() / $wrap;
-            format!("{:.2}", val).parse::<f64>().unwrap()
+            format!("{:.2}", val).parse::<f64>()?
         }};
     }
 
