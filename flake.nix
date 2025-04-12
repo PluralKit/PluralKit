@@ -16,7 +16,7 @@
     nci.inputs.nixpkgs.follows = "nixpkgs";
     nci.inputs.dream2nix.follows = "d2n";
     nci.inputs.treefmt.follows = "treefmt";
-    uniffi-bindgen-cs.url = "git+https://github.com/NordSecurity/uniffi-bindgen-cs?tag=v0.8.3+v0.25.0&submodules=1";
+    uniffi-bindgen-cs.url = "git+https://github.com/NordSecurity/uniffi-bindgen-cs?ref=refs/tags/v0.8.3+v0.25.0&submodules=1";
     uniffi-bindgen-cs.flake = false;
     # misc
     treefmt.url = "github:numtide/treefmt-nix";
