@@ -33,7 +33,7 @@ RUN cargo build --bin avatar_cleanup --release --target x86_64-unknown-linux-mus
 RUN cargo build --bin scheduled_tasks --release --target x86_64-unknown-linux-musl
 RUN cargo build --bin gdpr_worker --release --target x86_64-unknown-linux-musl
 
-FROM scratch
+FROM alpine:latest
 
 COPY --from=binary-builder /build/target/x86_64-unknown-linux-musl/release/api /api
 COPY --from=binary-builder /build/target/x86_64-unknown-linux-musl/release/dispatch /dispatch

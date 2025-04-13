@@ -188,9 +188,7 @@ pub async fn update_stats_api(ctx: AppCtx) -> anyhow::Result<()> {
 
             let data = resp.json::<PrometheusResult>().await?;
 
-            let error_handler = || {
-                anyhow::anyhow!("missing data at {}", $q)
-            };
+            let error_handler = || anyhow::anyhow!("missing data at {}", $q);
 
             data.data
                 .result

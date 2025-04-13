@@ -1,52 +1,46 @@
-# API port: 2838, InfluxDB port: 2839, both listen on localhost only
-# Reads `pluralkit.conf` from current directory, and logs to `/var/log/pluralkit`.
-
 version: "3"
 
 services:
   bot:
-    image: pluralkit # This image is reused in the other containers due to the
-    build: .         # build instruction right here
+    build: .
     command: ["bin/PluralKit.Bot.dll"]
     environment:
-      - "PluralKit:Database=Host=db;Username=postgres;Password=postgres;Database=postgres;Maximum Pool Size=1000"
-      - "PluralKit:RedisAddr=redis"
-      - "PluralKit:InfluxUrl=http://influx:8086"
-      - "PluralKit:InfluxDb=pluralkit"
-      - "PluralKit:LogDir=/var/log/pluralkit"
-    volumes:
-      - "./pluralkit.conf:/app/pluralkit.conf:ro"
-      - "/var/log/pluralkit:/var/log/pluralkit"
+      - "PluralKit__Database=Host=db;Username=postgres;Password=postgres;Database=postgres"
+      - "PluralKit__RedisAddr=redis"
+      - "PluralKit__Bot__Token=${BOT_TOKEN}"
+      - "PluralKit__Bot__ClientId=${CLIENT_ID}"
+      - "PluralKit__Bot__AdminRole=${ADMIN_ROLE}"
+      - "PluralKit__Bot__HttpCacheUrl=http://gateway:5000"
+      - "PluralKit__Bot__HttpListenerAddr=0.0.0.0"
+      - "PluralKit__Bot__EventAwaiterTarget=http://bot:5002/events"
+      - "PluralKit__Bot__DisableGateway=true"
     restart: unless-stopped
 
-  api:
-    image: pluralkit
-    command: ["bin/PluralKit.API.dll"]
+  gateway:
+    build:
+      context: .
+      dockerfile: ci/Dockerfile.rust
+    command: ["/gateway"]
     environment:
-      - "PluralKit:Database=Host=db;Username=postgres;Password=postgres;Database=postgres;Maximum Pool Size=1000"
-      - "PluralKit:RedisAddr=redis"
-    ports:
-      - "127.0.0.1:2838:5000"
-    restart: unless-stopped
-
-  scheduled_tasks:
-    image: pluralkit
-    command: ["bin/PluralKit.ScheduledTasks.dll"]
-    environment:
-      - "PluralKit:Database=Host=db;Username=postgres;Password=postgres;Database=postgres;Maximum Pool Size=1000"
+      - RUST_LOG=info
+      - pluralkit__discord__client_id=${CLIENT_ID}
+      - pluralkit__discord__bot_token=${BOT_TOKEN}
+      - pluralkit__discord__max_concurrency=1
+      - pluralkit__discord__gateway_target=http://bot:5002/events
+      - pluralkit__db__data_db_uri=postgresql://postgres:postgres@db:5432/postgres
+      - pluralkit__db__data_redis_addr=redis://redis:6379
+      - pluralkit__api__temp_token2=1
+      - pluralkit__api__remote_url=1
+      - pluralkit__api__ratelimit_redis_addr=1
+      - pluralkit__discord__client_secret=1
+    depends_on:
+      - redis
     restart: unless-stopped
 
   db:
-    image: postgres:12-alpine
+    image: postgres:17-alpine
     volumes:
       - "db_data:/var/lib/postgresql/data"
-      - "/var/run/postgresql:/var/run/postgresql"
-    command: ["postgres",
-              "-c", "max-connections=1000",
-              "-c", "timezone=Etc/UTC",
-              "-c", "max_wal_size=1GB",
-              "-c", "min_wal_size=80MB",
-              "-c", "shared_buffers=128MB"]
     environment:
       - "POSTGRES_PASSWORD=postgres"
     restart: unless-stopped
@@ -55,14 +49,5 @@ services:
     image: redis:alpine
     restart: unless-stopped
 
-  influx:
-    image: influxdb:1.8
-    volumes:
-      - "influx_data:/var/lib/influxdb"
-    ports:
-      - 127.0.0.1:2839:8086
-    restart: unless-stopped
-
 volumes:
   db_data:
-  influx_data:

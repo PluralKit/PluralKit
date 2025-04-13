@@ -24,6 +24,9 @@ pub struct DiscordConfig {
 
     #[serde(default = "_default_api_addr")]
     pub cache_api_addr: String,
+
+    #[serde(default)]
+    pub gateway_target: Option<String>,
 }
 
 #[derive(Deserialize, Debug)]

@@ -40,6 +40,19 @@ async fn real_main() -> anyhow::Result<()> {
         .await?,
     );
 
+    // hacky, but needed for selfhost for now
+    if let Some(target) = libpk::config
+        .discord
+        .as_ref()
+        .unwrap()
+        .gateway_target
+        .clone()
+    {
+        runtime_config
+            .set(RUNTIME_CONFIG_KEY_EVENT_TARGET.to_string(), target)
+            .await?;
+    }
+
     let shard_state = discord::shard_state::new(redis.clone());
     let cache = Arc::new(discord::cache::new());
     let awaiter = Arc::new(EventAwaiter::new());
