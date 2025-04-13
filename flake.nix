@@ -160,7 +160,7 @@
                         ${sourceDotenv}
                         set -x
                         ${pluralkitConfCheck}
-                        exec cargo build --package ${name}
+                        exec cargo build --bin ${name}
                       '';
                     };
                   };
