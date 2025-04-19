@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, State},
+    extract::{ConnectInfo, Path, State},
     http::StatusCode,
     response::{IntoResponse, Response},
     routing::{delete, get, post},
@@ -17,7 +17,7 @@ use crate::{
     },
     event_awaiter::{AwaitEventRequest, EventAwaiter},
 };
-use std::sync::Arc;
+use std::{net::SocketAddr, sync::Arc};
 
 fn status_code(code: StatusCode, body: String) -> Response {
     (code, body).into_response()
@@ -197,12 +197,13 @@ pub async fn run_server(cache: Arc<DiscordCache>, runtime_config: Arc<RuntimeCon
             status_code(StatusCode::FOUND, to_string(&runtime_config.get_all().await).unwrap())
         }))
 
-        .route("/await_event", post(|body: String| async move {
-            info!("got request: {body}");
+        .route("/await_event", post(|ConnectInfo(addr): ConnectInfo<SocketAddr>, body: String| async move {
+            info!("got request: {body} from: {addr}");
             let Ok(req) = serde_json::from_str::<AwaitEventRequest>(&body) else {
                 return status_code(StatusCode::BAD_REQUEST, "".to_string());
             };
-            awaiter.handle_request(req).await;
+
+            awaiter.handle_request(req, addr).await;
             status_code(StatusCode::NO_CONTENT, "".to_string())
         }))
         .route("/clear_awaiter", post(|| async move {
@@ -216,7 +217,7 @@ pub async fn run_server(cache: Arc<DiscordCache>, runtime_config: Arc<RuntimeCon
     let addr: &str = libpk::config.discord.as_ref().expect("missing discord config").cache_api_addr.as_ref();
     let listener = tokio::net::TcpListener::bind(addr).await?;
     info!("listening on {}", addr);
-    axum::serve(listener, app).await?;
+    axum::serve(listener, app.into_make_service_with_connect_info::<SocketAddr>()).await?;
 
     Ok(())
 }

@@ -4,6 +4,7 @@
 
 use std::{
     collections::{hash_map::Entry, HashMap},
+    net::{IpAddr, SocketAddr},
     time::Duration,
 };
 
@@ -149,7 +150,7 @@ impl EventAwaiter {
         }
     }
 
-    pub async fn handle_request(&self, req: AwaitEventRequest) {
+    pub async fn handle_request(&self, req: AwaitEventRequest, addr: SocketAddr) {
         match req {
             AwaitEventRequest::Reaction {
                 message_id,
@@ -167,7 +168,7 @@ impl EventAwaiter {
                                     .unwrap_or(DEFAULT_TIMEOUT),
                             )
                             .expect("invalid time"),
-                        target,
+                        target_or_addr(target, addr),
                     ),
                 );
             }
@@ -188,7 +189,7 @@ impl EventAwaiter {
                                     .unwrap_or(DEFAULT_TIMEOUT),
                             )
                             .expect("invalid time"),
-                        target,
+                        target_or_addr(target, addr),
                         options,
                     ),
                 );
@@ -208,7 +209,7 @@ impl EventAwaiter {
                                     .unwrap_or(DEFAULT_TIMEOUT),
                             )
                             .expect("invalid time"),
-                        target,
+                        target_or_addr(target, addr),
                     ),
                 );
             }
@@ -219,5 +220,23 @@ impl EventAwaiter {
         self.reactions.write().await.clear();
         self.messages.write().await.clear();
         self.interactions.write().await.clear();
+    }
+}
+
+fn target_or_addr(target: String, addr: SocketAddr) -> String {
+    if target == "source-addr" {
+        let ip_str = match addr.ip() {
+            IpAddr::V4(v4) => v4.to_string(),
+            IpAddr::V6(v6) => {
+                if let Some(v4) = v6.to_ipv4_mapped() {
+                    v4.to_string()
+                } else {
+                    format!("[{v6}]")
+                }
+            }
+        };
+        format!("http://{ip_str}:5002/events")
+    } else {
+        target
     }
 }
