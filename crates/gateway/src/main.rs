@@ -7,14 +7,14 @@ use discord::gateway::cluster_config;
 use event_awaiter::EventAwaiter;
 use fred::{clients::RedisPool, interfaces::*};
 use libpk::runtime_config::RuntimeConfig;
-use reqwest::ClientBuilder;
+use reqwest::{ClientBuilder, StatusCode};
 use signal_hook::{
     consts::{SIGINT, SIGTERM},
     iterator::Signals,
 };
 use std::{sync::Arc, time::Duration, vec::Vec};
 use tokio::{sync::mpsc::channel, task::JoinSet};
-use tracing::{debug, error, info, warn};
+use tracing::{error, info, warn};
 use twilight_gateway::{MessageSender, ShardId};
 use twilight_model::gateway::payload::outgoing::UpdatePresence;
 
@@ -97,7 +97,7 @@ async fn real_main() -> anyhow::Result<()> {
 
             while let Some((shard_id, parsed_event, raw_event)) = event_rx.recv().await {
                 let target = if let Some(target) = awaiter.target_for_event(parsed_event).await {
-                    debug!("sending event to awaiter");
+                    info!(target = ?target, "sending event to awaiter");
                     Some(target)
                 } else if let Some(target) =
                     runtime_config.get(RUNTIME_CONFIG_KEY_EVENT_TARGET).await
@@ -111,13 +111,24 @@ async fn real_main() -> anyhow::Result<()> {
                     tokio::spawn({
                         let client = client.clone();
                         async move {
-                            if let Err(error) = client
+                            match client
                                 .post(format!("{target}/{}", shard_id.number()))
                                 .body(raw_event)
                                 .send()
                                 .await
                             {
-                                error!(error = ?error, "failed to request event target")
+                                Ok(res) => {
+                                    if res.status() != StatusCode::OK {
+                                        error!(
+                                            status = ?res.status(),
+                                            target = ?target,
+                                            "got non-200 from bot while sending event",
+                                        );
+                                    }
+                                }
+                                Err(error) => {
+                                    error!(error = ?error, "failed to request event target");
+                                }
                             }
                         }
                     });
