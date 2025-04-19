@@ -14,7 +14,7 @@ public class HttpDiscordCache: IDiscordCache
 {
     private readonly ILogger _logger;
     private readonly HttpClient _client;
-    private readonly Uri _cacheEndpoint;
+    private readonly string _cacheEndpoint;
     private readonly string? _eventTarget;
     private readonly int _shardCount;
     private readonly ulong _ownUserId;
@@ -29,7 +29,7 @@ public class HttpDiscordCache: IDiscordCache
     {
         _logger = logger;
         _client = client;
-        _cacheEndpoint = new Uri(cacheEndpoint);
+        _cacheEndpoint = cacheEndpoint;
         _eventTarget = eventTarget;
         _shardCount = shardCount;
         _ownUserId = ownUserId;
@@ -52,13 +52,12 @@ public class HttpDiscordCache: IDiscordCache
 
     private async Task<T?> QueryCache<T>(string endpoint, ulong guildId)
     {
-        var cluster = _cacheEndpoint.Authority;
-        // todo: there should not be infra-specific code here
-        if (cluster.Contains(".service.consul") || cluster.Contains("process.pluralkit-gateway.internal"))
-            // int(((guild_id >> 22) % shard_count) / 16)
-            cluster = $"cluster{(int)(((guildId >> 22) % (ulong)_shardCount) / 16)}.{cluster}";
+        var cluster = _cacheEndpoint;
 
-        var response = await _client.GetAsync($"{_cacheEndpoint.Scheme}://{cluster}{endpoint}");
+        if (cluster.Contains("{clusterid}"))
+            cluster = cluster.Replace("{clusterid}", $"{(int)(((guildId >> 22) % (ulong)_shardCount) / 16)}");
+
+        var response = await _client.GetAsync($"http://{cluster}{endpoint}");
 
         if (response.StatusCode == HttpStatusCode.NotFound)
             return default;
@@ -81,14 +80,13 @@ public class HttpDiscordCache: IDiscordCache
         if (_eventTarget == null)
             throw new Exception("missing event target for remote await event");
 
-        var cluster = _cacheEndpoint.Authority;
-        // todo: there should not be infra-specific code here
-        if (cluster.Contains(".service.consul") || cluster.Contains("process.pluralkit-gateway.internal"))
-            // int(((guild_id >> 22) % shard_count) / 16)
-            cluster = $"cluster{shardId / 16}.{cluster}";
+        var cluster = _cacheEndpoint;
+
+        if (cluster.Contains("{clusterid}"))
+            cluster = cluster.Replace("{clusterid}", $"{(int)(shardId / 16)}");
 
         var response = await _client.PostAsync(
-            $"{_cacheEndpoint.Scheme}://{cluster}/await_event",
+            $"http://{cluster}/await_event",
             new StringContent(JsonSerializer.Serialize(data), Encoding.UTF8)
         );
 
