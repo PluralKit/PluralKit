@@ -1,3 +1,4 @@
+use anyhow::anyhow;
 use futures::StreamExt;
 use libpk::{_config::ClusterSettings, runtime_config::RuntimeConfig};
 use metrics::counter;
@@ -48,6 +49,12 @@ pub fn create_shards(redis: fred::clients::RedisPool) -> anyhow::Result<Vec<Shar
 
     let (start_shard, end_shard): (u32, u32) = if cluster_settings.total_shards < 16 {
         warn!("we have less than 16 shards, assuming single gateway process");
+        if cluster_settings.node_id != 0 {
+            return Err(anyhow!(
+                "expecting to be node 0 in single-process mode, but we are node {}",
+                cluster_settings.node_id
+            ));
+        }
         (0, (cluster_settings.total_shards - 1).into())
     } else {
         (
