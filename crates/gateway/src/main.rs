@@ -35,7 +35,11 @@ async fn real_main() -> anyhow::Result<()> {
     let runtime_config = Arc::new(
         RuntimeConfig::new(
             redis.clone(),
-            format!("gateway:{}", cluster_config().node_id),
+            format!(
+                "{}:{}",
+                libpk::config.runtime_config_key.as_ref().unwrap(),
+                cluster_config().node_id
+            ),
         )
         .await?,
     );

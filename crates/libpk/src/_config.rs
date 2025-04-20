@@ -117,6 +117,9 @@ pub struct PKConfig {
     pub(crate) json_log: bool,
 
     #[serde(default)]
+    pub runtime_config_key: Option<String>,
+
+    #[serde(default)]
     pub sentry_url: Option<String>,
 }
 
