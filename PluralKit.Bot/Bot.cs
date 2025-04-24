@@ -282,7 +282,7 @@ public class Bot
         _logger.Debug("Running once-per-minute scheduled tasks");
 
         // Check from a new custom status from Redis and update Discord accordingly
-        if (true)
+        if (!_config.DisableGateway)
         {
             var newStatus = await _redis.Connection.GetDatabase().StringGetAsync("pluralkit:botstatus");
             if (newStatus != CustomStatusMessage)
