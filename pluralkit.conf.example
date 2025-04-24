@@ -4,7 +4,7 @@
       "Token": "BOT_TOKEN_GOES_HERE",
       "ClientId": 466707357099884544,
     },
-    "Database": "Host=localhost;Port=5432;Username=myusername;Password=mypassword;Database=mydatabasename",
-    "RedisAddr": "host:port"
+    "Database": "Host=localhost;Port=5432;Username=postgres;Password=postgres;Database=pluralkit",
+    "RedisAddr": "127.0.0.1:6379"
   }
 }
