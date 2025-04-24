@@ -473,7 +473,7 @@ public class SystemEdit
                     else
                         str +=
                             " Member names will now use the global system tag when proxied in the current server, if there is one set."
-                            + "\n\nTo check or change where your tag appears in your name use the command `{ctx.DefaultPrefix}cfg name format`.";
+                            + $"\n\nTo check or change where your tag appears in your name use the command `{ctx.DefaultPrefix}cfg name format`.";
                 }
             }
 
