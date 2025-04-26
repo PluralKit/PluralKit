@@ -12,6 +12,8 @@ use tracing::{debug, error, info, warn};
 
 use crate::util::{header_or_unknown, json_err};
 
+use super::authnz::{INTERNAL_APPID_HEADER, INTERNAL_SYSTEMID_HEADER};
+
 const LUA_SCRIPT: &str = include_str!("ratelimit.lua");
 
 lazy_static::lazy_static! {
@@ -103,28 +105,8 @@ pub async fn do_request_ratelimited(
     if let Some(redis) = redis {
         let headers = request.headers().clone();
         let source_ip = header_or_unknown(headers.get("X-PluralKit-Client-IP"));
-        let authenticated_system_id = header_or_unknown(headers.get("x-pluralkit-systemid"));
-
-        // https://github.com/rust-lang/rust/issues/53667
-        let is_temp_token2 = if let Some(header) = request.headers().clone().get("X-PluralKit-App")
-        {
-            if let Some(token2) = &libpk::config
-                .api
-                .as_ref()
-                .expect("missing api config")
-                .temp_token2
-            {
-                if header.to_str().unwrap_or("invalid") == token2 {
-                    true
-                } else {
-                    false
-                }
-            } else {
-                false
-            }
-        } else {
-            false
-        };
+        let authenticated_system_id = header_or_unknown(headers.get(INTERNAL_SYSTEMID_HEADER));
+        let authenticated_app_id = header_or_unknown(headers.get(INTERNAL_APPID_HEADER));
 
         let endpoint = request
             .extensions()
@@ -133,7 +115,13 @@ pub async fn do_request_ratelimited(
             .map(|v| v.as_str().to_string())
             .unwrap_or("unknown".to_string());
 
-        let rlimit = if is_temp_token2 {
+        // looks like this chooses the tokens/sec by app_id or endpoint
+        // then chooses the key by system_id or source_ip
+        // todo: key should probably be chosen by app_id when it's present
+        // todo: make x-ratelimit-scope actually meaningful
+
+        // hack: for now, we only have one "registered app", so we hardcode the app id
+        let rlimit = if authenticated_app_id == "1" {
             RatelimitType::TempCustom
         } else if endpoint == "/v2/messages/:message_id" {
             RatelimitType::Message

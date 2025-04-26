@@ -137,6 +137,14 @@ pub fn parse_url(url: &str) -> anyhow::Result<ParsedUrl> {
 
     match (url.scheme(), url.domain()) {
         ("https", Some("media.discordapp.net" | "cdn.discordapp.com")) => {}
+        ("https", Some("serve.apparyllis.com")) => {
+            return Ok(ParsedUrl {
+                channel_id: 0,
+                attachment_id: 0,
+                filename: "".to_string(),
+                full_url: url.to_string(),
+            })
+        }
         _ => anyhow::bail!("not a discord cdn url"),
     }
 

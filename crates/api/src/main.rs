@@ -1,3 +1,5 @@
+#![feature(let_chains)]
+
 use axum::{
     body::Body,
     extract::{Request as ExtractRequest, State},

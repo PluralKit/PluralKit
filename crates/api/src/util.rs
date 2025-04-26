@@ -56,6 +56,7 @@ pub fn handle_panic(err: Box<dyn std::any::Any + Send + 'static>) -> axum::respo
     )
 }
 
+// todo: make 500 not duplicated
 pub fn json_err(code: StatusCode, text: String) -> axum::response::Response {
     let mut response = (code, text).into_response();
     let headers = response.headers_mut();

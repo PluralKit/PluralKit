@@ -93,7 +93,7 @@ async fn pull(
 ) -> Result<Json<PullResponse>, PKAvatarError> {
     let parsed = pull::parse_url(&req.url) // parsing beforehand to "normalize"
         .map_err(|_| PKAvatarError::InvalidCdnUrl)?;
-    if !req.force {
+    if !(req.force || req.url.contains("https://serve.apparyllis.com/")) {
         if let Some(existing) = db::get_by_attachment_id(&state.pool, parsed.attachment_id).await? {
             // remove any pending image cleanup
             db::remove_deletion_queue(&state.pool, parsed.attachment_id).await?;

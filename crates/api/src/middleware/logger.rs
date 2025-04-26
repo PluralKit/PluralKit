@@ -4,13 +4,14 @@ use axum::{extract::MatchedPath, extract::Request, middleware::Next, response::R
 use metrics::{counter, histogram};
 use tracing::{info, span, warn, Instrument, Level};
 
-use crate::util::header_or_unknown;
+use crate::{
+    middleware::authnz::{INTERNAL_APPID_HEADER, INTERNAL_SYSTEMID_HEADER},
+    util::header_or_unknown,
+};
 
 // log any requests that take longer than 2 seconds
 // todo: change as necessary
 const MIN_LOG_TIME: u128 = 2_000;
-
-pub const DID_AUTHENTICATE_HEADER: &'static str = "x-pluralkit-didauthenticate";
 
 pub async fn logger(request: Request, next: Next) -> Response {
     let method = request.method().clone();
@@ -40,14 +41,20 @@ pub async fn logger(request: Request, next: Next) -> Response {
     let mut response = next.run(request).instrument(request_span).await;
     let elapsed = start.elapsed().as_millis();
 
-    let authenticated = {
+    let (system_id, app_id) = {
         let headers = response.headers_mut();
-        if headers.contains_key(DID_AUTHENTICATE_HEADER) {
-            headers.remove(DID_AUTHENTICATE_HEADER);
-            true
-        } else {
-            false
-        }
+        (
+            headers
+                .remove(INTERNAL_SYSTEMID_HEADER)
+                .map(|h| h.to_str().ok().map(|v| v.to_string()))
+                .flatten()
+                .unwrap_or("none".to_string()),
+            headers
+                .remove(INTERNAL_APPID_HEADER)
+                .map(|h| h.to_str().ok().map(|v| v.to_string()))
+                .flatten()
+                .unwrap_or("none".to_string()),
+        )
     };
 
     counter!(
@@ -55,7 +62,8 @@ pub async fn logger(request: Request, next: Next) -> Response {
         "method" => method.to_string(),
         "endpoint" => endpoint.clone(),
         "status" => response.status().to_string(),
-        "authenticated" => authenticated.to_string(),
+        "system_id" => system_id.to_string(),
+        "app_id" => app_id.to_string(),
     )
     .increment(1);
     histogram!(
@@ -63,7 +71,8 @@ pub async fn logger(request: Request, next: Next) -> Response {
         "method" => method.to_string(),
         "endpoint" => endpoint.clone(),
         "status" => response.status().to_string(),
-        "authenticated" => authenticated.to_string(),
+        "system_id" => system_id.to_string(),
+        "app_id" => app_id.to_string(),
     )
     .record(elapsed as f64 / 1_000_f64);
 
@@ -81,7 +90,8 @@ pub async fn logger(request: Request, next: Next) -> Response {
             "method" => method.to_string(),
             "endpoint" => endpoint.clone(),
             "status" => response.status().to_string(),
-            "authenticated" => authenticated.to_string(),
+            "system_id" => system_id.to_string(),
+            "app_id" => app_id.to_string(),
         )
         .increment(1);
 
