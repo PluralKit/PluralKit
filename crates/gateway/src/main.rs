@@ -8,12 +8,12 @@ use event_awaiter::EventAwaiter;
 use fred::{clients::RedisPool, interfaces::*};
 use libpk::runtime_config::RuntimeConfig;
 use reqwest::{ClientBuilder, StatusCode};
-use signal_hook::{
-    consts::{SIGINT, SIGTERM},
-    iterator::Signals,
-};
 use std::{sync::Arc, time::Duration, vec::Vec};
-use tokio::{sync::mpsc::channel, task::JoinSet};
+use tokio::{
+    signal::unix::{signal, SignalKind},
+    sync::mpsc::channel,
+    task::JoinSet,
+};
 use tracing::{error, info, warn};
 use twilight_gateway::{MessageSender, ShardId};
 use twilight_model::gateway::payload::outgoing::UpdatePresence;
@@ -27,9 +27,6 @@ const RUNTIME_CONFIG_KEY_EVENT_TARGET: &'static str = "event_target";
 
 libpk::main!("gateway");
 async fn real_main() -> anyhow::Result<()> {
-    let (shutdown_tx, mut shutdown_rx) = channel::<()>(1);
-    let shutdown_tx = Arc::new(shutdown_tx);
-
     let redis = libpk::db::init_redis().await?;
 
     let runtime_config = Arc::new(
@@ -68,7 +65,8 @@ async fn real_main() -> anyhow::Result<()> {
     let shards = discord::gateway::create_shards(redis.clone())?;
 
     // arbitrary
-    let (event_tx, mut event_rx) = channel(1000);
+    // todo: make sure this doesn't fill up
+    let (event_tx, mut event_rx) = channel::<(ShardId, twilight_gateway::Event, String)>(1000);
 
     let mut senders = Vec::new();
     let mut signal_senders = Vec::new();
@@ -145,42 +143,38 @@ async fn real_main() -> anyhow::Result<()> {
         async move { scheduled_task(redis, senders).await },
     ));
 
-    // todo: probably don't do it this way
-    let api_shutdown_tx = shutdown_tx.clone();
     set.spawn(tokio::spawn(async move {
         match cache_api::run_server(cache, runtime_config, awaiter.clone()).await {
             Err(error) => {
-                tracing::error!(?error, "failed to serve cache api");
-                let _ = api_shutdown_tx.send(());
+                error!(?error, "failed to serve cache api");
             }
             _ => unreachable!(),
         }
     }));
 
-    let mut signals = Signals::new(&[SIGINT, SIGTERM])?;
-
     set.spawn(tokio::spawn(async move {
-        for sig in signals.forever() {
-            info!("received signal {:?}", sig);
-
-            let presence = UpdatePresence {
-                op: twilight_model::gateway::OpCode::PresenceUpdate,
-                d: discord::gateway::presence("Restarting... (please wait)", true),
-            };
-
-            for sender in signal_senders.iter() {
-                let presence = presence.clone();
-                let _ = sender.command(&presence);
-            }
-
-            let _ = shutdown_tx.send(()).await;
-            break;
-        }
+        signal(SignalKind::interrupt()).unwrap().recv().await;
+        info!("got SIGINT");
     }));
 
-    let _ = shutdown_rx.recv().await;
+    set.spawn(tokio::spawn(async move {
+        signal(SignalKind::terminate()).unwrap().recv().await;
+        info!("got SIGTERM");
+    }));
+
+    set.join_next().await;
 
     info!("gateway exiting, have a nice day!");
+
+    let presence = UpdatePresence {
+        op: twilight_model::gateway::OpCode::PresenceUpdate,
+        d: discord::gateway::presence("Restarting... (please wait)", true),
+    };
+
+    for sender in signal_senders.iter() {
+        let presence = presence.clone();
+        let _ = sender.command(&presence);
+    }
 
     set.abort_all();
 
