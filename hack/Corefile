@@ -1,0 +1,9 @@
+cluster.local. {
+	forward . fdaa:9:e856:0:1::12 {
+		force_tcp
+	}
+}
+
+. {
+	forward . fdaa::3
+}

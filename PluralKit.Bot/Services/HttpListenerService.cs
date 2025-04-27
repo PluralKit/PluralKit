@@ -32,6 +32,7 @@ public class HttpListenerService
         }
         foreach (var h in hosts)
         {
+            _logger.Information($"starting http listener on {h}");
             var server = new WebserverLite(new WebserverSettings(h, 5002), DefaultRoute);
 
             server.Routes.PreAuthentication.Static.Add(WatsonWebserver.Core.HttpMethod.GET, "/runtime_config", RuntimeConfigGet);

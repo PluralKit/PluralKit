@@ -23,6 +23,8 @@ LABEL org.opencontainers.image.source = "https://github.com/PluralKit/PluralKit"
 WORKDIR /app
 COPY --from=build /app ./
 
+COPY hack/ /hack
+
 # Allow overriding CMD from eg. docker-compose to run API layer too
 ENTRYPOINT ["dotnet"]
 CMD ["bin/PluralKit.Bot.dll"]
