@@ -23,11 +23,16 @@ public class HttpListenerService
         _bot = bot;
     }
 
-    public void Start(string[] hosts)
+    public void Start(string host)
     {
-        foreach (var host in hosts)
+        var hosts = new[] { host };
+        if (host == "allv4v6")
         {
-            var server = new WebserverLite(new WebserverSettings(host, 5002), DefaultRoute);
+            hosts = new[] { "[::]", "0.0.0.0" };
+        }
+        foreach (var h in hosts)
+        {
+            var server = new WebserverLite(new WebserverSettings(h, 5002), DefaultRoute);
 
             server.Routes.PreAuthentication.Static.Add(WatsonWebserver.Core.HttpMethod.GET, "/runtime_config", RuntimeConfigGet);
             server.Routes.PreAuthentication.Parameter.Add(WatsonWebserver.Core.HttpMethod.POST, "/runtime_config/{key}", RuntimeConfigSet);
