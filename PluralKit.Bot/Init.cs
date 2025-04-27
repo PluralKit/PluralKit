@@ -80,8 +80,8 @@ public class Init
             await services.Resolve<RuntimeConfigService>().LoadConfig();
 
             // Start HTTP server
-            if (config.HttpListenerAddr != null)
-                services.Resolve<HttpListenerService>().Start(config.HttpListenerAddr);
+            if (config.HttpListenerAddrs.Length > 0)
+                services.Resolve<HttpListenerService>().Start(config.HttpListenerAddrs);
 
             // Start the Discord shards themselves (handlers already set up)
             if (!config.DisableGateway)

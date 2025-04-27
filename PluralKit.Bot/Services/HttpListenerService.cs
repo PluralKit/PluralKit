@@ -23,17 +23,20 @@ public class HttpListenerService
         _bot = bot;
     }
 
-    public void Start(string host)
+    public void Start(string[] hosts)
     {
-        var server = new WebserverLite(new WebserverSettings(host, 5002), DefaultRoute);
+        foreach (var host in hosts)
+        {
+            var server = new WebserverLite(new WebserverSettings(host, 5002), DefaultRoute);
 
-        server.Routes.PreAuthentication.Static.Add(WatsonWebserver.Core.HttpMethod.GET, "/runtime_config", RuntimeConfigGet);
-        server.Routes.PreAuthentication.Parameter.Add(WatsonWebserver.Core.HttpMethod.POST, "/runtime_config/{key}", RuntimeConfigSet);
-        server.Routes.PreAuthentication.Parameter.Add(WatsonWebserver.Core.HttpMethod.DELETE, "/runtime_config/{key}", RuntimeConfigDelete);
+            server.Routes.PreAuthentication.Static.Add(WatsonWebserver.Core.HttpMethod.GET, "/runtime_config", RuntimeConfigGet);
+            server.Routes.PreAuthentication.Parameter.Add(WatsonWebserver.Core.HttpMethod.POST, "/runtime_config/{key}", RuntimeConfigSet);
+            server.Routes.PreAuthentication.Parameter.Add(WatsonWebserver.Core.HttpMethod.DELETE, "/runtime_config/{key}", RuntimeConfigDelete);
 
-        server.Routes.PreAuthentication.Parameter.Add(WatsonWebserver.Core.HttpMethod.POST, "/events/{shard_id}", GatewayEvent);
+            server.Routes.PreAuthentication.Parameter.Add(WatsonWebserver.Core.HttpMethod.POST, "/events/{shard_id}", GatewayEvent);
 
-        server.Start();
+            server.Start();
+        }
     }
 
     private async Task DefaultRoute(HttpContextBase ctx)

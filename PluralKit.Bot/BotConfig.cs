@@ -24,7 +24,7 @@ public class BotConfig
     public string? HttpCacheUrl { get; set; }
     public bool HttpUseInnerCache { get; set; } = false;
 
-    public string? HttpListenerAddr { get; set; }
+    public string[] HttpListenerAddrs { get; set; }
     public bool DisableGateway { get; set; } = false;
     public string? EventAwaiterTarget { get; set; }
 
