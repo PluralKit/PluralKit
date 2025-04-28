@@ -47,13 +47,15 @@ pluralkit__discord__bot_token="BOT_TOKEN_GOES_HERE"
 pluralkit__discord__client_id="BOT_CLIENT_ID_GOES_HERE"
 pluralkit__discord__client_secret=1
 pluralkit__discord__max_concurrency=1
+pluralkit__runtime_config_key="gateway"
 ```
-**(This should match the username/password/database specified in the flake file and the configuration file)**
+**(This should match the username/password/database specified in the flake file and the configuration file AND the redis address in the configuration file should be changed to match this)**
 
 *(assuming you already have Git installed, if not, you can start a shell with git by running `nix-shell -p git`)*
 1. Clone the repository: `git clone https://github.com/PluralKit/PluralKit`
 2. Create a `pluralkit.conf` configuration file in the `PluralKit` directory
 	- Again, the DB URI parameters must match what's in the `flake.nix` file
+	- Also again, the Redis address must match what is in the .env file created next
 3. Create a `.env` configuration file in the `PluralKit` directory *(see above)*
 4. Build and run: `nix run .#dev`
 	- This will download the dependencies, build, and run PluralKit
