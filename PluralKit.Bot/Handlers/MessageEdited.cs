@@ -107,10 +107,6 @@ public class MessageEdited: IEventHandler<MessageUpdateEvent>
             ? new Message.Reference(channel.GuildId, evt.ChannelId, lastMessage.ReferencedMessage.Value)
             : null;
 
-        var messageType = lastMessage.ReferencedMessage != null
-            ? Message.MessageType.Reply
-            : Message.MessageType.Default;
-
         // TODO: is this missing anything?
         var equivalentEvt = new MessageCreateEvent
         {
@@ -123,7 +119,7 @@ public class MessageEdited: IEventHandler<MessageUpdateEvent>
             Attachments = evt.Attachments.Value ?? Array.Empty<Message.Attachment>(),
             MessageReference = messageReference,
             ReferencedMessage = referencedMessage,
-            Type = messageType,
+            Type = evt.Type,
         };
         return equivalentEvt;
     }

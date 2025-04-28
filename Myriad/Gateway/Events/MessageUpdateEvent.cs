@@ -10,6 +10,8 @@ public record MessageUpdateEvent(ulong Id, ulong ChannelId): IGatewayEvent
     public Optional<GuildMemberPartial> Member { get; init; }
     public Optional<Message.Attachment[]> Attachments { get; init; }
 
+    public Message.MessageType Type { get; init; }
+
     public Optional<ulong?> GuildId { get; init; }
     // TODO: lots of partials
 }
