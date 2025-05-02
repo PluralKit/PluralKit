@@ -95,7 +95,10 @@ pub async fn update_discord_stats(ctx: AppCtx) -> anyhow::Result<()> {
 
     for idx in 0..cfg.expected_gateway_count {
         let res = client
-            .get(format!("http://pluralkit-gateway-{idx}.{}/stats", cfg.gateway_url))
+            .get(format!(
+                "http://pluralkit-gateway-{idx}.{}/stats",
+                cfg.gateway_url
+            ))
             .send()
             .await?;
 
@@ -185,11 +188,7 @@ pub async fn update_stats_api(ctx: AppCtx) -> anyhow::Result<()> {
         ($t:ty, $q:expr) => {{
             tracing::info!("Query: {}", $q);
             let resp = client
-                .get(format!(
-                    "{}/api/v1/query?query={}",
-                    cfg.vm_url,
-                    $q
-                ))
+                .get(format!("{}/api/v1/query?query={}", cfg.vm_url, $q))
                 .send()
                 .await?;
 
