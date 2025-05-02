@@ -92,15 +92,14 @@ pub async fn update_discord_stats(ctx: AppCtx) -> anyhow::Result<()> {
 
     let mut guild_count = 0;
     let mut channel_count = 0;
+    let mut url = cfg.gateway_url.clone();
 
     for idx in 0..cfg.expected_gateway_count {
-        let res = client
-            .get(format!(
-                "http://pluralkit-gateway-{idx}.{}/stats",
-                cfg.gateway_url
-            ))
-            .send()
-            .await?;
+        if url.contains("{clusterid}") {
+            url = url.replace("{clusterid}", &idx.to_string());
+        }
+
+        let res = client.get(&url).send().await?;
 
         let stat: GatewayStatus = res.json().await?;
 
@@ -188,7 +187,7 @@ pub async fn update_stats_api(ctx: AppCtx) -> anyhow::Result<()> {
         ($t:ty, $q:expr) => {{
             tracing::info!("Query: {}", $q);
             let resp = client
-                .get(format!("{}/api/v1/query?query={}", cfg.vm_url, $q))
+                .get(format!("{}/api/v1/query?query={}", cfg.prometheus_url, $q))
                 .send()
                 .await?;
 
