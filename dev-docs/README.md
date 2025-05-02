@@ -28,23 +28,25 @@ PluralKit services are configured with environment variables; see service-specif
 
 Your .env should contain at least the following for the bot to run (see the C#/Rust service specific docs for more on configuration):
 ```
+pluralkit__discord__bot_token="<YOUR_BOT_TOKEN_HERE>"
+PluralKit__Bot__Token="<YOUR_BOT_TOKEN_HERE>"
+pluralkit__discord__client_id="<YOUR_CLIENT_ID_HERE>"
+PluralKit__Bot__Client="<YOUR_CLIENT_ID_HERE>"
+
 RUST_LOG="info"
-pluralkit__discord__bot_token="<BOT_TOKEN_HERE>"
-pluralkit__discord__client_id="<CLIENT_ID_HERE>"
 pluralkit__db__db_password="postgres"
 pluralkit__db__data_db_uri="postgresql://postgres@localhost:5432/pluralkit"
 pluralkit__db__data_redis_addr="redis://localhost:6379"
 pluralkit__discord__client_secret=1
 pluralkit__discord__max_concurrency=1
-pluralkit__runtime_config_key="gateway"
-PluralKit__Bot__Token="<BOT_TOKEN_HERE>"
-PluralKit__Bot__Client="<CLIENT_ID_HERE>"
+pluralkit__discord__gateway_target="http://localhost:5002/events"
+pluralkit__runtime_config_key=gateway
 PluralKit__Database="Host=localhost;Port=5432;Username=postgres;Password=postgres;Database=pluralkit"
-PluralKit__RedisAddr="127.0.0.1:6379"
+PluralKit__RedisAddr="localhost:6379"
 PluralKit__Bot__DisableGateway="true"
-PluralKit__Bot__EventAwaiterTarget="http://127.0.0.1:5002/events"
+PluralKit__Bot__EventAwaiterTarget="http://localhost:5002/events"
 PluralKit__Bot__HttpListenerAddr="127.0.0.1"
-PluralKit__Bot__HttpCacheUrl="127.0.0.1:5000"
+PluralKit__Bot__HttpCacheUrl="localhost:5000"
 ```
 
 1. Clone the repository: `git clone https://github.com/PluralKit/PluralKit`

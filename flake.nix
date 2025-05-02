@@ -104,7 +104,8 @@
           process-compose."dev" = let
             dataDir = ".nix-process-compose";
             sourceDotenv = ''
-              [[ -f ".env" ]] && echo "sourcing .env file..." && export "$(xargs < .env)"
+              # shellcheck disable=SC2046
+              [[ -f ".env" ]] && echo "sourcing .env file..." && export $(xargs < .env)
             '';
           in {
             imports = [ inp.services.processComposeModules.default ];
