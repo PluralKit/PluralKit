@@ -10,7 +10,7 @@ services:
       - "PluralKit__Bot__Token=${BOT_TOKEN}"
       - "PluralKit__Bot__ClientId=${CLIENT_ID}"
       - "PluralKit__Bot__AdminRole=${ADMIN_ROLE}"
-      - "PluralKit__Bot__HttpCacheUrl=http://gateway:5000"
+      - "PluralKit__Bot__HttpCacheUrl=gateway:5000"
       - "PluralKit__Bot__HttpListenerAddr=0.0.0.0"
       - "PluralKit__Bot__EventAwaiterTarget=http://bot:5002/events"
       - "PluralKit__Bot__DisableGateway=true"
@@ -33,6 +33,7 @@ services:
       - pluralkit__api__remote_url=1
       - pluralkit__api__ratelimit_redis_addr=1
       - pluralkit__discord__client_secret=1
+      - pluralkit__runtime_config_key=gateway
     depends_on:
       - redis
     restart: unless-stopped
