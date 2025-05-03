@@ -88,6 +88,7 @@ pub struct ScheduledTasksConfig {
     pub set_guild_count: bool,
     pub expected_gateway_count: usize,
     pub gateway_url: String,
+    pub prometheus_url: String,
 }
 
 fn _metrics_default() -> bool {
