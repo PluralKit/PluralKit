@@ -103,11 +103,9 @@
 
           process-compose."dev" = let
             dataDir = ".nix-process-compose";
-            pluralkitConfCheck = ''
-              [[ -f "pluralkit.conf" ]] || (echo "pluralkit config not found, please copy pluralkit.conf.example to pluralkit.conf and edit it" && exit 1)
-            '';
             sourceDotenv = ''
-              [[ -f ".env" ]] && echo "sourcing .env file..." && export "$(xargs < .env)"
+              # shellcheck disable=SC2046
+              [[ -f ".env" ]] && echo "sourcing .env file..." && export $(xargs < .env)
             '';
           in {
             imports = [ inp.services.processComposeModules.default ];
@@ -159,7 +157,6 @@
                       text = ''
                         ${sourceDotenv}
                         set -x
-                        ${pluralkitConfCheck}
                         exec cargo build --bin ${name}
                       '';
                     };
@@ -177,7 +174,6 @@
                     text = ''
                       ${sourceDotenv}
                       set -x
-                      ${pluralkitConfCheck}
                       exec ${mkBotEnv "dotnet build -c Release -o obj/"}/bin/env
                     '';
                   };
