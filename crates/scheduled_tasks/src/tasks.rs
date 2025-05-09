@@ -18,11 +18,18 @@ pub async fn update_prometheus(ctx: AppCtx) -> anyhow::Result<()> {
     struct Count {
         count: i64,
     }
+
+    let pending_count: Count = sqlx::query_as("select count(*) from image_cleanup_pending_jobs")
+        .fetch_one(&ctx.data)
+        .await?;
+
     let count: Count = sqlx::query_as("select count(*) from image_cleanup_jobs")
         .fetch_one(&ctx.data)
         .await?;
 
-    gauge!("pluralkit_image_cleanup_queue_length").set(count.count as f64);
+    gauge!("pluralkit_image_cleanup_queue_length", "pending" => "true")
+        .set(pending_count.count as f64);
+    gauge!("pluralkit_image_cleanup_queue_length", "pending" => "false").set(count.count as f64);
 
     let gateway = ctx.discord.gateway().authed().await?.model().await?;
 
@@ -133,14 +140,10 @@ pub async fn update_discord_stats(ctx: AppCtx) -> anyhow::Result<()> {
 }
 
 pub async fn queue_deleted_image_cleanup(ctx: AppCtx) -> anyhow::Result<()> {
-    // todo: we want to delete immediately when system is deleted, but after a
-    // delay if member is deleted
-    ctx.data
-        .execute(
-            r#"
-insert into image_cleanup_jobs
-select id, now() from images where
-        not exists (select from image_cleanup_jobs j where j.id = images.id)
+    // if an image is present on no member, add it to the pending deletion queue
+    // if it is still present on no member after 24h, actually delete it
+
+    let usage_query = r#"
     and not exists (select from systems where avatar_url = images.url)
     and not exists (select from systems where banner_image = images.url)
     and not exists (select from system_guild where avatar_url = images.url)
@@ -152,9 +155,42 @@ select id, now() from images where
 
     and not exists (select from groups where icon = images.url)
     and not exists (select from groups where banner_image = images.url);
+    "#;
+
+    ctx.data
+        .execute(
+            format!(
+                r#"
+            insert into image_cleanup_pending_jobs
+            select id, now() from images where
+            not exists (select from image_cleanup_pending_jobs j where j.id = images.id)
+            and not exists (select from image_cleanup_jobs j where j.id = images.id)
+            {}
         "#,
+                usage_query
+            )
+            .as_str(),
         )
         .await?;
+
+    ctx.data
+        .execute(
+            format!(
+                r#"
+            insert into image_cleanup_jobs
+            select image_cleanup_pending_jobs.id from image_cleanup_pending_jobs
+            left join images on images.id = image_cleanup_pending_jobs.id
+            where
+            ts < now() - '24 hours'::interval
+            and not exists (select from image_cleanup_jobs j where j.id = images.id)
+            {}
+        "#,
+                usage_query
+            )
+            .as_str(),
+        )
+        .await?;
+
     Ok(())
 }
 
