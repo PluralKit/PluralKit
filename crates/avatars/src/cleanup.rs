@@ -55,9 +55,10 @@ async fn cleanup_job(pool: sqlx::PgPool, bucket: Arc<s3::Bucket>) -> anyhow::Res
     let mut tx = pool.begin().await?;
 
     let image_id: Option<CleanupJobEntry> = sqlx::query_as(
+        // no timestamp checking here
+        // images are only added to the table after 24h
         r#"
                 select id from image_cleanup_jobs
-                where ts < now() - interval '1 day'
                 for update skip locked limit 1;"#,
     )
     .fetch_optional(&mut *tx)
@@ -72,6 +73,7 @@ async fn cleanup_job(pool: sqlx::PgPool, bucket: Arc<s3::Bucket>) -> anyhow::Res
 
     let image_data = libpk::db::repository::avatars::get_by_id(&pool, image_id.clone()).await?;
     if image_data.is_none() {
+        // unsure how this can happen? there is a FK reference
         info!("image {image_id} was already deleted, skipping");
         sqlx::query("delete from image_cleanup_jobs where id = $1")
             .bind(image_id)
