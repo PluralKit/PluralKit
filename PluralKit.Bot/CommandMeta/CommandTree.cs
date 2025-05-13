@@ -6,7 +6,7 @@ public partial class CommandTree
 {
     public Task ExecuteCommand(Context ctx)
     {
-        if (ctx.Match("system", "s"))
+        if (ctx.Match("system", "s", "account", "acc"))
             return HandleSystemCommand(ctx);
         if (ctx.Match("member", "m"))
             return HandleMemberCommand(ctx);
@@ -503,6 +503,8 @@ public partial class CommandTree
             case "system":
             case "systems":
             case "s":
+            case "account":
+            case "acc":
                 await PrintCommandList(ctx, "systems", SystemCommands);
                 break;
             case "member":
