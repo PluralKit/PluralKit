@@ -33,7 +33,7 @@ pub async fn run_server(cache: Arc<DiscordCache>, runtime_config: Arc<RuntimeCon
 
     let app = Router::new()
         .route(
-            "/guilds/:guild_id",
+            "/guilds/{guild_id}",
             get(|State(cache): State<Arc<DiscordCache>>, Path(guild_id): Path<u64>| async move {
                 match cache.guild(Id::new(guild_id)) {
                     Some(guild) => status_code(StatusCode::FOUND, to_string(&guild).unwrap()),
@@ -42,7 +42,7 @@ pub async fn run_server(cache: Arc<DiscordCache>, runtime_config: Arc<RuntimeCon
             }),
         )
         .route(
-            "/guilds/:guild_id/members/@me",
+            "/guilds/{guild_id}/members/@me",
             get(|State(cache): State<Arc<DiscordCache>>, Path(guild_id): Path<u64>| async move {
                 match cache.0.member(Id::new(guild_id), libpk::config.discord.as_ref().expect("missing discord config").client_id) {
                     Some(member) => status_code(StatusCode::FOUND, to_string(member.value()).unwrap()),
@@ -51,7 +51,7 @@ pub async fn run_server(cache: Arc<DiscordCache>, runtime_config: Arc<RuntimeCon
             }),
         )
         .route(
-            "/guilds/:guild_id/permissions/@me",
+            "/guilds/{guild_id}/permissions/@me",
             get(|State(cache): State<Arc<DiscordCache>>, Path(guild_id): Path<u64>| async move {
                 match cache.guild_permissions(Id::new(guild_id), libpk::config.discord.as_ref().expect("missing discord config").client_id).await {
                     Ok(val) => {
@@ -65,7 +65,7 @@ pub async fn run_server(cache: Arc<DiscordCache>, runtime_config: Arc<RuntimeCon
             }),
         )
         .route(
-            "/guilds/:guild_id/permissions/:user_id",
+            "/guilds/{guild_id}/permissions/{user_id}",
             get(|State(cache): State<Arc<DiscordCache>>, Path((guild_id, user_id)): Path<(u64, u64)>| async move {
                 match cache.guild_permissions(Id::new(guild_id), Id::new(user_id)).await {
                     Ok(val) => status_code(StatusCode::FOUND, to_string(&val.bits()).unwrap()),
@@ -78,7 +78,7 @@ pub async fn run_server(cache: Arc<DiscordCache>, runtime_config: Arc<RuntimeCon
         )
 
         .route(
-            "/guilds/:guild_id/channels",
+            "/guilds/{guild_id}/channels",
             get(|State(cache): State<Arc<DiscordCache>>, Path(guild_id): Path<u64>| async move {
                 let channel_ids = match cache.0.guild_channels(Id::new(guild_id)) {
                     Some(channels) => channels.to_owned(),
@@ -104,7 +104,7 @@ pub async fn run_server(cache: Arc<DiscordCache>, runtime_config: Arc<RuntimeCon
             })
         )
         .route(
-            "/guilds/:guild_id/channels/:channel_id",
+            "/guilds/{guild_id}/channels/{channel_id}",
             get(|State(cache): State<Arc<DiscordCache>>, Path((guild_id, channel_id)): Path<(u64, u64)>| async move {
                 if guild_id == 0 {
                     return status_code(StatusCode::FOUND, to_string(&dm_channel(Id::new(channel_id))).unwrap());
@@ -116,7 +116,7 @@ pub async fn run_server(cache: Arc<DiscordCache>, runtime_config: Arc<RuntimeCon
             })
         )
         .route(
-            "/guilds/:guild_id/channels/:channel_id/permissions/@me",
+            "/guilds/{guild_id}/channels/{channel_id}/permissions/@me",
             get(|State(cache): State<Arc<DiscordCache>>, Path((guild_id, channel_id)): Path<(u64, u64)>| async move {
                 if guild_id == 0 {
                     return status_code(StatusCode::FOUND, to_string(&*DM_PERMISSIONS).unwrap());
@@ -131,11 +131,11 @@ pub async fn run_server(cache: Arc<DiscordCache>, runtime_config: Arc<RuntimeCon
             }),
         )
         .route(
-            "/guilds/:guild_id/channels/:channel_id/permissions/:user_id",
+            "/guilds/{guild_id}/channels/{channel_id}/permissions/{user_id}",
             get(|| async { "todo" }),
         )
         .route(
-            "/guilds/:guild_id/channels/:channel_id/last_message",
+            "/guilds/{guild_id}/channels/{channel_id}/last_message",
             get(|State(cache): State<Arc<DiscordCache>>, Path((_guild_id, channel_id)): Path<(u64, Id<ChannelMarker>)>| async move {
                 let lm = cache.get_last_message(channel_id).await;
                 status_code(StatusCode::FOUND, to_string(&lm).unwrap())
@@ -143,7 +143,7 @@ pub async fn run_server(cache: Arc<DiscordCache>, runtime_config: Arc<RuntimeCon
         )
 
         .route(
-            "/guilds/:guild_id/roles",
+            "/guilds/{guild_id}/roles",
             get(|State(cache): State<Arc<DiscordCache>>, Path(guild_id): Path<u64>| async move {
                 let role_ids = match cache.0.guild_roles(Id::new(guild_id)) {
                     Some(roles) => roles.to_owned(),
@@ -186,12 +186,12 @@ pub async fn run_server(cache: Arc<DiscordCache>, runtime_config: Arc<RuntimeCon
         .route("/runtime_config", get(|| async move {
             status_code(StatusCode::FOUND, to_string(&runtime_config.get_all().await).unwrap())
         }))
-        .route("/runtime_config/:key", post(|Path(key): Path<String>, body: String| async move {
+        .route("/runtime_config/{key}", post(|Path(key): Path<String>, body: String| async move {
             let runtime_config = runtime_config_for_post;
             runtime_config.set(key, body).await.expect("failed to update runtime config");
             status_code(StatusCode::FOUND, to_string(&runtime_config.get_all().await).unwrap())
         }))
-        .route("/runtime_config/:key", delete(|Path(key): Path<String>| async move {
+        .route("/runtime_config/{key}", delete(|Path(key): Path<String>| async move {
             let runtime_config = runtime_config_for_delete;
             runtime_config.delete(key).await.expect("failed to update runtime config");
             status_code(StatusCode::FOUND, to_string(&runtime_config.get_all().await).unwrap())
