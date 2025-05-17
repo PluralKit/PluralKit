@@ -129,9 +129,9 @@ pub async fn worker(worker_id: u32, state: Arc<AppState>) {
             Ok(()) => {}
             Err(e) => {
                 error!(
-                    "error in migrate worker {}: {}",
-                    worker_id,
-                    e.source().unwrap_or(&e)
+                    error = e.source().unwrap_or(&e)
+                    ?worker_id,
+                    "error in migrate worker",
                 );
                 tokio::time::sleep(Duration::from_secs(5)).await;
             }

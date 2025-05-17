@@ -86,11 +86,11 @@ async fn dispatch(
     let uri = match req.url.parse::<Uri>() {
         Ok(v) if v.scheme_str() == Some("https") && v.host().is_some() => v,
         Err(error) => {
-            error!(?error, "failed to parse uri {}", req.url);
+            error!(?error, uri = req.url, "failed to parse uri");
             return DispatchResponse::BadData.to_string();
         }
         _ => {
-            error!("uri {} is invalid", req.url);
+            error!(uri = req.url, "uri is invalid");
             return DispatchResponse::BadData.to_string();
         }
     };

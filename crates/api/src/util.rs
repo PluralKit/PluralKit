@@ -11,7 +11,7 @@ pub fn header_or_unknown(header: Option<&HeaderValue>) -> &str {
         match value.to_str() {
             Ok(v) => v,
             Err(err) => {
-                error!("failed to parse header value {:#?}: {:#?}", value, err);
+                error!(?err, ?value, "failed to parse header value");
                 "failed to parse"
             }
         }
@@ -35,9 +35,9 @@ where
             ),
             None => {
                 error!(
-                    "error in handler {}: {:#?}",
+                    ?error,
+                    "error in handler {}",
                     std::any::type_name::<F>(),
-                    error
                 );
                 json_err(
                     StatusCode::INTERNAL_SERVER_ERROR,
@@ -48,8 +48,8 @@ where
     }
 }
 
-pub fn handle_panic(err: Box<dyn std::any::Any + Send + 'static>) -> axum::response::Response {
-    error!("caught panic from handler: {:#?}", err);
+pub fn handle_panic(error: Box<dyn std::any::Any + Send + 'static>) -> axum::response::Response {
+    error!(?error, "caught panic from handler");
     json_err(
         StatusCode::INTERNAL_SERVER_ERROR,
         r#"{"message": "500: Internal Server Error", "code": 0}"#.to_string(),

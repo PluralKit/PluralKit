@@ -124,7 +124,7 @@ pub async fn runner(
                     .increment(1);
 
                     if let Err(error) = shard_state.socket_closed(shard_id).await {
-                        error!("failed to update shard state for socket closure: {error}");
+                        error!(?error, "failed to update shard state for socket closure");
                     }
 
                     continue;
@@ -145,7 +145,7 @@ pub async fn runner(
                 continue;
             }
             Err(error) => {
-                error!("shard {shard_id} failed to parse gateway event: {error}");
+                error!(?error, ?shard_id, "failed to parse gateway event");
                 continue;
             }
         };

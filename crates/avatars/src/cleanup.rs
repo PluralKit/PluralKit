@@ -38,8 +38,8 @@ async fn real_main() -> anyhow::Result<()> {
         tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
         match cleanup_job(pool.clone(), bucket.clone()).await {
             Ok(()) => {}
-            Err(err) => {
-                error!("failed to run avatar cleanup job: {}", err);
+            Err(error) => {
+                error!(?error, "failed to run avatar cleanup job");
                 // sentry
             }
         }

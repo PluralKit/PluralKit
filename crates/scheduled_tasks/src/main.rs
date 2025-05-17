@@ -74,8 +74,7 @@ async fn real_main() -> anyhow::Result<()> {
                     info!("running {}", $desc);
                     let before = std::time::Instant::now();
                     if let Err(error) = $fn(ctx).await {
-                        error!("failed to run {}: {}", $desc, error);
-                        // sentry
+                        error!(?error, "failed to run {}", $desc);
                     }
                     let duration = before.elapsed();
                     info!("ran {} in {duration:?}", $desc);

@@ -81,12 +81,12 @@ macro_rules! main {
                 .build()
                 .unwrap()
                 .block_on(async {
-                    if let Err(err) = libpk::init_metrics() {
-                        tracing::error!("failed to init metrics collector: {err}");
+                    if let Err(error) = libpk::init_metrics() {
+                        tracing::error!(?error, "failed to init metrics collector");
                     };
                     tracing::info!("hello world");
-                    if let Err(err) = real_main().await {
-                        tracing::error!("failed to run service: {err}");
+                    if let Err(error) = real_main().await {
+                        tracing::error!(?error, "failed to run service");
                     };
                 });
             Ok(())
