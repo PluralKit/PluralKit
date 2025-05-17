@@ -4,10 +4,7 @@ use axum::{extract::MatchedPath, extract::Request, middleware::Next, response::R
 use metrics::{counter, histogram};
 use tracing::{info, span, warn, Instrument, Level};
 
-use crate::{
-    middleware::authnz::{INTERNAL_APPID_HEADER, INTERNAL_SYSTEMID_HEADER},
-    util::header_or_unknown,
-};
+use crate::{auth::AuthState, util::header_or_unknown};
 
 // log any requests that take longer than 2 seconds
 // todo: change as necessary
@@ -19,12 +16,17 @@ pub async fn logger(request: Request, next: Next) -> Response {
     let remote_ip = header_or_unknown(request.headers().get("X-PluralKit-Client-IP"));
     let user_agent = header_or_unknown(request.headers().get("User-Agent"));
 
-    let endpoint = request
-        .extensions()
+    let extensions = request.extensions().clone();
+
+    let endpoint = extensions
         .get::<MatchedPath>()
         .cloned()
         .map(|v| v.as_str().to_string())
         .unwrap_or("unknown".to_string());
+
+    let auth = extensions
+        .get::<AuthState>()
+        .expect("should always have AuthState");
 
     let uri = request.uri().clone();
 
@@ -38,24 +40,18 @@ pub async fn logger(request: Request, next: Next) -> Response {
     );
 
     let start = Instant::now();
-    let mut response = next.run(request).instrument(request_span).await;
+    let response = next.run(request).instrument(request_span).await;
     let elapsed = start.elapsed().as_millis();
 
-    let (system_id, app_id) = {
-        let headers = response.headers_mut();
-        (
-            headers
-                .remove(INTERNAL_SYSTEMID_HEADER)
-                .map(|h| h.to_str().ok().map(|v| v.to_string()))
-                .flatten()
-                .unwrap_or("none".to_string()),
-            headers
-                .remove(INTERNAL_APPID_HEADER)
-                .map(|h| h.to_str().ok().map(|v| v.to_string()))
-                .flatten()
-                .unwrap_or("none".to_string()),
-        )
-    };
+    let system_id = auth
+        .system_id()
+        .map(|v| v.to_string())
+        .unwrap_or("none".to_string());
+
+    let app_id = auth
+        .app_id()
+        .map(|v| v.to_string())
+        .unwrap_or("none".to_string());
 
     counter!(
         "pluralkit_api_requests",

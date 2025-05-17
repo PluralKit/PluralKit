@@ -9,5 +9,4 @@ pub use ignore_invalid_routes::ignore_invalid_routes;
 
 pub mod ratelimit;
 
-mod authnz;
-pub use authnz::authnz;
+pub mod auth;

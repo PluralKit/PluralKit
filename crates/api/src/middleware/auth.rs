@@ -4,27 +4,19 @@ use axum::{
     middleware::Next,
     response::Response,
 };
+
 use tracing::error;
 
+use crate::auth::AuthState;
 use crate::{util::json_err, ApiContext};
 
-pub const INTERNAL_SYSTEMID_HEADER: &'static str = "x-pluralkit-systemid";
-pub const INTERNAL_APPID_HEADER: &'static str = "x-pluralkit-appid";
-
-// todo: auth should pass down models in request context
-// not numerical ids in headers
-
-pub async fn authnz(State(ctx): State<ApiContext>, mut request: Request, next: Next) -> Response {
-    let headers = request.headers_mut();
-
-    headers.remove(INTERNAL_SYSTEMID_HEADER);
-    headers.remove(INTERNAL_APPID_HEADER);
-
+pub async fn auth(State(ctx): State<ApiContext>, mut req: Request, next: Next) -> Response {
     let mut authed_system_id: Option<i32> = None;
     let mut authed_app_id: Option<i32> = None;
 
     // fetch user authorization
-    if let Some(system_auth_header) = headers
+    if let Some(system_auth_header) = req
+        .headers()
         .get("authorization")
         .map(|h| h.to_str().ok())
         .flatten()
@@ -45,7 +37,8 @@ pub async fn authnz(State(ctx): State<ApiContext>, mut request: Request, next: N
 
     // fetch app authorization
     // todo: actually fetch it from db
-    if let Some(app_auth_header) = headers
+    if let Some(app_auth_header) = req
+        .headers()
         .get("x-pluralkit-app")
         .map(|h| h.to_str().ok())
         .flatten()
@@ -62,29 +55,8 @@ pub async fn authnz(State(ctx): State<ApiContext>, mut request: Request, next: N
         authed_app_id = Some(1);
     }
 
-    // add headers for ratelimiter / dotnet-api
-    {
-        let headers = request.headers_mut();
-        if let Some(sid) = authed_system_id {
-            headers.append(INTERNAL_SYSTEMID_HEADER, sid.into());
-        }
-        if let Some(aid) = authed_app_id {
-            headers.append(INTERNAL_APPID_HEADER, aid.into());
-        }
-    }
+    req.extensions_mut()
+        .insert(AuthState::new(authed_system_id, authed_app_id));
 
-    let mut response = next.run(request).await;
-
-    // add headers for logger module (ugh)
-    {
-        let headers = response.headers_mut();
-        if let Some(sid) = authed_system_id {
-            headers.append(INTERNAL_SYSTEMID_HEADER, sid.into());
-        }
-        if let Some(aid) = authed_app_id {
-            headers.append(INTERNAL_APPID_HEADER, aid.into());
-        }
-    }
-
-    response
+    next.run(req).await
 }
