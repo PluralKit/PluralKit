@@ -47,8 +47,8 @@ async fn rproxy(
         .rproxy_client
         .request(req)
         .await
-        .map_err(|err| {
-            error!("failed to serve reverse proxy to dotnet-api: {:?}", err);
+        .map_err(|error| {
+            error!(?error, "failed to serve reverse proxy to dotnet-api");
             StatusCode::BAD_GATEWAY
         })?
         .into_response())

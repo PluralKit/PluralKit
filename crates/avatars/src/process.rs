@@ -84,7 +84,7 @@ pub fn process(data: &[u8], kind: ImageKind) -> Result<ProcessOutput, PKAvatarEr
     } else {
         reader.decode().map_err(|e| {
             // print the ugly error, return the nice error
-            error!("error decoding image: {}", e);
+            error!(error = format!("{e:#?}"), "error decoding image");
             PKAvatarError::ImageFormatError(e)
         })?
     };

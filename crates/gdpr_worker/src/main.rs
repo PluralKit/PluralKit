@@ -42,8 +42,8 @@ async fn real_main() -> anyhow::Result<()> {
         tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
         match run_job(db.clone(), client.clone()).await {
             Ok(()) => {}
-            Err(err) => {
-                error!("failed to run messages gdpr job: {:?}", err);
+            Err(error) => {
+                error!(?error, "failed to run messages gdpr job");
             }
         }
     }
@@ -131,8 +131,10 @@ async fn run_job(pool: sqlx::PgPool, discord: Arc<twilight_http::Client>) -> any
                 }
                 _ => {
                     error!(
-                        "got unknown error deleting message {}: status={status}, code={code}",
-                        message.mid
+                        ?status,
+                        ?code,
+                        message_id = message.mid,
+                        "got unknown error deleting message",
                     );
                 }
             }

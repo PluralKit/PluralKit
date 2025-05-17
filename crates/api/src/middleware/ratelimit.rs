@@ -52,7 +52,7 @@ pub fn ratelimiter<F, T>(f: F) -> FromFnLayer<F, Option<RedisPool>, T> {
                         .await
                     {
                         Ok(_) => info!("connected to redis for request rate limiting"),
-                        Err(err) => error!("could not load redis script: {}", err),
+                        Err(error) => error!(?error, "could not load redis script"),
                     }
                 } else {
                     error!("could not wait for connection to load redis script!");
@@ -212,8 +212,8 @@ pub async fn do_request_ratelimited(
 
                 return response;
             }
-            Err(err) => {
-                tracing::error!("error getting ratelimit info: {}", err);
+            Err(error) => {
+                tracing::error!(?error, "error getting ratelimit info");
                 return json_err(
                     StatusCode::INTERNAL_SERVER_ERROR,
                     r#"{"message": "500: internal server error", "code": 0}"#.to_string(),

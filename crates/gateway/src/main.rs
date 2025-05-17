@@ -129,7 +129,7 @@ async fn real_main() -> anyhow::Result<()> {
                                     }
                                 }
                                 Err(error) => {
-                                    error!(error = ?error, "failed to request event target");
+                                    error!(?error, "failed to request event target");
                                 }
                             }
                         }

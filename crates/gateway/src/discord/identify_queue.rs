@@ -78,8 +78,8 @@ async fn request_inner(redis: RedisPool, concurrency: u32, shard_id: u32, tx: on
             Ok(None) => {
                 // not allowed yet, waiting
             }
-            Err(e) => {
-                error!(shard_id, bucket, "error getting shard allowance: {}", e)
+            Err(error) => {
+                error!(?error, ?shard_id, ?bucket, "error getting shard allowance")
             }
         }
 
