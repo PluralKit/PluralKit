@@ -84,8 +84,7 @@ fn parse_field(field: syn::Field) -> ModelField {
     f
 }
 
-#[proc_macro_attribute]
-pub fn pk_model(
+pub fn macro_impl(
     _args: proc_macro::TokenStream,
     input: proc_macro::TokenStream,
 ) -> proc_macro::TokenStream {

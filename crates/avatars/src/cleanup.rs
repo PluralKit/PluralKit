@@ -4,8 +4,8 @@ use sqlx::prelude::FromRow;
 use std::{sync::Arc, time::Duration};
 use tracing::{error, info};
 
-libpk::main!("avatar_cleanup");
-async fn real_main() -> anyhow::Result<()> {
+#[libpk::main]
+async fn main() -> anyhow::Result<()> {
     let config = libpk::config
         .avatars
         .as_ref()

@@ -20,8 +20,8 @@ pub struct AppCtx {
     pub discord: Arc<twilight_http::Client>,
 }
 
-libpk::main!("scheduled_tasks");
-async fn real_main() -> anyhow::Result<()> {
+#[libpk::main]
+async fn main() -> anyhow::Result<()> {
     let mut client_builder = twilight_http::Client::builder().token(
         libpk::config
             .discord

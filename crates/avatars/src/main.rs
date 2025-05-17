@@ -170,8 +170,8 @@ pub struct AppState {
     config: Arc<AvatarsConfig>,
 }
 
-libpk::main!("avatars");
-async fn real_main() -> anyhow::Result<()> {
+#[libpk::main]
+async fn main() -> anyhow::Result<()> {
     let config = libpk::config
         .avatars
         .as_ref()
