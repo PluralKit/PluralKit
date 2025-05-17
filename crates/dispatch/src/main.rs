@@ -19,17 +19,8 @@ use axum::{extract::State, http::Uri, routing::post, Json, Router};
 
 mod logger;
 
-// this package does not currently use libpk
-
-#[tokio::main]
+#[libpk::main]
 async fn main() -> anyhow::Result<()> {
-    tracing_subscriber::fmt()
-        .json()
-        .with_env_filter(EnvFilter::from_default_env())
-        .init();
-
-    info!("hello world");
-
     let address = std::env::var("DNS_UPSTREAM").unwrap().parse().unwrap();
     let stream = UdpClientStream::<UdpSocket>::with_timeout(address, Duration::from_secs(3));
     let (client, bg) = AsyncClient::connect(stream).await?;

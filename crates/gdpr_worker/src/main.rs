@@ -11,8 +11,8 @@ use twilight_model::id::{
 
 // create table messages_gdpr_jobs (mid bigint not null references messages(mid) on delete cascade, channel bigint not null);
 
-libpk::main!("messages_gdpr_worker");
-async fn real_main() -> anyhow::Result<()> {
+#[libpk::main]
+async fn main() -> anyhow::Result<()> {
     let db = libpk::db::init_messages_db().await?;
 
     let mut client_builder = twilight_http::Client::builder()

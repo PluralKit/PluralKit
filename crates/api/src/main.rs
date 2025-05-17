@@ -130,8 +130,8 @@ fn router(ctx: ApiContext) -> Router {
         .route("/", get(|| async { axum::response::Redirect::to("https://pluralkit.me/api") }))
 }
 
-libpk::main!("api");
-async fn real_main() -> anyhow::Result<()> {
+#[libpk::main]
+async fn main() -> anyhow::Result<()> {
     let db = libpk::db::init_data_db().await?;
     let redis = libpk::db::init_redis().await?;
 

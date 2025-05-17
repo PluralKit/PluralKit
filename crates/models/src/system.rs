@@ -1,6 +1,6 @@
 use std::error::Error;
 
-use model_macros::pk_model;
+use pk_macros::pk_model;
 
 use chrono::NaiveDateTime;
 use sqlx::{postgres::PgTypeInfo, Database, Decode, Postgres, Type};

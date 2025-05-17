@@ -14,7 +14,9 @@ pub mod state;
 pub mod _config;
 pub use crate::_config::CONFIG as config;
 
-// functions in this file are only used by the main function below
+// functions in this file are only used by the main function in macros/entrypoint.rs
+
+pub use pk_macros::main;
 
 pub fn init_logging(component: &str) {
     let sentry_layer =
@@ -67,29 +69,4 @@ pub fn init_sentry() -> sentry::ClientInitGuard {
         release: sentry::release_name!(),
         ..Default::default()
     })
-}
-
-#[macro_export]
-macro_rules! main {
-    ($component:expr) => {
-        fn main() -> anyhow::Result<()> {
-            let _sentry_guard = libpk::init_sentry();
-            // we might also be able to use env!("CARGO_CRATE_NAME") here
-            libpk::init_logging($component);
-            tokio::runtime::Builder::new_multi_thread()
-                .enable_all()
-                .build()
-                .unwrap()
-                .block_on(async {
-                    if let Err(error) = libpk::init_metrics() {
-                        tracing::error!(?error, "failed to init metrics collector");
-                    };
-                    tracing::info!("hello world");
-                    if let Err(error) = real_main().await {
-                        tracing::error!(?error, "failed to run service");
-                    };
-                });
-            Ok(())
-        }
-    };
 }

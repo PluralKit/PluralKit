@@ -1,4 +1,4 @@
-use model_macros::pk_model;
+use pk_macros::pk_model;
 
 use sqlx::{postgres::PgTypeInfo, Database, Decode, Postgres, Type};
 use std::error::Error;
