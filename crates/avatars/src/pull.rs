@@ -41,7 +41,11 @@ pub async fn pull(
             }
         }
 
-        error!(url = parsed_url.full_url, error = s, "network error pulling image");
+        error!(
+            url = parsed_url.full_url,
+            error = s,
+            "network error pulling image"
+        );
         PKAvatarError::NetworkErrorString(s)
     })?;
     let time_after_headers = Instant::now();
@@ -93,7 +97,11 @@ pub async fn pull(
             }
         }
 
-        error!(url = parsed_url.full_url, error = s, "network error pulling image");
+        error!(
+            url = parsed_url.full_url,
+            error = s,
+            "network error pulling image"
+        );
         PKAvatarError::NetworkError(e)
     })?;
     if body.len() != size as usize {

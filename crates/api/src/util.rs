@@ -34,11 +34,7 @@ where
                     .unwrap(),
             ),
             None => {
-                error!(
-                    ?error,
-                    "error in handler {}",
-                    std::any::type_name::<F>(),
-                );
+                error!(?error, "error in handler {}", std::any::type_name::<F>(),);
                 json_err(
                     StatusCode::INTERNAL_SERVER_ERROR,
                     r#"{"message": "500: Internal Server Error", "code": 0}"#.to_string(),
