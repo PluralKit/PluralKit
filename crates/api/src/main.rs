@@ -1,12 +1,13 @@
 #![feature(let_chains)]
 
+use auth::{AuthState, INTERNAL_APPID_HEADER, INTERNAL_SYSTEMID_HEADER};
 use axum::{
     body::Body,
     extract::{Request as ExtractRequest, State},
     http::{Response, StatusCode, Uri},
     response::IntoResponse,
     routing::{delete, get, patch, post},
-    Router,
+    Extension, Router,
 };
 use hyper_util::{
     client::legacy::{connect::HttpConnector, Client},
@@ -14,6 +15,7 @@ use hyper_util::{
 };
 use tracing::{error, info};
 
+mod auth;
 mod endpoints;
 mod error;
 mod middleware;
@@ -29,6 +31,7 @@ pub struct ApiContext {
 }
 
 async fn rproxy(
+    Extension(auth): Extension<AuthState>,
     State(ctx): State<ApiContext>,
     mut req: ExtractRequest<Body>,
 ) -> Result<Response<Body>, StatusCode> {
@@ -42,6 +45,19 @@ async fn rproxy(
     let uri = format!("{}{}", ctx.rproxy_uri, path_query);
 
     *req.uri_mut() = Uri::try_from(uri).unwrap();
+
+    let headers = req.headers_mut();
+
+    headers.remove(INTERNAL_SYSTEMID_HEADER);
+    headers.remove(INTERNAL_APPID_HEADER);
+
+    if let Some(sid) = auth.system_id() {
+        headers.append(INTERNAL_SYSTEMID_HEADER, sid.into());
+    }
+
+    if let Some(aid) = auth.app_id() {
+        headers.append(INTERNAL_APPID_HEADER, aid.into());
+    }
 
     Ok(ctx
         .rproxy_client
@@ -118,10 +134,11 @@ fn router(ctx: ApiContext) -> Router {
         .route("/v2/groups/{group_id}/oembed.json", get(rproxy))
 
         .layer(middleware::ratelimit::ratelimiter(middleware::ratelimit::do_request_ratelimited)) // this sucks
-        .layer(axum::middleware::from_fn_with_state(ctx.clone(), middleware::authnz))
         .layer(axum::middleware::from_fn(middleware::ignore_invalid_routes))
         .layer(axum::middleware::from_fn(middleware::cors))
         .layer(axum::middleware::from_fn(middleware::logger))
+
+        .layer(axum::middleware::from_fn_with_state(ctx.clone(), middleware::auth::auth))
 
         .layer(tower_http::catch_panic::CatchPanicLayer::custom(util::handle_panic))
 
