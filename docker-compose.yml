@@ -2,7 +2,9 @@ version: "3"
 
 services:
   bot:
-    build: .
+    build:
+      context: .
+      dockerfile: ci/Dockerfile.dotnet
     command: ["bin/PluralKit.Bot.dll"]
     environment:
       - "PluralKit__Database=Host=db;Username=postgres;Password=postgres;Database=postgres"

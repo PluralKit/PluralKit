@@ -4,6 +4,7 @@
 # Include project code and build files
 !PluralKit.*/
 !Myriad/
+!Serilog/
 !.git
 !dashboard
 !crates/

@@ -2,7 +2,9 @@ name: Build and push Docker image
 on:
   push:
     paths:
-    - '.github/workflows/docker.yml'
+    - '.dockerignore'
+    - '.github/workflows/dotnet-docker.yml'
+    - 'ci/Dockerfile.dotnet'
     - 'ci/dotnet-version.sh'
     - 'Myriad/**'
     - 'PluralKit.API/**'
@@ -23,6 +25,9 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.CR_PAT }}
       - uses: actions/checkout@v2
+        with:
+          submodules: true
+
       - run: echo "BRANCH_NAME=${GITHUB_REF#refs/heads/}" | sed 's|/|-|g' >> $GITHUB_ENV
 
       - name: Extract Docker metadata
@@ -41,6 +46,7 @@ jobs:
         with:
           # https://github.com/docker/build-push-action/issues/378
           context: .
+          file: ci/Dockerfile.dotnet
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           cache-from: type=registry,ref=ghcr.io/pluralkit/pluralkit:${{ env.BRANCH_NAME }}

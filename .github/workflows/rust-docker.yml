@@ -3,6 +3,7 @@ on:
   push:
     paths:
     - 'crates/**'
+    - '.dockerignore'
     - '.github/workflows/rust.yml'
     - 'ci/Dockerfile.rust'
     - 'ci/rust-docker-target.sh'
