@@ -42,6 +42,7 @@ At the moment, log cleanup works with the following bots:
 - [UnbelievaBoat](https://unbelievaboat.com/) (precise)
 - Vanessa (fuzzy)
 - [Vortex](https://github.com/jagrosh/Vortex/wiki) (fuzzy)
+- [Zeppelin](https://zeppelin.gg/) (precise)
 
 ::: warning
 In most cases, PluralKit will match log messages by the ID of the deleted message itself. However, some bots (marked with *(fuzzy)* above) don't include this in their logs. In this case, PluralKit will attempt to match based on other parameters, but there may be false positives. 
