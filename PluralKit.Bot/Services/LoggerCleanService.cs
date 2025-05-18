@@ -45,6 +45,7 @@ public class LoggerCleanService
     private static readonly Regex _AnnabelleRegex = new("```\n(\\d{17,19})\n```");
     private static readonly Regex _AnnabelleRegexFuzzy = new("\\<t:(\\d+)\\> A message from \\*\\*[\\w.]{2,32}\\*\\* \\(`(\\d{17,19})`\\) was deleted in <#\\d{17,19}>");
     private static readonly Regex _koiraRegex = new("ID:\\*\\* (\\d{17,19})");
+    private static readonly Regex _zeppelinRegex = new("🗑 Message \\(`(\\d{17,19})`\\)");
 
     private static readonly Regex _VortexRegex =
         new("`\\[(\\d\\d:\\d\\d:\\d\\d)\\]` .* \\(ID:(\\d{17,19})\\).* <#\\d{17,19}>:");
@@ -83,7 +84,8 @@ public class LoggerCleanService
         new LoggerBot("Dozer", 356535250932858885, ExtractDozer),
         new LoggerBot("Skyra", 266624760782258186, ExtractSkyra),
         new LoggerBot("Annabelle", 231241068383961088, ExtractAnnabelle, fuzzyExtractFunc: ExtractAnnabelleFuzzy),
-        new LoggerBot("Koira", 1247013404569239624, ExtractKoira)
+        new LoggerBot("Koira", 1247013404569239624, ExtractKoira),
+        new LoggerBot("Zeppelin", 473868086773153793, ExtractZeppelin) // webhook
     }.ToDictionary(b => b.Id);
 
     private static Dictionary<ulong, LoggerBot> _botsByApplicationId
@@ -439,6 +441,23 @@ public class LoggerCleanService
         if (!(embed.Author?.Name?.StartsWith("Message Deleted") ?? false)) return null;
         var match = _koiraRegex.Match(embed.Description);
         return match.Success ? ulong.Parse(match.Groups[1].Value) : null;
+    }
+
+    private static ulong? ExtractZeppelin(Message msg)
+    {
+        // zeppelin uses a non-embed format by default but can be configured to use a customizable embed
+        // if it's an embed, assume the footer contains the message ID
+        var embed = msg.Embeds?.FirstOrDefault();
+        if (embed == null)
+        {
+            var match = _zeppelinRegex.Match(msg.Content ?? "");
+            return match.Success ? ulong.Parse(match.Groups[1].Value) : null;
+        }
+        else
+        {
+            var match = _basicRegex.Match(embed.Footer?.Text ?? "");
+            return match.Success ? ulong.Parse(match.Groups[1].Value) : null;
+        }
     }
 
     public class LoggerBot
