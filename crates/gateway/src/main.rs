@@ -185,6 +185,15 @@ async fn main() -> anyhow::Result<()> {
 }
 
 async fn scheduled_task(redis: RedisPool, senders: Vec<(ShardId, MessageSender)>) {
+    let prefix = libpk::config
+        .discord
+        .as_ref()
+        .expect("missing discord config")
+        .bot_prefix_for_gateway
+        .clone();
+
+    println!("{prefix}");
+
     loop {
         tokio::time::sleep(Duration::from_secs(
             (60 - chrono::offset::Utc::now().second()).into(),
@@ -204,9 +213,9 @@ async fn scheduled_task(redis: RedisPool, senders: Vec<(ShardId, MessageSender)>
             op: twilight_model::gateway::OpCode::PresenceUpdate,
             d: discord::gateway::presence(
                 if let Some(status) = status {
-                    format!("pk;help | {}", status)
+                    format!("{prefix}help | {status}")
                 } else {
-                    "pk;help".to_string()
+                    format!("{prefix}help")
                 }
                 .as_str(),
                 false,

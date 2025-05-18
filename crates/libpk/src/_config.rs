@@ -12,10 +12,16 @@ pub struct ClusterSettings {
     pub total_nodes: u32,
 }
 
+fn _default_bot_prefix() -> String {
+    "pk;".to_string()
+}
+
 #[derive(Deserialize, Debug)]
 pub struct DiscordConfig {
     pub client_id: Id<UserMarker>,
     pub bot_token: String,
+    #[serde(default = "_default_bot_prefix")]
+    pub bot_prefix_for_gateway: String,
     pub client_secret: String,
     pub max_concurrency: u32,
     #[serde(default)]

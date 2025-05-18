@@ -63,6 +63,13 @@ pub fn create_shards(redis: fred::clients::RedisPool) -> anyhow::Result<Vec<Shar
         )
     };
 
+    let prefix = libpk::config
+        .discord
+        .as_ref()
+        .expect("missing discord config")
+        .bot_prefix_for_gateway
+        .clone();
+
     let shards = create_iterator(
         start_shard..end_shard + 1,
         cluster_settings.total_shards,
@@ -75,7 +82,7 @@ pub fn create_shards(redis: fred::clients::RedisPool) -> anyhow::Result<Vec<Shar
                 .to_owned(),
             intents,
         )
-        .presence(presence("pk;help", false))
+        .presence(presence(format!("{prefix}help").as_str(), false))
         .queue(queue.clone())
         .build(),
         |_, builder| builder.build(),
