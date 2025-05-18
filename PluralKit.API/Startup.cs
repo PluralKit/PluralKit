@@ -35,7 +35,7 @@ public class Startup
         builder.RegisterInstance(InitUtils.BuildConfiguration(Environment.GetCommandLineArgs()).Build())
             .As<IConfiguration>();
         builder.RegisterModule(new ConfigModule<ApiConfig>("API"));
-        builder.RegisterModule(new LoggingModule("api",
+        builder.RegisterModule(new LoggingModule("dotnet-api",
             cfg: new LoggerConfiguration().Filter.ByExcluding(
                 exc => exc.Exception is PKError || exc.Exception.IsUserError()
         )));

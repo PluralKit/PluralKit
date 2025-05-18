@@ -10,8 +10,7 @@ using NodaTime;
 
 using Serilog;
 using Serilog.Events;
-using Serilog.Formatting.Compact;
-using Serilog.Sinks.Seq;
+using Serilog.Formatting.Json;
 using Serilog.Sinks.SystemConsole.Themes;
 
 using ILogger = Serilog.ILogger;
@@ -50,14 +49,9 @@ public class LoggingModule: Module
 
     private ILogger InitLogger(CoreConfig config)
     {
-        var consoleTemplate = "[{Timestamp:HH:mm:ss.fff}] {Level:u3} {Message:lj}{NewLine}{Exception}";
-        var outputTemplate = "[{Timestamp:yyyy-MM-dd HH:mm:ss.ffffff}] {Level:u3} {Message:lj}{NewLine}{Exception}";
-
         var logCfg = _cfg
             .Enrich.FromLogContext()
-            .Enrich.WithProperty("GitCommitHash", BuildInfoService.FullVersion)
             .ConfigureForNodaTime(DateTimeZoneProviders.Tzdb)
-            .Enrich.WithProperty("Component", _component)
             .MinimumLevel.Is(config.ConsoleLogLevel)
 
             // Don't want App.Metrics/D#+ spam
@@ -75,9 +69,8 @@ public class LoggingModule: Module
             .Destructure.With<PatchObjectDestructuring>()
             .WriteTo.Async(a =>
                 a.Console(
-                    theme: AnsiConsoleTheme.Code,
-                    outputTemplate: consoleTemplate,
-                    restrictedToMinimumLevel: config.ConsoleLogLevel));
+                    new CustomJsonFormatter(_component),
+                    config.ConsoleLogLevel));
 
         if (config.ElasticUrl != null)
         {
@@ -88,15 +81,6 @@ public class LoggingModule: Module
                 basicAuthPassword: "unused"
             );
         }
-
-        if (config.SeqLogUrl != null)
-        {
-            logCfg.WriteTo.Seq(
-                config.SeqLogUrl,
-                restrictedToMinimumLevel: LogEventLevel.Verbose
-            );
-        }
-
 
         _fn.Invoke(logCfg);
         return Log.Logger = logCfg.CreateLogger();
