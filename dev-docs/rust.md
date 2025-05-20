@@ -21,6 +21,7 @@ Configuration is done through environment variables. A potentially uncompleted a
 | G               | **`pluralkit__discord__cluster__node_id`**               | the ID of the cluster (overwritten at runtime when operating under managers that can't template the node id into this variable, such as kubernetes) |
 | G               | **`pluralkit__discord__max_concurrency`**                | number of identify requests per 5 seconds -- see Discord docs                                                                                       |
 | G               | **`pluralkit__discord__gateway_target`**                 | the URL of a dotnet bot instance to send events to                                                                                                  |
+| G               | **`pluralkit__discord__bot_prefix_for_gateway`**         | the prefix to show in the bot's activity status. If not specified will use `pk;`                                                                    |
 | G, ST           | **`pluralkit__discord__api_base_url`**                   | the base Discord API url used for HTTP API requests                                                                                                 |
 | G, A, ST, AV    | **`pluralkit__db__data_db_uri`**                         | the URI of the PostgreSQL data database in [libpq format](https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING)              |
 | G, A, ST, AV    | **`pluralkit__db__data_redis_addr`**                     | the address of the Redis instance, in [standard Redis format](https://redis.io/docs/latest/develop/clients/nodejs/connect/)                         |
@@ -45,4 +46,3 @@ Configuration is done through environment variables. A potentially uncompleted a
 | G               | **`pluralkit__runtime_config_key`**                      | the instance identifier key used when fetching configuration from Redis at runtime to differentiate gateway instances (ex. 'gateway')               |
 | G, A, ST, AV, D | **`pluralkit__run_metrics_server`**                      | boolean used to enable or disable the inbuilt Prometheus format metrics server                                                                      |
 | G, A, ST, AV, D | **`pluralkit__sentry_url`**                              | the URL of a sentry instance to publish errors to                                                                                                   |
-
