@@ -94,6 +94,7 @@ pub fn create_shards(redis: fred::clients::RedisPool) -> anyhow::Result<Vec<Shar
     Ok(shards_vec)
 }
 
+#[tracing::instrument(fields(shard = %shard.id()), skip_all)]
 pub async fn runner(
     mut shard: Shard<RedisQueue>,
     tx: Sender<(ShardId, Event, String)>,
