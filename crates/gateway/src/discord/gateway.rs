@@ -1,6 +1,6 @@
 use anyhow::anyhow;
 use futures::StreamExt;
-use libpk::{_config::ClusterSettings, runtime_config::RuntimeConfig};
+use libpk::{_config::ClusterSettings, runtime_config::RuntimeConfig, state::ShardStateEvent};
 use metrics::counter;
 use std::sync::Arc;
 use tokio::sync::mpsc::Sender;
@@ -19,7 +19,7 @@ use crate::{
     RUNTIME_CONFIG_KEY_EVENT_TARGET,
 };
 
-use super::{cache::DiscordCache, shard_state::ShardStateManager};
+use super::cache::DiscordCache;
 
 pub fn cluster_config() -> ClusterSettings {
     libpk::config
@@ -90,7 +90,7 @@ pub fn create_shards(redis: fred::clients::RedisPool) -> anyhow::Result<Vec<Shar
 pub async fn runner(
     mut shard: Shard<RedisQueue>,
     tx: Sender<(ShardId, Event, String)>,
-    shard_state: ShardStateManager,
+    tx_state: Sender<(ShardId, ShardStateEvent, Option<Event>, Option<i32>)>,
     cache: Arc<DiscordCache>,
     runtime_config: Arc<RuntimeConfig>,
 ) {
@@ -123,7 +123,9 @@ pub async fn runner(
                     )
                     .increment(1);
 
-                    if let Err(error) = shard_state.socket_closed(shard_id).await {
+                    if let Err(error) =
+                        tx_state.try_send((shard.id(), ShardStateEvent::Closed, None, None))
+                    {
                         error!("failed to update shard state for socket closure: {error}");
                     }
 
@@ -165,14 +167,29 @@ pub async fn runner(
         .increment(1);
 
         // update shard state and discord cache
-        if let Err(error) = shard_state.handle_event(shard_id, event.clone()).await {
-            tracing::error!(?error, "error updating redis state");
+        if let Err(error) = tx_state.try_send((
+            shard.id(),
+            ShardStateEvent::Other,
+            Some(event.clone()),
+            None,
+        )) {
+            tracing::error!(?error, "error updating shard state");
         }
         // need to do heartbeat separately, to get the latency
+        let latency_num = shard
+            .latency()
+            .recent()
+            .first()
+            .map_or_else(|| 0, |d| d.as_millis()) as i32;
         if let Event::GatewayHeartbeatAck = event
-            && let Err(error) = shard_state.heartbeated(shard_id, shard.latency()).await
+            && let Err(error) = tx_state.try_send((
+                shard.id(),
+                ShardStateEvent::Heartbeat,
+                Some(event.clone()),
+                Some(latency_num),
+            ))
         {
-            tracing::error!(?error, "error updating redis state for latency");
+            tracing::error!(?error, "error updating shard state for latency");
         }
 
         if let Event::Ready(_) = event {
