@@ -6,7 +6,7 @@ use chrono::Timelike;
 use discord::gateway::cluster_config;
 use event_awaiter::EventAwaiter;
 use fred::{clients::RedisPool, interfaces::*};
-use libpk::runtime_config::RuntimeConfig;
+use libpk::{runtime_config::RuntimeConfig, state::ShardStateEvent};
 use reqwest::{ClientBuilder, StatusCode};
 use std::{sync::Arc, time::Duration, vec::Vec};
 use tokio::{
@@ -54,7 +54,6 @@ async fn main() -> anyhow::Result<()> {
             .await?;
     }
 
-    let shard_state = discord::shard_state::new(redis.clone());
     let cache = Arc::new(discord::cache::new());
     let awaiter = Arc::new(EventAwaiter::new());
     tokio::spawn({
@@ -68,6 +67,14 @@ async fn main() -> anyhow::Result<()> {
     // todo: make sure this doesn't fill up
     let (event_tx, mut event_rx) = channel::<(ShardId, twilight_gateway::Event, String)>(1000);
 
+    // todo: make sure this doesn't fill up
+    let (state_tx, mut state_rx) = channel::<(
+        ShardId,
+        ShardStateEvent,
+        Option<twilight_gateway::Event>,
+        Option<i32>,
+    )>(1000);
+
     let mut senders = Vec::new();
     let mut signal_senders = Vec::new();
 
@@ -78,11 +85,47 @@ async fn main() -> anyhow::Result<()> {
         set.spawn(tokio::spawn(discord::gateway::runner(
             shard,
             event_tx.clone(),
-            shard_state.clone(),
+            state_tx.clone(),
             cache.clone(),
             runtime_config.clone(),
         )));
     }
+
+    set.spawn(tokio::spawn({
+        let mut shard_state = discord::shard_state::new(redis.clone());
+
+        async move {
+            while let Some((shard_id, state_event, parsed_event, latency)) = state_rx.recv().await {
+                match state_event {
+                    ShardStateEvent::Heartbeat => {
+                        if !latency.is_none()
+                            && let Err(error) = shard_state
+                                .heartbeated(shard_id.number(), latency.unwrap())
+                                .await
+                        {
+                            error!("failed to update shard state for heartbeat: {error}")
+                        };
+                    }
+                    ShardStateEvent::Closed => {
+                        if let Err(error) = shard_state.socket_closed(shard_id.number()).await {
+                            error!("failed to update shard state for heartbeat: {error}")
+                        };
+                    }
+                    ShardStateEvent::Other => {
+                        if let Err(error) = shard_state
+                            .handle_event(
+                                shard_id.number(),
+                                parsed_event.expect("shard state event not provided!"),
+                            )
+                            .await
+                        {
+                            error!("failed to update shard state for heartbeat: {error}")
+                        };
+                    }
+                }
+            }
+        }
+    }));
 
     set.spawn(tokio::spawn({
         let runtime_config = runtime_config.clone();
