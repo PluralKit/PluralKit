@@ -26,7 +26,7 @@
 
     const get = async () => {
         const pkdata = await api().private.discord.shard_state.get();
-        let data = pkdata.shards.sort((x, y) => (x.id > y.id) ? 1 : -1);
+        let data = pkdata.shards.sort((x, y) => (x.shard_id < y.shard_id) ? 1 : -1);
         let latencies = 0;
         data = data.map(shard => {
             latencies += shard.latency;
@@ -71,7 +71,7 @@
         var match = findShardInput.match(/https:\/\/(?:[\w]*\.)?discord(?:app)?\.com\/channels\/(\d+)\/\d+\/\d+/);
         if (match != null) {
             console.log("match", match)
-            foundShard = shards[Number(getShardID(match[1], shards.length))];
+            foundShard = shards[(shards.length - 1) - (Number(getShardID(match[1], shards.length)))];
             valid = true;
             shardInfoMsg = "";
             return;
@@ -84,7 +84,7 @@
                 shardInfoMsg = "Invalid server ID";
                 return;
             }
-            foundShard = shards[Number(shard)];
+            foundShard = shards[(shards.length - 1) - Number(shard)];
             valid = true;
             shardInfoMsg = "";
         } catch(e) {
