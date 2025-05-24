@@ -18,7 +18,7 @@ use tracing::{error, info, warn};
 use twilight_gateway::{MessageSender, ShardId};
 use twilight_model::gateway::payload::outgoing::UpdatePresence;
 
-mod cache_api;
+mod api;
 mod discord;
 mod event_awaiter;
 mod logger;
@@ -189,7 +189,7 @@ async fn main() -> anyhow::Result<()> {
     ));
 
     set.spawn(tokio::spawn(async move {
-        match cache_api::run_server(cache, shard_state, runtime_config, awaiter.clone()).await {
+        match api::run_server(cache, shard_state, runtime_config, awaiter.clone()).await {
             Err(error) => {
                 error!(?error, "failed to serve cache api");
             }
