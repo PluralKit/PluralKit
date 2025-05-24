@@ -25,6 +25,7 @@ pub fn new(redis: RedisPool) -> ShardStateManager {
 impl ShardStateManager {
     pub async fn handle_event(&self, shard_id: u32, event: Event) -> anyhow::Result<()> {
         match event {
+            // also update gateway.rs with event types
             Event::Ready(_) => self.ready_or_resumed(shard_id, false).await,
             Event::Resumed => self.ready_or_resumed(shard_id, true).await,
             _ => Ok(()),

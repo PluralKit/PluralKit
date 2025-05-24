@@ -175,13 +175,15 @@ pub async fn runner(
         .increment(1);
 
         // update shard state and discord cache
-        if let Err(error) = tx_state.try_send((
-            shard.id(),
-            ShardStateEvent::Other,
-            Some(event.clone()),
-            None,
-        )) {
-            tracing::error!(?error, "error updating shard state");
+        if matches!(event, Event::Ready(_)) || matches!(event, Event::Resumed) {
+            if let Err(error) = tx_state.try_send((
+                shard.id(),
+                ShardStateEvent::Other,
+                Some(event.clone()),
+                None,
+            )) {
+                tracing::error!(?error, "error updating shard state");
+            }
         }
         // need to do heartbeat separately, to get the latency
         let latency_num = shard
