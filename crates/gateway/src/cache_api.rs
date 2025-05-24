@@ -14,6 +14,7 @@ use crate::{
     discord::{
         cache::{dm_channel, DiscordCache, DM_PERMISSIONS},
         gateway::cluster_config,
+        shard_state::ShardStateManager,
     },
     event_awaiter::{AwaitEventRequest, EventAwaiter},
 };
@@ -25,7 +26,7 @@ fn status_code(code: StatusCode, body: String) -> Response {
 
 // this function is manually formatted for easier legibility of route_services
 #[rustfmt::skip]
-pub async fn run_server(cache: Arc<DiscordCache>, runtime_config: Arc<RuntimeConfig>, awaiter: Arc<EventAwaiter>) -> anyhow::Result<()> {
+pub async fn run_server(cache: Arc<DiscordCache>, shard_state: Arc<ShardStateManager>, runtime_config: Arc<RuntimeConfig>, awaiter: Arc<EventAwaiter>) -> anyhow::Result<()> {
     // hacky fix for `move`
     let runtime_config_for_post = runtime_config.clone();
     let runtime_config_for_delete = runtime_config.clone();
@@ -209,6 +210,10 @@ pub async fn run_server(cache: Arc<DiscordCache>, runtime_config: Arc<RuntimeCon
         .route("/clear_awaiter", post(|| async move {
             awaiter_for_clear.clear().await;
             status_code(StatusCode::NO_CONTENT, "".to_string())
+        }))
+
+        .route("/shard_status", get(|| async move {
+            status_code(StatusCode::FOUND, to_string(&shard_state.get().await).unwrap())
         }))
 
         .layer(axum::middleware::from_fn(crate::logger::logger))

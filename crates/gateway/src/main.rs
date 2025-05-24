@@ -91,8 +91,10 @@ async fn main() -> anyhow::Result<()> {
         )));
     }
 
+    let shard_state = Arc::new(discord::shard_state::new(redis.clone()));
+
     set.spawn(tokio::spawn({
-        let mut shard_state = discord::shard_state::new(redis.clone());
+        let shard_state = shard_state.clone();
 
         async move {
             while let Some((shard_id, state_event, parsed_event, latency)) = state_rx.recv().await {
@@ -187,7 +189,7 @@ async fn main() -> anyhow::Result<()> {
     ));
 
     set.spawn(tokio::spawn(async move {
-        match cache_api::run_server(cache, runtime_config, awaiter.clone()).await {
+        match cache_api::run_server(cache, shard_state, runtime_config, awaiter.clone()).await {
             Err(error) => {
                 error!(?error, "failed to serve cache api");
             }
