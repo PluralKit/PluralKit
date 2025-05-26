@@ -530,11 +530,6 @@
         "resolved": "4.13.0",
         "contentHash": "Wfw3M1WpFcrYaGzPm7QyUTfIOYkVXQ1ry6p4WYjhbLz9fPwV23SGQZTFDpdox67NHM0V0g1aoQ4YKLm4ANtEEg=="
       },
-      "Serilog": {
-        "type": "Transitive",
-        "resolved": "4.2.0",
-        "contentHash": "gmoWVOvKgbME8TYR+gwMf7osROiWAURterc6Rt2dQyX7wtjZYpqFiA/pY6ztjGQKKV62GGCyOcmtP1UKMHgSmA=="
-      },
       "Serilog.AspNetCore": {
         "type": "Transitive",
         "resolved": "8.0.0",
@@ -983,7 +978,7 @@
           "NodaTime.Serialization.JsonNet": "[3.1.0, )",
           "Polly": "[8.5.0, )",
           "Polly.Contrib.WaitAndRetry": "[1.1.1, )",
-          "Serilog": "[4.2.0, )",
+          "Serilog": "[4.1.0, )",
           "StackExchange.Redis": "[2.8.22, )",
           "System.Linq.Async": "[6.0.1, )"
         }
@@ -1047,6 +1042,9 @@
           "System.Interactive.Async": "[6.0.1, )",
           "ipnetwork2": "[3.0.667, )"
         }
+      },
+      "serilog": {
+        "type": "Project"
       }
     }
   }
