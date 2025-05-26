@@ -6,7 +6,7 @@ PluralKit is a Discord bot meant for plural communities. It has features like me
 PluralKit has a Discord server for support, feedback, and discussion: https://discord.gg/PczBt78 
 
 # Running
-In production, we run PluralKit using Kubernetes (soon). The configuration can be found in the infra repo.
+In production, we run PluralKit using Kubernetes. The configuration can be found in the infra repo.
 
 For self-hosting, it's simpler to use Docker, with the provided [docker-compose](./docker-compose.yml) file.
 
@@ -22,6 +22,7 @@ If you want to use `pk;admin` commands (to raise member limits  and such), set `
 ADMIN_ROLE=682632767057428509
 ```
 
+*If you didn't clone the repository with submodules, run `git submodule update --init` first to pull the required submodules.*
 Run `docker compose build`, then `docker compose up -d`.
 
 To view logs, use `docker compose logs`.

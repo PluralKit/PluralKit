@@ -49,14 +49,14 @@ PluralKit__Bot__HttpListenerAddr="127.0.0.1"
 PluralKit__Bot__HttpCacheUrl="localhost:5000"
 ```
 
-1. Clone the repository: `git clone https://github.com/PluralKit/PluralKit`
+1. Clone the repository: `git clone --recurse-submodules https://github.com/PluralKit/PluralKit`
 2. Create a `.env` configuration file in the `PluralKit` directory *(see above)*
 3. Build and run: `nix run .#dev`
 	- This will download the dependencies, build, and run PluralKit
 	- If Nix is not setup to allow flakes, you may need to add `--extra-experimental-features nix-command --extra-experimental-features flakes` to the command
 	- If the `pluralkit-bot` process fails to run, you can restart it by selecting it and pressing `Ctrl-R`
 ```
-[nix-shell:~]$ git clone https://github.com/PluralKit/PluralKit
+[nix-shell:~]$ git clone --recurse-submodules https://github.com/PluralKit/PluralKit
 [nix-shell:~]$ cd PluralKit
 [nix-shell:~/PluralKit]$ nano .env
 [nix-shell:~/PluralKit]$ nix run .#dev
