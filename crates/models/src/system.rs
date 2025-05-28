@@ -1,35 +1,12 @@
-use std::error::Error;
-
 use pk_macros::pk_model;
 
 use chrono::NaiveDateTime;
-use sqlx::{postgres::PgTypeInfo, Database, Decode, Postgres, Type};
 use uuid::Uuid;
 
-use crate::_util::fake_enum_impls;
+use crate::PrivacyLevel;
 
 // todo: fix this
 pub type SystemId = i32;
-
-// todo: move this
-#[derive(serde::Serialize, Debug, Clone)]
-#[serde(rename_all = "snake_case")]
-pub enum PrivacyLevel {
-    Public,
-    Private,
-}
-
-fake_enum_impls!(PrivacyLevel);
-
-impl From<i32> for PrivacyLevel {
-    fn from(value: i32) -> Self {
-        match value {
-            1 => PrivacyLevel::Public,
-            2 => PrivacyLevel::Private,
-            _ => unreachable!(),
-        }
-    }
-}
 
 #[pk_model]
 struct System {
@@ -40,21 +17,25 @@ struct System {
     #[json = "uuid"]
     uuid: Uuid,
     #[json = "name"]
+    #[privacy = name_privacy]
     name: Option<String>,
     #[json = "description"]
+    #[privacy = description_privacy]
     description: Option<String>,
     #[json = "tag"]
     tag: Option<String>,
     #[json = "pronouns"]
+    #[privacy = pronoun_privacy]
     pronouns: Option<String>,
     #[json = "avatar_url"]
+    #[privacy = avatar_privacy]
     avatar_url: Option<String>,
-    #[json = "banner_image"]
+    #[json = "banner"]
+    #[privacy = banner_privacy]
     banner_image: Option<String>,
     #[json = "color"]
     color: Option<String>,
     token: Option<String>,
-    #[json = "webhook_url"]
     webhook_url: Option<String>,
     webhook_token: Option<String>,
     #[json = "created"]

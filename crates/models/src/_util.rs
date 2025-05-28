@@ -33,3 +33,17 @@ macro_rules! fake_enum_impls {
 }
 
 pub(crate) use fake_enum_impls;
+
+macro_rules! privacy_lookup {
+    ($v:expr, $vprivacy:expr, $lookup_level:expr) => {
+        if matches!($vprivacy, crate::PrivacyLevel::Public)
+            || matches!($lookup_level, crate::PrivacyLevel::Private)
+        {
+            Some($v)
+        } else {
+            None
+        }
+    };
+}
+
+pub(crate) use privacy_lookup;
