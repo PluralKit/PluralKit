@@ -276,8 +276,7 @@ dependencies = [
 [[package]]
 name = "axum"
 version = "0.8.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "021e862c184ae977658b36c4500f7feac3221ca5da43e3f25bd04ab6c79a29b5"
+source = "git+https://github.com/pluralkit/axum?branch=v0.8.4-pluralkit#3b45806719f27e69aed912bac724056b910f4aa6"
 dependencies = [
  "axum-core 0.5.2",
  "bytes",
@@ -327,8 +326,7 @@ dependencies = [
 [[package]]
 name = "axum-core"
 version = "0.5.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "68464cd0412f486726fb3373129ef5d2993f90c34bc2bc1c1e9943b2f4fc7ca6"
+source = "git+https://github.com/pluralkit/axum?branch=v0.8.4-pluralkit#3b45806719f27e69aed912bac724056b910f4aa6"
 dependencies = [
  "bytes",
  "futures-core",

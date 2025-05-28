@@ -10,7 +10,7 @@ pub const DEFAULT_GROUP_LIMIT: i32 = 250;
 
 #[derive(serde::Serialize, Debug, Clone)]
 #[serde(rename_all = "snake_case")]
-enum HidPadFormat {
+pub enum HidPadFormat {
     #[serde(rename = "off")]
     None,
     Left,
@@ -31,7 +31,7 @@ impl From<i32> for HidPadFormat {
 
 #[derive(serde::Serialize, Debug, Clone)]
 #[serde(rename_all = "snake_case")]
-enum ProxySwitchAction {
+pub enum ProxySwitchAction {
     Off,
     New,
     Add,
@@ -83,7 +83,8 @@ struct SystemConfig {
     #[json = "proxy_switch"]
     proxy_switch: ProxySwitchAction,
     #[json = "name_format"]
-    name_format: String,
+    #[default = "{name} {tag}".to_string()]
+    name_format: Option<String>,
     #[json = "description_templates"]
     description_templates: Vec<String>,
 }
