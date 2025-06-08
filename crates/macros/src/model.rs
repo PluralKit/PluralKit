@@ -93,7 +93,7 @@ fn parse_field(field: syn::Field) -> ModelField {
 }
 
 pub fn macro_impl(
-    args: proc_macro::TokenStream,
+    _args: proc_macro::TokenStream,
     input: proc_macro::TokenStream,
 ) -> proc_macro::TokenStream {
     let ast = parse_macro_input!(input as DeriveInput);
@@ -115,20 +115,10 @@ pub fn macro_impl(
         panic!("fields of a struct must be named");
     };
 
-    // parse args to find privacy_hide
-    // this is for models that have private fields but not a privacy object
-    // private fields are PrivacyLevel::Private
-    let privacy_hide = args
-        .clone()
-        .into_iter()
-        .nth(0)
-        .map(|ident| ident.to_string() == "privacy_hide")
-        .unwrap_or(false);
-
     let tfields = mk_tfields(fields.clone());
     let from_json = mk_tfrom_json(fields.clone());
     let _from_sql = mk_tfrom_sql(fields.clone());
-    let to_json = mk_tto_json(fields.clone(), privacy_hide);
+    let to_json = mk_tto_json(fields.clone());
 
     let fields: Vec<ModelField> = fields
         .iter()
@@ -201,7 +191,7 @@ fn mk_tfrom_json(_fields: Vec<ModelField>) -> TokenStream {
 fn mk_tfrom_sql(_fields: Vec<ModelField>) -> TokenStream {
     quote! { unimplemented!(); }
 }
-fn mk_tto_json(fields: Vec<ModelField>, privacy_hide: bool) -> TokenStream {
+fn mk_tto_json(fields: Vec<ModelField>) -> TokenStream {
     let has_privacy = fields.iter().any(|f| f.privacy.is_some());
     let fielddefs: TokenStream = fields
         .iter()
@@ -209,13 +199,8 @@ fn mk_tto_json(fields: Vec<ModelField>, privacy_hide: bool) -> TokenStream {
             f.json.as_ref().map(|v| {
                 let tname = f.name.clone();
                 let maybepriv = if let Some(privacy) = f.privacy.as_ref() {
-                    let target_level = if privacy_hide {
-                        quote! { crate::PrivacyLevel::Private }
-                    } else {
-                        quote! { self.#privacy }
-                    };
                     quote! {
-                        #v: crate::_util::privacy_lookup!(self.#tname, #target_level, lookup_level)
+                        #v: crate::_util::privacy_lookup!(self.#tname, self.#privacy, lookup_level)
                     }
                 } else {
                     quote! {
@@ -258,7 +243,7 @@ fn mk_tto_json(fields: Vec<ModelField>, privacy_hide: bool) -> TokenStream {
         quote! {}
     };
 
-    let privacy_fielddefs = if has_privacy && !privacy_hide {
+    let privacy_fielddefs = if has_privacy {
         quote! {
             "privacy": if matches!(lookup_level, crate::PrivacyLevel::Private) {
                 Some(serde_json::json!({

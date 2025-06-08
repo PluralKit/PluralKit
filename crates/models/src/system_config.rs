@@ -10,7 +10,7 @@ pub const DEFAULT_GROUP_LIMIT: i32 = 250;
 
 #[derive(serde::Serialize, Debug, Clone)]
 #[serde(rename_all = "snake_case")]
-enum HidPadFormat {
+pub enum HidPadFormat {
     #[serde(rename = "off")]
     None,
     Left,
@@ -31,7 +31,7 @@ impl From<i32> for HidPadFormat {
 
 #[derive(serde::Serialize, Debug, Clone)]
 #[serde(rename_all = "snake_case")]
-enum ProxySwitchAction {
+pub enum ProxySwitchAction {
     Off,
     New,
     Add,
@@ -49,32 +49,26 @@ impl From<i32> for ProxySwitchAction {
     }
 }
 
-#[pk_model(privacy_hide)]
+#[pk_model]
 struct SystemConfig {
     system: SystemId,
     #[json = "timezone"]
-    #[privacy = _]
     ui_tz: String,
     #[json = "pings_enabled"]
     pings_enabled: bool,
     #[json = "latch_timeout"]
     latch_timeout: Option<i32>,
     #[json = "member_default_private"]
-    #[privacy = _]
     member_default_private: bool,
     #[json = "group_default_private"]
-    #[privacy = _]
     group_default_private: bool,
     #[json = "show_private_info"]
-    #[privacy = _]
     show_private_info: bool,
     #[json = "member_limit"]
-    #[privacy = _]
-    #[default = Some(DEFAULT_MEMBER_LIMIT)]
+    #[default = DEFAULT_MEMBER_LIMIT]
     member_limit_override: Option<i32>,
     #[json = "group_limit"]
-    #[privacy = _]
-    #[default = Some(DEFAULT_GROUP_LIMIT)]
+    #[default = DEFAULT_GROUP_LIMIT]
     group_limit_override: Option<i32>,
     #[json = "case_sensitive_proxy_tags"]
     case_sensitive_proxy_tags: bool,
@@ -91,6 +85,5 @@ struct SystemConfig {
     #[json = "name_format"]
     name_format: String,
     #[json = "description_templates"]
-    #[privacy = _]
     description_templates: Vec<String>,
 }

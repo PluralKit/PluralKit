@@ -178,7 +178,7 @@ pub async fn discord_callback(
         StatusCode::OK,
         serde_json::to_string(&serde_json::json!({
             "system": system.to_json(PrivacyLevel::Private),
-            "config": system_config.to_json(PrivacyLevel::Private),
+            "config": system_config.to_json(),
             "user": user,
             "token": token,
         }))
