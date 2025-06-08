@@ -113,15 +113,54 @@ Every PluralKit entity has two IDs: a short (5 or 6 character) ID and a longer U
 |key|type|notes|
 |---|---|---|
 |timezone|string|defaults to `UTC`|
-|pings_enabled|boolean|
-|latch_timeout|int?|
+|pings_enabled|boolean|whether proxied messages can be pinged using the :bell: reaction|
+|latch_timeout|int?|seconds after which latch autoproxy will timeout (null/default is 6 hours, 0 is "never")|
 |member_default_private*|boolean|whether members created through the bot have privacy settings set to private by default|
 |group_default_private*|boolean|whether groups created through the bot have privacy settings set to private by default|
 |show_private_info|boolean|whether the bot shows the system's own private information without a `-private` flag|
 |member_limit|int|read-only, defaults to 1000|
 |group_limit|int|read-only, defaults to 250|
+|case_sensitive_proxy_tags|bool|whether the bot will match proxy tags matching only the case used in the trigger message|
+|proxy_error_message_enabled|bool|whether the bot will show errors when proxying fails|
+|hid_display_split|bool|whether 6-character ids will be shown by the bot as two 3-character parts separated by a `-`|
+|hid_display_caps|bool|whether ids will be shown by the bot in uppercase|
+|hid_list_padding|[ID padding format](#id-padding-format-enum)|whether the bot will pad 5-character ids in lists|
+|proxy_switch|[proxy switch action](#proxy-switch-action-enum)|switch action the bot will take when proxying|
+|name_format|string|format used for webhook names during proxying (defaults to `{name} {tag}`)|
 
 \* this *does not* affect members/groups created through the API - please specify privacy keys in the JSON payload instead
+
+#### ID padding format enum
+
+|key|description|
+|---|---|
+|none|do not pad 5-character ids|
+|left|add a padding space to the left of 5-character ids in lists|
+|right|add a padding space to the right of 5-character ids in lists|
+
+#### Proxy switch action enum
+
+|key|description|
+|---|---|
+|off|do nothing|
+|new|if the currently proxied member is not present in the current switch, log a new switch with this member|
+|add|if the current switch has 0 members, log a new switch with the currently proxied member; otherwise, add the member to the current switch|
+
+### Public system settings model
+
+This model is used when querying system settings without authenticating, or for a system other than the one you are authenticated as.
+
+|key|type|notes|
+|---|---|---|
+|pings_enabled|boolean|whether proxied messages can be pinged using the :bell: reaction|
+|latch_timeout|int?|seconds after which latch autoproxy will timeout (null/default is 6 hours, 0 is "never")|
+|case_sensitive_proxy_tags|bool|whether the bot will match proxy tags matching only the case used in the trigger message|
+|proxy_error_message_enabled|bool|whether the bot will show errors when proxying fails|
+|hid_display_split|bool|whether 6-character ids will be shown by the bot as two 3-character parts separated by a `-`|
+|hid_display_caps|bool|whether ids will be shown by the bot in uppercase|
+|hid_list_padding|[ID padding format](#id-padding-format-enum)|whether the bot will pad 5-character ids in lists|
+|proxy_switch|[proxy switch action](#proxy-switch-action-enum)|switch action the bot will take when proxying|
+|name_format|string|format used for webhook names during proxying (defaults to `{name} {tag}`)|
 
 ### System guild settings model
 

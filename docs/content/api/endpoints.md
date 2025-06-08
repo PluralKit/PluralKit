@@ -34,6 +34,8 @@ GET `/systems/{systemRef}/settings`
 
 Returns a [system settings object](/api/models#system-settings-model).
 
+If not authenticated, or authenticated as a different system, returns a [public system settings object](/api/models#public-system-settings-model).
+
 ### Update System Settings
 
 PATCH `/systems/{systemRef}/settings`
