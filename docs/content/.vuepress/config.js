@@ -82,7 +82,6 @@ module.exports = {
       },
       ["https://discord.gg/PczBt78", "Join the support server"],
     ],
-    pkBannerContent: "PluralKit needs your help! <a href=\"/posts/2025-01-14-funding-update/\">Check out our latest funding update for details.</a>",
   },
 
   plugins: [
