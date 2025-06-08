@@ -33,7 +33,10 @@ public class ApplicationCommandProxiedMessage
         var messageId = ctx.Event.Data!.TargetId!.Value;
         var msg = await ctx.Repository.GetFullMessage(messageId);
         if (msg == null)
-            throw Errors.MessageNotFound(messageId);
+        {
+            await QueryCommandMessage(ctx);
+            return;
+        }
 
         var showContent = true;
         var channel = await _rest.GetChannelOrNull(msg.Message.Channel);
@@ -54,6 +57,20 @@ public class ApplicationCommandProxiedMessage
             ));
 
         embeds.Add(await _embeds.CreateMessageInfoEmbed(msg, showContent, ctx.Config));
+
+        await ctx.Reply(embeds: embeds.ToArray());
+    }
+
+    private async Task QueryCommandMessage(InteractionContext ctx)
+    {
+        var messageId = ctx.Event.Data!.TargetId!.Value;
+        var msg = await ctx.Repository.GetCommandMessage(messageId);
+        if (msg == null)
+            throw Errors.MessageNotFound(messageId);
+
+        var embeds = new List<Embed>();
+
+        embeds.Add(await _embeds.CreateCommandMessageInfoEmbed(msg, true));
 
         await ctx.Reply(embeds: embeds.ToArray());
     }

@@ -42,12 +42,37 @@ public partial class ModelRepository
         };
     }
 
+    public async Task AddCommandMessage(CommandMessage msg)
+    {
+        var query = new Query("command_messages").AsInsert(new
+        {
+            mid = msg.Mid,
+            guild = msg.Guild,
+            channel = msg.Channel,
+            sender = msg.Sender,
+            original_mid = msg.OriginalMid
+        });
+        await _db.ExecuteQuery(query, messages: true);
+
+        _logger.Debug("Stored command message {@StoredMessage} in channel {Channel}", msg, msg.Channel);
+    }
+
+    public Task<CommandMessage?> GetCommandMessage(ulong id)
+        => _db.QueryFirst<CommandMessage?>(new Query("command_messages").Where("mid", id), messages: true);
+
     public async Task DeleteMessage(ulong id)
     {
         var query = new Query("messages").AsDelete().Where("mid", id);
         var rowCount = await _db.ExecuteQuery(query, messages: true);
         if (rowCount > 0)
             _logger.Information("Deleted message {MessageId} from database", id);
+        else
+        {
+            var cquery = new Query("command_messages").AsDelete().Where("mid", id);
+            var crowCount = await _db.ExecuteQuery(query, messages: true);
+            if (crowCount > 0)
+                _logger.Information("Deleted command message {MessageId} from database", id);
+        }
     }
 
     public async Task DeleteMessagesBulk(IReadOnlyCollection<ulong> ids)
@@ -59,5 +84,19 @@ public partial class ModelRepository
         if (rowCount > 0)
             _logger.Information("Bulk deleted messages ({FoundCount} found) from database: {MessageIds}", rowCount,
                 ids);
+        var cquery = new Query("command_messages").AsDelete().WhereIn("mid", ids.Select(id => (long)id).ToArray());
+        var crowCount = await _db.ExecuteQuery(query, messages: true);
+        if (crowCount > 0)
+            _logger.Information("Bulk deleted command messages ({FoundCount} found) from database: {MessageIds}", rowCount,
+                ids);
     }
+}
+
+public class CommandMessage
+{
+    public ulong Mid { get; set; }
+    public ulong Guild { get; set; }
+    public ulong Channel { get; set; }
+    public ulong Sender { get; set; }
+    public ulong OriginalMid { get; set; }
 }
