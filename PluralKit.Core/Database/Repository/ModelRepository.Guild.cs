@@ -41,8 +41,8 @@ public partial class ModelRepository
 
             if (!searchRes)
                 searchRes = await _db.QueryFirst<bool>(
-                    "select exists(select 1 from command_messages where guild = @guild and sender in @accounts)",
-                    new { guild = guild, accounts = accounts },
+                    "select exists(select 1 from command_messages where guild = @guild and sender = any(@accounts))",
+                    new { guild = guild, accounts = accounts.Select(u => (long)u).ToArray() },
                     queryName: "find_system_from_messages",
                     messages: true
                 );
