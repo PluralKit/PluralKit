@@ -20,7 +20,7 @@ public class DiscordControllerV2: PKControllerBase
         if (ContextFor(system) != LookupContext.ByOwner)
             throw Errors.GenericMissingPermissions;
 
-        var settings = await _repo.GetSystemGuild(guild_id, system.Id, false);
+        var settings = await _repo.GetSystemGuild(guild_id, system.Id, false, _config.SearchGuildSettings);
         if (settings == null)
             throw Errors.SystemGuildNotFound;
 
@@ -34,7 +34,7 @@ public class DiscordControllerV2: PKControllerBase
         if (ContextFor(system) != LookupContext.ByOwner)
             throw Errors.GenericMissingPermissions;
 
-        var settings = await _repo.GetSystemGuild(guild_id, system.Id, false);
+        var settings = await _repo.GetSystemGuild(guild_id, system.Id, false, _config.SearchGuildSettings);
         if (settings == null)
             throw Errors.SystemGuildNotFound;
 
@@ -58,7 +58,7 @@ public class DiscordControllerV2: PKControllerBase
         if (member.System != system.Id)
             throw Errors.NotOwnMemberError;
 
-        var settings = await _repo.GetMemberGuild(guild_id, member.Id, false);
+        var settings = await _repo.GetMemberGuild(guild_id, member.Id, false, _config.SearchGuildSettings ? system.Id : null);
         if (settings == null)
             throw Errors.MemberGuildNotFound;
 
@@ -75,7 +75,7 @@ public class DiscordControllerV2: PKControllerBase
         if (member.System != system.Id)
             throw Errors.NotOwnMemberError;
 
-        var settings = await _repo.GetMemberGuild(guild_id, member.Id, false);
+        var settings = await _repo.GetMemberGuild(guild_id, member.Id, false, _config.SearchGuildSettings ? system.Id : null);
         if (settings == null)
             throw Errors.MemberGuildNotFound;
 

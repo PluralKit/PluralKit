@@ -7,4 +7,5 @@ public class ApiConfig
     public string? ClientSecret { get; set; }
     public bool TrustAuth { get; set; } = false;
     public string? AvatarServiceUrl { get; set; }
+    public bool SearchGuildSettings = false;
 }
