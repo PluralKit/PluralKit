@@ -83,7 +83,8 @@ struct SystemConfig {
     #[json = "proxy_switch"]
     proxy_switch: ProxySwitchAction,
     #[json = "name_format"]
-    name_format: String,
+    #[default = "{name} {tag}".to_string()]
+    name_format: Option<String>,
     #[json = "description_templates"]
     description_templates: Vec<String>,
 }
