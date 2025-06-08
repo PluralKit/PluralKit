@@ -19,16 +19,40 @@ public partial class ModelRepository
     }
 
 
-    public Task<SystemGuildSettings> GetSystemGuild(ulong guild, SystemId system, bool defaultInsert = true)
+    public async Task<SystemGuildSettings> GetSystemGuild(ulong guild, SystemId system, bool defaultInsert = true, bool search = false)
     {
         if (!defaultInsert)
-            return _db.QueryFirst<SystemGuildSettings>(new Query("system_guild")
+        {
+            var simpleRes = await _db.QueryFirst<SystemGuildSettings>(new Query("system_guild")
                 .Where("guild", guild)
                 .Where("system", system)
             );
+            if (simpleRes != null || !search)
+                return simpleRes;
+
+            var accounts = await GetSystemAccounts(system);
+
+            var searchRes = await _db.QueryFirst<bool>(
+                "select exists(select 1 from command_messages where guild = @guild and sender = any(@accounts))",
+                new { guild = guild, accounts = accounts.Select(u => (long)u).ToArray() },
+                queryName: "find_system_from_commands",
+                messages: true
+            );
+
+            if (!searchRes)
+                searchRes = await _db.QueryFirst<bool>(
+                    "select exists(select 1 from command_messages where guild = @guild and sender = any(@accounts))",
+                    new { guild = guild, accounts = accounts.Select(u => (long)u).ToArray() },
+                    queryName: "find_system_from_messages",
+                    messages: true
+                );
+
+            if (!searchRes)
+                return null;
+        }
 
         var query = new Query("system_guild").AsInsert(new { guild, system });
-        return _db.QueryFirst<SystemGuildSettings>(query,
+        return await _db.QueryFirst<SystemGuildSettings>(query,
             "on conflict (guild, system) do update set guild = $1, system = $2 returning *"
         );
     }
@@ -42,16 +66,25 @@ public partial class ModelRepository
         return settings;
     }
 
-    public Task<MemberGuildSettings> GetMemberGuild(ulong guild, MemberId member, bool defaultInsert = true)
+    public async Task<MemberGuildSettings> GetMemberGuild(ulong guild, MemberId member, bool defaultInsert = true, SystemId? search = null)
     {
         if (!defaultInsert)
-            return _db.QueryFirst<MemberGuildSettings>(new Query("member_guild")
+        {
+            var simpleRes = await _db.QueryFirst<MemberGuildSettings>(new Query("member_guild")
                 .Where("guild", guild)
                 .Where("member", member)
             );
+            if (simpleRes != null || !search.HasValue)
+                return simpleRes;
+
+            var systemConfig = await GetSystemGuild(guild, search.Value, defaultInsert: false, search: true);
+
+            if (systemConfig == null)
+                return null;
+        }
 
         var query = new Query("member_guild").AsInsert(new { guild, member });
-        return _db.QueryFirst<MemberGuildSettings>(query,
+        return await _db.QueryFirst<MemberGuildSettings>(query,
             "on conflict (guild, member) do update set guild = $1, member = $2 returning *"
         );
     }
