@@ -101,12 +101,17 @@ public class Context
             AllowedMentions = mentions ?? new AllowedMentions()
         });
 
-        // if (embed != null)
-        // {
-        // Sensitive information that might want to be deleted by :x: reaction is typically in an embed format (member cards, for example)
-        // but since we can, we just store all sent messages for possible deletion
-        await _commandMessageService.RegisterMessage(msg.Id, Guild?.Id ?? 0, msg.ChannelId, Author.Id);
-        // }
+        // store log of sent message, so it can be queried or deleted later
+        // skip DMs as DM messages can always be deleted
+        if (Guild != null)
+            await Repository.AddCommandMessage(new Core.CommandMessage
+            {
+                Mid = msg.Id,
+                Guild = Guild!.Id,
+                Channel = Channel.Id,
+                Sender = Author.Id,
+                OriginalMid = Message.Id,
+            });
 
         return msg;
     }

@@ -347,13 +347,8 @@ public class ProxiedMessage
         var message = await ctx.Repository.GetFullMessage(messageId.Value);
         if (message == null)
         {
-            if (isDelete)
-            {
-                await DeleteCommandMessage(ctx, messageId.Value);
-                return;
-            }
-
-            throw Errors.MessageNotFound(messageId.Value);
+            await GetCommandMessage(ctx, messageId.Value, isDelete);
+            return;
         }
 
         var showContent = true;
@@ -448,20 +443,35 @@ public class ProxiedMessage
         await ctx.Reply(embed: await _embeds.CreateMessageInfoEmbed(message, showContent, ctx.Config));
     }
 
-    private async Task DeleteCommandMessage(Context ctx, ulong messageId)
+    private async Task GetCommandMessage(Context ctx, ulong messageId, bool isDelete)
     {
-        var cmessage = await ctx.Services.Resolve<CommandMessageService>().GetCommandMessage(messageId);
-        if (cmessage == null)
+        var msg = await _repo.GetCommandMessage(messageId);
+        if (msg == null)
             throw Errors.MessageNotFound(messageId);
 
-        if (cmessage!.AuthorId != ctx.Author.Id)
-            throw new PKError("You can only delete command messages queried by this account.");
+        if (isDelete)
+        {
+            if (msg.Sender != ctx.Author.Id)
+                throw new PKError("You can only delete command messages queried by this account.");
 
-        await ctx.Rest.DeleteMessage(cmessage.ChannelId, messageId);
+            await ctx.Rest.DeleteMessage(msg.Channel, messageId);
 
-        if (ctx.Guild != null)
-            await ctx.Rest.DeleteMessage(ctx.Message);
-        else
-            await ctx.Rest.CreateReaction(ctx.Message.ChannelId, ctx.Message.Id, new Emoji { Name = Emojis.Success });
+            if (ctx.Guild != null)
+                await ctx.Rest.DeleteMessage(ctx.Message);
+            else
+                await ctx.Rest.CreateReaction(ctx.Message.ChannelId, ctx.Message.Id, new Emoji { Name = Emojis.Success });
+
+            return;
+        }
+
+        var showContent = true;
+
+        var channel = await _rest.GetChannelOrNull(msg.Channel);
+        if (channel == null)
+            showContent = false;
+        else if (!await ctx.CheckPermissionsInGuildChannel(channel, PermissionSet.ViewChannel))
+            showContent = false;
+
+        await ctx.Reply(embed: await _embeds.CreateCommandMessageInfoEmbed(msg, showContent));
     }
 }

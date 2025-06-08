@@ -9,29 +9,23 @@ namespace PluralKit.Bot;
 public class CommandMessageService
 {
     private readonly RedisService _redis;
+    private readonly ModelRepository _repo;
     private readonly ILogger _logger;
     private static readonly TimeSpan CommandMessageRetention = TimeSpan.FromHours(24);
 
-    public CommandMessageService(RedisService redis, IClock clock, ILogger logger)
+    public CommandMessageService(RedisService redis, ModelRepository repo, IClock clock, ILogger logger)
     {
         _redis = redis;
+        _repo = repo;
         _logger = logger.ForContext<CommandMessageService>();
-    }
-
-    public async Task RegisterMessage(ulong messageId, ulong guildId, ulong channelId, ulong authorId)
-    {
-        if (_redis.Connection == null) return;
-
-        _logger.Debug(
-            "Registering command response {MessageId} from author {AuthorId} in {ChannelId}",
-            messageId, authorId, channelId
-        );
-
-        await _redis.Connection.GetDatabase().StringSetAsync("command_message:" + messageId.ToString(), $"{authorId}-{channelId}-{guildId}", expiry: CommandMessageRetention);
     }
 
     public async Task<CommandMessage?> GetCommandMessage(ulong messageId)
     {
+        var repoMsg = await _repo.GetCommandMessage(messageId);
+        if (repoMsg != null)
+            return new CommandMessage(repoMsg.Sender, repoMsg.Channel, repoMsg.Guild);
+
         var str = await _redis.Connection.GetDatabase().StringGetAsync(messageId.ToString());
         if (str.HasValue)
         {
