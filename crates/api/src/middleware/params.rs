@@ -13,6 +13,15 @@ use crate::auth::AuthState;
 use crate::{util::json_err, ApiContext};
 use pluralkit_models::PKSystem;
 
+// move this somewhere else
+fn parse_hid(hid: &str) -> String {
+    if hid.len() > 7 || hid.len() < 5 {
+        hid.to_string()
+    } else {
+        hid.to_lowercase().replace("-", "")
+    }
+}
+
 pub async fn params(State(ctx): State<ApiContext>, mut req: Request, next: Next) -> Response {
     let pms = match req.extensions().get::<UrlParams>() {
         None => Vec::new(),
@@ -86,7 +95,7 @@ pub async fn params(State(ctx): State<ApiContext>, mut req: Request, next: Next)
                         Err(_) => sqlx::query_as::<Postgres, PKSystem>(
                             "select * from systems where hid = $1",
                         )
-                        .bind(id),
+                        .bind(parse_hid(id)),
                     }
                     .fetch_optional(&ctx.db)
                     .await
