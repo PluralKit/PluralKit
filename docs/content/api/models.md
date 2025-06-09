@@ -16,6 +16,8 @@ Privacy objects (`privacy` key in models) contain values "private" or "public". 
 
 Every PluralKit entity has two IDs: a short (5 or 6 character) ID and a longer UUID. The short ID is unique across the resource (a member can have the same short ID as a system, for example), while the UUID is consistent for the lifetime of the entity and globally unique across the bot.
 
+The PluralKit Discord bot can be configured to display short IDs in uppercase, or (in the case of 6-character IDs) as two parts of 3 characters separated by a dash (for example, `EXA-MPL`). For convenience, IDs are accepted by the API in any format displayable by the bot.
+
 ### System model
 
 |key|type|notes|
