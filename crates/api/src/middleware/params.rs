@@ -87,15 +87,22 @@ pub async fn params(State(ctx): State<ApiContext>, mut req: Request, next: Next)
                     }
                 }
                 id => {
+                    println!("a {id}");
                     match match Uuid::parse_str(id) {
                         Ok(uuid) => sqlx::query_as::<Postgres, PKSystem>(
                             "select * from systems where uuid = $1",
                         )
                         .bind(uuid),
-                        Err(_) => sqlx::query_as::<Postgres, PKSystem>(
-                            "select * from systems where hid = $1",
-                        )
-                        .bind(parse_hid(id)),
+                        Err(_) => match id.parse::<i64>() {
+                            Ok(parsed) => sqlx::query_as::<Postgres, PKSystem>(
+                                "select * from systems where id = (select system from accounts where uid = $1)"
+                            )
+                            .bind(parsed),
+                            Err(_) => sqlx::query_as::<Postgres, PKSystem>(
+                                "select * from systems where hid = $1",
+                            )
+                            .bind(parse_hid(id))
+                        },
                     }
                     .fetch_optional(&ctx.db)
                     .await
