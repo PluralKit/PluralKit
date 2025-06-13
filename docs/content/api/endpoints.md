@@ -279,6 +279,8 @@ GET `/systems/{systemRef}/fronters`
 
 Returns a [switch object](/api/models#switch-model) containing a list of member objects.
 
+If the target system has no registered switches, returns 204 status code with no content.
+
 ### Create Switch
 
 POST `/systems/{systemRef}/switches`
