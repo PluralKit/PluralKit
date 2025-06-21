@@ -1,8 +1,8 @@
 -- database version 52
 -- messages db updates
 
-create index concurrently messages_by_original on messages(original_mid);
-create index concurrently messages_by_sender on messages(sender);
+create index messages_by_original on messages(original_mid);
+create index messages_by_sender on messages(sender);
 
 create table command_messages (
     mid bigint primary key,
@@ -12,7 +12,7 @@ create table command_messages (
     original_mid bigint not null
 );
 
-create index concurrently command_messages_by_original on command_messages(original_mid);
-create index concurrently command_messages_by_sender on command_messages(sender);
+create index command_messages_by_original on command_messages(original_mid);
+create index command_messages_by_sender on command_messages(sender);
 
 update info set schema_version = 52;
