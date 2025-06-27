@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -403,13 +404,14 @@ public class ProxyService
             // strip out overly excessive line breaks
             msg = Regex.Replace(msg, @"(?:(?:([_\*]) \1)?\n){2,}", "\n");
 
-            if (msg.Length > 100)
+            if (new StringInfo(msg).LengthInTextElements > 100)
             {
-                msg = repliedTo.Content.Substring(0, 100);
+                var msgInfo = new StringInfo(repliedTo.Content);
+                msg = msgInfo.SubstringByTextElements(0, 100);
                 var endsWithOpenMention = Regex.IsMatch(msg, @"<[at]?[@#:][!&]?(\w+:)?(\d+)?(:[tTdDfFR])?$");
                 if (endsWithOpenMention)
                 {
-                    var mentionTail = repliedTo.Content.Substring(100).Split(">")[0];
+                    var mentionTail = msgInfo.SubstringByTextElements(100).Split(">")[0];
                     if (repliedTo.Content.Contains(msg + mentionTail + ">"))
                         msg += mentionTail + ">";
                 }
@@ -417,7 +419,7 @@ public class ProxyService
                 var endsWithUrl = Regex.IsMatch(msg, URL_REGEX);
                 if (endsWithUrl)
                 {
-                    msg += repliedTo.Content.Substring(100).Split(" ")[0];
+                    msg += msgInfo.SubstringByTextElements(100).Split(" ")[0];
 
                     // replace the entire URL with a placeholder if it's *too* long
                     if (msg.Length > 300)
@@ -425,6 +427,10 @@ public class ProxyService
 
                     msg += " ";
                 }
+
+                // if it's unreasonably long in code units, just cut it off as a failsafe
+                if (msg.Length > 500)
+                    msg = msg.Substring(0, 500);
 
                 var spoilersInOriginalString = Regex.Matches(repliedTo.Content, @"\|\|").Count;
                 var spoilersInTruncatedString = Regex.Matches(msg, @"\|\|").Count;
