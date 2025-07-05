@@ -2,7 +2,7 @@ use axum::{
     extract::State,
     http::StatusCode,
     response::{IntoResponse, Response},
-    Extension,
+    Extension, Json,
 };
 use serde_json::json;
 use sqlx::Postgres;
@@ -19,7 +19,7 @@ pub async fn get_system_settings(
 ) -> Response {
     let access_level = auth.access_level_for(&system);
 
-    let config = match sqlx::query_as::<Postgres, PKSystemConfig>(
+    let mut config = match sqlx::query_as::<Postgres, PKSystemConfig>(
         "select * from system_config where system = $1",
     )
     .bind(system.id)
@@ -46,23 +46,24 @@ pub async fn get_system_settings(
         }
     };
 
-    (
-        StatusCode::OK,
-        serde_json::to_string(&match access_level {
-            PrivacyLevel::Private => config.to_json(),
-            PrivacyLevel::Public => json!({
-                "pings_enabled": config.pings_enabled,
-                "latch_timeout": config.latch_timeout,
-                "case_sensitive_proxy_tags": config.case_sensitive_proxy_tags,
-                "proxy_error_message_enabled": config.proxy_error_message_enabled,
-                "hid_display_split": config.hid_display_split,
-                "hid_display_caps": config.hid_display_caps,
-                "hid_list_padding": config.hid_list_padding,
-                "proxy_switch": config.proxy_switch,
-                "name_format": config.name_format,
-            }),
-        })
-        .unwrap(),
-    )
-        .into_response()
+    // fix this
+    if config.name_format.is_none() {
+        config.name_format = Some("{name} {tag}".to_string());
+    }
+
+    Json(&match access_level {
+        PrivacyLevel::Private => config.to_json(),
+        PrivacyLevel::Public => json!({
+            "pings_enabled": config.pings_enabled,
+            "latch_timeout": config.latch_timeout,
+            "case_sensitive_proxy_tags": config.case_sensitive_proxy_tags,
+            "proxy_error_message_enabled": config.proxy_error_message_enabled,
+            "hid_display_split": config.hid_display_split,
+            "hid_display_caps": config.hid_display_caps,
+            "hid_list_padding": config.hid_list_padding,
+            "proxy_switch": config.proxy_switch,
+            "name_format": config.name_format,
+        }),
+    })
+    .into_response()
 }
