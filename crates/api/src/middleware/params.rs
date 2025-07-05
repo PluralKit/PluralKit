@@ -29,7 +29,7 @@ pub async fn params(State(ctx): State<ApiContext>, mut req: Request, next: Next)
         _ => {
             return json_err(
                 StatusCode::BAD_REQUEST,
-                r#"{"error": "400: Bad Request", "code": 0}"#.to_string(),
+                r#"{"message":"400: Bad Request","code": 0}"#.to_string(),
             )
             .into()
         }
@@ -47,7 +47,7 @@ pub async fn params(State(ctx): State<ApiContext>, mut req: Request, next: Next)
                     else {
                         return json_err(
                             StatusCode::UNAUTHORIZED,
-                            r#"{"error": "401: Missing or invalid Authorization header", "code": 0}"#.to_string(),
+                            r#"{"message":"401: Missing or invalid Authorization header","code": 0}"#.to_string(),
                         )
                         .into();
                     };
