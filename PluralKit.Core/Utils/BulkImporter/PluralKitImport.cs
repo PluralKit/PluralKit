@@ -205,7 +205,7 @@ public partial class BulkImporter
             ? existingSwitches.Select(sw => sw.Id).Max()
             : (SwitchId?)null;
 
-        if (switches.Count > 10000)
+        if (switches.Count > 100000)
             throw new ImportException("Too many switches present in import file.");
 
         // Import switch definitions
