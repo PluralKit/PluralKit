@@ -308,10 +308,11 @@ public class MemberEdit
                 await ctx.Reply(embed: new EmbedBuilder()
                     .Title("Member color")
                     .Color(target.Color.ToDiscordColor())
-                    .Thumbnail(new Embed.EmbedThumbnail($"https://fakeimg.pl/256x256/{target.Color}/?text=%20"))
+                    .Thumbnail(new Embed.EmbedThumbnail($"attachment://color.gif"))
                     .Description($"This member's color is **#{target.Color}**."
                         + (isOwnSystem ? $" To clear it, type `{ctx.DefaultPrefix}member {target.Reference(ctx)} color -clear`." : ""))
-                    .Build());
+                    .Build(),
+                    files: [MiscUtils.GenerateColorPreview(target.Color)]);
             return;
         }
 
@@ -336,8 +337,9 @@ public class MemberEdit
             await ctx.Reply(embed: new EmbedBuilder()
                 .Title($"{Emojis.Success} Member color changed.")
                 .Color(color.ToDiscordColor())
-                .Thumbnail(new Embed.EmbedThumbnail($"https://fakeimg.pl/256x256/{color}/?text=%20"))
-                .Build());
+                .Thumbnail(new Embed.EmbedThumbnail($"attachment://color.gif"))
+                .Build(),
+                files: [MiscUtils.GenerateColorPreview(color)]);
         }
     }
 
