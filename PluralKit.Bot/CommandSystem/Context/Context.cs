@@ -92,7 +92,7 @@ public class Context
 
         if (embed != null && !botPerms.HasFlag(PermissionSet.EmbedLinks))
             throw new PKError("PluralKit does not have permission to send embeds in this channel. Please ensure I have the **Embed Links** permission enabled.");
-        
+
         if (files != null && !botPerms.HasFlag(PermissionSet.AttachFiles))
             throw new PKError("PluralKit does not have permission to attach files in this channel. Please ensure I have the **Attach Files** permission enabled.");
 
