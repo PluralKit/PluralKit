@@ -59,3 +59,4 @@ When something goes wrong, the API will send back a 4xx HTTP status code, along 
 |40004|400|Member list identical to current fronter list.|
 |40005|400|Switch with provided timestamp already exists.|
 |40006|400|Invalid switch ID.|
+|50001|501|Unimplemented.|
