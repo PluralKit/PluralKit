@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.Json;
 
 using Serilog;
@@ -57,7 +58,7 @@ public class HttpListenerService
     private async Task RuntimeConfigSet(HttpContextBase ctx)
     {
         var key = ctx.Request.Url.Parameters["key"];
-        var value = ctx.Request.DataAsString;
+        var value = ReadStream(ctx.Request.Data, ctx.Request.ContentLength);
         await _runtimeConfig.Set(key, value);
         await RuntimeConfigGet(ctx);
     }
@@ -76,7 +77,7 @@ public class HttpListenerService
         var shardIdString = ctx.Request.Url.Parameters["shard_id"];
         if (!int.TryParse(shardIdString, out var shardId)) return;
 
-        var packet = JsonSerializer.Deserialize<GatewayPacket>(ctx.Request.DataAsString, _jsonSerializerOptions);
+        var packet = JsonSerializer.Deserialize<GatewayPacket>(ReadStream(ctx.Request.Data, ctx.Request.ContentLength), _jsonSerializerOptions);
         var evt = DeserializeEvent(shardId, packet.EventType!, (JsonElement)packet.Payload!);
         if (evt != null)
         {
@@ -105,6 +106,41 @@ public class HttpListenerService
             _logger.Error(e, "Shard {ShardId}: Error deserializing event {EventType} to {ClrType}", shardId,
                 eventType, clrType);
             return null;
+        }
+    }
+
+    //temporary re-implementation of the ReadStream function found in WatsonWebserver.Lite, but with handling for closed connections
+    //https://github.com/dotnet/WatsonWebserver/issues/171
+    private static string ReadStream(Stream input, long contentLength)
+    {
+        if (input == null) throw new ArgumentNullException(nameof(input));
+        if (!input.CanRead) throw new InvalidOperationException("Input stream is not readable");
+        if (contentLength < 1) return "";
+
+        byte[] buffer = new byte[65536];
+        long bytesRemaining = contentLength;
+
+        using (MemoryStream ms = new MemoryStream())
+        {
+            int read;
+
+            while (bytesRemaining > 0)
+            {
+                read = input.Read(buffer, 0, buffer.Length);
+                if (read > 0)
+                {
+                    ms.Write(buffer, 0, read);
+                    bytesRemaining -= read;
+                }
+                else
+                {
+                    throw new IOException("Connection closed before reading end of stream.");
+                }
+            }
+
+            if (ms.Length < 1) return null;
+            var str = Encoding.Default.GetString(ms.ToArray());
+            return str;
         }
     }
 }
