@@ -139,6 +139,8 @@ Returns 204 No Content on success.
 
 GET `/members/{memberRef}/groups`
 
+Returns an array of [group objects](/api/models/#group-model)
+
 ### Add Member To Groups
 
 POST `/members/{memberRef}/groups/add`
