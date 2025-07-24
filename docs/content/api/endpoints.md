@@ -296,6 +296,8 @@ JSON Body Parameters
 
 ** Can be short IDs or UUIDs.
 
+Returns a [switch object](/api/models#switch-model) containing a list of member objects.
+
 ### Get Switch
 
 GET `/systems/{systemRef}/switches/{switchRef}`
