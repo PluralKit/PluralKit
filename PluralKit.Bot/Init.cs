@@ -57,16 +57,6 @@ public class Init
 
             var cache = services.Resolve<IDiscordCache>();
 
-            if (config.Cluster == null)
-            {
-                // "Connect to the database" (ie. set off database migrations and ensure state)
-                logger.Information("Connecting to database");
-                await services.Resolve<IDatabase>().ApplyMigrations();
-
-                // Clear shard status from Redis
-                await redis.Connection.GetDatabase().KeyDeleteAsync("pluralkit:shardstatus");
-            }
-
             logger.Information("Initializing bot");
             var bot = services.Resolve<Bot>();
 

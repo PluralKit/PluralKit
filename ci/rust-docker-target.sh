@@ -37,6 +37,7 @@ EOF
 }
 
 # add rust binaries here to build
+build migrate
 build api
 build dispatch
 build gateway

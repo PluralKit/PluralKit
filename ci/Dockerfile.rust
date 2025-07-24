@@ -25,6 +25,7 @@ COPY Cargo.lock /build/
 
 COPY crates/ /build/crates
 
+RUN cargo build --bin migrate --release --target x86_64-unknown-linux-musl
 RUN cargo build --bin api --release --target x86_64-unknown-linux-musl
 RUN cargo build --bin dispatch --release --target x86_64-unknown-linux-musl
 RUN cargo build --bin gateway --release --target x86_64-unknown-linux-musl
@@ -35,6 +36,7 @@ RUN cargo build --bin gdpr_worker --release --target x86_64-unknown-linux-musl
 
 FROM alpine:latest
 
+COPY --from=binary-builder /build/target/x86_64-unknown-linux-musl/release/migrate /migrate
 COPY --from=binary-builder /build/target/x86_64-unknown-linux-musl/release/api /api
 COPY --from=binary-builder /build/target/x86_64-unknown-linux-musl/release/dispatch /dispatch
 COPY --from=binary-builder /build/target/x86_64-unknown-linux-musl/release/gateway /gateway

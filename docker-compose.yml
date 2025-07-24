@@ -1,6 +1,17 @@
 version: "3"
 
 services:
+  migrate:
+    build:
+      context: .
+      dockerfile: ci/Dockerfile.rust
+    environment:
+      - RUST_LOG=info
+      - pluralkit__db__data_db_uri=postgresql://postgres:postgres@db:5432/postgres
+      - pluralkit__db__data_redis_addr=1
+    command: ["/migrate"]
+    depends_on: ["db"]
+
   bot:
     build:
       context: .
@@ -17,6 +28,9 @@ services:
       - "PluralKit__Bot__EventAwaiterTarget=http://bot:5002/events"
       - "PluralKit__Bot__DisableGateway=true"
     restart: unless-stopped
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
 
   gateway:
     build:
