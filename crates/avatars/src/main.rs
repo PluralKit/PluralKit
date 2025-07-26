@@ -179,7 +179,7 @@ async fn main() -> anyhow::Result<()> {
 
     let bucket = {
         let region = s3::Region::Custom {
-            region: "s3".to_string(),
+            region: "auto".to_string(),
             endpoint: config.s3.endpoint.to_string(),
         };
 
