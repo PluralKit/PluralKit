@@ -3311,6 +3311,7 @@ dependencies = [
  "chrono",
  "croner",
  "fred",
+ "lazy_static",
  "libpk",
  "metrics",
  "num-format",

@@ -42,5 +42,10 @@ build api
 build dispatch
 build gateway
 build avatars "COPY .docker-bin/avatar_cleanup /bin/avatar_cleanup"
-build scheduled_tasks
+build scheduled_tasks "$(cat <<EOF
+RUN wget https://github.com/wal-g/wal-g/releases/download/v3.0.7/wal-g-pg-ubuntu-22.04-amd64 -O /usr/local/bin/wal-g
+RUN chmod +x /usr/local/bin/wal-g
+RUN apk add gcompat
+EOF
+)"
 build gdpr_worker
