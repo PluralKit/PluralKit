@@ -137,7 +137,7 @@ The PluralKit Discord bot can be configured to display short IDs in uppercase, o
 
 |key|description|
 |---|---|
-|none|do not pad 5-character ids|
+|off|do not pad 5-character ids|
 |left|add a padding space to the left of 5-character ids in lists|
 |right|add a padding space to the right of 5-character ids in lists|
 
