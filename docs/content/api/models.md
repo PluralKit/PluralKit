@@ -31,6 +31,7 @@ The PluralKit Discord bot can be configured to display short IDs in uppercase, o
 |avatar_url|?string|256-character limit, must be a publicly-accessible URL|
 |banner|?string|256-character limit, must be a publicly-accessible URL|
 |color|?string|6-character hex code, no `#` at the beginning|
+|webhook_url|?string||
 |created|datetime||
 |privacy|?system privacy object||
 
