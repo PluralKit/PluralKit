@@ -130,6 +130,7 @@ The PluralKit Discord bot can be configured to display short IDs in uppercase, o
 |hid_list_padding|[ID padding format](#id-padding-format-enum)|whether the bot will pad 5-character ids in lists|
 |proxy_switch|[proxy switch action](#proxy-switch-action-enum)|switch action the bot will take when proxying|
 |name_format|string|format used for webhook names during proxying (defaults to `{name} {tag}`)|
+|description_templates|array of strings|used by the dashboard for predefined description templates (max of 3, 1000-character limit each)|
 
 \* this *does not* affect members/groups created through the API - please specify privacy keys in the JSON payload instead
 
