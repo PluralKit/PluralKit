@@ -34,7 +34,7 @@ The PluralKit Discord bot can be configured to display short IDs in uppercase, o
 |created|datetime||
 |privacy|?system privacy object||
 
-* System privacy keys: `description_privacy`, `pronoun_privacy`, `member_list_privacy`, `group_list_privacy`, `front_privacy`, `front_history_privacy`
+* System privacy keys: `name_privacy`, `description_privacy`, `avatar_privacy`, `banner_privacy`, `pronoun_privacy`, `member_list_privacy`, `group_list_privacy`, `front_privacy`, `front_history_privacy`
 
 ### Member model
 
@@ -61,7 +61,7 @@ The PluralKit Discord bot can be configured to display short IDs in uppercase, o
 |last_message_timestamp|?datetime||
 |privacy|?member privacy object||
 
-* Member privacy keys: `visibility`, `name_privacy`, `description_privacy`, `birthday_privacy`, `pronoun_privacy`, `avatar_privacy`, `metadata_privacy`, `proxy_privacy`
+* Member privacy keys: `visibility`, `name_privacy`, `description_privacy`, `birthday_privacy`, `pronoun_privacy`, `avatar_privacy`, `banner_privacy`, `metadata_privacy`, `proxy_privacy`
 
 #### ProxyTag object
 
@@ -88,7 +88,7 @@ The PluralKit Discord bot can be configured to display short IDs in uppercase, o
 |color|?string|6-character hex code, no `#` at the beginning|
 |privacy|?group privacy object||
 
-* Group privacy keys: `name_privacy`, `description_privacy`, `icon_privacy`, `list_privacy`, `metadata_privacy`, `visibility`
+* Group privacy keys: `name_privacy`, `description_privacy`, `banner_privacy`, `icon_privacy`, `list_privacy`, `metadata_privacy`, `visibility`
 
 ### Switch model
 
