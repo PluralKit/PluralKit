@@ -173,6 +173,8 @@ This model is used when querying system settings without authenticating, or for 
 |proxying_enabled|boolean||
 |tag|?string|79-character limit|
 |tag_enabled|boolean||
+|avatar_url|?string|256-character limit|
+|display_name|?string|100-character limit|
 
 
 ### Autoproxy settings model
