@@ -5,6 +5,8 @@ use axum::{
     response::Response,
 };
 
+use subtle::ConstantTimeEq;
+
 use tracing::error;
 
 use crate::auth::AuthState;
@@ -48,9 +50,10 @@ pub async fn auth(State(ctx): State<ApiContext>, mut req: Request, next: Next) -
             .expect("missing api config")
             .temp_token2
             .as_ref()
-        // this is NOT how you validate tokens
-        // but this is low abuse risk so we're keeping it for now
-        && app_auth_header == config_token2
+        && app_auth_header
+            .as_bytes()
+            .ct_eq(config_token2.as_bytes())
+            .into()
     {
         authed_app_id = Some(1);
     }
