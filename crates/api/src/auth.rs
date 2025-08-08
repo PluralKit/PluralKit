@@ -7,11 +7,16 @@ pub const INTERNAL_APPID_HEADER: &'static str = "x-pluralkit-appid";
 pub struct AuthState {
     system_id: Option<i32>,
     app_id: Option<i32>,
+    internal: bool,
 }
 
 impl AuthState {
-    pub fn new(system_id: Option<i32>, app_id: Option<i32>) -> Self {
-        Self { system_id, app_id }
+    pub fn new(system_id: Option<i32>, app_id: Option<i32>, internal: bool) -> Self {
+        Self {
+            system_id,
+            app_id,
+            internal,
+        }
     }
 
     pub fn system_id(&self) -> Option<i32> {
@@ -20,6 +25,10 @@ impl AuthState {
 
     pub fn app_id(&self) -> Option<i32> {
         self.app_id
+    }
+
+    pub fn internal(&self) -> bool {
+        self.internal
     }
 
     pub fn access_level_for(&self, a: &impl Authable) -> PrivacyLevel {

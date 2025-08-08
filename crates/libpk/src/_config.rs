@@ -128,6 +128,9 @@ pub struct PKConfig {
 
     #[serde(default)]
     pub sentry_url: Option<String>,
+
+    #[serde(default)]
+    pub internal_auth: Option<String>,
 }
 
 impl PKConfig {

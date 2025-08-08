@@ -58,8 +58,23 @@ pub async fn auth(State(ctx): State<ApiContext>, mut req: Request, next: Next) -
         authed_app_id = Some(1);
     }
 
+    // todo: fix syntax
+    let internal = if req.headers().get("x-pluralkit-client-ip").is_none()
+        && let Some(auth_header) = req
+            .headers()
+            .get("x-pluralkit-internalauth")
+            .map(|h| h.to_str().ok())
+            .flatten()
+        && let Some(real_token) = libpk::config.internal_auth.clone()
+        && auth_header.as_bytes().ct_eq(real_token.as_bytes()).into()
+    {
+        true
+    } else {
+        false
+    };
+
     req.extensions_mut()
-        .insert(AuthState::new(authed_system_id, authed_app_id));
+        .insert(AuthState::new(authed_system_id, authed_app_id, internal));
 
     next.run(req).await
 }
