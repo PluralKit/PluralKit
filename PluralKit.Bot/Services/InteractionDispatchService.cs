@@ -1,5 +1,7 @@
 using System.Collections.Concurrent;
 
+using Myriad.Cache;
+
 using NodaTime;
 
 using Serilog;
@@ -16,9 +18,12 @@ public class InteractionDispatchService: IDisposable
     private readonly ConcurrentDictionary<Guid, RegisteredInteraction> _handlers = new();
     private readonly ILogger _logger;
 
-    public InteractionDispatchService(IClock clock, ILogger logger)
+    private readonly IDiscordCache _cache;
+
+    public InteractionDispatchService(IClock clock, ILogger logger, IDiscordCache cache)
     {
         _clock = clock;
+        _cache = cache;
         _logger = logger.ForContext<InteractionDispatchService>();
 
         _cleanupWorker = CleanupLoop(_cts.Token);
@@ -50,9 +55,15 @@ public class InteractionDispatchService: IDisposable
         _handlers.TryRemove(customIdGuid, out _);
     }
 
-    public string Register(Func<InteractionContext, Task> callback, Duration? expiry = null)
+    public string Register(int shardId, Func<InteractionContext, Task> callback, Duration? expiry = null)
     {
         var key = Guid.NewGuid();
+
+        // if http_cache, return RegisterRemote
+        // not awaited here, it's probably fine
+        if (_cache is HttpDiscordCache)
+            (_cache as HttpDiscordCache).AwaitInteraction(shardId, key.ToString(), expiry);
+
         var handler = new RegisteredInteraction
         {
             Callback = callback,

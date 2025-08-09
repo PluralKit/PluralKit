@@ -1,5 +1,6 @@
 using Autofac;
 
+using Myriad.Cache;
 using Myriad.Gateway;
 using Myriad.Rest.Types;
 using Myriad.Types;
@@ -69,6 +70,9 @@ public class YesNoPrompt: BaseInteractive
             return true;
         }
 
+        // no need to reawait message
+        // gateway will already have sent us only matching messages
+
         return false;
     }
 
@@ -88,6 +92,17 @@ public class YesNoPrompt: BaseInteractive
         {
             try
             {
+                // check if http gateway and set listener
+                // todo: this one needs to handle options for message
+                if (_ctx.Cache is HttpDiscordCache)
+                    await (_ctx.Cache as HttpDiscordCache).AwaitMessage(
+                        _ctx.Guild?.Id ?? 0,
+                        _ctx.Channel.Id,
+                        _ctx.Author.Id,
+                        Timeout,
+                        options: new[] { "yes", "y", "no", "n" }
+                    );
+
                 await queue.WaitFor(MessagePredicate, Timeout, cts.Token);
             }
             catch (TimeoutException e)

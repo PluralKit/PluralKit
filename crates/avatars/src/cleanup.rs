@@ -4,8 +4,8 @@ use sqlx::prelude::FromRow;
 use std::{sync::Arc, time::Duration};
 use tracing::{error, info};
 
-libpk::main!("avatar_cleanup");
-async fn real_main() -> anyhow::Result<()> {
+#[libpk::main]
+async fn main() -> anyhow::Result<()> {
     let config = libpk::config
         .avatars
         .as_ref()
@@ -13,7 +13,7 @@ async fn real_main() -> anyhow::Result<()> {
 
     let bucket = {
         let region = s3::Region::Custom {
-            region: "s3".to_string(),
+            region: "auto".to_string(),
             endpoint: config.s3.endpoint.to_string(),
         };
 
@@ -38,8 +38,8 @@ async fn real_main() -> anyhow::Result<()> {
         tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
         match cleanup_job(pool.clone(), bucket.clone()).await {
             Ok(()) => {}
-            Err(err) => {
-                error!("failed to run avatar cleanup job: {}", err);
+            Err(error) => {
+                error!(?error, "failed to run avatar cleanup job");
                 // sentry
             }
         }
@@ -55,9 +55,10 @@ async fn cleanup_job(pool: sqlx::PgPool, bucket: Arc<s3::Bucket>) -> anyhow::Res
     let mut tx = pool.begin().await?;
 
     let image_id: Option<CleanupJobEntry> = sqlx::query_as(
+        // no timestamp checking here
+        // images are only added to the table after 24h
         r#"
                 select id from image_cleanup_jobs
-                where ts < now() - interval '1 day'
                 for update skip locked limit 1;"#,
     )
     .fetch_optional(&mut *tx)
@@ -72,6 +73,7 @@ async fn cleanup_job(pool: sqlx::PgPool, bucket: Arc<s3::Bucket>) -> anyhow::Res
 
     let image_data = libpk::db::repository::avatars::get_by_id(&pool, image_id.clone()).await?;
     if image_data.is_none() {
+        // unsure how this can happen? there is a FK reference
         info!("image {image_id} was already deleted, skipping");
         sqlx::query("delete from image_cleanup_jobs where id = $1")
             .bind(image_id)

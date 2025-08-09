@@ -1,0 +1,12 @@
+[package]
+name = "migrate"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+libpk = { path = "../libpk" }
+
+anyhow = { workspace = true }
+sqlx = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }

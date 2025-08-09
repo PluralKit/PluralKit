@@ -28,7 +28,7 @@ public abstract class BaseInteractive
                                ButtonStyle style = ButtonStyle.Secondary, bool disabled = false)
     {
         var dispatch = _ctx.Services.Resolve<InteractionDispatchService>();
-        var customId = dispatch.Register(handler, Timeout);
+        var customId = dispatch.Register(_ctx.ShardId, handler, Timeout);
 
         var button = new Button
         {
@@ -89,7 +89,7 @@ public abstract class BaseInteractive
     {
         var dispatch = ctx.Services.Resolve<InteractionDispatchService>();
         foreach (var button in _buttons)
-            button.CustomId = dispatch.Register(button.Handler, Timeout);
+            button.CustomId = dispatch.Register(_ctx.ShardId, button.Handler, Timeout);
     }
 
     public abstract Task Start();

@@ -6,7 +6,6 @@ members = [
 
 [workspace.dependencies]
 anyhow = "1"
-axum = "0.7.5"
 axum-macros = "0.4.1"
 bytes = "1.6.0"
 chrono = "0.4"
@@ -18,21 +17,22 @@ reqwest = { version = "0.12.7" , default-features = false, features = ["rustls-t
 sentry = { version = "0.36.0", default-features = false, features =  ["backtrace", "contexts", "panic", "debug-images", "reqwest", "rustls"] } # replace native-tls with rustls
 serde = { version = "1.0.196", features = ["derive"] }
 serde_json = "1.0.117"
-signal-hook = "0.3.17"
-sqlx = { version = "0.8.2", features = ["runtime-tokio", "postgres", "time", "chrono", "macros", "uuid"] }
+sqlx = { version = "0.8.2", features = ["runtime-tokio", "postgres", "time", "macros", "uuid"] }
 tokio = { version = "1.36.0", features = ["full"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3.16", features = ["env-filter", "json"] }
 uuid = { version = "1.7.0", features = ["serde"] }
 
-twilight-gateway = { git = "https://github.com/pluralkit/twilight" }
-twilight-cache-inmemory = { git = "https://github.com/pluralkit/twilight", features = ["permission-calculator"] }
-twilight-util = { git = "https://github.com/pluralkit/twilight", features = ["permission-calculator"] }
-twilight-model = { git = "https://github.com/pluralkit/twilight" }
-twilight-http = { git = "https://github.com/pluralkit/twilight", default-features = false, features = ["rustls-native-roots"] }
+axum = { git = "https://github.com/pluralkit/axum", branch = "v0.8.4-pluralkit" }
 
-#twilight-gateway = { path = "../twilight/twilight-gateway" }
-#twilight-cache-inmemory = { path = "../twilight/twilight-cache-inmemory", features = ["permission-calculator"] }
-#twilight-util = { path = "../twilight/twilight-util", features = ["permission-calculator"] }
-#twilight-model = { path = "../twilight/twilight-model" }
-#twilight-http = { path = "../twilight/twilight-http", default-features = false, features = ["rustls-native-roots"] }
+twilight-gateway = { git = "https://github.com/pluralkit/twilight", branch = "pluralkit-70105ef" }
+twilight-cache-inmemory = { git = "https://github.com/pluralkit/twilight", branch = "pluralkit-70105ef", features = ["permission-calculator"] }
+twilight-util = { git = "https://github.com/pluralkit/twilight", branch = "pluralkit-70105ef", features = ["permission-calculator"] }
+twilight-model = { git = "https://github.com/pluralkit/twilight", branch = "pluralkit-70105ef" }
+twilight-http = { git = "https://github.com/pluralkit/twilight", branch = "pluralkit-70105ef", default-features = false, features = ["rustls-aws_lc_rs", "rustls-native-roots"] }
+
+# twilight-gateway = { path = "../twilight/twilight-gateway" }
+# twilight-cache-inmemory = { path = "../twilight/twilight-cache-inmemory", features = ["permission-calculator"] }
+# twilight-util = { path = "../twilight/twilight-util", features = ["permission-calculator"] }
+# twilight-model = { path = "../twilight/twilight-model" }
+# twilight-http = { path = "../twilight/twilight-http", default-features = false, features = ["rustls-aws_lc_rs", "rustls-native-roots"] }

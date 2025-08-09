@@ -1,4 +1,4 @@
-#[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Default, Debug)]
 pub struct ShardState {
     pub shard_id: i32,
     pub up: bool,
@@ -9,4 +9,10 @@ pub struct ShardState {
     pub last_heartbeat: i32,
     pub last_connection: i32,
     pub cluster_id: Option<i32>,
+}
+
+pub enum ShardStateEvent {
+    Closed,
+    Heartbeat,
+    Other,
 }

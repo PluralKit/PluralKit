@@ -212,9 +212,9 @@ a display name using the `pk;member displayname` command, like so:
     pk;member John displayname Jonathan
     pk;member Robert displayname Bob (he/him)
     
-To remove a display name, just use the same command with no last parameter, eg:
+To remove a display name, use the same command with `-clear` as the parameter, eg:
 
-    pk;member John displayname
+    pk;member John displayname -clear
     
 This will remove the display name, and thus the member will be proxied with their canonical name.
 

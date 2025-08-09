@@ -1,3 +1,7 @@
+using System.Net;
+using System.Net.Http;
+using System.Net.Http.Json;
+
 using Microsoft.AspNetCore.Mvc;
 
 using Newtonsoft.Json.Linq;
@@ -49,6 +53,9 @@ public class MemberControllerV2: PKControllerBase
             patch.Errors.Add(new ValidationError("name", "Key 'name' is required when creating new member."));
         if (patch.Errors.Count > 0)
             throw new ModelParseError(patch.Errors);
+
+        if (patch.AvatarUrl.Value != null)
+            patch.AvatarUrl = await TryUploadAvatar(patch.AvatarUrl.Value, system);
 
         using var conn = await _db.Obtain();
         using var tx = await conn.BeginTransactionAsync();
@@ -110,6 +117,9 @@ public class MemberControllerV2: PKControllerBase
         if (patch.Errors.Count > 0)
             throw new ModelParseError(patch.Errors);
 
+        if (patch.AvatarUrl.Value != null)
+            patch.AvatarUrl = await TryUploadAvatar(patch.AvatarUrl.Value, system);
+
         var newMember = await _repo.UpdateMember(member.Id, patch);
         return Ok(newMember.ToJson(LookupContext.ByOwner, systemStr: system.Hid));
     }
@@ -129,4 +139,28 @@ public class MemberControllerV2: PKControllerBase
 
         return NoContent();
     }
+
+    private async Task<string> TryUploadAvatar(string avatarUrl, PKSystem system)
+    {
+        if (!avatarUrl.StartsWith("https://serve.apparyllis.com/")) return avatarUrl;
+        if (_config.AvatarServiceUrl == null) return avatarUrl;
+        if (!HttpContext.Items.TryGetValue("AppId", out var appId) || (int)appId != 1) return avatarUrl;
+
+        using var client = new HttpClient();
+        var response = await client.PostAsJsonAsync(_config.AvatarServiceUrl + "/pull",
+            new { url = avatarUrl, kind = "avatar", uploaded_by = (string)null, system_id = system.Uuid.ToString() });
+
+        if (response.StatusCode != HttpStatusCode.OK)
+        {
+            var error = await response.Content.ReadFromJsonAsync<ErrorResponse>();
+            throw new PKError(500, 0, $"Error uploading image to CDN: {error.Error}");
+        }
+
+        var success = await response.Content.ReadFromJsonAsync<SuccessResponse>();
+        return success.Url;
+    }
+
+    public record ErrorResponse(string Error);
+
+    public record SuccessResponse(string Url, bool New);
 }

@@ -16,6 +16,7 @@ struct ModelField {
     patch: ElemPatchability,
     json: Option<Expr>,
     is_privacy: bool,
+    privacy: Option<Expr>,
     default: Option<Expr>,
 }
 
@@ -26,6 +27,7 @@ fn parse_field(field: syn::Field) -> ModelField {
         patch: ElemPatchability::None,
         json: None,
         is_privacy: false,
+        privacy: None,
         default: None,
     };
 
@@ -61,6 +63,12 @@ fn parse_field(field: syn::Field) -> ModelField {
                     }
                     f.json = Some(nv.value.clone());
                 }
+                "privacy" => {
+                    if f.privacy.is_some() {
+                        panic!("cannot set privacy multiple times for same field");
+                    }
+                    f.privacy = Some(nv.value.clone());
+                }
                 "default" => {
                     if f.default.is_some() {
                         panic!("cannot set default multiple times for same field");
@@ -84,8 +92,7 @@ fn parse_field(field: syn::Field) -> ModelField {
     f
 }
 
-#[proc_macro_attribute]
-pub fn pk_model(
+pub fn macro_impl(
     _args: proc_macro::TokenStream,
     input: proc_macro::TokenStream,
 ) -> proc_macro::TokenStream {
@@ -107,8 +114,6 @@ pub fn pk_model(
     } else {
         panic!("fields of a struct must be named");
     };
-
-    // println!("{}: {:#?}", tname, fields);
 
     let tfields = mk_tfields(fields.clone());
     let from_json = mk_tfrom_json(fields.clone());
@@ -138,9 +143,7 @@ pub fn pk_model(
                 #from_json
             }
 
-            pub fn to_json(self) -> serde_json::Value {
-                #to_json
-            }
+            #to_json
         }
 
         #[derive(Debug, Clone)]
@@ -189,19 +192,28 @@ fn mk_tfrom_sql(_fields: Vec<ModelField>) -> TokenStream {
     quote! { unimplemented!(); }
 }
 fn mk_tto_json(fields: Vec<ModelField>) -> TokenStream {
-    // todo: check privacy access
+    let has_privacy = fields.iter().any(|f| f.privacy.is_some());
     let fielddefs: TokenStream = fields
         .iter()
         .filter_map(|f| {
             f.json.as_ref().map(|v| {
                 let tname = f.name.clone();
-                if let Some(default) = f.default.as_ref() {
+                let maybepriv = if let Some(privacy) = f.privacy.as_ref() {
                     quote! {
-                        #v: self.#tname.unwrap_or(#default),
+                        #v: crate::_util::privacy_lookup!(self.#tname, self.#privacy, lookup_level)
                     }
                 } else {
                     quote! {
-                        #v: self.#tname,
+                        #v: self.#tname
+                    }
+                };
+                if let Some(default) = f.default.as_ref() {
+                    quote! {
+                        #maybepriv.unwrap_or(#default),
+                    }
+                } else {
+                    quote! {
+                        #maybepriv,
                     }
                 }
             })
@@ -223,13 +235,35 @@ fn mk_tto_json(fields: Vec<ModelField>) -> TokenStream {
         })
         .collect();
 
-    quote! {
-        serde_json::json!({
-            #fielddefs
-            "privacy": {
-                #privacyfielddefs
+    let privdef = if has_privacy {
+        quote! {
+            , lookup_level: crate::PrivacyLevel
+        }
+    } else {
+        quote! {}
+    };
+
+    let privacy_fielddefs = if has_privacy {
+        quote! {
+            "privacy": if matches!(lookup_level, crate::PrivacyLevel::Private) {
+                Some(serde_json::json!({
+                    #privacyfielddefs
+                }))
+            } else {
+                None
             }
-        })
+        }
+    } else {
+        quote! {}
+    };
+
+    quote! {
+        pub fn to_json(self #privdef) -> serde_json::Value {
+            serde_json::json!({
+                #fielddefs
+                #privacy_fielddefs
+            })
+        }
     }
 }
 

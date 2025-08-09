@@ -420,6 +420,24 @@ public class EmbedService
         return eb.Build();
     }
 
+    public async Task<Embed> CreateCommandMessageInfoEmbed(Core.CommandMessage msg, bool showContent)
+    {
+        var content = "*(command message deleted or inaccessible)*";
+        if (showContent)
+        {
+            var discordMessage = await _rest.GetMessageOrNull(msg.Channel, msg.OriginalMid);
+            if (discordMessage != null)
+                content = discordMessage.Content;
+        }
+
+        return new EmbedBuilder()
+            .Title("Command response message")
+            .Description(content)
+            .Field(new("Original message", $"https://discord.com/channels/{msg.Guild}/{msg.Channel}/{msg.OriginalMid}", true))
+            .Field(new("Sent by", $"<@{msg.Sender}>", true))
+            .Build();
+    }
+
     public Task<Embed> CreateFrontPercentEmbed(FrontBreakdown breakdown, PKSystem system, PKGroup group,
                                                DateTimeZone tz, LookupContext ctx, string embedTitle,
                                                bool ignoreNoFronters, bool showFlat)

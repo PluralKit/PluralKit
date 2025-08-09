@@ -108,7 +108,7 @@ public partial class CommandTree
             ctx.Reply(
                 $"{Emojis.Error} Parsed command {ctx.Parameters.Callback().AsCode()} not implemented in PluralKit.Bot!"),
         };
-        if (ctx.Match("system", "s"))
+        if (ctx.Match("system", "s", "account", "acc"))
             return HandleSystemCommand(ctx);
         if (ctx.Match("member", "m"))
             return HandleMemberCommand(ctx);
@@ -554,6 +554,8 @@ public partial class CommandTree
             case "system":
             case "systems":
             case "s":
+            case "account":
+            case "acc":
                 await PrintCommandList(ctx, "systems", SystemCommands);
                 break;
             case "member":

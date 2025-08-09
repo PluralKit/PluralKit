@@ -1,10 +1,13 @@
+#![feature(let_chains)]
+
+use auth::{AuthState, INTERNAL_APPID_HEADER, INTERNAL_SYSTEMID_HEADER};
 use axum::{
     body::Body,
     extract::{Request as ExtractRequest, State},
     http::{Response, StatusCode, Uri},
     response::IntoResponse,
     routing::{delete, get, patch, post},
-    Router,
+    Extension, Router,
 };
 use hyper_util::{
     client::legacy::{connect::HttpConnector, Client},
@@ -12,6 +15,7 @@ use hyper_util::{
 };
 use tracing::{error, info};
 
+mod auth;
 mod endpoints;
 mod error;
 mod middleware;
@@ -27,6 +31,7 @@ pub struct ApiContext {
 }
 
 async fn rproxy(
+    Extension(auth): Extension<AuthState>,
     State(ctx): State<ApiContext>,
     mut req: ExtractRequest<Body>,
 ) -> Result<Response<Body>, StatusCode> {
@@ -41,12 +46,25 @@ async fn rproxy(
 
     *req.uri_mut() = Uri::try_from(uri).unwrap();
 
+    let headers = req.headers_mut();
+
+    headers.remove(INTERNAL_SYSTEMID_HEADER);
+    headers.remove(INTERNAL_APPID_HEADER);
+
+    if let Some(sid) = auth.system_id() {
+        headers.append(INTERNAL_SYSTEMID_HEADER, sid.into());
+    }
+
+    if let Some(aid) = auth.app_id() {
+        headers.append(INTERNAL_APPID_HEADER, aid.into());
+    }
+
     Ok(ctx
         .rproxy_client
         .request(req)
         .await
-        .map_err(|err| {
-            error!("failed to serve reverse proxy to dotnet-api: {:?}", err);
+        .map_err(|error| {
+            error!(?error, "failed to serve reverse proxy to dotnet-api");
             StatusCode::BAD_GATEWAY
         })?
         .into_response())
@@ -57,52 +75,52 @@ async fn rproxy(
 fn router(ctx: ApiContext) -> Router {
     // processed upside down (???) so we have to put middleware at the end
     Router::new()
-        .route("/v2/systems/:system_id", get(rproxy))
-        .route("/v2/systems/:system_id", patch(rproxy))
-        .route("/v2/systems/:system_id/settings", get(rproxy))
-        .route("/v2/systems/:system_id/settings", patch(rproxy))
+        .route("/v2/systems/{system_id}", get(rproxy))
+        .route("/v2/systems/{system_id}", patch(rproxy))
+        .route("/v2/systems/{system_id}/settings", get(endpoints::system::get_system_settings))
+        .route("/v2/systems/{system_id}/settings", patch(rproxy))
 
-        .route("/v2/systems/:system_id/members", get(rproxy))
+        .route("/v2/systems/{system_id}/members", get(rproxy))
         .route("/v2/members", post(rproxy))
-        .route("/v2/members/:member_id", get(rproxy))
-        .route("/v2/members/:member_id", patch(rproxy))
-        .route("/v2/members/:member_id", delete(rproxy))
+        .route("/v2/members/{member_id}", get(rproxy))
+        .route("/v2/members/{member_id}", patch(rproxy))
+        .route("/v2/members/{member_id}", delete(rproxy))
 
-        .route("/v2/systems/:system_id/groups", get(rproxy))
+        .route("/v2/systems/{system_id}/groups", get(rproxy))
         .route("/v2/groups", post(rproxy))
-        .route("/v2/groups/:group_id", get(rproxy))
-        .route("/v2/groups/:group_id", patch(rproxy))
-        .route("/v2/groups/:group_id", delete(rproxy))
+        .route("/v2/groups/{group_id}", get(rproxy))
+        .route("/v2/groups/{group_id}", patch(rproxy))
+        .route("/v2/groups/{group_id}", delete(rproxy))
 
-        .route("/v2/groups/:group_id/members", get(rproxy))
-        .route("/v2/groups/:group_id/members/add", post(rproxy))
-        .route("/v2/groups/:group_id/members/remove", post(rproxy))
-        .route("/v2/groups/:group_id/members/overwrite", post(rproxy))
+        .route("/v2/groups/{group_id}/members", get(rproxy))
+        .route("/v2/groups/{group_id}/members/add", post(rproxy))
+        .route("/v2/groups/{group_id}/members/remove", post(rproxy))
+        .route("/v2/groups/{group_id}/members/overwrite", post(rproxy))
 
-        .route("/v2/members/:member_id/groups", get(rproxy))
-        .route("/v2/members/:member_id/groups/add", post(rproxy))
-        .route("/v2/members/:member_id/groups/remove", post(rproxy))
-        .route("/v2/members/:member_id/groups/overwrite", post(rproxy))
+        .route("/v2/members/{member_id}/groups", get(rproxy))
+        .route("/v2/members/{member_id}/groups/add", post(rproxy))
+        .route("/v2/members/{member_id}/groups/remove", post(rproxy))
+        .route("/v2/members/{member_id}/groups/overwrite", post(rproxy))
 
-        .route("/v2/systems/:system_id/switches", get(rproxy))
-        .route("/v2/systems/:system_id/switches", post(rproxy))
-        .route("/v2/systems/:system_id/fronters", get(rproxy))
+        .route("/v2/systems/{system_id}/switches", get(rproxy))
+        .route("/v2/systems/{system_id}/switches", post(rproxy))
+        .route("/v2/systems/{system_id}/fronters", get(rproxy))
 
-        .route("/v2/systems/:system_id/switches/:switch_id", get(rproxy))
-        .route("/v2/systems/:system_id/switches/:switch_id", patch(rproxy))
-        .route("/v2/systems/:system_id/switches/:switch_id/members", patch(rproxy))
-        .route("/v2/systems/:system_id/switches/:switch_id", delete(rproxy))
+        .route("/v2/systems/{system_id}/switches/{switch_id}", get(rproxy))
+        .route("/v2/systems/{system_id}/switches/{switch_id}", patch(rproxy))
+        .route("/v2/systems/{system_id}/switches/{switch_id}/members", patch(rproxy))
+        .route("/v2/systems/{system_id}/switches/{switch_id}", delete(rproxy))
 
-        .route("/v2/systems/:system_id/guilds/:guild_id", get(rproxy))
-        .route("/v2/systems/:system_id/guilds/:guild_id", patch(rproxy))
+        .route("/v2/systems/{system_id}/guilds/{guild_id}", get(rproxy))
+        .route("/v2/systems/{system_id}/guilds/{guild_id}", patch(rproxy))
 
-        .route("/v2/members/:member_id/guilds/:guild_id", get(rproxy))
-        .route("/v2/members/:member_id/guilds/:guild_id", patch(rproxy))
+        .route("/v2/members/{member_id}/guilds/{guild_id}", get(rproxy))
+        .route("/v2/members/{member_id}/guilds/{guild_id}", patch(rproxy))
 
-        .route("/v2/systems/:system_id/autoproxy", get(rproxy))
-        .route("/v2/systems/:system_id/autoproxy", patch(rproxy))
+        .route("/v2/systems/{system_id}/autoproxy", get(rproxy))
+        .route("/v2/systems/{system_id}/autoproxy", patch(rproxy))
 
-        .route("/v2/messages/:message_id", get(rproxy))
+        .route("/v2/messages/{message_id}", get(rproxy))
 
         .route("/private/bulk_privacy/member", post(rproxy))
         .route("/private/bulk_privacy/group", post(rproxy))
@@ -111,16 +129,19 @@ fn router(ctx: ApiContext) -> Router {
         .route("/private/discord/shard_state", get(endpoints::private::discord_state))
         .route("/private/stats", get(endpoints::private::meta))
 
-        .route("/v2/systems/:system_id/oembed.json", get(rproxy))
-        .route("/v2/members/:member_id/oembed.json", get(rproxy))
-        .route("/v2/groups/:group_id/oembed.json", get(rproxy))
+        .route("/v2/systems/{system_id}/oembed.json", get(rproxy))
+        .route("/v2/members/{member_id}/oembed.json", get(rproxy))
+        .route("/v2/groups/{group_id}/oembed.json", get(rproxy))
 
         .layer(middleware::ratelimit::ratelimiter(middleware::ratelimit::do_request_ratelimited)) // this sucks
-        .layer(axum::middleware::from_fn_with_state(ctx.clone(), middleware::authnz))
-        .layer(axum::middleware::from_fn(middleware::ignore_invalid_routes))
-        .layer(axum::middleware::from_fn(middleware::cors))
-        .layer(axum::middleware::from_fn(middleware::logger))
 
+        .layer(axum::middleware::from_fn(middleware::ignore_invalid_routes::ignore_invalid_routes))
+        .layer(axum::middleware::from_fn(middleware::logger::logger))
+
+        .layer(axum::middleware::from_fn_with_state(ctx.clone(), middleware::params::params))
+        .layer(axum::middleware::from_fn_with_state(ctx.clone(), middleware::auth::auth))
+
+        .layer(axum::middleware::from_fn(middleware::cors::cors))
         .layer(tower_http::catch_panic::CatchPanicLayer::custom(util::handle_panic))
 
         .with_state(ctx)
@@ -128,8 +149,8 @@ fn router(ctx: ApiContext) -> Router {
         .route("/", get(|| async { axum::response::Redirect::to("https://pluralkit.me/api") }))
 }
 
-libpk::main!("api");
-async fn real_main() -> anyhow::Result<()> {
+#[libpk::main]
+async fn main() -> anyhow::Result<()> {
     let db = libpk::db::init_data_db().await?;
     let redis = libpk::db::init_redis().await?;
 

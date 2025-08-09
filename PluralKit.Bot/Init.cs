@@ -57,16 +57,6 @@ public class Init
 
             var cache = services.Resolve<IDiscordCache>();
 
-            if (config.Cluster == null)
-            {
-                // "Connect to the database" (ie. set off database migrations and ensure state)
-                logger.Information("Connecting to database");
-                await services.Resolve<IDatabase>().ApplyMigrations();
-
-                // Clear shard status from Redis
-                await redis.Connection.GetDatabase().KeyDeleteAsync("pluralkit:shardstatus");
-            }
-
             logger.Information("Initializing bot");
             var bot = services.Resolve<Bot>();
 
@@ -76,10 +66,19 @@ public class Init
             // Init the bot instance itself, register handlers and such to the client before beginning to connect
             bot.Init();
 
-            // Start the Discord shards themselves (handlers already set up)
-            logger.Information("Connecting to Discord");
-            await StartCluster(services);
+            // load runtime config from redis
+            await services.Resolve<RuntimeConfigService>().LoadConfig();
 
+            // Start HTTP server
+            if (config.HttpListenerAddr != null)
+                services.Resolve<HttpListenerService>().Start(config.HttpListenerAddr);
+
+            // Start the Discord shards themselves (handlers already set up)
+            if (!config.DisableGateway)
+            {
+                logger.Information("Connecting to Discord");
+                await StartCluster(services);
+            }
             logger.Information("Connected! All is good (probably).");
 
             // Lastly, we just... wait. Everything else is handled in the DiscordClient event loop
@@ -149,7 +148,7 @@ public class Init
         var builder = new ContainerBuilder();
         builder.RegisterInstance(config);
         builder.RegisterModule(new ConfigModule<BotConfig>("Bot"));
-        builder.RegisterModule(new LoggingModule("bot"));
+        builder.RegisterModule(new LoggingModule("dotnet-bot"));
         builder.RegisterModule(new MetricsModule());
         builder.RegisterModule<DataStoreModule>();
         builder.RegisterModule<BotModule>();

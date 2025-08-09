@@ -1,7 +1,8 @@
 using System.Net;
 using System.Net.Sockets;
-
+using System.Globalization;
 using Myriad.Rest.Exceptions;
+using Myriad.Rest.Types;
 
 using Newtonsoft.Json;
 
@@ -101,5 +102,27 @@ public static class MiscUtils
             return false;
 
         return true;
+    }
+
+    public static MultipartFile GenerateColorPreview(string color)
+    {
+        //generate a 128x128 solid color gif from bytes
+        //image data is a 1x1 pixel, using the background color to fill the rest of the canvas
+        var imgBytes = new byte[]
+        {
+            0x47, 0x49, 0x46, 0x38, 0x39, 0x61, // Header
+            0x80, 0x00, 0x80, 0x00, 0x80, 0x00, 0x00, // Logical Screen Descriptor
+            0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, // Global Color Table
+            0x21, 0xF9, 0x04, 0x08, 0x00, 0x00, 0x00, 0x00, // Graphics Control Extension
+            0x2C, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00, // Image Descriptor
+            0x02, 0x02, 0x4C, 0x01, 0x00, // Image Data
+            0x3B // Trailer
+        }; //indices 13, 14 and 15 are the R, G, and B values respectively
+
+        imgBytes[13] = byte.Parse(color.Substring(0, 2), NumberStyles.HexNumber);
+        imgBytes[14] = byte.Parse(color.Substring(2, 2), NumberStyles.HexNumber);
+        imgBytes[15] = byte.Parse(color.Substring(4, 2), NumberStyles.HexNumber);
+
+        return new MultipartFile("color.gif", new MemoryStream(imgBytes), null, null, null);
     }
 }

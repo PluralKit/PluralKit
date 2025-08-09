@@ -12,10 +12,16 @@ pub struct ClusterSettings {
     pub total_nodes: u32,
 }
 
+fn _default_bot_prefix() -> String {
+    "pk;".to_string()
+}
+
 #[derive(Deserialize, Debug)]
 pub struct DiscordConfig {
     pub client_id: Id<UserMarker>,
     pub bot_token: String,
+    #[serde(default = "_default_bot_prefix")]
+    pub bot_prefix_for_gateway: String,
     pub client_secret: String,
     pub max_concurrency: u32,
     #[serde(default)]
@@ -24,6 +30,9 @@ pub struct DiscordConfig {
 
     #[serde(default = "_default_api_addr")]
     pub cache_api_addr: String,
+
+    #[serde(default)]
+    pub gateway_target: Option<String>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -85,6 +94,7 @@ pub struct ScheduledTasksConfig {
     pub set_guild_count: bool,
     pub expected_gateway_count: usize,
     pub gateway_url: String,
+    pub prometheus_url: String,
 }
 
 fn _metrics_default() -> bool {
@@ -114,6 +124,9 @@ pub struct PKConfig {
     pub(crate) json_log: bool,
 
     #[serde(default)]
+    pub runtime_config_key: Option<String>,
+
+    #[serde(default)]
     pub sentry_url: Option<String>,
 }
 
@@ -132,9 +145,14 @@ impl PKConfig {
 lazy_static! {
     #[derive(Debug)]
     pub static ref CONFIG: Arc<PKConfig> = {
+        // hacks
         if let Ok(var) = std::env::var("NOMAD_ALLOC_INDEX")
             && std::env::var("pluralkit__discord__cluster__total_nodes").is_ok() {
             std::env::set_var("pluralkit__discord__cluster__node_id", var);
+        }
+        if let Ok(var) = std::env::var("STATEFULSET_NAME_FOR_INDEX")
+            && std::env::var("pluralkit__discord__cluster__total_nodes").is_ok() {
+            std::env::set_var("pluralkit__discord__cluster__node_id", var.split("-").last().unwrap());
         }
 
         Arc::new(Config::builder()

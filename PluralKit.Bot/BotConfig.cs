@@ -24,6 +24,10 @@ public class BotConfig
     public string? HttpCacheUrl { get; set; }
     public bool HttpUseInnerCache { get; set; } = false;
 
+    public string? HttpListenerAddr { get; set; }
+    public bool DisableGateway { get; set; } = false;
+    public string? EventAwaiterTarget { get; set; }
+
     public string? DiscordBaseUrl { get; set; }
     public string? AvatarServiceUrl { get; set; }
 

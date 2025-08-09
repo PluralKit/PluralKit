@@ -1,19 +1,24 @@
 use axum::{
-    extract::{Path, State},
+    extract::{ConnectInfo, Path, State},
     http::StatusCode,
     response::{IntoResponse, Response},
-    routing::get,
+    routing::{delete, get, post},
     Router,
 };
+use libpk::runtime_config::RuntimeConfig;
 use serde_json::{json, to_string};
 use tracing::{error, info};
-use twilight_model::id::Id;
+use twilight_model::id::{marker::ChannelMarker, Id};
 
-use crate::discord::{
-    cache::{dm_channel, DiscordCache, DM_PERMISSIONS},
-    gateway::cluster_config,
+use crate::{
+    discord::{
+        cache::{dm_channel, DiscordCache, DM_PERMISSIONS},
+        gateway::cluster_config,
+        shard_state::ShardStateManager,
+    },
+    event_awaiter::{AwaitEventRequest, EventAwaiter},
 };
-use std::sync::Arc;
+use std::{net::SocketAddr, sync::Arc};
 
 fn status_code(code: StatusCode, body: String) -> Response {
     (code, body).into_response()
@@ -21,10 +26,15 @@ fn status_code(code: StatusCode, body: String) -> Response {
 
 // this function is manually formatted for easier legibility of route_services
 #[rustfmt::skip]
-pub async fn run_server(cache: Arc<DiscordCache>) -> anyhow::Result<()> {
+pub async fn run_server(cache: Arc<DiscordCache>, shard_state: Arc<ShardStateManager>, runtime_config: Arc<RuntimeConfig>, awaiter: Arc<EventAwaiter>) -> anyhow::Result<()> {
+    // hacky fix for `move`
+    let runtime_config_for_post = runtime_config.clone();
+    let runtime_config_for_delete = runtime_config.clone();
+    let awaiter_for_clear = awaiter.clone();
+
     let app = Router::new()
         .route(
-            "/guilds/:guild_id",
+            "/guilds/{guild_id}",
             get(|State(cache): State<Arc<DiscordCache>>, Path(guild_id): Path<u64>| async move {
                 match cache.guild(Id::new(guild_id)) {
                     Some(guild) => status_code(StatusCode::FOUND, to_string(&guild).unwrap()),
@@ -33,7 +43,7 @@ pub async fn run_server(cache: Arc<DiscordCache>) -> anyhow::Result<()> {
             }),
         )
         .route(
-            "/guilds/:guild_id/members/@me",
+            "/guilds/{guild_id}/members/@me",
             get(|State(cache): State<Arc<DiscordCache>>, Path(guild_id): Path<u64>| async move {
                 match cache.0.member(Id::new(guild_id), libpk::config.discord.as_ref().expect("missing discord config").client_id) {
                     Some(member) => status_code(StatusCode::FOUND, to_string(member.value()).unwrap()),
@@ -42,7 +52,7 @@ pub async fn run_server(cache: Arc<DiscordCache>) -> anyhow::Result<()> {
             }),
         )
         .route(
-            "/guilds/:guild_id/permissions/@me",
+            "/guilds/{guild_id}/permissions/@me",
             get(|State(cache): State<Arc<DiscordCache>>, Path(guild_id): Path<u64>| async move {
                 match cache.guild_permissions(Id::new(guild_id), libpk::config.discord.as_ref().expect("missing discord config").client_id).await {
                     Ok(val) => {
@@ -56,7 +66,7 @@ pub async fn run_server(cache: Arc<DiscordCache>) -> anyhow::Result<()> {
             }),
         )
         .route(
-            "/guilds/:guild_id/permissions/:user_id",
+            "/guilds/{guild_id}/permissions/{user_id}",
             get(|State(cache): State<Arc<DiscordCache>>, Path((guild_id, user_id)): Path<(u64, u64)>| async move {
                 match cache.guild_permissions(Id::new(guild_id), Id::new(user_id)).await {
                     Ok(val) => status_code(StatusCode::FOUND, to_string(&val.bits()).unwrap()),
@@ -69,7 +79,7 @@ pub async fn run_server(cache: Arc<DiscordCache>) -> anyhow::Result<()> {
         )
 
         .route(
-            "/guilds/:guild_id/channels",
+            "/guilds/{guild_id}/channels",
             get(|State(cache): State<Arc<DiscordCache>>, Path(guild_id): Path<u64>| async move {
                 let channel_ids = match cache.0.guild_channels(Id::new(guild_id)) {
                     Some(channels) => channels.to_owned(),
@@ -95,7 +105,7 @@ pub async fn run_server(cache: Arc<DiscordCache>) -> anyhow::Result<()> {
             })
         )
         .route(
-            "/guilds/:guild_id/channels/:channel_id",
+            "/guilds/{guild_id}/channels/{channel_id}",
             get(|State(cache): State<Arc<DiscordCache>>, Path((guild_id, channel_id)): Path<(u64, u64)>| async move {
                 if guild_id == 0 {
                     return status_code(StatusCode::FOUND, to_string(&dm_channel(Id::new(channel_id))).unwrap());
@@ -107,7 +117,7 @@ pub async fn run_server(cache: Arc<DiscordCache>) -> anyhow::Result<()> {
             })
         )
         .route(
-            "/guilds/:guild_id/channels/:channel_id/permissions/@me",
+            "/guilds/{guild_id}/channels/{channel_id}/permissions/@me",
             get(|State(cache): State<Arc<DiscordCache>>, Path((guild_id, channel_id)): Path<(u64, u64)>| async move {
                 if guild_id == 0 {
                     return status_code(StatusCode::FOUND, to_string(&*DM_PERMISSIONS).unwrap());
@@ -122,16 +132,19 @@ pub async fn run_server(cache: Arc<DiscordCache>) -> anyhow::Result<()> {
             }),
         )
         .route(
-            "/guilds/:guild_id/channels/:channel_id/permissions/:user_id",
+            "/guilds/{guild_id}/channels/{channel_id}/permissions/{user_id}",
             get(|| async { "todo" }),
         )
         .route(
-            "/guilds/:guild_id/channels/:channel_id/last_message",
-            get(|| async { status_code(StatusCode::NOT_IMPLEMENTED, "".to_string()) }),
+            "/guilds/{guild_id}/channels/{channel_id}/last_message",
+            get(|State(cache): State<Arc<DiscordCache>>, Path((_guild_id, channel_id)): Path<(u64, Id<ChannelMarker>)>| async move {
+                let lm = cache.get_last_message(channel_id).await;
+                status_code(StatusCode::FOUND, to_string(&lm).unwrap())
+            }),
         )
 
         .route(
-            "/guilds/:guild_id/roles",
+            "/guilds/{guild_id}/roles",
             get(|State(cache): State<Arc<DiscordCache>>, Path(guild_id): Path<u64>| async move {
                 let role_ids = match cache.0.guild_roles(Id::new(guild_id)) {
                     Some(roles) => roles.to_owned(),
@@ -171,13 +184,45 @@ pub async fn run_server(cache: Arc<DiscordCache>) -> anyhow::Result<()> {
             status_code(StatusCode::FOUND, to_string(&stats).unwrap())
         }))
 
+        .route("/runtime_config", get(|| async move {
+            status_code(StatusCode::FOUND, to_string(&runtime_config.get_all().await).unwrap())
+        }))
+        .route("/runtime_config/{key}", post(|Path(key): Path<String>, body: String| async move {
+            let runtime_config = runtime_config_for_post;
+            runtime_config.set(key, body).await.expect("failed to update runtime config");
+            status_code(StatusCode::FOUND, to_string(&runtime_config.get_all().await).unwrap())
+        }))
+        .route("/runtime_config/{key}", delete(|Path(key): Path<String>| async move {
+            let runtime_config = runtime_config_for_delete;
+            runtime_config.delete(key).await.expect("failed to update runtime config");
+            status_code(StatusCode::FOUND, to_string(&runtime_config.get_all().await).unwrap())
+        }))
+
+        .route("/await_event", post(|ConnectInfo(addr): ConnectInfo<SocketAddr>, body: String| async move {
+            info!("got request: {body} from: {addr}");
+            let Ok(req) = serde_json::from_str::<AwaitEventRequest>(&body) else {
+                return status_code(StatusCode::BAD_REQUEST, "".to_string());
+            };
+
+            awaiter.handle_request(req, addr).await;
+            status_code(StatusCode::NO_CONTENT, "".to_string())
+        }))
+        .route("/clear_awaiter", post(|| async move {
+            awaiter_for_clear.clear().await;
+            status_code(StatusCode::NO_CONTENT, "".to_string())
+        }))
+
+        .route("/shard_status", get(|| async move {
+            status_code(StatusCode::FOUND, to_string(&shard_state.get().await).unwrap())
+        }))
+
         .layer(axum::middleware::from_fn(crate::logger::logger))
         .with_state(cache);
 
     let addr: &str = libpk::config.discord.as_ref().expect("missing discord config").cache_api_addr.as_ref();
     let listener = tokio::net::TcpListener::bind(addr).await?;
     info!("listening on {}", addr);
-    axum::serve(listener, app).await?;
+    axum::serve(listener, app.into_make_service_with_connect_info::<SocketAddr>()).await?;
 
     Ok(())
 }

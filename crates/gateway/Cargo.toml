@@ -13,8 +13,9 @@ futures = { workspace = true }
 lazy_static = { workspace = true }
 libpk = { path = "../libpk" }
 metrics = { workspace = true }
+reqwest = { workspace = true }
+serde = { workspace = true }
 serde_json = { workspace = true }
-signal-hook = { workspace = true }
 tokio = { workspace = true }
 tracing = { workspace = true }
 

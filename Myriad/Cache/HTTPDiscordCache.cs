@@ -1,6 +1,9 @@
 using Serilog;
 using System.Net;
+using System.Text;
 using System.Text.Json;
+
+using NodaTime;
 
 using Myriad.Serialization;
 using Myriad.Types;
@@ -11,7 +14,8 @@ public class HttpDiscordCache: IDiscordCache
 {
     private readonly ILogger _logger;
     private readonly HttpClient _client;
-    private readonly Uri _cacheEndpoint;
+    private readonly string _cacheEndpoint;
+    private readonly string? _eventTarget;
     private readonly int _shardCount;
     private readonly ulong _ownUserId;
 
@@ -21,11 +25,12 @@ public class HttpDiscordCache: IDiscordCache
 
     public EventHandler<(bool?, string)> OnDebug;
 
-    public HttpDiscordCache(ILogger logger, HttpClient client, string cacheEndpoint, int shardCount, ulong ownUserId, bool useInnerCache)
+    public HttpDiscordCache(ILogger logger, HttpClient client, string cacheEndpoint, string? eventTarget, int shardCount, ulong ownUserId, bool useInnerCache)
     {
         _logger = logger;
         _client = client;
-        _cacheEndpoint = new Uri(cacheEndpoint);
+        _cacheEndpoint = cacheEndpoint;
+        _eventTarget = eventTarget;
         _shardCount = shardCount;
         _ownUserId = ownUserId;
         _jsonSerializerOptions = new JsonSerializerOptions().ConfigureForMyriad();
@@ -47,13 +52,12 @@ public class HttpDiscordCache: IDiscordCache
 
     private async Task<T?> QueryCache<T>(string endpoint, ulong guildId)
     {
-        var cluster = _cacheEndpoint.Authority;
-        // todo: there should not be infra-specific code here
-        if (cluster.Contains(".service.consul") || cluster.Contains("process.pluralkit-gateway.internal"))
-            // int(((guild_id >> 22) % shard_count) / 16)
-            cluster = $"cluster{(int)(((guildId >> 22) % (ulong)_shardCount) / 16)}.{cluster}";
+        var cluster = _cacheEndpoint;
 
-        var response = await _client.GetAsync($"{_cacheEndpoint.Scheme}://{cluster}{endpoint}");
+        if (cluster.Contains("{clusterid}"))
+            cluster = cluster.Replace("{clusterid}", $"{(int)(((guildId >> 22) % (ulong)_shardCount) / 16)}");
+
+        var response = await _client.GetAsync($"http://{cluster}{endpoint}");
 
         if (response.StatusCode == HttpStatusCode.NotFound)
             return default;
@@ -63,6 +67,70 @@ public class HttpDiscordCache: IDiscordCache
 
         var plaintext = await response.Content.ReadAsStringAsync();
         return JsonSerializer.Deserialize<T>(plaintext, _jsonSerializerOptions);
+    }
+
+    public Task<T> GetLastMessage<T>(ulong guildId, ulong channelId)
+        => QueryCache<T>($"/guilds/{guildId}/channels/{channelId}/last_message", guildId);
+
+    private Task AwaitEvent(ulong guildId, object data)
+        => AwaitEventShard((int)((guildId >> 22) % (ulong)_shardCount), data);
+
+    private async Task AwaitEventShard(int shardId, object data)
+    {
+        if (_eventTarget == null)
+            throw new Exception("missing event target for remote await event");
+
+        var cluster = _cacheEndpoint;
+
+        if (cluster.Contains("{clusterid}"))
+            cluster = cluster.Replace("{clusterid}", $"{(int)(shardId / 16)}");
+
+        var response = await _client.PostAsync(
+            $"http://{cluster}/await_event",
+            new StringContent(JsonSerializer.Serialize(data), Encoding.UTF8)
+        );
+
+        if (response.StatusCode != HttpStatusCode.NoContent)
+            throw new Exception($"failed to await event from gateway: {response.StatusCode}");
+    }
+
+    public async Task AwaitReaction(ulong guildId, ulong messageId, ulong userId, Duration? timeout)
+    {
+        var obj = new
+        {
+            message_id = messageId,
+            user_id = userId,
+            target = _eventTarget!,
+            timeout = timeout?.TotalSeconds,
+        };
+
+        await AwaitEvent(guildId, obj);
+    }
+
+    public async Task AwaitMessage(ulong guildId, ulong channelId, ulong authorId, Duration? timeout, string[] options = null)
+    {
+        var obj = new
+        {
+            channel_id = channelId,
+            author_id = authorId,
+            target = _eventTarget!,
+            timeout = timeout?.TotalSeconds,
+            options = options,
+        };
+
+        await AwaitEvent(guildId, obj);
+    }
+
+    public async Task AwaitInteraction(int shardId, string id, Duration? timeout)
+    {
+        var obj = new
+        {
+            id = id,
+            target = _eventTarget!,
+            timeout = timeout?.TotalSeconds,
+        };
+
+        await AwaitEventShard(shardId, obj);
     }
 
     public async Task<Guild?> TryGetGuild(ulong guildId)

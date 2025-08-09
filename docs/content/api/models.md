@@ -16,6 +16,8 @@ Privacy objects (`privacy` key in models) contain values "private" or "public". 
 
 Every PluralKit entity has two IDs: a short (5 or 6 character) ID and a longer UUID. The short ID is unique across the resource (a member can have the same short ID as a system, for example), while the UUID is consistent for the lifetime of the entity and globally unique across the bot.
 
+The PluralKit Discord bot can be configured to display short IDs in uppercase, or (in the case of 6-character IDs) as two parts of 3 characters separated by a dash (for example, `EXA-MPL`). For convenience, IDs are accepted by the API in any format displayable by the bot.
+
 ### System model
 
 |key|type|notes|
@@ -29,10 +31,10 @@ Every PluralKit entity has two IDs: a short (5 or 6 character) ID and a longer U
 |avatar_url|?string|256-character limit, must be a publicly-accessible URL|
 |banner|?string|256-character limit, must be a publicly-accessible URL|
 |color|?string|6-character hex code, no `#` at the beginning|
-|created|?datetime||
+|created|datetime||
 |privacy|?system privacy object||
 
-* System privacy keys: `description_privacy`, `pronoun_privacy`, `member_list_privacy`, `group_list_privacy`, `front_privacy`, `front_history_privacy`
+* System privacy keys: `name_privacy`, `description_privacy`, `avatar_privacy`, `banner_privacy`, `pronoun_privacy`, `member_list_privacy`, `group_list_privacy`, `front_privacy`, `front_history_privacy`
 
 ### Member model
 
@@ -59,7 +61,7 @@ Every PluralKit entity has two IDs: a short (5 or 6 character) ID and a longer U
 |last_message_timestamp|?datetime||
 |privacy|?member privacy object||
 
-* Member privacy keys: `visibility`, `name_privacy`, `description_privacy`, `birthday_privacy`, `pronoun_privacy`, `avatar_privacy`, `metadata_privacy`, `proxy_privacy`
+* Member privacy keys: `visibility`, `name_privacy`, `description_privacy`, `birthday_privacy`, `pronoun_privacy`, `avatar_privacy`, `banner_privacy`, `metadata_privacy`, `proxy_privacy`
 
 #### ProxyTag object
 
@@ -80,12 +82,13 @@ Every PluralKit entity has two IDs: a short (5 or 6 character) ID and a longer U
 |name|string|100-character limit|
 |display_name|?string|100-character limit|
 |description|?string|1000-character limit|
+|created|?datetime||
 |icon|?string|256-character limit, must be a publicly-accessible URL|
 |banner|?string|256-character limit, must be a publicly-accessible URL|
 |color|?string|6-character hex code, no `#` at the beginning|
 |privacy|?group privacy object||
 
-* Group privacy keys: `name_privacy`, `description_privacy`, `icon_privacy`, `list_privacy`, `metadata_privacy`, `visibility`
+* Group privacy keys: `name_privacy`, `description_privacy`, `banner_privacy`, `icon_privacy`, `list_privacy`, `metadata_privacy`, `visibility`
 
 ### Switch model
 
@@ -113,15 +116,54 @@ Every PluralKit entity has two IDs: a short (5 or 6 character) ID and a longer U
 |key|type|notes|
 |---|---|---|
 |timezone|string|defaults to `UTC`|
-|pings_enabled|boolean|
-|latch_timeout|int?|
+|pings_enabled|boolean|whether proxied messages can be pinged using the :bell: reaction|
+|latch_timeout|int?|seconds after which latch autoproxy will timeout (null/default is 6 hours, 0 is "never")|
 |member_default_private*|boolean|whether members created through the bot have privacy settings set to private by default|
 |group_default_private*|boolean|whether groups created through the bot have privacy settings set to private by default|
 |show_private_info|boolean|whether the bot shows the system's own private information without a `-private` flag|
 |member_limit|int|read-only, defaults to 1000|
 |group_limit|int|read-only, defaults to 250|
+|case_sensitive_proxy_tags|bool|whether the bot will match proxy tags matching only the case used in the trigger message|
+|proxy_error_message_enabled|bool|whether the bot will show errors when proxying fails|
+|hid_display_split|bool|whether 6-character ids will be shown by the bot as two 3-character parts separated by a `-`|
+|hid_display_caps|bool|whether ids will be shown by the bot in uppercase|
+|hid_list_padding|[ID padding format](#id-padding-format-enum)|whether the bot will pad 5-character ids in lists|
+|proxy_switch|[proxy switch action](#proxy-switch-action-enum)|switch action the bot will take when proxying|
+|name_format|string|format used for webhook names during proxying (defaults to `{name} {tag}`)|
 
 \* this *does not* affect members/groups created through the API - please specify privacy keys in the JSON payload instead
+
+#### ID padding format enum
+
+|key|description|
+|---|---|
+|off|do not pad 5-character ids|
+|left|add a padding space to the left of 5-character ids in lists|
+|right|add a padding space to the right of 5-character ids in lists|
+
+#### Proxy switch action enum
+
+|key|description|
+|---|---|
+|off|do nothing|
+|new|if the currently proxied member is not present in the current switch, log a new switch with this member|
+|add|if the current switch has 0 members, log a new switch with the currently proxied member; otherwise, add the member to the current switch|
+
+### Public system settings model
+
+This model is used when querying system settings without authenticating, or for a system other than the one you are authenticated as.
+
+|key|type|notes|
+|---|---|---|
+|pings_enabled|boolean|whether proxied messages can be pinged using the :bell: reaction|
+|latch_timeout|int?|seconds after which latch autoproxy will timeout (null/default is 6 hours, 0 is "never")|
+|case_sensitive_proxy_tags|bool|whether the bot will match proxy tags matching only the case used in the trigger message|
+|proxy_error_message_enabled|bool|whether the bot will show errors when proxying fails|
+|hid_display_split|bool|whether 6-character ids will be shown by the bot as two 3-character parts separated by a `-`|
+|hid_display_caps|bool|whether ids will be shown by the bot in uppercase|
+|hid_list_padding|[ID padding format](#id-padding-format-enum)|whether the bot will pad 5-character ids in lists|
+|proxy_switch|[proxy switch action](#proxy-switch-action-enum)|switch action the bot will take when proxying|
+|name_format|string|format used for webhook names during proxying (defaults to `{name} {tag}`)|
 
 ### System guild settings model
 
@@ -131,6 +173,8 @@ Every PluralKit entity has two IDs: a short (5 or 6 character) ID and a longer U
 |proxying_enabled|boolean||
 |tag|?string|79-character limit|
 |tag_enabled|boolean||
+|avatar_url|?string|256-character limit|
+|display_name|?string|100-character limit|
 
 
 ### Autoproxy settings model
@@ -155,7 +199,7 @@ Every PluralKit entity has two IDs: a short (5 or 6 character) ID and a longer U
 
 |key|type|notes|
 |---|---|---|
-|guild_id|snowflake|only sent if the guild ID isn't already known (in dispatch payloads)|
+|?guild_id|snowflake|only sent if the guild ID isn't already known (in dispatch payloads)|
 |display_name|?string|100-character limit|
 |avatar_url|?string|256-character limit, must be a publicly-accessible URL|
 |keep_proxy|?boolean||

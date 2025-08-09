@@ -93,7 +93,7 @@ async fn pull(
 ) -> Result<Json<PullResponse>, PKAvatarError> {
     let parsed = pull::parse_url(&req.url) // parsing beforehand to "normalize"
         .map_err(|_| PKAvatarError::InvalidCdnUrl)?;
-    if !req.force {
+    if !(req.force || req.url.contains("https://serve.apparyllis.com/")) {
         if let Some(existing) = db::get_by_attachment_id(&state.pool, parsed.attachment_id).await? {
             // remove any pending image cleanup
             db::remove_deletion_queue(&state.pool, parsed.attachment_id).await?;
@@ -170,8 +170,8 @@ pub struct AppState {
     config: Arc<AvatarsConfig>,
 }
 
-libpk::main!("avatars");
-async fn real_main() -> anyhow::Result<()> {
+#[libpk::main]
+async fn main() -> anyhow::Result<()> {
     let config = libpk::config
         .avatars
         .as_ref()
@@ -179,7 +179,7 @@ async fn real_main() -> anyhow::Result<()> {
 
     let bucket = {
         let region = s3::Region::Custom {
-            region: "s3".to_string(),
+            region: "auto".to_string(),
             endpoint: config.s3.endpoint.to_string(),
         };
 
@@ -232,24 +232,9 @@ async fn real_main() -> anyhow::Result<()> {
     Ok(())
 }
 
-struct AppError(anyhow::Error);
-
 #[derive(Serialize)]
 struct ErrorResponse {
     error: String,
-}
-
-impl IntoResponse for AppError {
-    fn into_response(self) -> Response {
-        error!("error handling request: {}", self.0);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse {
-                error: self.0.to_string(),
-            }),
-        )
-            .into_response()
-    }
 }
 
 impl IntoResponse for PKAvatarError {
@@ -276,14 +261,5 @@ impl IntoResponse for PKAvatarError {
             }),
         )
             .into_response()
-    }
-}
-
-impl<E> From<E> for AppError
-where
-    E: Into<anyhow::Error>,
-{
-    fn from(err: E) -> Self {
-        Self(err.into())
     }
 }

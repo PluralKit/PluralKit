@@ -65,7 +65,7 @@ public class MessageEdited: IEventHandler<MessageUpdateEvent>
         var guild = await _cache.TryGetGuild(channel.GuildId!.Value);
         if (guild == null)
             throw new Exception("could not find self guild in MessageEdited event");
-        var lastMessage = _lastMessageCache.GetLastMessage(evt.ChannelId)?.Current;
+        var lastMessage = (await _lastMessageCache.GetLastMessage(evt.GuildId.HasValue ? evt.GuildId.Value ?? 0 : 0, evt.ChannelId))?.Current;
 
         // Only react to the last message in the channel
         if (lastMessage?.Id != evt.Id)
@@ -107,10 +107,6 @@ public class MessageEdited: IEventHandler<MessageUpdateEvent>
             ? new Message.Reference(channel.GuildId, evt.ChannelId, lastMessage.ReferencedMessage.Value)
             : null;
 
-        var messageType = lastMessage.ReferencedMessage != null
-            ? Message.MessageType.Reply
-            : Message.MessageType.Default;
-
         // TODO: is this missing anything?
         var equivalentEvt = new MessageCreateEvent
         {
@@ -123,7 +119,7 @@ public class MessageEdited: IEventHandler<MessageUpdateEvent>
             Attachments = evt.Attachments.Value ?? Array.Empty<Message.Attachment>(),
             MessageReference = messageReference,
             ReferencedMessage = referencedMessage,
-            Type = messageType,
+            Type = evt.Type,
         };
         return equivalentEvt;
     }

@@ -1,0 +1,4 @@
+[submodule "Serilog"]
+	path = Serilog
+	url = https://github.com/pluralkit/serilog
+	branch = f5eb991cb4c4a0c1e2407de7504c543536786598

@@ -52,7 +52,7 @@ use axum::{
 };
 use hyper::StatusCode;
 use libpk::config;
-use pluralkit_models::{PKSystem, PKSystemConfig};
+use pluralkit_models::{PKSystem, PKSystemConfig, PrivacyLevel};
 use reqwest::ClientBuilder;
 
 #[derive(serde::Deserialize, Debug)]
@@ -151,14 +151,12 @@ pub async fn discord_callback(
     .await
     .expect("failed to query");
 
-    if system.is_none() {
+    let Some(system) = system else {
         return json_err(
             StatusCode::BAD_REQUEST,
             "user does not have a system registered".to_string(),
         );
-    }
-
-    let system = system.unwrap();
+    };
 
     let system_config: Option<PKSystemConfig> = sqlx::query_as(
         r#"
@@ -179,7 +177,7 @@ pub async fn discord_callback(
     (
         StatusCode::OK,
         serde_json::to_string(&serde_json::json!({
-            "system": system.to_json(),
+            "system": system.to_json(PrivacyLevel::Private),
             "config": system_config.to_json(),
             "user": user,
             "token": token,

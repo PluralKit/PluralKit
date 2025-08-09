@@ -1,7 +1,9 @@
+use anyhow::anyhow;
 use futures::StreamExt;
-use libpk::_config::ClusterSettings;
+use libpk::{_config::ClusterSettings, runtime_config::RuntimeConfig, state::ShardStateEvent};
 use metrics::counter;
-use std::sync::{mpsc::Sender, Arc};
+use std::sync::Arc;
+use tokio::sync::mpsc::Sender;
 use tracing::{error, info, warn};
 use twilight_gateway::{
     create_iterator, ConfigBuilder, Event, EventTypeFlags, Message, Shard, ShardId,
@@ -12,9 +14,12 @@ use twilight_model::gateway::{
     Intents,
 };
 
-use crate::discord::identify_queue::{self, RedisQueue};
+use crate::{
+    discord::identify_queue::{self, RedisQueue},
+    RUNTIME_CONFIG_KEY_EVENT_TARGET,
+};
 
-use super::{cache::DiscordCache, shard_state::ShardStateManager};
+use super::cache::DiscordCache;
 
 pub fn cluster_config() -> ClusterSettings {
     libpk::config
@@ -44,6 +49,12 @@ pub fn create_shards(redis: fred::clients::RedisPool) -> anyhow::Result<Vec<Shar
 
     let (start_shard, end_shard): (u32, u32) = if cluster_settings.total_shards < 16 {
         warn!("we have less than 16 shards, assuming single gateway process");
+        if cluster_settings.node_id != 0 {
+            return Err(anyhow!(
+                "expecting to be node 0 in single-process mode, but we are node {}",
+                cluster_settings.node_id
+            ));
+        }
         (0, (cluster_settings.total_shards - 1).into())
     } else {
         (
@@ -51,6 +62,13 @@ pub fn create_shards(redis: fred::clients::RedisPool) -> anyhow::Result<Vec<Shar
             (((cluster_settings.node_id + 1) * 16) - 1).into(),
         )
     };
+
+    let prefix = libpk::config
+        .discord
+        .as_ref()
+        .expect("missing discord config")
+        .bot_prefix_for_gateway
+        .clone();
 
     let shards = create_iterator(
         start_shard..end_shard + 1,
@@ -64,7 +82,7 @@ pub fn create_shards(redis: fred::clients::RedisPool) -> anyhow::Result<Vec<Shar
                 .to_owned(),
             intents,
         )
-        .presence(presence("pk;help", false))
+        .presence(presence(format!("{prefix}help").as_str(), false))
         .queue(queue.clone())
         .build(),
         |_, builder| builder.build(),
@@ -76,14 +94,22 @@ pub fn create_shards(redis: fred::clients::RedisPool) -> anyhow::Result<Vec<Shar
     Ok(shards_vec)
 }
 
+#[tracing::instrument(fields(shard = %shard.id()), skip_all)]
 pub async fn runner(
     mut shard: Shard<RedisQueue>,
-    _tx: Sender<(ShardId, String)>,
-    shard_state: ShardStateManager,
+    tx: Sender<(ShardId, Event, String)>,
+    tx_state: Sender<(ShardId, ShardStateEvent, Option<Event>, Option<i32>)>,
     cache: Arc<DiscordCache>,
+    runtime_config: Arc<RuntimeConfig>,
 ) {
     // let _span = info_span!("shard_runner", shard_id = shard.id().number()).entered();
     let shard_id = shard.id().number();
+
+    let our_user_id = libpk::config
+        .discord
+        .as_ref()
+        .expect("missing discord config")
+        .client_id;
 
     info!("waiting for events");
     while let Some(item) = shard.next().await {
@@ -105,7 +131,9 @@ pub async fn runner(
                     )
                     .increment(1);
 
-                    if let Err(error) = shard_state.socket_closed(shard_id).await {
+                    if let Err(error) =
+                        tx_state.try_send((shard.id(), ShardStateEvent::Closed, None, None))
+                    {
                         error!("failed to update shard state for socket closure: {error}");
                     }
 
@@ -127,7 +155,7 @@ pub async fn runner(
                 continue;
             }
             Err(error) => {
-                error!("shard {shard_id} failed to parse gateway event: {error}");
+                error!(?error, ?shard_id, "failed to parse gateway event");
                 continue;
             }
         };
@@ -147,14 +175,31 @@ pub async fn runner(
         .increment(1);
 
         // update shard state and discord cache
-        if let Err(error) = shard_state.handle_event(shard_id, event.clone()).await {
-            tracing::error!(?error, "error updating redis state");
+        if matches!(event, Event::Ready(_)) || matches!(event, Event::Resumed) {
+            if let Err(error) = tx_state.try_send((
+                shard.id(),
+                ShardStateEvent::Other,
+                Some(event.clone()),
+                None,
+            )) {
+                tracing::error!(?error, "error updating shard state");
+            }
         }
         // need to do heartbeat separately, to get the latency
+        let latency_num = shard
+            .latency()
+            .recent()
+            .first()
+            .map_or_else(|| 0, |d| d.as_millis()) as i32;
         if let Event::GatewayHeartbeatAck = event
-            && let Err(error) = shard_state.heartbeated(shard_id, shard.latency()).await
+            && let Err(error) = tx_state.try_send((
+                shard.id(),
+                ShardStateEvent::Heartbeat,
+                Some(event.clone()),
+                Some(latency_num),
+            ))
         {
-            tracing::error!(?error, "error updating redis state for latency");
+            tracing::error!(?error, "error updating shard state for latency");
         }
 
         if let Event::Ready(_) = event {
@@ -162,10 +207,28 @@ pub async fn runner(
                 cache.2.write().await.push(shard_id);
             }
         }
-        cache.0.update(&event);
+        cache.update(&event).await;
 
         // okay, we've handled the event internally, let's send it to consumers
-        // tx.send((shard.id(), raw_event)).unwrap();
+
+        // some basic filtering here is useful
+        // we can't use if matching using the | operator, so anything matched does nothing
+        // and the default match skips the next block (continues to the next event)
+        match event {
+            Event::InteractionCreate(_) => {}
+            Event::MessageCreate(ref m) if m.author.id != our_user_id => {}
+            Event::MessageUpdate(ref m) if m.author.id != our_user_id && !m.author.bot => {}
+            Event::MessageDelete(_) => {}
+            Event::MessageDeleteBulk(_) => {}
+            Event::ReactionAdd(ref r) if r.user_id != our_user_id => {}
+            _ => {
+                continue;
+            }
+        }
+
+        if runtime_config.exists(RUNTIME_CONFIG_KEY_EVENT_TARGET).await {
+            tx.send((shard.id(), event, raw_event)).await.unwrap();
+        }
     }
 }
 

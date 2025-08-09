@@ -55,7 +55,9 @@ public class MessageCreated: IEventHandler<MessageCreateEvent>
     public (ulong?, ulong?) ErrorChannelFor(MessageCreateEvent evt, ulong userId) => (evt.GuildId, evt.ChannelId);
     private bool IsDuplicateMessage(Message msg) =>
         // We consider a message duplicate if it has the same ID as the previous message that hit the gateway
-        _lastMessageCache.GetLastMessage(msg.ChannelId)?.Current.Id == msg.Id;
+        // use only the local cache here
+        // http gateway sets last message before forwarding the message here, so this will always return true
+        _lastMessageCache._GetLastMessage(msg.ChannelId)?.Current.Id == msg.Id;
 
     public async Task Handle(int shardId, MessageCreateEvent evt)
     {

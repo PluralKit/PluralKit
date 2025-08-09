@@ -19,5 +19,4 @@ public class CoreConfig
 
     public LogEventLevel ConsoleLogLevel { get; set; } = LogEventLevel.Debug;
     public LogEventLevel ElasticLogLevel { get; set; } = LogEventLevel.Information;
-    public LogEventLevel FileLogLevel { get; set; } = LogEventLevel.Information;
 }

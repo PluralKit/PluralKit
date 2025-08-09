@@ -49,8 +49,15 @@ public class BotModule: Module
 
             if (botConfig.HttpCacheUrl != null)
             {
-                var cache = new HttpDiscordCache(c.Resolve<ILogger>(),
-                    c.Resolve<HttpClient>(), botConfig.HttpCacheUrl, botConfig.Cluster?.TotalShards ?? 1, botConfig.ClientId, botConfig.HttpUseInnerCache);
+                var cache = new HttpDiscordCache(
+                    c.Resolve<ILogger>(),
+                    c.Resolve<HttpClient>(),
+                    botConfig.HttpCacheUrl,
+                    botConfig.EventAwaiterTarget,
+                    botConfig.Cluster?.TotalShards ?? 1,
+                    botConfig.ClientId,
+                    botConfig.HttpUseInnerCache
+                );
 
                 var metrics = c.Resolve<IMetrics>();
 
@@ -153,6 +160,8 @@ public class BotModule: Module
         builder.RegisterType<CommandMessageService>().AsSelf().SingleInstance();
         builder.RegisterType<InteractionDispatchService>().AsSelf().SingleInstance();
         builder.RegisterType<AvatarHostingService>().AsSelf().SingleInstance();
+        builder.RegisterType<HttpListenerService>().AsSelf().SingleInstance();
+        builder.RegisterType<RuntimeConfigService>().AsSelf().SingleInstance();
 
         // Sentry stuff
         builder.Register(_ => new Scope(null)).AsSelf().InstancePerLifetimeScope();

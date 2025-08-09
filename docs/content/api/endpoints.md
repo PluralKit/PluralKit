@@ -34,6 +34,8 @@ GET `/systems/{systemRef}/settings`
 
 Returns a [system settings object](/api/models#system-settings-model).
 
+If not authenticated, or authenticated as a different system, returns a [public system settings object](/api/models#public-system-settings-model).
+
 ### Update System Settings
 
 PATCH `/systems/{systemRef}/settings`
@@ -136,6 +138,8 @@ Returns 204 No Content on success.
 ### Get Member Groups
 
 GET `/members/{memberRef}/groups`
+
+Returns an array of [group objects](/api/models/#group-model).
 
 ### Add Member To Groups
 
@@ -277,6 +281,8 @@ GET `/systems/{systemRef}/fronters`
 
 Returns a [switch object](/api/models#switch-model) containing a list of member objects.
 
+If the target system has no registered switches, returns 204 status code with no content.
+
 ### Create Switch
 
 POST `/systems/{systemRef}/switches`
@@ -291,6 +297,8 @@ JSON Body Parameters
 \* Defaults to "now" when missing.
 
 ** Can be short IDs or UUIDs.
+
+Returns a [switch object](/api/models#switch-model) containing a list of member objects.
 
 ### Get Switch
 

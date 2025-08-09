@@ -41,7 +41,11 @@ pub async fn pull(
             }
         }
 
-        error!("network error for {}: {}", parsed_url.full_url, s);
+        error!(
+            url = parsed_url.full_url,
+            error = s,
+            "network error pulling image"
+        );
         PKAvatarError::NetworkErrorString(s)
     })?;
     let time_after_headers = Instant::now();
@@ -82,7 +86,22 @@ pub async fn pull(
         .map(|x| x.to_string());
 
     let body = response.bytes().await.map_err(|e| {
-        error!("network error for {}: {}", parsed_url.full_url, e);
+        // terrible
+        let mut s = format!("{}", e);
+        if let Some(src) = e.source() {
+            let _ = write!(s, ": {}", src);
+            let mut err = src;
+            while let Some(src) = err.source() {
+                let _ = write!(s, ": {}", src);
+                err = src;
+            }
+        }
+
+        error!(
+            url = parsed_url.full_url,
+            error = s,
+            "network error pulling image"
+        );
         PKAvatarError::NetworkError(e)
     })?;
     if body.len() != size as usize {
@@ -137,6 +156,14 @@ pub fn parse_url(url: &str) -> anyhow::Result<ParsedUrl> {
 
     match (url.scheme(), url.domain()) {
         ("https", Some("media.discordapp.net" | "cdn.discordapp.com")) => {}
+        ("https", Some("serve.apparyllis.com")) => {
+            return Ok(ParsedUrl {
+                channel_id: 0,
+                attachment_id: 0,
+                filename: "".to_string(),
+                full_url: url.to_string(),
+            })
+        }
         _ => anyhow::bail!("not a discord cdn url"),
     }
 

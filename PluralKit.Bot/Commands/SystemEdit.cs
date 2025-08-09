@@ -233,8 +233,9 @@ public class SystemEdit
         await ctx.Reply(embed: new EmbedBuilder()
             .Title($"{Emojis.Success} System color changed.")
             .Color(newColor.ToDiscordColor())
-            .Thumbnail(new Embed.EmbedThumbnail($"https://fakeimg.pl/256x256/{newColor}/?text=%20"))
-            .Build());
+            .Thumbnail(new Embed.EmbedThumbnail($"attachment://color.gif"))
+            .Build(),
+            files: [MiscUtils.GenerateColorPreview(color)]););
     }
 
     public async Task ClearColor(Context ctx, PKSystem target, bool flagConfirmYes)
@@ -274,10 +275,11 @@ public class SystemEdit
         await ctx.Reply(embed: new EmbedBuilder()
             .Title("System color")
             .Color(target.Color.ToDiscordColor())
-            .Thumbnail(new Embed.EmbedThumbnail($"https://fakeimg.pl/256x256/{target.Color}/?text=%20"))
+            .Thumbnail(new Embed.EmbedThumbnail($"attachment://color.gif"))
             .Description(
                 $"This system's color is **#{target.Color}**." + (isOwnSystem ? $" To clear it, type `{ctx.DefaultPrefix}s color -clear`." : ""))
-            .Build());
+            .Build(),
+            files: [MiscUtils.GenerateColorPreview(target.Color)]);
     }
 
     public async Task ClearTag(Context ctx, PKSystem target, bool flagConfirmYes)
@@ -475,7 +477,7 @@ public class SystemEdit
                 else
                     str +=
                         " Member names will now use the global system tag when proxied in the current server, if there is one set."
-                        + "\n\nTo check or change where your tag appears in your name use the command `{ctx.DefaultPrefix}cfg name format`.";
+                        + $"\n\nTo check or change where your tag appears in your name use the command `{ctx.DefaultPrefix}cfg name format`.";
             }
         }
 

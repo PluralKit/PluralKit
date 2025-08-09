@@ -111,6 +111,7 @@ public class ReactionAdded: IEventHandler<MessageReactionAddEvent>
             case "\U0001F514": // Bell
             case "\U0001F6CE": // Bellhop bell
             case "\U0001F3D3": // Ping pong paddle (lol)
+            case "\U0001FAD1": // Bell pepper
             case "\u23F0": // Alarm clock
             case "\u2757": // Exclamation mark
                 {

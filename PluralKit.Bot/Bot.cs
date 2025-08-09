@@ -32,13 +32,14 @@ public class Bot
     private readonly DiscordApiClient _rest;
     private readonly RedisService _redis;
     private readonly ILifetimeScope _services;
+    private readonly RuntimeConfigService _runtimeConfig;
 
     private Timer _periodicTask; // Never read, just kept here for GC reasons
 
     public Bot(ILifetimeScope services, ILogger logger, PeriodicStatCollector collector, IMetrics metrics,
                BotConfig config, RedisService redis,
                ErrorMessageService errorMessageService, CommandMessageService commandMessageService,
-               Cluster cluster, DiscordApiClient rest, IDiscordCache cache)
+               Cluster cluster, DiscordApiClient rest, IDiscordCache cache, RuntimeConfigService runtimeConfig)
     {
         _logger = logger.ForContext<Bot>();
         _services = services;
@@ -51,6 +52,7 @@ public class Bot
         _rest = rest;
         _redis = redis;
         _cache = cache;
+        _runtimeConfig = runtimeConfig;
     }
 
     private string BotStatus => $"{(_config.Prefixes ?? BotConfig.DefaultPrefixes)[0]}help"
@@ -97,13 +99,15 @@ public class Bot
 
     private async Task OnEventReceived(int shardId, IGatewayEvent evt)
     {
+        if (_runtimeConfig.Exists("disable_events")) return;
+
         // we HandleGatewayEvent **before** getting the own user, because the own user is set in HandleGatewayEvent for ReadyEvent
         await _cache.HandleGatewayEvent(evt);
         await _cache.TryUpdateSelfMember(_config.ClientId, evt);
         await OnEventReceivedInner(shardId, evt);
     }
 
-    private async Task OnEventReceivedInner(int shardId, IGatewayEvent evt)
+    public async Task OnEventReceivedInner(int shardId, IGatewayEvent evt)
     {
         // HandleEvent takes a type parameter, automatically inferred by the event type
         // It will then look up an IEventHandler<TypeOfEvent> in the DI container and call that object's handler method
@@ -278,7 +282,7 @@ public class Bot
         _logger.Debug("Running once-per-minute scheduled tasks");
 
         // Check from a new custom status from Redis and update Discord accordingly
-        if (true)
+        if (!_config.DisableGateway)
         {
             var newStatus = await _redis.Connection.GetDatabase().StringGetAsync("pluralkit:botstatus");
             if (newStatus != CustomStatusMessage)

@@ -1,6 +1,7 @@
 use anyhow::format_err;
 use lazy_static::lazy_static;
-use std::sync::Arc;
+use serde::Serialize;
+use std::{collections::HashMap, sync::Arc};
 use tokio::sync::RwLock;
 use twilight_cache_inmemory::{
     model::CachedMember,
@@ -8,11 +9,12 @@ use twilight_cache_inmemory::{
     traits::CacheableChannel,
     InMemoryCache, ResourceType,
 };
+use twilight_gateway::Event;
 use twilight_model::{
     channel::{Channel, ChannelType},
     guild::{Guild, Member, Permissions},
     id::{
-        marker::{ChannelMarker, GuildMarker, UserMarker},
+        marker::{ChannelMarker, GuildMarker, MessageMarker, UserMarker},
         Id,
     },
 };
@@ -123,16 +125,134 @@ pub fn new() -> DiscordCache {
             .build(),
     );
 
-    DiscordCache(cache, client, RwLock::new(Vec::new()))
+    DiscordCache(
+        cache,
+        client,
+        RwLock::new(Vec::new()),
+        RwLock::new(HashMap::new()),
+    )
+}
+
+#[derive(Clone, Serialize)]
+pub struct CachedMessage {
+    id: Id<MessageMarker>,
+    referenced_message: Option<Id<MessageMarker>>,
+    author_username: String,
+}
+
+#[derive(Clone, Serialize)]
+pub struct LastMessageCacheEntry {
+    pub current: CachedMessage,
+    pub previous: Option<CachedMessage>,
 }
 
 pub struct DiscordCache(
     pub Arc<InMemoryCache>,
     pub Arc<twilight_http::Client>,
     pub RwLock<Vec<u32>>,
+    pub RwLock<HashMap<Id<ChannelMarker>, LastMessageCacheEntry>>,
 );
 
 impl DiscordCache {
+    pub async fn get_last_message(
+        &self,
+        channel: Id<ChannelMarker>,
+    ) -> Option<LastMessageCacheEntry> {
+        self.3.read().await.get(&channel).cloned()
+    }
+
+    pub async fn update(&self, event: &twilight_gateway::Event) {
+        self.0.update(event);
+
+        match event {
+            Event::MessageCreate(m) => match self.3.write().await.entry(m.channel_id) {
+                std::collections::hash_map::Entry::Occupied(mut e) => {
+                    let cur = e.get();
+                    e.insert(LastMessageCacheEntry {
+                        current: CachedMessage {
+                            id: m.id,
+                            referenced_message: m.referenced_message.as_ref().map(|v| v.id),
+                            author_username: m.author.name.clone(),
+                        },
+                        previous: Some(cur.current.clone()),
+                    });
+                }
+                std::collections::hash_map::Entry::Vacant(e) => {
+                    e.insert(LastMessageCacheEntry {
+                        current: CachedMessage {
+                            id: m.id,
+                            referenced_message: m.referenced_message.as_ref().map(|v| v.id),
+                            author_username: m.author.name.clone(),
+                        },
+                        previous: None,
+                    });
+                }
+            },
+            Event::MessageDelete(m) => {
+                self.handle_message_deletion(m.channel_id, vec![m.id]).await;
+            }
+            Event::MessageDeleteBulk(m) => {
+                self.handle_message_deletion(m.channel_id, m.ids.clone())
+                    .await;
+            }
+            _ => {}
+        };
+    }
+
+    async fn handle_message_deletion(
+        &self,
+        channel_id: Id<ChannelMarker>,
+        mids: Vec<Id<MessageMarker>>,
+    ) {
+        let mut lm = self.3.write().await;
+
+        let Some(entry) = lm.get(&channel_id) else {
+            return;
+        };
+
+        let mut entry = entry.clone();
+
+        // if none of the deleted messages are relevant, just return
+        if !mids.contains(&entry.current.id)
+            && entry
+                .previous
+                .clone()
+                .map(|v| !mids.contains(&v.id))
+                .unwrap_or(false)
+        {
+            return;
+        }
+
+        // remove "previous" entry if it was deleted
+        if let Some(prev) = entry.previous.clone()
+            && mids.contains(&prev.id)
+        {
+            entry.previous = None;
+        }
+
+        // set "current" entry to "previous" if current entry was deleted
+        // (if the "previous" entry still exists, it was not deleted)
+        if let Some(prev) = entry.previous.clone()
+            && mids.contains(&entry.current.id)
+        {
+            entry.current = prev;
+            entry.previous = None;
+        }
+
+        // if the current entry was already deleted, but previous wasn't,
+        // we would've set current to previous
+        // so if current is deleted this means both current and previous have
+        // been deleted
+        // so just drop the cache entry here
+        if mids.contains(&entry.current.id) && entry.previous.is_none() {
+            lm.remove(&channel_id);
+            return;
+        }
+
+        // ok, update the entry
+        lm.insert(channel_id, entry.clone());
+    }
+
     pub async fn guild_permissions(
         &self,
         guild_id: Id<GuildMarker>,
@@ -356,12 +476,14 @@ impl DiscordCache {
                 system_channel_flags: guild.system_channel_flags(),
                 system_channel_id: guild.system_channel_id(),
                 threads: vec![],
-                unavailable: false,
+                unavailable: Some(false),
                 vanity_url_code: guild.vanity_url_code().map(ToString::to_string),
                 verification_level: guild.verification_level(),
                 voice_states: vec![],
                 widget_channel_id: guild.widget_channel_id(),
                 widget_enabled: guild.widget_enabled(),
+                guild_scheduled_events: guild.guild_scheduled_events().to_vec(),
+                max_stage_video_channel_users: guild.max_stage_video_channel_users(),
             }
         })
     }

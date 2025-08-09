@@ -19,17 +19,8 @@ use axum::{extract::State, http::Uri, routing::post, Json, Router};
 
 mod logger;
 
-// this package does not currently use libpk
-
-#[tokio::main]
+#[libpk::main]
 async fn main() -> anyhow::Result<()> {
-    tracing_subscriber::fmt()
-        .json()
-        .with_env_filter(EnvFilter::from_default_env())
-        .init();
-
-    info!("hello world");
-
     let address = std::env::var("DNS_UPSTREAM").unwrap().parse().unwrap();
     let stream = UdpClientStream::<UdpSocket>::with_timeout(address, Duration::from_secs(3));
     let (client, bg) = AsyncClient::connect(stream).await?;
@@ -86,11 +77,11 @@ async fn dispatch(
     let uri = match req.url.parse::<Uri>() {
         Ok(v) if v.scheme_str() == Some("https") && v.host().is_some() => v,
         Err(error) => {
-            error!(?error, "failed to parse uri {}", req.url);
+            error!(?error, uri = req.url, "failed to parse uri");
             return DispatchResponse::BadData.to_string();
         }
         _ => {
-            error!("uri {} is invalid", req.url);
+            error!(uri = req.url, "uri is invalid");
             return DispatchResponse::BadData.to_string();
         }
     };

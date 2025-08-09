@@ -10,7 +10,10 @@ use fred::{clients::RedisPool, interfaces::ClientLike, prelude::LuaInterface, ut
 use metrics::counter;
 use tracing::{debug, error, info, warn};
 
-use crate::util::{header_or_unknown, json_err};
+use crate::{
+    auth::AuthState,
+    util::{header_or_unknown, json_err},
+};
 
 const LUA_SCRIPT: &str = include_str!("ratelimit.lua");
 
@@ -50,7 +53,7 @@ pub fn ratelimiter<F, T>(f: F) -> FromFnLayer<F, Option<RedisPool>, T> {
                         .await
                     {
                         Ok(_) => info!("connected to redis for request rate limiting"),
-                        Err(err) => error!("could not load redis script: {}", err),
+                        Err(error) => error!(?error, "could not load redis script"),
                     }
                 } else {
                     error!("could not wait for connection to load redis script!");
@@ -103,37 +106,28 @@ pub async fn do_request_ratelimited(
     if let Some(redis) = redis {
         let headers = request.headers().clone();
         let source_ip = header_or_unknown(headers.get("X-PluralKit-Client-IP"));
-        let authenticated_system_id = header_or_unknown(headers.get("x-pluralkit-systemid"));
 
-        // https://github.com/rust-lang/rust/issues/53667
-        let is_temp_token2 = if let Some(header) = request.headers().clone().get("X-PluralKit-App")
-        {
-            if let Some(token2) = &libpk::config
-                .api
-                .as_ref()
-                .expect("missing api config")
-                .temp_token2
-            {
-                if header.to_str().unwrap_or("invalid") == token2 {
-                    true
-                } else {
-                    false
-                }
-            } else {
-                false
-            }
-        } else {
-            false
-        };
+        let extensions = request.extensions().clone();
 
-        let endpoint = request
-            .extensions()
+        let endpoint = extensions
             .get::<MatchedPath>()
             .cloned()
             .map(|v| v.as_str().to_string())
             .unwrap_or("unknown".to_string());
 
-        let rlimit = if is_temp_token2 {
+        let auth = extensions
+            .get::<AuthState>()
+            .expect("should always have AuthState");
+
+        // looks like this chooses the tokens/sec by app_id or endpoint
+        // then chooses the key by system_id or source_ip
+        // todo: key should probably be chosen by app_id when it's present
+        // todo: make x-ratelimit-scope actually meaningful
+
+        // hack: for now, we only have one "registered app", so we hardcode the app id
+        let rlimit = if let Some(app_id) = auth.app_id()
+            && app_id == 1
+        {
             RatelimitType::TempCustom
         } else if endpoint == "/v2/messages/:message_id" {
             RatelimitType::Message
@@ -145,12 +139,12 @@ pub async fn do_request_ratelimited(
 
         let rl_key = format!(
             "{}:{}",
-            if authenticated_system_id != "unknown"
+            if let Some(system_id) = auth.system_id()
                 && matches!(rlimit, RatelimitType::GenericUpdate)
             {
-                authenticated_system_id
+                system_id.to_string()
             } else {
-                source_ip
+                source_ip.to_string()
             },
             rlimit.key()
         );
@@ -224,8 +218,8 @@ pub async fn do_request_ratelimited(
 
                 return response;
             }
-            Err(err) => {
-                tracing::error!("error getting ratelimit info: {}", err);
+            Err(error) => {
+                tracing::error!(?error, "error getting ratelimit info");
                 return json_err(
                     StatusCode::INTERNAL_SERVER_ERROR,
                     r#"{"message": "500: internal server error", "code": 0}"#.to_string(),
