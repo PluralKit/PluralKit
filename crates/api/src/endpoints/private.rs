@@ -2,6 +2,7 @@ use crate::ApiContext;
 use axum::{extract::State, response::Json};
 use fred::interfaces::*;
 use libpk::state::ShardState;
+use pk_macros::api_endpoint;
 use serde::Deserialize;
 use serde_json::{json, Value};
 use std::collections::HashMap;
@@ -13,34 +14,33 @@ struct ClusterStats {
     pub channel_count: i32,
 }
 
+#[api_endpoint]
 pub async fn discord_state(State(ctx): State<ApiContext>) -> Json<Value> {
     let mut shard_status = ctx
         .redis
         .hgetall::<HashMap<String, String>, &str>("pluralkit:shardstatus")
-        .await
-        .unwrap()
+        .await?
         .values()
         .map(|v| serde_json::from_str(v).expect("could not deserialize shard"))
         .collect::<Vec<ShardState>>();
 
     shard_status.sort_by(|a, b| b.shard_id.cmp(&a.shard_id));
 
-    Json(json!({
+    Ok(Json(json!({
         "shards": shard_status,
-    }))
+    })))
 }
 
+#[api_endpoint]
 pub async fn meta(State(ctx): State<ApiContext>) -> Json<Value> {
     let stats = serde_json::from_str::<Value>(
         ctx.redis
             .get::<String, &'static str>("statsapi")
-            .await
-            .unwrap()
+            .await?
             .as_str(),
-    )
-    .unwrap();
+    )?;
 
-    Json(stats)
+    Ok(Json(stats))
 }
 
 use std::time::Duration;

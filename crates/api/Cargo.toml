@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 pluralkit_models = { path = "../models" }
+pk_macros = { path = "../macros" }
 libpk = { path = "../libpk" }
 
 anyhow = { workspace = true } 
