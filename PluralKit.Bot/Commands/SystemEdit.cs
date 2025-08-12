@@ -235,7 +235,8 @@ public class SystemEdit
             .Color(newColor.ToDiscordColor())
             .Thumbnail(new Embed.EmbedThumbnail($"attachment://color.gif"))
             .Build(),
-            files: [MiscUtils.GenerateColorPreview(color)]););
+            files: [MiscUtils.GenerateColorPreview(newColor)]
+        );
     }
 
     public async Task ClearColor(Context ctx, PKSystem target, bool flagConfirmYes)
