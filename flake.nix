@@ -39,7 +39,6 @@
           self',
           pkgs,
           lib,
-          system,
           ...
         }:
         let
@@ -51,7 +50,11 @@
           };
 
           rustOutputs = config.nci.outputs;
-          composeCfg = config.process-compose."dev";
+
+          sourceDotenv = ''
+            # shellcheck disable=SC1091
+            [[ -f ".env" ]] && echo "sourcing .env file..." && set -a && source .env && set +a
+          '';
         in
         {
           treefmt = {
@@ -117,11 +120,15 @@
                 gcc
                 omnisharp-roslyn
                 bashInteractive
+                postgresql
               ];
             };
             all = (pkgs.mkShell.override { stdenv = services.stdenv; }) {
               name = "pk-devshell";
               nativeBuildInputs = bot.nativeBuildInputs ++ services.nativeBuildInputs;
+              shellHook = ''
+                ${sourceDotenv}
+              '';
             };
             docs = pkgs.mkShellNoCC {
               buildInputs = with pkgs; [ nodejs yarn ];
@@ -132,12 +139,6 @@
           process-compose."dev" =
             let
               dataDir = ".nix-process-compose";
-              pluralkitConfCheck = ''
-                [[ -f "pluralkit.conf" ]] || (echo "pluralkit config not found, please copy pluralkit.conf.example to pluralkit.conf and edit it" && exit 1)
-              '';
-              sourceDotenv = ''
-                [[ -f ".env" ]] && echo "sourcing .env file..." && export "$(xargs < .env)"
-              '';
             in
             {
               imports = [ inp.services.processComposeModules.default ];
@@ -166,12 +167,8 @@
 
               settings.processes =
                 let
-                  procCfg = composeCfg.settings.processes;
                   mkServiceProcess =
                     name: attrs:
-                    let
-                      shell = rustOutputs.${name}.devShell;
-                    in
                     attrs
                     // {
                       command = pkgs.writeShellApplication {
@@ -180,7 +177,6 @@
                         text = ''
                           ${sourceDotenv}
                           set -x
-                          ${pluralkitConfCheck}
                           nix develop .#services -c cargo run --package ${name}
                         '';
                       };
@@ -195,7 +191,6 @@
                       text = ''
                         ${sourceDotenv}
                         set -x
-                        ${pluralkitConfCheck}
                         ${self'.apps.generate-command-parser-bindings.program}
                         nix develop .#bot -c bash -c "dotnet build ./PluralKit.Bot/PluralKit.Bot.csproj -c Release -o obj/ && dotnet obj/PluralKit.Bot.dll"
                       '';
