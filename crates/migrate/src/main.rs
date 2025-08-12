@@ -1,5 +1,3 @@
-#![feature(let_chains)]
-
 use tracing::info;
 
 include!(concat!(env!("OUT_DIR"), "/data.rs"));
