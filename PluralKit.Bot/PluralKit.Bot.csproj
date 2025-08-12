@@ -24,6 +24,6 @@
     <ItemGroup>
         <PackageReference Include="Humanizer.Core" Version="2.14.1" />
         <PackageReference Include="Sentry" Version="4.13.0" />
-        <PackageReference Include="Watson.Lite" Version="6.3.5" />
+        <PackageReference Include="Watson.Lite" Version="6.3.12" />
     </ItemGroup>
 </Project>

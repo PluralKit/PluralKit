@@ -16,12 +16,12 @@
       },
       "Watson.Lite": {
         "type": "Direct",
-        "requested": "[6.3.5, )",
-        "resolved": "6.3.5",
-        "contentHash": "YF8+se3IVenn8YlyNeb4wSJK6QMnVD0QHIOEiZ22wS4K2wkwoSDzWS+ZAjk1MaPeB+XO5gRoENUN//pOc+wI2g==",
+        "requested": "[6.3.12, )",
+        "resolved": "6.3.12",
+        "contentHash": "L/TfJadyOwK9bhhvOnEKXLeyDaTAn8v6hnYPVPIwQ7JlnUXDbDqsUa3qHFdFIHiuK8vMZOnDL7+k/mY10yxdYw==",
         "dependencies": {
-          "CavemanTcp": "2.0.5",
-          "Watson.Core": "6.3.5"
+          "CavemanTcp": "2.0.9",
+          "Watson.Core": "6.3.12"
         }
       },
       "App.Metrics": {
@@ -119,8 +119,8 @@
       },
       "CavemanTcp": {
         "type": "Transitive",
-        "resolved": "2.0.5",
-        "contentHash": "90wywmGpjrj26HMAkufYZwuZI8sVYB1mRwEdqugSR3kgDnPX+3l0jO86gwtFKsPvsEpsS4Dn/1EbhguzUxMU8Q=="
+        "resolved": "2.0.9",
+        "contentHash": "KgIwYhPhGkBTm+wwVAmWonkKPw4xYVnutzzlIeqOLcX1fti+8d+MEGTvbern1smf3S/UpjFjihkf6XRziTddzQ=="
       },
       "Dapper": {
         "type": "Transitive",
@@ -746,8 +746,8 @@
       },
       "Watson.Core": {
         "type": "Transitive",
-        "resolved": "6.3.5",
-        "contentHash": "Y5YxKOCSLe2KDmfwvI/J0qApgmmZR77LwyoufRVfKH7GLdHiE7fY0IfoNxWTG7nNv8knBfgwyOxdehRm+4HaCg==",
+        "resolved": "6.3.12",
+        "contentHash": "lCWv+7rz++z/1ceu+aBdJYw+nO7u/dgXxVYrmdUO/3ylFeEbbPQP19MYjOJbhSQY4+bmQRex79YJ1IneLZhprA==",
         "dependencies": {
           "IpMatcher": "1.0.5",
           "RegexMatcher": "1.0.9",
