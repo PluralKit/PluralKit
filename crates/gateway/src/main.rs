@@ -1,6 +1,5 @@
-#![feature(let_chains)]
+#![feature(duration_constructors_lite)]
 #![feature(if_let_guard)]
-#![feature(duration_constructors)]
 
 use chrono::Timelike;
 use discord::gateway::cluster_config;

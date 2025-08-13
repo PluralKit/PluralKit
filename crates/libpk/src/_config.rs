@@ -148,11 +148,15 @@ lazy_static! {
         // hacks
         if let Ok(var) = std::env::var("NOMAD_ALLOC_INDEX")
             && std::env::var("pluralkit__discord__cluster__total_nodes").is_ok() {
-            std::env::set_var("pluralkit__discord__cluster__node_id", var);
+            unsafe {
+                std::env::set_var("pluralkit__discord__cluster__node_id", var);
+            }
         }
         if let Ok(var) = std::env::var("STATEFULSET_NAME_FOR_INDEX")
             && std::env::var("pluralkit__discord__cluster__total_nodes").is_ok() {
-            std::env::set_var("pluralkit__discord__cluster__node_id", var.split("-").last().unwrap());
+            unsafe {
+                std::env::set_var("pluralkit__discord__cluster__node_id", var.split("-").last().unwrap());
+            }
         }
 
         Arc::new(Config::builder()

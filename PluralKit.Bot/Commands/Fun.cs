@@ -34,6 +34,9 @@ public class Fun
     public Task Sus(Context ctx) =>
         ctx.Reply("\U0001F4EE");
 
+    public Task Meow(Context ctx) =>
+        ctx.Reply("*mrrp :3*");
+
     public Task Error(Context ctx)
     {
         if (ctx.Match("message"))

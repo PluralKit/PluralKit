@@ -10,6 +10,14 @@ namespace PluralKit.Bot;
 
 public static class ContextEntityArgumentsExt
 {
+    public static async Task<User> ParseUser(this Context ctx, string arg)
+    {
+        if (arg.TryParseMention(out var id))
+            return await ctx.Cache.GetOrFetchUser(ctx.Rest, id);
+
+        return null;
+    }
+
     public static async Task<User> MatchUser(this Context ctx)
     {
         var text = ctx.PeekArgument();
@@ -34,19 +42,15 @@ public static class ContextEntityArgumentsExt
         return id != 0;
     }
 
-    public static Task<PKSystem> PeekSystem(this Context ctx) => ctx.MatchSystemInner();
+    public static Task<PKSystem> PeekSystem(this Context ctx) => throw new NotImplementedException();
 
     public static async Task<PKSystem> MatchSystem(this Context ctx)
     {
-        var system = await ctx.MatchSystemInner();
-        if (system != null) ctx.PopArgument();
-        return system;
+        throw new NotImplementedException();
     }
 
-    private static async Task<PKSystem> MatchSystemInner(this Context ctx)
+    public static async Task<PKSystem> ParseSystem(this Context ctx, string input)
     {
-        var input = ctx.PeekArgument();
-
         // System references can take three forms:
         // - The direct user ID of an account connected to the system
         // - A @mention of an account connected to the system (<@uid>)
@@ -63,10 +67,8 @@ public static class ContextEntityArgumentsExt
         return null;
     }
 
-    public static async Task<PKMember> PeekMember(this Context ctx, SystemId? restrictToSystem = null)
+    public static async Task<PKMember> ParseMember(this Context ctx, string input, bool byId, SystemId? restrictToSystem = null)
     {
-        var input = ctx.PeekArgument();
-
         // Member references can have one of three forms, depending on
         // whether you're in a system or not:
         // - A member hid
@@ -75,7 +77,7 @@ public static class ContextEntityArgumentsExt
 
         // Skip name / display name matching if the user does not have a system
         // or if they specifically request by-HID matching
-        if (ctx.System != null && !ctx.MatchFlag("id", "by-id"))
+        if (ctx.System != null && !byId)
         {
             // First, try finding by member name in system
             if (await ctx.Repository.GetMemberByName(ctx.System.Id, input) is PKMember memberByName)
@@ -124,6 +126,11 @@ public static class ContextEntityArgumentsExt
         return null;
     }
 
+    public static async Task<PKMember> PeekMember(this Context ctx, SystemId? restrictToSystem = null)
+    {
+        throw new NotImplementedException();
+    }
+
     /// <summary>
     /// Attempts to pop a member descriptor from the stack, returning it if present. If a member could not be
     /// resolved by the next word in the argument stack, does *not* touch the stack, and returns null.
@@ -170,9 +177,9 @@ public static class ContextEntityArgumentsExt
         return group;
     }
 
-    public static string CreateNotFoundError(this Context ctx, string entity, string input)
+    public static string CreateNotFoundError(this Context ctx, string entity, string input, bool byId = false)
     {
-        var isIDOnlyQuery = ctx.System == null || ctx.MatchFlag("id", "by-id");
+        var isIDOnlyQuery = ctx.System == null || byId;
         var inputIsHid = HidUtils.ParseHid(input) != null;
 
         if (isIDOnlyQuery)
@@ -204,6 +211,14 @@ public static class ContextEntityArgumentsExt
 
         ctx.PopArgument();
         return channel;
+    }
+
+    public static async Task<Guild> ParseGuild(this Context ctx, string input)
+    {
+        if (!ulong.TryParse(input, out var id))
+            return null;
+
+        return await ctx.Rest.GetGuildOrNull(id);
     }
 
     public static async Task<Guild> MatchGuild(this Context ctx)

@@ -1,4 +1,3 @@
-#![feature(let_chains)]
 use std::net::SocketAddr;
 
 use metrics_exporter_prometheus::PrometheusBuilder;

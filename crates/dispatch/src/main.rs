@@ -12,8 +12,7 @@ use std::{
     time::Duration,
 };
 use tokio::{net::UdpSocket, sync::RwLock};
-use tracing::{debug, error, info};
-use tracing_subscriber::EnvFilter;
+use tracing::{debug, error};
 
 use axum::{extract::State, http::Uri, routing::post, Json, Router};
 

@@ -1,5 +1,3 @@
-#![feature(let_chains)]
-
 use auth::{AuthState, INTERNAL_APPID_HEADER, INTERNAL_SYSTEMID_HEADER};
 use axum::{
     body::Body,
