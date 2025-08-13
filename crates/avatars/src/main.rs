@@ -153,7 +153,7 @@ async fn verify(
     )
     .await?;
 
-    let encoded = process::process_async(result.data, req.kind).await?;
+    let _ = process::process_async(result.data, req.kind).await?;
 
     Ok(())
 }

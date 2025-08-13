@@ -1,5 +1,3 @@
-#![feature(let_chains)]
-
 use sqlx::prelude::FromRow;
 use std::{sync::Arc, time::Duration};
 use tracing::{error, info, warn};
