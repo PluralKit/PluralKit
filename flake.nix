@@ -195,6 +195,22 @@
                   # TODO: add liveness check
                   ready_log_line = "Received Ready";
                 };
+                ### migrations ###
+                pluralkit-migrate-init = mkServiceInitProcess {
+                  name = "migrate";
+                };
+                pluralkit-migrate = {
+                  command = pkgs.writeShellApplication {
+                    name = "pluralkit-migrate";
+                    text = ''
+                      ${sourceDotenv}
+                      set -x
+                      exec target/debug/migrate
+                    '';
+                  };
+                  depends_on.postgres.condition = "process_healthy";
+                  depends_on.pluralkit-migrate-init.condition = "process_completed_successfully";
+                };
                 ### gateway ###
                 pluralkit-gateway-init = mkServiceInitProcess {
                   name = "gateway";

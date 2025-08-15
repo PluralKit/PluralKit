@@ -8,10 +8,11 @@ use std::{
 
 fn main() -> Result<(), Box<dyn Error>> {
     let out_dir = env::var("OUT_DIR")?;
+    let manifest_dir = env::var("CARGO_MANIFEST_DIR")?;
     let dest_path = Path::new(&out_dir).join("data.rs");
     let mut datafile = File::create(&dest_path)?;
 
-    let prefix = "../../../../../../crates/migrate/data";
+    let prefix = manifest_dir + "/data";
 
     let ct = fs::read_dir("data/migrations")?
         .filter(|p| {
