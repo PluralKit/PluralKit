@@ -227,7 +227,9 @@ pub async fn runner(
         }
 
         if runtime_config.exists(RUNTIME_CONFIG_KEY_EVENT_TARGET).await {
-            tx.send((shard.id(), event, raw_event)).await.unwrap();
+            if let Err(error) = tx.try_send((shard.id(), event, raw_event)) {
+                tracing::error!(?error, "error sending shard event");
+            }
         }
     }
 }
