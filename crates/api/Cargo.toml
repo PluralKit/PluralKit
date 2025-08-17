@@ -10,8 +10,12 @@ libpk = { path = "../libpk" }
 
 anyhow = { workspace = true } 
 axum = { workspace = true }
+base64 = { workspace = true }
+chrono = { workspace = true }
 fred = { workspace = true }
+jsonwebtoken = { workspace = true }
 lazy_static = { workspace = true }
+uuid = { workspace = true }
 metrics = { workspace = true }
 reqwest = { workspace = true }
 serde = { workspace = true }

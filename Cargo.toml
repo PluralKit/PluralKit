@@ -7,10 +7,12 @@ resolver = "2"
 [workspace.dependencies]
 anyhow = "1"
 axum-macros = "0.4.1"
+base64 = "0.22.1"
 bytes = "1.6.0"
 chrono = "0.4"
 fred = { version = "9.3.0", default-features = false, features = ["tracing", "i-keys", "i-hashes", "i-scripts", "sha-1"] }
 futures = "0.3.30"
+jsonwebtoken = { version = "9.3.0", features = ["pem"] }
 lazy_static = "1.4.0"
 metrics = "0.23.0"
 reqwest = { version = "0.12.7" , default-features = false, features = ["rustls-tls", "trust-dns"]}

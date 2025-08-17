@@ -218,6 +218,8 @@ public partial class CommandTree
         // todo: these aren't deprecated but also shouldn't be here
         else if (ctx.Match("webhook", "hook"))
             await ctx.Execute<Api>(null, m => m.SystemWebhook(ctx));
+        else if (ctx.Match("apikey", "apikeys", "apitoken", "apitokens"))
+            await HandleSystemApiKeyCommand(ctx);
         else if (ctx.Match("proxy"))
             await ctx.Execute<SystemEdit>(SystemProxy, m => m.SystemProxy(ctx));
 
@@ -320,6 +322,42 @@ public partial class CommandTree
                 await ctx.CheckSystem(target).Execute<Random>(GroupRandom, r => r.Group(ctx, target));
             else
                 await ctx.CheckSystem(target).Execute<Random>(MemberRandom, m => m.Member(ctx, target));
+    }
+
+    private async Task HandleSystemApiKeyCommand(Context ctx)
+    {
+        ctx.CheckSystem();
+        if (ctx.Match("new", "n", "add", "create", "register"))
+            await ctx.Execute<Api>(ApiKeyCreate, c => c.ApiKeyCreate(ctx));
+        else if (ctx.Match("list", "ls", "l"))
+            await ctx.Execute<Api>(ApiKeyList, c => c.ApiKeyList(ctx));
+        else if (ctx.Match("deleteall", "removeall", "destroyall", "eraseall", "revokeall", "yeetall"))
+            await ctx.Execute<Api>(ApiKeyDeleteAll, c => c.ApiKeyDeleteAll(ctx));
+        else if (!ctx.HasNext())
+            await PrintCommandExpectedError(ctx, ApiKeyCreate, ApiKeyList, ApiKeyRename, ApiKeyDelete, ApiKeyDeleteAll);
+        else
+        {
+            PKApiKey? key = null!;
+            var input = ctx.PeekArgument();
+            if (Guid.TryParse(input, out var keyId))
+                key = await ctx.Repository.GetApiKey(keyId);
+            else if (await ctx.Repository.GetApiKeyByName(ctx.System.Id, input) is PKApiKey keyByName)
+                key = keyByName;
+
+            if (key == null || key.System != ctx.System.Id)
+            {
+                await ctx.Reply($"{Emojis.Error} API key with name \"{ctx.PopArgument()}\" not found.");
+                return;
+            }
+
+            ctx.PopArgument();
+            if (ctx.Match("rename", "name", "changename", "setname", "rn"))
+                await ctx.Execute<Api>(ApiKeyRename, c => c.ApiKeyRename(ctx, key));
+            else if (ctx.Match("delete", "remove", "destroy", "erase", "yeet"))
+                await ctx.Execute<Api>(ApiKeyDelete, c => c.ApiKeyDelete(ctx, key));
+            else
+                await PrintCommandNotFoundError(ctx, ApiKeyRename, ApiKeyDelete);
+        }
     }
 
     private async Task HandleMemberCommand(Context ctx)

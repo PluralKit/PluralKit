@@ -101,24 +101,48 @@ public class PKControllerBase: ControllerBase
         return null;
     }
 
+    protected bool IsAuthenticatedAs(SystemId system)
+    {
+        HttpContext.Items.TryGetValue("SystemId", out var systemId);
+        return systemId != null && (SystemId)systemId == system;
+    }
+
     protected LookupContext ContextFor(PKSystem system)
     {
         HttpContext.Items.TryGetValue("SystemId", out var systemId);
-        if (systemId == null) return LookupContext.ByNonOwner;
-        return (SystemId)systemId == system.Id ? LookupContext.ByOwner : LookupContext.ByNonOwner;
+        HttpContext.Items.TryGetValue("LookupContext", out var lookupCtx);
+        if (systemId != null && (SystemId)systemId == system.Id)
+        {
+            if (lookupCtx != null) return (LookupContext)lookupCtx;
+            return LookupContext.ByOwner;
+        }
+
+        return LookupContext.ByNonOwner;
     }
 
     protected LookupContext ContextFor(PKMember member)
     {
         HttpContext.Items.TryGetValue("SystemId", out var systemId);
-        if (systemId == null) return LookupContext.ByNonOwner;
-        return (SystemId)systemId == member.System ? LookupContext.ByOwner : LookupContext.ByNonOwner;
+        HttpContext.Items.TryGetValue("LookupContext", out var lookupCtx);
+        if (systemId != null && (SystemId)systemId == member.System)
+        {
+            if (lookupCtx != null) return (LookupContext)lookupCtx;
+            return LookupContext.ByOwner;
+        }
+
+        return LookupContext.ByNonOwner;
     }
 
     protected LookupContext ContextFor(PKGroup group)
     {
         HttpContext.Items.TryGetValue("SystemId", out var systemId);
-        if (systemId == null) return LookupContext.ByNonOwner;
-        return (SystemId)systemId == group.System ? LookupContext.ByOwner : LookupContext.ByNonOwner;
+        HttpContext.Items.TryGetValue("LookupContext", out var lookupCtx);
+        if (systemId != null && (SystemId)systemId == group.System)
+        {
+            if (lookupCtx != null) return (LookupContext)lookupCtx;
+            return LookupContext.ByOwner;
+        }
+
+        return LookupContext.ByNonOwner;
     }
 }

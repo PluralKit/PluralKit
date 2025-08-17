@@ -19,10 +19,9 @@ public class GroupMemberControllerV2: PKControllerBase
         if (group == null)
             throw Errors.GroupNotFound;
 
-
         var ctx = ContextFor(group);
 
-        if (!group.ListPrivacy.CanAccess(ctx))
+        if (!IsAuthenticatedAs(group.System) && !group.ListPrivacy.CanAccess(ctx))
             throw Errors.UnauthorizedGroupMemberList;
 
         var system = await _repo.GetSystem(group.System);
@@ -154,7 +153,7 @@ public class GroupMemberControllerV2: PKControllerBase
         var ctx = ContextFor(member);
 
         var system = await _repo.GetSystem(member.System);
-        if (!system.GroupListPrivacy.CanAccess(ctx))
+        if (!IsAuthenticatedAs(member.System) && !system.GroupListPrivacy.CanAccess(ctx))
             throw Errors.UnauthorizedGroupList;
 
         var groups = _repo.GetMemberGroups(member.Id).Where(g => g.Visibility.CanAccess(ctx));

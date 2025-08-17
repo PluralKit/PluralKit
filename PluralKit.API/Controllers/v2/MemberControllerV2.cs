@@ -26,7 +26,7 @@ public class MemberControllerV2: PKControllerBase
 
         var ctx = ContextFor(system);
 
-        if (!system.MemberListPrivacy.CanAccess(ContextFor(system)))
+        if (!IsAuthenticatedAs(system.Id) && !system.MemberListPrivacy.CanAccess(ContextFor(system)))
             throw Errors.UnauthorizedMemberList;
 
         var members = _repo.GetSystemMembers(system.Id);

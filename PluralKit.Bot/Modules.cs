@@ -162,6 +162,7 @@ public class BotModule: Module
         builder.RegisterType<AvatarHostingService>().AsSelf().SingleInstance();
         builder.RegisterType<HttpListenerService>().AsSelf().SingleInstance();
         builder.RegisterType<RuntimeConfigService>().AsSelf().SingleInstance();
+        builder.RegisterType<ApiKeyService>().AsSelf().SingleInstance();
 
         // Sentry stuff
         builder.Register(_ => new Scope(null)).AsSelf().InstancePerLifetimeScope();

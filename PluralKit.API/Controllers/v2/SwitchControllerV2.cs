@@ -28,7 +28,7 @@ public class SwitchControllerV2: PKControllerBase
 
         var ctx = ContextFor(system);
 
-        if (!system.FrontHistoryPrivacy.CanAccess(ctx))
+        if (!IsAuthenticatedAs(system.Id) && !system.FrontHistoryPrivacy.CanAccess(ctx))
             throw Errors.UnauthorizedFrontHistory;
 
         if (before == null)
@@ -59,7 +59,7 @@ public class SwitchControllerV2: PKControllerBase
 
         var ctx = ContextFor(system);
 
-        if (!system.FrontPrivacy.CanAccess(ctx))
+        if (!IsAuthenticatedAs(system.Id) && !system.FrontPrivacy.CanAccess(ctx))
             throw Errors.UnauthorizedCurrentFronters;
 
         var sw = await _repo.GetLatestSwitch(system.Id);
@@ -145,7 +145,7 @@ public class SwitchControllerV2: PKControllerBase
 
         var ctx = ContextFor(system);
 
-        if (!system.FrontHistoryPrivacy.CanAccess(ctx))
+        if (!IsAuthenticatedAs(system.Id) && !system.FrontHistoryPrivacy.CanAccess(ctx))
             throw Errors.SwitchNotFoundPublic;
 
         var members = _db.Execute(conn => _repo.GetSwitchMembers(conn, sw.Id));

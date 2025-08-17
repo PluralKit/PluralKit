@@ -8,11 +8,6 @@ permalink: /api
 PluralKit has a basic HTTP REST API for querying and modifying your system.
 The root endpoint of the API is `https://api.pluralkit.me/v2/`.
 
-#### Authorization header token example
-```
-Authorization: z865MC7JNhLtZuSq1NXQYVe+FgZJHBfeBCXOPYYRwH4liDCDrsd7zdOuR45mX257
-```
-
 Endpoints will always return all fields, using `null` when a value is missing. On `PATCH` endpoints,
 missing fields from the JSON request will be ignored and preserved as is, but on `POST` endpoints will
 be set to `null` or cleared.
@@ -29,14 +24,12 @@ If you are developing an application exposed to the public, we would appreciate 
 
 ## Authentication
 
-Authentication is done with a simple "system token". You can get your system token by running `pk;token` using the
-Discord bot, either in a channel with the bot or in DMs. Then, pass this token in the `Authorization` HTTP header
-on requests that require it. Failure to do so on endpoints that require authentication will return a `401 Unauthorized`.
+Authentication is done with an API key provided in the `Authorization` HTTP header - [see the API key section of the documentation for details.](/api/tokens)
 
-Some endpoints show information that a given system may have set to private. If this is a specific field
-(eg. description), the field will simply contain `null` rather than the true value. If this applies to entire endpoint
-responses (eg. fronter, switches, member list), the entire request will return `403 Forbidden`. Authenticating with the
-system's token (as described above) will override these privacy settings and show the full information. 
+Some endpoints show information that a given system may have set to private. For unauthenticated requests, and for requests authenticated with an API key that does not have permission to read private data, the following rules apply:
+
+- For fields with specific privacy settings (e.g. descriptions), the field will simply contain `null` rather than the true value
+- For entire endpoints which show private data (e.g. member/group lists), a `403 Forbidden` response will be returned
 
 ## Rate Limiting
 
@@ -46,7 +39,7 @@ To protect against abuse and manage server resources, PluralKit's API limits the
 - **10/second** for requests to the [Get Proxied Message Information](/api/endpoints/#get-proxied-message-information) endpoint (`message` scope)
 - **3/second** for any `POST`, `PATCH`, or `DELETE` requests (`generic_update` scope)
 
-We may raise the limits for individual users in a case-by-case basis; please ask [in the support server](https://discord.gg/PczBt78) if you need a higher limit.
+We may raise the limits for individual API clients on a case-by-case basis; please ask [in the support server](https://discord.gg/PczBt78) if you need a higher limit.
 
 ::: tip
 If you are looking to query a specific resource in your system repeatedly (polling), please consider using [Dispatch Webhooks](/api/dispatch) instead.

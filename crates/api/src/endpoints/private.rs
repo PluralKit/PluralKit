@@ -1,18 +1,20 @@
-use crate::ApiContext;
-use axum::{extract::State, response::Json};
+use crate::{util::json_err, ApiContext};
+use libpk::config;
+use pluralkit_models::{PrivacyLevel, PKApiKey, PKSystem, PKSystemConfig};
+
+use axum::{
+    extract::{self, State},
+    response::{IntoResponse, Json, Response},
+};
 use fred::interfaces::*;
+use hyper::StatusCode;
 use libpk::state::ShardState;
 use pk_macros::api_endpoint;
+use reqwest::ClientBuilder;
 use serde::Deserialize;
 use serde_json::{json, Value};
 use std::collections::HashMap;
-
-#[derive(Deserialize)]
-#[serde(rename_all = "PascalCase")]
-struct ClusterStats {
-    pub guild_count: i32,
-    pub channel_count: i32,
-}
+use std::time::Duration;
 
 #[api_endpoint]
 pub async fn discord_state(State(ctx): State<ApiContext>) -> Json<Value> {
@@ -43,18 +45,6 @@ pub async fn meta(State(ctx): State<ApiContext>) -> Json<Value> {
     Ok(Json(stats))
 }
 
-use std::time::Duration;
-
-use crate::util::json_err;
-use axum::{
-    extract,
-    response::{IntoResponse, Response},
-};
-use hyper::StatusCode;
-use libpk::config;
-use pluralkit_models::{PKSystem, PKSystemConfig, PrivacyLevel};
-use reqwest::ClientBuilder;
-
 #[derive(serde::Deserialize, Debug)]
 pub struct CallbackRequestData {
     redirect_domain: String,
@@ -71,6 +61,7 @@ struct CallbackDiscordData {
     code: String,
 }
 
+#[api_endpoint]
 pub async fn discord_callback(
     State(ctx): State<ApiContext>,
     extract::Json(request_data): extract::Json<CallbackRequestData>,
@@ -107,7 +98,7 @@ pub async fn discord_callback(
     };
 
     if !discord_data.contains_key("access_token") {
-        return json_err(
+        return Ok(json_err(
             StatusCode::BAD_REQUEST,
             format!(
                 "{{\"error\":\"{}\"\"}}",
@@ -116,7 +107,7 @@ pub async fn discord_callback(
                     .expect("missing error_description from discord")
                     .to_string()
             ),
-        );
+        ));
     };
 
     let token = format!(
@@ -152,10 +143,10 @@ pub async fn discord_callback(
     .expect("failed to query");
 
     let Some(system) = system else {
-        return json_err(
+        return Ok(json_err(
             StatusCode::BAD_REQUEST,
-            "user does not have a system registered".to_string(),
-        );
+            r#"{"message": "user does not have a system registered", "code": 0}"#.to_string(),
+        ));
     };
 
     let system_config: Option<PKSystemConfig> = sqlx::query_as(
@@ -170,11 +161,38 @@ pub async fn discord_callback(
 
     let system_config = system_config.unwrap();
 
-    // create dashboard token for system
+    let token: PKApiKey = sqlx::query_as(
+        r#"
+            insert into api_keys
+            (
+                system,
+                kind,
+                discord_id,
+                discord_access_token,
+                discord_refresh_token,
+                discord_expires_at
+            )
+            values
+                ($1, $2::api_key_type, $3, $4, $5, $6)
+            returning *
+        "#,
+    )
+    .bind(system.id)
+    .bind("dashboard")
+    .bind(user.id.get() as i64)
+    .bind(discord_data.get("access_token").unwrap().as_str())
+    .bind(discord_data.get("refresh_token").unwrap().as_str())
+    .bind(
+        chrono::Utc::now()
+            + chrono::Duration::seconds(discord_data.get("expires_in").unwrap().as_i64().unwrap()),
+    )
+    .fetch_one(&ctx.db)
+    .await
+    .expect("failed to create token");
 
-    let token = system.clone().token;
+    let token = token.to_header_str(system.clone().uuid, &ctx.token_privatekey);
 
-    (
+    Ok((
         StatusCode::OK,
         serde_json::to_string(&serde_json::json!({
             "system": system.to_json(PrivacyLevel::Private),
@@ -183,6 +201,5 @@ pub async fn discord_callback(
             "token": token,
         }))
         .expect("should not error"),
-    )
-        .into_response()
+    ).into_response())
 }

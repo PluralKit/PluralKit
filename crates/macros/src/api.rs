@@ -9,6 +9,7 @@ fn pretty_print(ts: &proc_macro2::TokenStream) -> String {
 pub fn macro_impl(
     _args: proc_macro::TokenStream,
     input: proc_macro::TokenStream,
+	is_internal: bool,
 ) -> proc_macro::TokenStream {
     let input = parse_macro_input!(input as ItemFn);
 
@@ -34,6 +35,16 @@ pub fn macro_impl(
         })
         .collect();
 
+	let internal_res = if is_internal {
+		quote! {
+			if !auth.internal() {
+				return crate::error::FORBIDDEN_INTERNAL_ROUTE.into_response();
+			}
+		}
+	} else {
+		quote!()
+	};
+
     let res = quote! {
         #[allow(unused_mut)]
         pub async fn #fn_name(#fn_params) -> axum::response::Response {
@@ -41,6 +52,7 @@ pub fn macro_impl(
                 #fn_body
             }
 
+			#internal_res
             match inner(#(#pms),*).await {
                 Ok(res) => res.into_response(),
                 Err(err) => err.into_response(),

@@ -42,6 +42,7 @@ pub async fn ignore_invalid_routes(request: Request, next: Next) -> Response {
     // we ignored v1 routes earlier, now let's ignore all non-v2 routes
     else if !request.uri().clone().path().starts_with("/v2")
         && !request.uri().clone().path().starts_with("/private")
+        && !request.uri().clone().path().starts_with("/internal")
     {
         return (
             StatusCode::BAD_REQUEST,

@@ -1,10 +1,10 @@
 #![feature(let_chains)]
 
-use auth::{AuthState, INTERNAL_APPID_HEADER, INTERNAL_SYSTEMID_HEADER};
+use auth::{AuthState, INTERNAL_APPID_HEADER, INTERNAL_SYSTEMID_HEADER, INTERNAL_TOKENID_HEADER, INTERNAL_PRIVACYLEVEL_HEADER};
 use axum::{
     body::Body,
     extract::{Request as ExtractRequest, State},
-    http::Uri,
+    http::{HeaderValue, Uri},
     response::{IntoResponse, Response},
     routing::{delete, get, patch, post},
     Extension, Router,
@@ -13,8 +13,8 @@ use hyper_util::{
     client::legacy::{connect::HttpConnector, Client},
     rt::TokioExecutor,
 };
-use tracing::info;
-
+use jsonwebtoken::{DecodingKey, EncodingKey};
+use tracing::{error, info};
 use pk_macros::api_endpoint;
 
 mod auth;
@@ -30,6 +30,9 @@ pub struct ApiContext {
 
     rproxy_uri: String,
     rproxy_client: Client<HttpConnector, Body>,
+
+    token_privatekey: EncodingKey,
+    token_publickey: DecodingKey,
 }
 
 #[api_endpoint]
@@ -53,14 +56,21 @@ async fn rproxy(
 
     headers.remove(INTERNAL_SYSTEMID_HEADER);
     headers.remove(INTERNAL_APPID_HEADER);
+	headers.remove(INTERNAL_TOKENID_HEADER);
+	headers.remove(INTERNAL_PRIVACYLEVEL_HEADER);
 
     if let Some(sid) = auth.system_id() {
         headers.append(INTERNAL_SYSTEMID_HEADER, sid.into());
+		headers.append(INTERNAL_PRIVACYLEVEL_HEADER, HeaderValue::from_str(&auth.access_level().privacy_level().to_string())?);
     }
 
     if let Some(aid) = auth.app_id() {
-        headers.append(INTERNAL_APPID_HEADER, aid.into());
+        headers.append(INTERNAL_APPID_HEADER, HeaderValue::from_str(&format!("{}", aid))?);
     }
+	
+	if let Some(tid) = auth.api_key_id() {
+		headers.append(INTERNAL_TOKENID_HEADER, HeaderValue::from_str(&format!("{}", tid))?);
+	}
 
     Ok(ctx.rproxy_client.request(req).await?.into_response())
 }
@@ -124,11 +134,13 @@ fn router(ctx: ApiContext) -> Router {
         .route("/private/discord/shard_state", get(endpoints::private::discord_state))
         .route("/private/stats", get(endpoints::private::meta))
 
-        .route("/v2/systems/{system_id}/oembed.json", get(rproxy))
-        .route("/v2/members/{member_id}/oembed.json", get(rproxy))
-        .route("/v2/groups/{group_id}/oembed.json", get(rproxy))
+        .route("/internal/apikey/user", post(endpoints::internal::create_api_key_user))
 
-        .layer(middleware::ratelimit::ratelimiter(middleware::ratelimit::do_request_ratelimited)) // this sucks
+        .route("/v2/systems/:system_id/oembed.json", get(rproxy))
+        .route("/v2/members/:member_id/oembed.json", get(rproxy))
+        .route("/v2/groups/:group_id/oembed.json", get(rproxy))
+
+        .layer(middleware::ratelimit::ratelimiter(ctx.clone(), middleware::ratelimit::do_request_ratelimited))
 
         .layer(axum::middleware::from_fn(middleware::ignore_invalid_routes::ignore_invalid_routes))
         .layer(axum::middleware::from_fn(middleware::logger::logger))
@@ -149,14 +161,9 @@ async fn main() -> anyhow::Result<()> {
     let db = libpk::db::init_data_db().await?;
     let redis = libpk::db::init_redis().await?;
 
-    let rproxy_uri = Uri::from_static(
-        &libpk::config
-            .api
-            .as_ref()
-            .expect("missing api config")
-            .remote_url,
-    )
-    .to_string();
+    let cfg = libpk::config.api.as_ref().expect("missing api config");
+
+    let rproxy_uri = Uri::from_static(cfg.remote_url.as_str()).to_string();
     let rproxy_client = hyper_util::client::legacy::Client::<(), ()>::builder(TokioExecutor::new())
         .build(HttpConnector::new());
 
@@ -166,16 +173,16 @@ async fn main() -> anyhow::Result<()> {
 
         rproxy_uri: rproxy_uri[..rproxy_uri.len() - 1].to_string(),
         rproxy_client,
+
+        token_privatekey: EncodingKey::from_ec_pem(cfg.token_privatekey.as_bytes())
+            .expect("failed to load private key"),
+        token_publickey: DecodingKey::from_ec_pem(cfg.token_publickey.as_bytes())
+            .expect("failed to load public key"),
     };
 
     let app = router(ctx);
 
-    let addr: &str = libpk::config
-        .api
-        .as_ref()
-        .expect("missing api config")
-        .addr
-        .as_ref();
+    let addr: &str = cfg.addr.as_ref();
 
     let listener = tokio::net::TcpListener::bind(addr).await?;
     info!("listening on {}", addr);

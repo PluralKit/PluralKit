@@ -6,9 +6,9 @@
 // note: caller needs to implement From<i32> for their type
 macro_rules! fake_enum_impls {
     ($n:ident) => {
-        impl Type<Postgres> for $n {
-            fn type_info() -> PgTypeInfo {
-                PgTypeInfo::with_name("INT4")
+        impl ::sqlx::Type<::sqlx::Postgres> for $n {
+            fn type_info() -> ::sqlx::postgres::PgTypeInfo {
+                ::sqlx::postgres::PgTypeInfo::with_name("INT4")
             }
         }
 
@@ -18,14 +18,14 @@ macro_rules! fake_enum_impls {
             }
         }
 
-        impl<'r, DB: Database> Decode<'r, DB> for $n
+        impl<'r, DB: ::sqlx::Database> ::sqlx::Decode<'r, DB> for $n
         where
-            i32: Decode<'r, DB>,
+            i32: ::sqlx::Decode<'r, DB>,
         {
             fn decode(
-                value: <DB as Database>::ValueRef<'r>,
-            ) -> Result<Self, Box<dyn Error + 'static + Send + Sync>> {
-                let value = <i32 as Decode<DB>>::decode(value)?;
+                value: <DB as ::sqlx::Database>::ValueRef<'r>,
+            ) -> Result<Self, Box<dyn ::std::error::Error + 'static + Send + Sync>> {
+                let value = <i32 as ::sqlx::Decode<DB>>::decode(value)?;
                 Ok(Self::from(value))
             }
         }

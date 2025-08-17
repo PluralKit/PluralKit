@@ -21,7 +21,7 @@ public class GroupControllerV2: PKControllerBase
 
         var ctx = ContextFor(system);
 
-        if (!system.GroupListPrivacy.CanAccess(ContextFor(system)))
+        if (!IsAuthenticatedAs(system.Id) && !system.GroupListPrivacy.CanAccess(ContextFor(system)))
             throw Errors.UnauthorizedGroupList;
 
         var groups = _repo.GetSystemGroups(system.Id);

@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 anyhow = { workspace = true } 
 fred = { workspace = true }
+jsonwebtoken = { workspace = true }
 lazy_static = { workspace = true }
 metrics = { workspace = true }
 pk_macros = { path = "../macros" }

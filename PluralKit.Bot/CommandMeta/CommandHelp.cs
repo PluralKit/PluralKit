@@ -33,6 +33,11 @@ public partial class CommandTree
     public static Command ConfigProxySwitch = new Command("config proxyswitch", "config proxyswitch [new|add|off]", "Switching behavior when proxy tags are used");
     public static Command ConfigNameFormat = new Command("config nameformat", "config nameformat [format]", "Changes your system's username formatting");
     public static Command ConfigServerNameFormat = new Command("config servernameformat", "config servernameformat [format]", "Changes your system's username formatting in the current server");
+    public static Command ApiKeyCreate = new Command("system apikey new", "system apikey new <name> <type>", "Create a new API key");
+    public static Command ApiKeyList = new Command("system apikey list", "system apikey list", "Show current API keys");
+    public static Command ApiKeyRename = new Command("system apikey <key> rename", "system apikey <key> rename <name>", "Rename an existing API key");
+    public static Command ApiKeyDelete = new Command("system apikey <key> delete", "system apikey <key> delete", "Delete an existing API key");
+    public static Command ApiKeyDeleteAll = new Command("system apikey deleteall", "system apikey deleteall", "Delete all existing API keys");
     public static Command AutoproxySet = new Command("autoproxy", "autoproxy [off|front|latch|member]", "Sets your system's autoproxy mode for the current server");
     public static Command AutoproxyOff = new Command("autoproxy off", "autoproxy off", "Disables autoproxying for your system in the current server");
     public static Command AutoproxyFront = new Command("autoproxy front", "autoproxy front", "Sets your system's autoproxy in this server to proxy the first member currently registered as front");

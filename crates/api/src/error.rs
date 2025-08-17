@@ -83,4 +83,6 @@ macro_rules! define_error {
 }
 
 define_error! { GENERIC_BAD_REQUEST, StatusCode::BAD_REQUEST, 0, "400: Bad Request" }
+// define_error! { GENERIC_UNAUTHORIZED, StatusCode::UNAUTHORIZED, 0, "401: Missing or invalid Authorization header" }
+define_error! { FORBIDDEN_INTERNAL_ROUTE, StatusCode::FORBIDDEN, 0, "403: Forbidden to access this endpoint" }
 define_error! { GENERIC_SERVER_ERROR, StatusCode::INTERNAL_SERVER_ERROR, 0, "500: Internal Server Error" }

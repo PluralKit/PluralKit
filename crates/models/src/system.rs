@@ -1,9 +1,8 @@
 use pk_macros::pk_model;
 
+use crate::PrivacyLevel;
 use chrono::NaiveDateTime;
 use uuid::Uuid;
-
-use crate::PrivacyLevel;
 
 // todo: fix this
 pub type SystemId = i32;

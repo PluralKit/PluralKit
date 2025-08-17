@@ -15,11 +15,18 @@ public class AuthorizationTokenHandlerMiddleware
 
     public async Task Invoke(HttpContext ctx, IDatabase db, ApiConfig cfg)
     {
-        if (cfg.TrustAuth
-            && ctx.Request.Headers.TryGetValue("X-PluralKit-SystemId", out var sidHeaders)
-            && sidHeaders.Count > 0
-            && int.TryParse(sidHeaders[0], out var systemId))
-            ctx.Items.Add("SystemId", new SystemId(systemId));
+        if (cfg.TrustAuth)
+        {
+            if (ctx.Request.Headers.TryGetValue("X-PluralKit-SystemId", out var sidHeaders)
+                && sidHeaders.Count > 0
+                && int.TryParse(sidHeaders[0], out var systemId))
+                ctx.Items.Add("SystemId", new SystemId(systemId));
+
+            if (ctx.Request.Headers.TryGetValue("X-PluralKit-PrivacyLevel", out var levelHeaders)
+                && levelHeaders.Count > 0)
+                ctx.Items.Add("LookupContext",
+                    levelHeaders[0].ToLower().Trim() == "private" ? LookupContext.ByOwner : LookupContext.ByNonOwner);
+        }
 
         if (cfg.TrustAuth
             && ctx.Request.Headers.TryGetValue("X-PluralKit-AppId", out var aidHeaders)

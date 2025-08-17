@@ -6,7 +6,12 @@ mod model;
 
 #[proc_macro_attribute]
 pub fn api_endpoint(args: TokenStream, input: TokenStream) -> TokenStream {
-    api::macro_impl(args, input)
+    api::macro_impl(args, input, false)
+}
+
+#[proc_macro_attribute]
+pub fn api_internal_endpoint(args: TokenStream, input: TokenStream) -> TokenStream {
+    api::macro_impl(args, input, true)
 }
 
 #[proc_macro_attribute]
