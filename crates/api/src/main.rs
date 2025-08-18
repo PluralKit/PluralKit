@@ -13,6 +13,7 @@ use hyper_util::{
     client::legacy::{connect::HttpConnector, Client},
     rt::TokioExecutor,
 };
+
 use jsonwebtoken::{DecodingKey, EncodingKey};
 use tracing::{error, info};
 use pk_macros::api_endpoint;
@@ -136,9 +137,9 @@ fn router(ctx: ApiContext) -> Router {
 
         .route("/internal/apikey/user", post(endpoints::internal::create_api_key_user))
 
-        .route("/v2/systems/:system_id/oembed.json", get(rproxy))
-        .route("/v2/members/:member_id/oembed.json", get(rproxy))
-        .route("/v2/groups/:group_id/oembed.json", get(rproxy))
+        .route("/v2/systems/{system_id}/oembed.json", get(rproxy))
+        .route("/v2/members/{member_id}/oembed.json", get(rproxy))
+        .route("/v2/groups/{group_id}/oembed.json", get(rproxy))
 
         .layer(middleware::ratelimit::ratelimiter(ctx.clone(), middleware::ratelimit::do_request_ratelimited))
 

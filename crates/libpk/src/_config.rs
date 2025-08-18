@@ -60,13 +60,8 @@ pub struct ApiConfig {
 
     pub remote_url: String,
 
-    #[serde(default)]
-    pub temp_token2: Option<String>,
-
     pub token_privatekey: String,
     pub token_publickey: String,
-
-    pub internal_request_secret: String,
 }
 
 #[derive(Deserialize, Clone, Debug)]

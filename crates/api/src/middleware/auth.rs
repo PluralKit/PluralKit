@@ -142,11 +142,9 @@ pub async fn auth(State(ctx): State<ApiContext>, mut req: Request, next: Next) -
                     .await
                     .expect("failed to query apitoken in postgres")
         {
+			authed_system_id = Some(token.system);
 			authed_api_key_id = Some(tid);
 			access_level = apikey_can_access(&token, req.method().to_string(), endpoint.clone());
-			if access_level != AccessLevel::None {
-				authed_system_id = Some(token.system);
-			}
 		}
 		else if let Some(system_id) =
             match libpk::db::repository::legacy_token_auth(&ctx.db, system_auth_header).await {
