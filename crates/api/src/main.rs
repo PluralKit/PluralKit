@@ -1,6 +1,9 @@
 #![feature(let_chains)]
 
-use auth::{AuthState, INTERNAL_APPID_HEADER, INTERNAL_SYSTEMID_HEADER, INTERNAL_TOKENID_HEADER, INTERNAL_PRIVACYLEVEL_HEADER};
+use auth::{
+    AuthState, INTERNAL_APPID_HEADER, INTERNAL_PRIVACYLEVEL_HEADER, INTERNAL_SYSTEMID_HEADER,
+    INTERNAL_TOKENID_HEADER,
+};
 use axum::{
     body::Body,
     extract::{Request as ExtractRequest, State},
@@ -15,8 +18,8 @@ use hyper_util::{
 };
 
 use jsonwebtoken::{DecodingKey, EncodingKey};
-use tracing::{error, info};
 use pk_macros::api_endpoint;
+use tracing::{error, info};
 
 mod auth;
 mod endpoints;
@@ -57,21 +60,30 @@ async fn rproxy(
 
     headers.remove(INTERNAL_SYSTEMID_HEADER);
     headers.remove(INTERNAL_APPID_HEADER);
-	headers.remove(INTERNAL_TOKENID_HEADER);
-	headers.remove(INTERNAL_PRIVACYLEVEL_HEADER);
+    headers.remove(INTERNAL_TOKENID_HEADER);
+    headers.remove(INTERNAL_PRIVACYLEVEL_HEADER);
 
     if let Some(sid) = auth.system_id() {
         headers.append(INTERNAL_SYSTEMID_HEADER, sid.into());
-		headers.append(INTERNAL_PRIVACYLEVEL_HEADER, HeaderValue::from_str(&auth.access_level().privacy_level().to_string())?);
+        headers.append(
+            INTERNAL_PRIVACYLEVEL_HEADER,
+            HeaderValue::from_str(&auth.access_level().privacy_level().to_string())?,
+        );
     }
 
     if let Some(aid) = auth.app_id() {
-        headers.append(INTERNAL_APPID_HEADER, HeaderValue::from_str(&format!("{}", aid))?);
+        headers.append(
+            INTERNAL_APPID_HEADER,
+            HeaderValue::from_str(&format!("{}", aid))?,
+        );
     }
-	
-	if let Some(tid) = auth.api_key_id() {
-		headers.append(INTERNAL_TOKENID_HEADER, HeaderValue::from_str(&format!("{}", tid))?);
-	}
+
+    if let Some(tid) = auth.api_key_id() {
+        headers.append(
+            INTERNAL_TOKENID_HEADER,
+            HeaderValue::from_str(&format!("{}", tid))?,
+        );
+    }
 
     Ok(ctx.rproxy_client.request(req).await?.into_response())
 }

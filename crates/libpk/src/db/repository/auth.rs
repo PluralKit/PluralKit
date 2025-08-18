@@ -22,10 +22,10 @@ struct LegacyTokenDbResponse {
 }
 
 pub async fn app_token_auth(
-	pool: &sqlx::postgres::PgPool,
-	token: &str,
+    pool: &sqlx::postgres::PgPool,
+    token: &str,
 ) -> anyhow::Result<Option<Uuid>> {
-	let mut app: Vec<AppTokenDbResponse> =
+    let mut app: Vec<AppTokenDbResponse> =
         sqlx::query_as("select id from external_apps where api_rl_token = $1")
             .bind(token)
             .fetch_all(pool)

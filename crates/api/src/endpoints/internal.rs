@@ -1,12 +1,12 @@
-use crate::{util::json_err, AuthState, ApiContext};
-use pluralkit_models::{ApiKeyType, PKApiKey, PKSystem, SystemId};
+use crate::{util::json_err, ApiContext, AuthState};
 use pk_macros::api_internal_endpoint;
+use pluralkit_models::{ApiKeyType, PKApiKey, PKSystem, SystemId};
 
 use axum::{
     extract::State,
     http::StatusCode,
     response::{IntoResponse, Json, Response},
-	Extension,
+    Extension,
 };
 
 use sqlx::Postgres;
@@ -23,7 +23,7 @@ pub struct NewApiKeyRequestData {
 #[api_internal_endpoint]
 pub async fn create_api_key_user(
     State(ctx): State<ApiContext>,
-	Extension(auth): Extension<AuthState>,
+    Extension(auth): Extension<AuthState>,
     Json(req): Json<NewApiKeyRequestData>,
 ) -> Response {
     let system: Option<PKSystem> = sqlx::query_as("select * from systems where id = $1")
@@ -76,7 +76,8 @@ pub async fn create_api_key_user(
                 "valid": true,
             }))
             .expect("should not error"),
-        ).into_response());
+        )
+            .into_response());
     }
 
     let token: PKApiKey = sqlx::query_as(
@@ -110,5 +111,6 @@ pub async fn create_api_key_user(
             "token": token,
         }))
         .expect("should not error"),
-    ).into_response())
+    )
+        .into_response())
 }

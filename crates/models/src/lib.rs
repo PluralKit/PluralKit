@@ -21,12 +21,12 @@ impl From<i32> for PrivacyLevel {
 }
 
 impl PrivacyLevel {
-	pub fn to_string(&self) -> String {
-		match self {
-			PrivacyLevel::Public => "public".into(),
-			PrivacyLevel::Private => "private".into(),
-		}
-	}
+    pub fn to_string(&self) -> String {
+        match self {
+            PrivacyLevel::Public => "public".into(),
+            PrivacyLevel::Private => "private".into(),
+        }
+    }
 }
 
 macro_rules! model {

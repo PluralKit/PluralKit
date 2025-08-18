@@ -12,9 +12,9 @@ use sqlx::Postgres;
 use tracing::{debug, error, info, warn};
 
 use crate::{
-    ApiContext,
     auth::AuthState,
     util::{header_or_unknown, json_err},
+    ApiContext,
 };
 use pluralkit_models::PKExternalApp;
 

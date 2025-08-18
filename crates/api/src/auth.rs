@@ -28,18 +28,24 @@ impl AccessLevel {
 pub struct AuthState {
     system_id: Option<i32>,
     app_id: Option<Uuid>,
-	api_key_id: Option<Uuid>,
-	access_level: AccessLevel,
+    api_key_id: Option<Uuid>,
+    access_level: AccessLevel,
     internal: bool,
 }
 
 impl AuthState {
-    pub fn new(system_id: Option<i32>, app_id: Option<Uuid>, api_key_id: Option<Uuid>, access_level: AccessLevel, internal: bool) -> Self {
+    pub fn new(
+        system_id: Option<i32>,
+        app_id: Option<Uuid>,
+        api_key_id: Option<Uuid>,
+        access_level: AccessLevel,
+        internal: bool,
+    ) -> Self {
         Self {
             system_id,
             app_id,
-			api_key_id,
-			access_level,
+            api_key_id,
+            access_level,
             internal,
         }
     }
@@ -56,9 +62,9 @@ impl AuthState {
         self.api_key_id
     }
 
-	pub fn access_level(&self) -> AccessLevel {
-		self.access_level.clone()
-	}
+    pub fn access_level(&self) -> AccessLevel {
+        self.access_level.clone()
+    }
 
     pub fn internal(&self) -> bool {
         self.internal

@@ -1,6 +1,6 @@
 use crate::{util::json_err, ApiContext};
 use libpk::config;
-use pluralkit_models::{PrivacyLevel, PKApiKey, PKSystem, PKSystemConfig};
+use pluralkit_models::{PKApiKey, PKSystem, PKSystemConfig, PrivacyLevel};
 
 use axum::{
     extract::{self, State},
@@ -201,5 +201,6 @@ pub async fn discord_callback(
             "token": token,
         }))
         .expect("should not error"),
-    ).into_response())
+    )
+        .into_response())
 }

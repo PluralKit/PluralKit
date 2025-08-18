@@ -1,19 +1,19 @@
 use axum::{
-    extract::{Request, State, MatchedPath},
+    extract::{MatchedPath, Request, State},
     http::StatusCode,
     middleware::Next,
     response::Response,
 };
 
-use uuid::Uuid;
 use subtle::ConstantTimeEq;
+use uuid::Uuid;
 
-use tracing::error;
 use sqlx::Postgres;
+use tracing::error;
 
-use pluralkit_models::{ApiKeyType, PKApiKey};
 use crate::auth::{AccessLevel, AuthState};
 use crate::{util::json_err, ApiContext};
+use pluralkit_models::{ApiKeyType, PKApiKey};
 
 pub fn is_part_path<'a, 'b>(part: &'a str, endpoint: &'b str) -> bool {
     if !endpoint.starts_with("/v2/") {
@@ -113,7 +113,7 @@ pub fn apikey_can_access(token: &PKApiKey, method: String, endpoint: String) -> 
 }
 
 pub async fn auth(State(ctx): State<ApiContext>, mut req: Request, next: Next) -> Response {
-	let endpoint = req
+    let endpoint = req
         .extensions()
         .get::<MatchedPath>()
         .cloned()
@@ -122,8 +122,8 @@ pub async fn auth(State(ctx): State<ApiContext>, mut req: Request, next: Next) -
 
     let mut authed_system_id: Option<i32> = None;
     let mut authed_app_id: Option<Uuid> = None;
-	let mut authed_api_key_id: Option<Uuid> = None;
-	let mut access_level = AccessLevel::None;
+    let mut authed_api_key_id: Option<Uuid> = None;
+    let mut access_level = AccessLevel::None;
 
     // fetch user authorization
     if let Some(system_auth_header) = req
@@ -131,10 +131,12 @@ pub async fn auth(State(ctx): State<ApiContext>, mut req: Request, next: Next) -
         .get("authorization")
         .map(|h| h.to_str().ok())
         .flatten()
-	{
-		if system_auth_header.starts_with("Bearer ")
-            && let Some(tid) =
-                PKApiKey::parse_header_str(system_auth_header[7..].to_string(), &ctx.token_publickey)
+    {
+        if system_auth_header.starts_with("Bearer ")
+            && let Some(tid) = PKApiKey::parse_header_str(
+                system_auth_header[7..].to_string(),
+                &ctx.token_publickey,
+            )
             && let Some(token) =
                 sqlx::query_as::<Postgres, PKApiKey>("select * from api_keys where id = $1")
                     .bind(&tid)
@@ -142,11 +144,10 @@ pub async fn auth(State(ctx): State<ApiContext>, mut req: Request, next: Next) -
                     .await
                     .expect("failed to query apitoken in postgres")
         {
-			authed_system_id = Some(token.system);
-			authed_api_key_id = Some(tid);
-			access_level = apikey_can_access(&token, req.method().to_string(), endpoint.clone());
-		}
-		else if let Some(system_id) =
+            authed_system_id = Some(token.system);
+            authed_api_key_id = Some(tid);
+            access_level = apikey_can_access(&token, req.method().to_string(), endpoint.clone());
+        } else if let Some(system_id) =
             match libpk::db::repository::legacy_token_auth(&ctx.db, system_auth_header).await {
                 Ok(val) => val,
                 Err(err) => {
@@ -157,11 +158,11 @@ pub async fn auth(State(ctx): State<ApiContext>, mut req: Request, next: Next) -
                     );
                 }
             }
-		{
-			authed_system_id = Some(system_id);
-			access_level = AccessLevel::Full;
-		}
-	}
+        {
+            authed_system_id = Some(system_id);
+            access_level = AccessLevel::Full;
+        }
+    }
 
     // fetch app authorization
     if let Some(app_auth_header) = req
@@ -170,7 +171,7 @@ pub async fn auth(State(ctx): State<ApiContext>, mut req: Request, next: Next) -
         .map(|h| h.to_str().ok())
         .flatten()
         && let Some(app_id) =
-			match libpk::db::repository::app_token_auth(&ctx.db, app_auth_header).await {
+            match libpk::db::repository::app_token_auth(&ctx.db, app_auth_header).await {
                 Ok(val) => val,
                 Err(err) => {
                     error!(?err, "failed to query authorization token in postgres");
@@ -199,8 +200,13 @@ pub async fn auth(State(ctx): State<ApiContext>, mut req: Request, next: Next) -
         false
     };
 
-    req.extensions_mut()
-        .insert(AuthState::new(authed_system_id, authed_app_id, authed_api_key_id, access_level, internal));
+    req.extensions_mut().insert(AuthState::new(
+        authed_system_id,
+        authed_app_id,
+        authed_api_key_id,
+        access_level,
+        internal,
+    ));
 
     next.run(req).await
 }
