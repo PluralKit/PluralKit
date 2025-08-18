@@ -262,7 +262,7 @@ public class Api
                             Type = ComponentType.Button,
                             Style = ButtonStyle.Primary,
                             Label = "Create API key",
-                            CustomId = _interactions.Register(cb),
+                            CustomId = _interactions.Register(ctx.ShardId, cb),
                         },
                     }
                 }

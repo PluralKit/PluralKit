@@ -33,9 +33,4 @@
         <ProjectReference Include="..\PluralKit.Bot\PluralKit.Bot.csproj" />
         <ProjectReference Include="..\PluralKit.Core\PluralKit.Core.csproj" />
     </ItemGroup>
-
-    <ItemGroup>
-        <Folder Include="API" />
-    </ItemGroup>
-
 </Project>
