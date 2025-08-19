@@ -36,4 +36,6 @@ See [the dev-docs/ directory](./dev-docs/README.md)
 See [the docs/ directory](./docs/README.md)
 
 # License
-This project is under the GNU Affero General Public License, Version 3. It is available at the following link: https://www.gnu.org/licenses/agpl-3.0.en.html
+With the exception of the Myriad library, this project is under the GNU Affero General Public License, Version 3. The license text can be found in the COPYING file.
+
+Licensing information for the Myriad library can be found in the library's README.md file.
