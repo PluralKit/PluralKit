@@ -4444,7 +4444,7 @@ checksum = "e421abadd41a4225275504ea4d6566923418b7f05506fbc9c0fe86ba7396114b"
 [[package]]
 name = "twilight-cache-inmemory"
 version = "0.16.0"
-source = "git+https://github.com/pluralkit/twilight?branch=pluralkit-70105ef#941604f888bb8d25239f4f3d4dfb1a9ecdb9851b"
+source = "git+https://github.com/pluralkit/twilight?branch=pluralkit-7f08d95#054a2aa5d29fb46220af1cd5df568b73511cdb26"
 dependencies = [
  "bitflags 2.9.0",
  "dashmap",
@@ -4456,7 +4456,7 @@ dependencies = [
 [[package]]
 name = "twilight-gateway"
 version = "0.16.0"
-source = "git+https://github.com/pluralkit/twilight?branch=pluralkit-70105ef#941604f888bb8d25239f4f3d4dfb1a9ecdb9851b"
+source = "git+https://github.com/pluralkit/twilight?branch=pluralkit-7f08d95#054a2aa5d29fb46220af1cd5df568b73511cdb26"
 dependencies = [
  "bitflags 2.9.0",
  "fastrand",
@@ -4476,7 +4476,7 @@ dependencies = [
 [[package]]
 name = "twilight-gateway-queue"
 version = "0.16.0"
-source = "git+https://github.com/pluralkit/twilight?branch=pluralkit-70105ef#941604f888bb8d25239f4f3d4dfb1a9ecdb9851b"
+source = "git+https://github.com/pluralkit/twilight?branch=pluralkit-7f08d95#054a2aa5d29fb46220af1cd5df568b73511cdb26"
 dependencies = [
  "tokio",
  "tracing",
@@ -4485,7 +4485,7 @@ dependencies = [
 [[package]]
 name = "twilight-http"
 version = "0.16.0"
-source = "git+https://github.com/pluralkit/twilight?branch=pluralkit-70105ef#941604f888bb8d25239f4f3d4dfb1a9ecdb9851b"
+source = "git+https://github.com/pluralkit/twilight?branch=pluralkit-7f08d95#054a2aa5d29fb46220af1cd5df568b73511cdb26"
 dependencies = [
  "fastrand",
  "http 1.3.1",
@@ -4507,7 +4507,7 @@ dependencies = [
 [[package]]
 name = "twilight-http-ratelimiting"
 version = "0.16.0"
-source = "git+https://github.com/pluralkit/twilight?branch=pluralkit-70105ef#941604f888bb8d25239f4f3d4dfb1a9ecdb9851b"
+source = "git+https://github.com/pluralkit/twilight?branch=pluralkit-7f08d95#054a2aa5d29fb46220af1cd5df568b73511cdb26"
 dependencies = [
  "tokio",
  "tracing",
@@ -4516,7 +4516,7 @@ dependencies = [
 [[package]]
 name = "twilight-model"
 version = "0.16.0"
-source = "git+https://github.com/pluralkit/twilight?branch=pluralkit-70105ef#941604f888bb8d25239f4f3d4dfb1a9ecdb9851b"
+source = "git+https://github.com/pluralkit/twilight?branch=pluralkit-7f08d95#054a2aa5d29fb46220af1cd5df568b73511cdb26"
 dependencies = [
  "bitflags 2.9.0",
  "serde",
@@ -4528,7 +4528,7 @@ dependencies = [
 [[package]]
 name = "twilight-util"
 version = "0.16.0"
-source = "git+https://github.com/pluralkit/twilight?branch=pluralkit-70105ef#941604f888bb8d25239f4f3d4dfb1a9ecdb9851b"
+source = "git+https://github.com/pluralkit/twilight?branch=pluralkit-7f08d95#054a2aa5d29fb46220af1cd5df568b73511cdb26"
 dependencies = [
  "twilight-model",
 ]
@@ -4536,7 +4536,7 @@ dependencies = [
 [[package]]
 name = "twilight-validate"
 version = "0.16.0"
-source = "git+https://github.com/pluralkit/twilight?branch=pluralkit-70105ef#941604f888bb8d25239f4f3d4dfb1a9ecdb9851b"
+source = "git+https://github.com/pluralkit/twilight?branch=pluralkit-7f08d95#054a2aa5d29fb46220af1cd5df568b73511cdb26"
 dependencies = [
  "twilight-model",
 ]
