@@ -139,7 +139,8 @@ public class ApplicationCommandProxiedMessage
         if (member == null || !(await _cache.PermissionsForMemberInChannel(ctx.GuildId, ctx.ChannelId, member)).HasFlag(requiredPerms))
         {
             throw new PKError("You do not have permission to send messages in this channel.");
-        };
+        }
+        ;
 
         var config = await _repo.GetSystemConfig(msg.System.Id);
 

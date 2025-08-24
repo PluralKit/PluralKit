@@ -520,7 +520,7 @@ public class Groups
     public async Task ShowGroupCard(Context ctx, PKGroup target)
     {
         var system = await GetGroupSystem(ctx, target);
-        await ctx.Reply(embed: await _embeds.CreateGroupEmbed(ctx, system, target));
+        await ctx.Reply(components: await _embeds.CreateGroupMessageComponents(ctx, system, target));
     }
 
     public async Task GroupPrivacy(Context ctx, PKGroup target, PrivacyLevel? newValueFromCommand)
