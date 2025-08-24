@@ -39,11 +39,16 @@ public class EmbedService
         return Task.WhenAll(ids.Select(Inner));
     }
 
-    public async Task<Embed> CreateSystemEmbed(Context cctx, PKSystem system, LookupContext ctx)
+    public async Task<MessageComponent[]> CreateSystemMessageComponents(Context cctx, PKSystem system, LookupContext ctx)
     {
         // Fetch/render info for all accounts simultaneously
         var accounts = await _repo.GetSystemAccounts(system.Id);
         var users = (await GetUsers(accounts)).Select(x => x.User?.NameAndMention() ?? $"(deleted account {x.Id})");
+        var linkedAccounts = new MessageComponent()
+        {
+            Type = ComponentType.Text,
+            Content = "**Linked accounts:**\n" + string.Join("\n", users).Truncate(1000),
+        };
 
         var countctx = LookupContext.ByNonOwner;
         if (cctx.MatchFlag("a", "all"))
@@ -55,21 +60,38 @@ public class EmbedService
         }
 
         var memberCount = await _repo.GetSystemMemberCount(system.Id, countctx == LookupContext.ByOwner ? null : PrivacyLevel.Public);
-
-        var eb = new EmbedBuilder()
-            .Title(system.NameFor(ctx))
-            .Footer(new Embed.EmbedFooter(
-                $"System ID: {system.DisplayHid(cctx.Config)} | Created on {system.Created.FormatZoned(cctx.Zone)}"))
-            .Color(system.Color?.ToDiscordColor())
-            .Url($"https://dash.pluralkit.me/profile/s/{system.Hid}");
+        var guildSettings = cctx.Guild != null ? await _repo.GetSystemGuild(cctx.Guild.Id, system.Id) : null;
 
         var avatar = system.AvatarFor(ctx);
-        if (avatar != null)
-            eb.Thumbnail(new Embed.EmbedThumbnail(avatar));
+        var headerText = "";
 
-        if (system.BannerPrivacy.CanAccess(ctx))
-            eb.Image(new Embed.EmbedImage(system.BannerImage));
+        if (system.PronounPrivacy.CanAccess(ctx) && system.Pronouns != null)
+            headerText += $"\n**Pronouns:** {system.Pronouns}";
 
+        if (system.Tag != null)
+            headerText += $"\n**Tag:** {system.Tag.EscapeMarkdown()}";
+
+        if (cctx.Guild != null)
+        {
+            if (guildSettings.Tag != null && guildSettings.TagEnabled)
+                headerText += $"**Tag (in server '{cctx.Guild.Name}'):** {guildSettings.Tag.EscapeMarkdown()}";
+            if (!guildSettings.TagEnabled)
+                headerText += $"**Tag (in server '{cctx.Guild.Name}'):** *(tag is disabled in this server)*";
+        }
+
+        if (system.MemberListPrivacy.CanAccess(ctx))
+        {
+            headerText += $"\n**Members:** {memberCount}";
+            if (system.Id == cctx.System.Id)
+                if (memberCount > 0)
+                    headerText += $" (see `{cctx.DefaultPrefix}system list`)";
+                else
+                    headerText += $" (add one with `{cctx.DefaultPrefix}member new`!)";
+            else if (memberCount > 0)
+                headerText += $" (see `{cctx.DefaultPrefix}system {system.DisplayHid(cctx.Config)} list`)";
+        }
+
+        List<MessageComponent> switchComponent = [];
         var latestSwitch = await _repo.GetLatestSwitch(system.Id);
         if (latestSwitch != null && system.FrontPrivacy.CanAccess(ctx))
         {
@@ -79,62 +101,87 @@ public class EmbedService
             {
                 var memberStr = string.Join(", ", switchMembers.Select(m => m.NameFor(ctx)));
                 if (memberStr.Length > 200)
-                    memberStr = $"[too many to show, see `{cctx.DefaultPrefix}system {system.DisplayHid(cctx.Config)} fronters`]";
-                eb.Field(new Embed.Field("Fronter".ToQuantity(switchMembers.Count, ShowQuantityAs.None), memberStr));
+                    memberStr = $"(too many to show, see `{cctx.DefaultPrefix}system {system.DisplayHid(cctx.Config)} fronters`)";
+
+                switchComponent.Add(new()
+                {
+                    Type = ComponentType.Text,
+                    Content = $"**{"Current fronter".ToQuantity(switchMembers.Count, ShowQuantityAs.None)}:** {memberStr}",
+                });
             }
         }
 
-        if (system.Tag != null)
-            eb.Field(new Embed.Field("Tag", system.Tag.EscapeMarkdown(), true));
+        List<MessageComponent> descComponents = [];
+        if (system.DescriptionFor(ctx) is { } desc)
+        {
+            descComponents.Add(new()
+            {
+                Type = ComponentType.Separator,
+            });
+
+            descComponents.Add(new()
+            {
+                Type = ComponentType.Text,
+                Content = desc.NormalizeLineEndSpacing().Truncate(1024),
+            });
+        }
+
+        if (system.BannerPrivacy.CanAccess(ctx))
+            descComponents.Add(new()
+            {
+                Type = ComponentType.MediaGallery,
+                Items = [new() { Media = new() { Url = system.BannerImage } }],
+            });
+
+        var systemName = (cctx.Guild != null && guildSettings?.DisplayName != null) ? guildSettings?.DisplayName! : system.NameFor(ctx);
+        var premiumText = ""; // TODO(iris): "\n\U0001F31F *PluralKit Premium supporter!*";
+        List<MessageComponent> header = [
+            new MessageComponent()
+            {
+                Type = ComponentType.Text,
+                Content = $"## [{systemName}](https://dash.pluralkit.me/profile/s/{system.Hid}){premiumText}",
+            },
+            new MessageComponent()
+            {
+                Type = ComponentType.Text,
+                Content = headerText,
+            },
+        ];
 
         if (cctx.Guild != null)
         {
-            var guildSettings = await _repo.GetSystemGuild(cctx.Guild.Id, system.Id);
-
-            if (guildSettings.Tag != null && guildSettings.TagEnabled)
-                eb.Field(new Embed.Field($"Tag (in server '{cctx.Guild.Name}')", guildSettings.Tag
-                    .EscapeMarkdown(), true));
-
-            if (!guildSettings.TagEnabled)
-                eb.Field(new Embed.Field($"Tag (in server '{cctx.Guild.Name}')",
-                    "*(tag is disabled in this server)*"));
-
-            if (guildSettings.DisplayName != null)
-                eb.Title(guildSettings.DisplayName);
-
             var guildAvatar = guildSettings.AvatarUrl.TryGetCleanCdnUrl();
             if (guildAvatar != null)
+                avatar = guildAvatar;
+        }
+
+        if (avatar != null)
+            header = [
+                new MessageComponent()
+                {
+                    Type = ComponentType.Section,
+                    Components = [.. header],
+                    Accessory = new MessageComponent()
+                    {
+                        Type = ComponentType.Thumbnail,
+                        Media = new() { Url = avatar },
+                    },
+                },
+            ];
+
+        return [
+            new MessageComponent()
             {
-                eb.Thumbnail(new Embed.EmbedThumbnail(guildAvatar));
-                var sysDesc = "*(this system has a server-specific avatar set";
-                if (avatar != null)
-                    sysDesc += $"; [click here]({system.AvatarUrl.TryGetCleanCdnUrl()}) to see their global avatar)*";
-                else
-                    sysDesc += ")*";
-                eb.Description(sysDesc);
-            }
-        }
-
-        if (system.PronounPrivacy.CanAccess(ctx) && system.Pronouns != null)
-            eb.Field(new Embed.Field("Pronouns", system.Pronouns, true));
-
-        if (!system.Color.EmptyOrNull()) eb.Field(new Embed.Field("Color", $"#{system.Color}", true));
-
-        eb.Field(new Embed.Field("Linked accounts", string.Join("\n", users).Truncate(1000), true));
-
-        if (system.MemberListPrivacy.CanAccess(ctx))
-        {
-            if (memberCount > 0)
-                eb.Field(new Embed.Field($"Members ({memberCount})",
-                    $"(see `{cctx.DefaultPrefix}system {system.DisplayHid(cctx.Config)} list` or `{cctx.DefaultPrefix}system {system.DisplayHid(cctx.Config)} list full`)", true));
-            else
-                eb.Field(new Embed.Field($"Members ({memberCount})", $"Add one with `{cctx.DefaultPrefix}member new`!", true));
-        }
-
-        if (system.DescriptionFor(ctx) is { } desc)
-            eb.Field(new Embed.Field("Description", desc.NormalizeLineEndSpacing().Truncate(1024)));
-
-        return eb.Build();
+                Type = ComponentType.Container,
+                AccentColor = system.Color?.ToDiscordColor(),
+                Components = [ ..header, ..switchComponent, linkedAccounts, ..descComponents ],
+            },
+            new MessageComponent()
+            {
+                Type = ComponentType.Text,
+                Content = $"-# System ID: `{system.DisplayHid(cctx.Config)}`\n-# Created: {system.Created.FormatZoned(cctx.Zone)}",
+            },
+        ];
     }
 
     public Embed CreateLoggedMessageEmbed(Message triggerMessage, Message proxiedMessage, string systemHid,
@@ -162,6 +209,135 @@ public class EmbedService
             embed.Field(new Embed.Field("Old message", oldContent?.NormalizeLineEndSpacing().Truncate(1000)));
 
         return embed.Build();
+    }
+
+    public async Task<MessageComponent[]> CreateMemberMessageComponents(PKSystem system, PKMember member, Guild guild, SystemConfig? ccfg, LookupContext ctx, DateTimeZone zone)
+    {
+        var name = member.NameFor(ctx);
+        var systemGuildSettings = guild != null ? await _repo.GetSystemGuild(guild.Id, system.Id) : null;
+        var systemName = (guild != null && systemGuildSettings?.DisplayName != null) ? systemGuildSettings?.DisplayName! : system.NameFor(ctx);
+
+        var guildSettings = guild != null ? await _repo.GetMemberGuild(guild.Id, member.Id) : null;
+        var guildDisplayName = guildSettings?.DisplayName;
+        var webhook_avatar = guildSettings?.AvatarUrl ?? member.WebhookAvatarFor(ctx) ?? member.AvatarFor(ctx);
+        var avatar = guildSettings?.AvatarUrl ?? member.AvatarFor(ctx);
+
+        var groups = await _repo.GetMemberGroups(member.Id)
+            .Where(g => g.Visibility.CanAccess(ctx))
+            .OrderBy(g => g.Name, StringComparer.InvariantCultureIgnoreCase)
+            .ToListAsync();
+
+        var headerText = "";
+        if (member.MemberVisibility == PrivacyLevel.Private)
+            headerText += "*(this member is hidden)*\n";
+        if (guildSettings?.AvatarUrl != null)
+            if (member.AvatarFor(ctx) != null)
+                headerText +=
+                    $"*(this member has a server-specific avatar set; [click here]({member.AvatarUrl.TryGetCleanCdnUrl()}) to see the global avatar)*\n";
+            else
+                headerText += "*(this member has a server-specific avatar set)*\n";
+
+        if (!member.DisplayName.EmptyOrNull() && member.NamePrivacy.CanAccess(ctx))
+            headerText += $"\n**Display name:** {member.DisplayName.Truncate(1024)}";
+        if (guild != null && guildDisplayName != null)
+            headerText += $"\n**Server nickname (for '{guild.Name}'):** {guildDisplayName.Truncate(1024)}";
+        if (member.PronounsFor(ctx) is { } pronouns && !string.IsNullOrWhiteSpace(pronouns))
+            headerText += $"\n**Pronouns:** {pronouns}";
+        if (member.BirthdayFor(ctx) != null)
+            headerText += $"\n**Birthday:** {member.BirthdayString}";
+        if (member.MessageCountFor(ctx) is { } count && count > 0)
+            headerText += $"\n**Message count:** {member.MessageCount}";
+
+        List<MessageComponent> extraData = [];
+        if (member.HasProxyTags && member.ProxyPrivacy.CanAccess(ctx))
+            extraData.Add(new MessageComponent
+            {
+                Type = ComponentType.Text,
+                Content = $"**Proxy tags:**\n{member.ProxyTagsString("\n").Truncate(1024)}",
+            });
+
+        if (groups.Count > 0)
+        {
+            // More than 5 groups show in "compact" format without ID
+            var content = groups.Count > 5
+                ? string.Join(", ", groups.Select(g => g.DisplayName ?? g.Name))
+                : string.Join("\n", groups.Select(g => $"[`{g.DisplayHid(ccfg, isList: true)}`] **{g.DisplayName ?? g.Name}**"));
+
+            extraData.Add(new MessageComponent
+            {
+                Type = ComponentType.Text,
+                Content = $"**Groups ({groups.Count}):**\n{content.Truncate(1000)}",
+            });
+        }
+
+        if (extraData.Count > 0)
+            extraData.Insert(0, new MessageComponent
+            {
+                Type = ComponentType.Separator,
+            });
+
+        List<MessageComponent> descComponents = [];
+        if (member.DescriptionFor(ctx) is { } desc)
+        {
+            descComponents.Add(new()
+            {
+                Type = ComponentType.Separator,
+            });
+
+            descComponents.Add(new()
+            {
+                Type = ComponentType.Text,
+                Content = desc.NormalizeLineEndSpacing().Truncate(1024),
+            });
+        }
+
+        if (member.BannerPrivacy.CanAccess(ctx) && !string.IsNullOrWhiteSpace(member.BannerImage))
+            descComponents.Add(new()
+            {
+                Type = ComponentType.MediaGallery,
+                Items = [new() { Media = new() { Url = member.BannerImage } }],
+            });
+
+        List<MessageComponent> header = [
+            new MessageComponent()
+            {
+                Type = ComponentType.Text,
+                Content = $"## [{name}](https://dash.pluralkit.me/profile/m/{member.Hid}){(systemName != null ? $" ({systemName})" : "")}",
+            },
+            new MessageComponent()
+            {
+                Type = ComponentType.Text,
+                Content = headerText,
+            },
+        ];
+
+        if (avatar != null)
+            header = [
+                new MessageComponent()
+                {
+                    Type = ComponentType.Section,
+                    Components = [.. header],
+                    Accessory = new MessageComponent()
+                    {
+                        Type = ComponentType.Thumbnail,
+                        Media = new() { Url = avatar },
+                    },
+                },
+            ];
+
+        return [
+            new MessageComponent()
+            {
+                Type = ComponentType.Container,
+                AccentColor = member.Color?.ToDiscordColor(),
+                Components = [ ..header, ..extraData, ..descComponents ],
+            },
+            new MessageComponent()
+            {
+                Type = ComponentType.Text,
+                Content = $"-# System ID: `{system.DisplayHid(ccfg)}` \u2219 Member ID: `{member.DisplayHid(ccfg)}`{(member.MetadataPrivacy.CanAccess(ctx) ? $"\n-# Created: {member.Created.FormatZoned(zone)}" : "")}",
+            },
+        ];
     }
 
     public async Task<Embed> CreateMemberEmbed(PKSystem system, PKMember member, Guild guild, SystemConfig? ccfg, LookupContext ctx, DateTimeZone zone)
@@ -239,6 +415,101 @@ public class EmbedService
             eb.Field(new Embed.Field("Description", member.Description.NormalizeLineEndSpacing()));
 
         return eb.Build();
+    }
+
+    public async Task<MessageComponent[]> CreateGroupMessageComponents(Context ctx, PKSystem system, PKGroup target)
+    {
+        var pctx = ctx.LookupContextFor(system.Id);
+        var name = target.NameFor(ctx);
+        var systemGuildSettings = ctx.Guild != null ? await _repo.GetSystemGuild(ctx.Guild.Id, system.Id) : null;
+        var systemName = (ctx.Guild != null && systemGuildSettings?.DisplayName != null) ? systemGuildSettings?.DisplayName! : system.NameFor(ctx);
+
+        var countctx = LookupContext.ByNonOwner;
+        if (ctx.MatchFlag("a", "all"))
+        {
+            if (system.Id == ctx.System.Id)
+                countctx = LookupContext.ByOwner;
+            else
+                throw Errors.LookupNotAllowed;
+        }
+
+        var memberCount = await _repo.GetGroupMemberCount(target.Id, countctx == LookupContext.ByOwner ? null : PrivacyLevel.Public);
+        var headerText = "";
+
+        if (target.NamePrivacy.CanAccess(pctx) && target.DisplayName != null)
+            headerText += $"\n**Display name:** {target.DisplayName}";
+
+        if (target.ListPrivacy.CanAccess(pctx))
+        {
+            headerText += $"\n**Members:** {memberCount}";
+            if (system.Id == ctx.System.Id && memberCount == 0)
+                headerText += $" (add one with `{ctx.DefaultPrefix}group {target.Reference(ctx)} add <member>`!)";
+            else if (memberCount > 0)
+                headerText += $" (see `{ctx.DefaultPrefix}group {target.Reference(ctx)} list`)";
+        }
+
+        List<MessageComponent> descComponents = [];
+        if (target.DescriptionFor(pctx) is { } desc)
+        {
+            descComponents.Add(new()
+            {
+                Type = ComponentType.Separator,
+            });
+
+            descComponents.Add(new()
+            {
+                Type = ComponentType.Text,
+                Content = desc.NormalizeLineEndSpacing().Truncate(1024),
+            });
+        }
+
+        if (target.BannerPrivacy.CanAccess(pctx) && !string.IsNullOrWhiteSpace(target.BannerImage))
+            descComponents.Add(new()
+            {
+                Type = ComponentType.MediaGallery,
+                Items = [new() { Media = new() { Url = target.BannerImage } }],
+            });
+
+        List<MessageComponent> header = [
+            new MessageComponent()
+            {
+                Type = ComponentType.Text,
+                Content = $"## [{name}](https://dash.pluralkit.me/profile/g/{target.Hid}){(systemName != null ? $" ({systemName})" : "")}",
+            },
+            new MessageComponent()
+            {
+                Type = ComponentType.Text,
+                Content = headerText,
+            },
+        ];
+
+        if (target.IconFor(pctx) is { } icon)
+            header = [
+                new MessageComponent()
+                {
+                    Type = ComponentType.Section,
+                    Components = [.. header],
+                    Accessory = new MessageComponent()
+                    {
+                        Type = ComponentType.Thumbnail,
+                        Media = new() { Url = icon.TryGetCleanCdnUrl() },
+                    },
+                },
+            ];
+
+        return [
+            new MessageComponent()
+            {
+                Type = ComponentType.Container,
+                AccentColor = target.Color?.ToDiscordColor(),
+                Components = [ ..header, ..descComponents ],
+            },
+            new MessageComponent()
+            {
+                Type = ComponentType.Text,
+                Content = $"-# System ID: `{system.DisplayHid(ctx.Config)}` \u2219 Group ID: `{target.DisplayHid(ctx.Config)}`{(target.MetadataPrivacy.CanAccess(pctx) ? $"\n-# Created: {target.Created.FormatZoned(ctx.Zone)}" : "")}",
+            },
+        ];
     }
 
     public async Task<Embed> CreateGroupEmbed(Context ctx, PKSystem system, PKGroup target)

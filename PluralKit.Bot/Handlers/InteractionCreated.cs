@@ -61,6 +61,7 @@ public class InteractionCreated: IEventHandler<InteractionCreateEvent>
                 // got some unhandled command, log and ignore
                 _logger.Warning(@"Unhandled ApplicationCommand interaction: {EventId} {CommandName}", evt.Id, evt.Data?.Name);
                 break;
-        };
+        }
+        ;
     }
 }
