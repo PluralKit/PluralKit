@@ -17,6 +17,7 @@ public record Message
         Ephemeral = 1 << 6,
         SuppressNotifications = 1 << 12,
         VoiceMessage = 1 << 13,
+        IsComponentsV2 = 1 << 15,
     }
 
     public enum MessageType
@@ -72,8 +73,6 @@ public record Message
     public Optional<Message?> ReferencedMessage { get; init; }
 
     public MessagePoll? Poll { get; init; }
-
-    // public MessageComponent[]? Components { get; init; }
 
     public record Reference(ulong? GuildId, ulong? ChannelId, ulong? MessageId);
 

@@ -18,7 +18,7 @@ public class System
     {
         if (system == null) throw Errors.NoSystemError(ctx.DefaultPrefix);
 
-        await ctx.Reply(embed: await _embeds.CreateSystemEmbed(ctx, system, ctx.LookupContextFor(system.Id)));
+        await ctx.Reply(components: await _embeds.CreateSystemMessageComponents(ctx, system, ctx.LookupContextFor(system.Id)));
     }
 
     public async Task New(Context ctx)
