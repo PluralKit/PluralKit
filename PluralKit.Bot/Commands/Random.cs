@@ -36,8 +36,17 @@ public class Random
                 "This system has no members!");
 
         var randInt = randGen.Next(members.Count);
-        await ctx.Reply(embed: await _embeds.CreateMemberEmbed(target, members[randInt], ctx.Guild,
-            ctx.Config, ctx.LookupContextFor(target.Id), ctx.Zone));
+
+        if (ctx.MatchFlag("show-embed", "se"))
+        {
+            await ctx.Reply(
+                text: EmbedService.LEGACY_EMBED_WARNING,
+                embed: await _embeds.CreateMemberEmbed(target, members[randInt], ctx.Guild, ctx.Config, ctx.LookupContextFor(target.Id), ctx.Zone));
+            return;
+        }
+
+        await ctx.Reply(
+            components: await _embeds.CreateMemberMessageComponents(target, members[randInt], ctx.Guild, ctx.Config, ctx.LookupContextFor(target.Id), ctx.Zone));
     }
 
     public async Task Group(Context ctx, PKSystem target)
@@ -60,7 +69,17 @@ public class Random
                     $"This system has no groups!");
 
         var randInt = randGen.Next(groups.Count());
-        await ctx.Reply(embed: await _embeds.CreateGroupEmbed(ctx, target, groups.ToArray()[randInt]));
+
+        if (ctx.MatchFlag("show-embed", "se"))
+        {
+            await ctx.Reply(
+                text: EmbedService.LEGACY_EMBED_WARNING,
+                embed: await _embeds.CreateGroupEmbed(ctx, target, groups.ToArray()[randInt]));
+            return;
+        }
+
+        await ctx.Reply(
+            components: await _embeds.CreateGroupMessageComponents(ctx, target, groups.ToArray()[randInt]));
     }
 
     public async Task GroupMember(Context ctx, PKGroup group)
@@ -92,7 +111,16 @@ public class Random
             system = await ctx.Repository.GetSystem(group.System);
 
         var randInt = randGen.Next(ms.Count);
-        await ctx.Reply(embed: await _embeds.CreateMemberEmbed(system, ms[randInt], ctx.Guild,
-            ctx.Config, ctx.LookupContextFor(group.System), ctx.Zone));
+
+        if (ctx.MatchFlag("show-embed", "se"))
+        {
+            await ctx.Reply(
+                text: EmbedService.LEGACY_EMBED_WARNING,
+                embed: await _embeds.CreateMemberEmbed(system, ms[randInt], ctx.Guild, ctx.Config, ctx.LookupContextFor(system.Id), ctx.Zone));
+            return;
+        }
+
+        await ctx.Reply(
+            components: await _embeds.CreateMemberMessageComponents(system, ms[randInt], ctx.Guild, ctx.Config, ctx.LookupContextFor(system.Id), ctx.Zone));
     }
 }
