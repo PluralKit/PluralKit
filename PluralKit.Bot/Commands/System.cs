@@ -17,6 +17,11 @@ public class System
     public async Task Query(Context ctx, PKSystem system)
     {
         if (system == null) throw Errors.NoSystemError(ctx.DefaultPrefix);
+        if (ctx.MatchFlag("show-embed", "se"))
+        {
+            await ctx.Reply(text: EmbedService.LEGACY_EMBED_WARNING, embed: await _embeds.CreateSystemEmbed(ctx, system, ctx.LookupContextFor(system.Id)));
+            return;
+        }
 
         await ctx.Reply(components: await _embeds.CreateSystemMessageComponents(ctx, system, ctx.LookupContextFor(system.Id)));
     }
