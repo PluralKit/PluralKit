@@ -143,7 +143,7 @@ public class EmbedService
             new MessageComponent()
             {
                 Type = ComponentType.Text,
-                Content = $"## {systemName ?? $"`{system.DisplayHid(cctx.Config)}`"}{premiumText}",
+                Content = $"### {systemName ?? $"`{system.DisplayHid(cctx.Config)}`"}{premiumText}",
             },
         ];
 
@@ -425,7 +425,7 @@ public class EmbedService
             new MessageComponent()
             {
                 Type = ComponentType.Text,
-                Content = $"## {name}{(systemName != null ? $" ({systemName})" : "")}",
+                Content = $"### {name}{(systemName != null ? $" ({systemName})" : "")}",
             },
         ];
 
@@ -612,7 +612,7 @@ public class EmbedService
             new MessageComponent()
             {
                 Type = ComponentType.Text,
-                Content = $"## {name}{(systemName != null ? $" ({systemName})" : "")}",
+                Content = $"### {name}{(systemName != null ? $" ({systemName})" : "")}",
             },
         ];
 
