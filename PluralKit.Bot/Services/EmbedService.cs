@@ -21,13 +21,15 @@ public class EmbedService
     private readonly IDatabase _db;
     private readonly ModelRepository _repo;
     private readonly DiscordApiClient _rest;
+    private readonly CoreConfig _coreConfig;
 
-    public EmbedService(IDatabase db, ModelRepository repo, IDiscordCache cache, DiscordApiClient rest)
+    public EmbedService(IDatabase db, ModelRepository repo, IDiscordCache cache, DiscordApiClient rest, CoreConfig coreConfig)
     {
         _db = db;
         _repo = repo;
         _cache = cache;
         _rest = rest;
+        _coreConfig = coreConfig;
     }
 
     private Task<(ulong Id, User? User)[]> GetUsers(IEnumerable<ulong> ids)
@@ -195,7 +197,7 @@ public class EmbedService
                     Type = ComponentType.Button,
                     Style = ButtonStyle.Link,
                     Label = "View on dashboard",
-                    Url = $"https://dash.pluralkit.me/profile/s/{system.Hid}",
+                    Url = $"{_coreConfig.DashboardBaseUrl}/profile/s/{system.Hid}",
                 },
             },
         ];
@@ -223,7 +225,7 @@ public class EmbedService
             .Footer(new Embed.EmbedFooter(
                 $"System ID: {system.DisplayHid(cctx.Config)} | Created on {system.Created.FormatZoned(cctx.Zone)}"))
             .Color(system.Color?.ToDiscordColor())
-            .Url($"https://dash.pluralkit.me/profile/s/{system.Hid}");
+            .Url($"{_coreConfig.DashboardBaseUrl}/profile/s/{system.Hid}");
 
         var avatar = system.AvatarFor(ctx);
         if (avatar != null)
@@ -470,7 +472,7 @@ public class EmbedService
                     Type = ComponentType.Button,
                     Style = ButtonStyle.Link,
                     Label = "View on dashboard",
-                    Url = $"https://dash.pluralkit.me/profile/m/{member.Hid}",
+                    Url = $"{_coreConfig.DashboardBaseUrl}/profile/m/{member.Hid}",
                 },
             },
         ];
@@ -500,7 +502,7 @@ public class EmbedService
             .ToListAsync();
 
         var eb = new EmbedBuilder()
-            .Author(new Embed.EmbedAuthor(name, IconUrl: webhook_avatar.TryGetCleanCdnUrl(), Url: $"https://dash.pluralkit.me/profile/m/{member.Hid}"))
+            .Author(new Embed.EmbedAuthor(name, IconUrl: webhook_avatar.TryGetCleanCdnUrl(), Url: $"{_coreConfig.DashboardBaseUrl}/profile/m/{member.Hid}"))
             // .WithColor(member.ColorPrivacy.CanAccess(ctx) ? color : null)
             .Color(member.Color?.ToDiscordColor())
             .Footer(new Embed.EmbedFooter(
@@ -657,7 +659,7 @@ public class EmbedService
                     Type = ComponentType.Button,
                     Style = ButtonStyle.Link,
                     Label = "View on dashboard",
-                    Url = $"https://dash.pluralkit.me/profile/g/{target.Hid}",
+                    Url = $"{_coreConfig.DashboardBaseUrl}/profile/g/{target.Hid}",
                 },
             },
         ];
@@ -688,7 +690,7 @@ public class EmbedService
             nameField = $"{nameField}";
 
         var eb = new EmbedBuilder()
-            .Author(new Embed.EmbedAuthor(nameField, IconUrl: target.IconFor(pctx), Url: $"https://dash.pluralkit.me/profile/g/{target.Hid}"))
+            .Author(new Embed.EmbedAuthor(nameField, IconUrl: target.IconFor(pctx), Url: $"{_coreConfig.DashboardBaseUrl}/profile/g/{target.Hid}"))
             .Color(target.Color?.ToDiscordColor());
 
         eb.Footer(new Embed.EmbedFooter($"System ID: {system.DisplayHid(ctx.Config)} | Group ID: {target.DisplayHid(ctx.Config)}{(target.MetadataPrivacy.CanAccess(pctx) ? $" | Created on {target.Created.FormatZoned(ctx.Zone)}" : "")}"));
