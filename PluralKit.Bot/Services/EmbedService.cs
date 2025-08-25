@@ -141,7 +141,7 @@ public class EmbedService
             new MessageComponent()
             {
                 Type = ComponentType.Text,
-                Content = $"## [{systemName ?? $"`{system.DisplayHid(cctx.Config)}`"}](https://dash.pluralkit.me/profile/s/{system.Hid}){premiumText}",
+                Content = $"## {systemName ?? $"`{system.DisplayHid(cctx.Config)}`"}{premiumText}",
             },
         ];
 
@@ -182,8 +182,21 @@ public class EmbedService
             },
             new MessageComponent()
             {
-                Type = ComponentType.Text,
-                Content = $"-# System ID: `{system.DisplayHid(cctx.Config)}`\n-# Created: {system.Created.FormatZoned(cctx.Zone)}",
+                Type = ComponentType.Section,
+                Components = [
+                    new MessageComponent()
+                    {
+                        Type = ComponentType.Text,
+                        Content = $"-# System ID: `{system.DisplayHid(cctx.Config)}`\n-# Created: {system.Created.FormatZoned(cctx.Zone)}",
+                    },
+                ],
+                Accessory = new MessageComponent()
+                {
+                    Type = ComponentType.Button,
+                    Style = ButtonStyle.Link,
+                    Label = "View on dashboard",
+                    Url = $"https://dash.pluralkit.me/profile/s/{system.Hid}",
+                },
             },
         ];
     }
@@ -410,7 +423,7 @@ public class EmbedService
             new MessageComponent()
             {
                 Type = ComponentType.Text,
-                Content = $"## [{name}](https://dash.pluralkit.me/profile/m/{member.Hid}){(systemName != null ? $" ({systemName})" : "")}",
+                Content = $"## {name}{(systemName != null ? $" ({systemName})" : "")}",
             },
         ];
 
@@ -444,8 +457,21 @@ public class EmbedService
             },
             new MessageComponent()
             {
-                Type = ComponentType.Text,
-                Content = $"-# System ID: `{system.DisplayHid(ccfg)}` \u2219 Member ID: `{member.DisplayHid(ccfg)}`{(member.MetadataPrivacy.CanAccess(ctx) ? $"\n-# Created: {member.Created.FormatZoned(zone)}" : "")}",
+                Type = ComponentType.Section,
+                Components = [
+                    new MessageComponent()
+                    {
+                        Type = ComponentType.Text,
+                        Content = $"-# System ID: `{system.DisplayHid(ccfg)}` \u2219 Member ID: `{member.DisplayHid(ccfg)}`{(member.MetadataPrivacy.CanAccess(ctx) ? $"\n-# Created: {member.Created.FormatZoned(zone)}" : "")}",
+                    },
+                ],
+                Accessory = new MessageComponent()
+                {
+                    Type = ComponentType.Button,
+                    Style = ButtonStyle.Link,
+                    Label = "View on dashboard",
+                    Url = $"https://dash.pluralkit.me/profile/m/{member.Hid}",
+                },
             },
         ];
     }
@@ -584,7 +610,7 @@ public class EmbedService
             new MessageComponent()
             {
                 Type = ComponentType.Text,
-                Content = $"## [{name}](https://dash.pluralkit.me/profile/g/{target.Hid}){(systemName != null ? $" ({systemName})" : "")}",
+                Content = $"## {name}{(systemName != null ? $" ({systemName})" : "")}",
             },
         ];
 
@@ -618,8 +644,21 @@ public class EmbedService
             },
             new MessageComponent()
             {
-                Type = ComponentType.Text,
-                Content = $"-# System ID: `{system.DisplayHid(ctx.Config)}` \u2219 Group ID: `{target.DisplayHid(ctx.Config)}`{(target.MetadataPrivacy.CanAccess(pctx) ? $"\n-# Created: {target.Created.FormatZoned(ctx.Zone)}" : "")}",
+                Type = ComponentType.Section,
+                Components = [
+                    new MessageComponent()
+                    {
+                        Type = ComponentType.Text,
+                        Content = $"-# System ID: `{system.DisplayHid(ctx.Config)}` \u2219 Group ID: `{target.DisplayHid(ctx.Config)}`{(target.MetadataPrivacy.CanAccess(pctx) ? $"\n-# Created: {target.Created.FormatZoned(ctx.Zone)}" : "")}",
+                    },
+                ],
+                Accessory = new MessageComponent()
+                {
+                    Type = ComponentType.Button,
+                    Style = ButtonStyle.Link,
+                    Label = "View on dashboard",
+                    Url = $"https://dash.pluralkit.me/profile/g/{target.Hid}",
+                },
             },
         ];
     }
