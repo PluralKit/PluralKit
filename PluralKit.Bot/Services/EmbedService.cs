@@ -15,6 +15,8 @@ namespace PluralKit.Bot;
 
 public class EmbedService
 {
+    public const string LEGACY_EMBED_WARNING = "\u26A0\uFE0F The \"legacy\" embeds for system/member/group cards are deprecated, and will be removed in future.";
+
     private readonly IDiscordCache _cache;
     private readonly IDatabase _db;
     private readonly ModelRepository _repo;
@@ -184,6 +186,104 @@ public class EmbedService
                 Content = $"-# System ID: `{system.DisplayHid(cctx.Config)}`\n-# Created: {system.Created.FormatZoned(cctx.Zone)}",
             },
         ];
+    }
+
+    public async Task<Embed> CreateSystemEmbed(Context cctx, PKSystem system, LookupContext ctx)
+    {
+        // Fetch/render info for all accounts simultaneously
+        var accounts = await _repo.GetSystemAccounts(system.Id);
+        var users = (await GetUsers(accounts)).Select(x => x.User?.NameAndMention() ?? $"(deleted account {x.Id})");
+
+        var countctx = LookupContext.ByNonOwner;
+        if (cctx.MatchFlag("a", "all"))
+        {
+            if (system.Id == cctx.System.Id)
+                countctx = LookupContext.ByOwner;
+            else
+                throw Errors.LookupNotAllowed;
+        }
+
+        var memberCount = await _repo.GetSystemMemberCount(system.Id, countctx == LookupContext.ByOwner ? null : PrivacyLevel.Public);
+
+        var eb = new EmbedBuilder()
+            .Title(system.NameFor(ctx))
+            .Footer(new Embed.EmbedFooter(
+                $"System ID: {system.DisplayHid(cctx.Config)} | Created on {system.Created.FormatZoned(cctx.Zone)}"))
+            .Color(system.Color?.ToDiscordColor())
+            .Url($"https://dash.pluralkit.me/profile/s/{system.Hid}");
+
+        var avatar = system.AvatarFor(ctx);
+        if (avatar != null)
+            eb.Thumbnail(new Embed.EmbedThumbnail(avatar));
+
+        if (system.BannerPrivacy.CanAccess(ctx))
+            eb.Image(new Embed.EmbedImage(system.BannerImage));
+
+        var latestSwitch = await _repo.GetLatestSwitch(system.Id);
+        if (latestSwitch != null && system.FrontPrivacy.CanAccess(ctx))
+        {
+            var switchMembers =
+                await _db.Execute(conn => _repo.GetSwitchMembers(conn, latestSwitch.Id)).ToListAsync();
+            if (switchMembers.Count > 0)
+            {
+                var memberStr = string.Join(", ", switchMembers.Select(m => m.NameFor(ctx)));
+                if (memberStr.Length > 200)
+                    memberStr = $"[too many to show, see `{cctx.DefaultPrefix}system {system.DisplayHid(cctx.Config)} fronters`]";
+                eb.Field(new Embed.Field("Fronter".ToQuantity(switchMembers.Count, ShowQuantityAs.None), memberStr));
+            }
+        }
+
+        if (system.Tag != null)
+            eb.Field(new Embed.Field("Tag", system.Tag.EscapeMarkdown(), true));
+
+        if (cctx.Guild != null)
+        {
+            var guildSettings = await _repo.GetSystemGuild(cctx.Guild.Id, system.Id);
+
+            if (guildSettings.Tag != null && guildSettings.TagEnabled)
+                eb.Field(new Embed.Field($"Tag (in server '{cctx.Guild.Name}')", guildSettings.Tag
+                    .EscapeMarkdown(), true));
+
+            if (!guildSettings.TagEnabled)
+                eb.Field(new Embed.Field($"Tag (in server '{cctx.Guild.Name}')",
+                    "*(tag is disabled in this server)*"));
+
+            if (guildSettings.DisplayName != null)
+                eb.Title(guildSettings.DisplayName);
+
+            var guildAvatar = guildSettings.AvatarUrl.TryGetCleanCdnUrl();
+            if (guildAvatar != null)
+            {
+                eb.Thumbnail(new Embed.EmbedThumbnail(guildAvatar));
+                var sysDesc = "*(this system has a server-specific avatar set";
+                if (avatar != null)
+                    sysDesc += $"; [click here]({system.AvatarUrl.TryGetCleanCdnUrl()}) to see their global avatar)*";
+                else
+                    sysDesc += ")*";
+                eb.Description(sysDesc);
+            }
+        }
+
+        if (system.PronounPrivacy.CanAccess(ctx) && system.Pronouns != null)
+            eb.Field(new Embed.Field("Pronouns", system.Pronouns, true));
+
+        if (!system.Color.EmptyOrNull()) eb.Field(new Embed.Field("Color", $"#{system.Color}", true));
+
+        eb.Field(new Embed.Field("Linked accounts", string.Join("\n", users).Truncate(1000), true));
+
+        if (system.MemberListPrivacy.CanAccess(ctx))
+        {
+            if (memberCount > 0)
+                eb.Field(new Embed.Field($"Members ({memberCount})",
+                    $"(see `{cctx.DefaultPrefix}system {system.DisplayHid(cctx.Config)} list` or `{cctx.DefaultPrefix}system {system.DisplayHid(cctx.Config)} list full`)", true));
+            else
+                eb.Field(new Embed.Field($"Members ({memberCount})", $"Add one with `{cctx.DefaultPrefix}member new`!", true));
+        }
+
+        if (system.DescriptionFor(ctx) is { } desc)
+            eb.Field(new Embed.Field("Description", desc.NormalizeLineEndSpacing().Truncate(1024)));
+
+        return eb.Build();
     }
 
     public Embed CreateLoggedMessageEmbed(Message triggerMessage, Message proxiedMessage, string systemHid,

@@ -520,6 +520,12 @@ public class Groups
     public async Task ShowGroupCard(Context ctx, PKGroup target)
     {
         var system = await GetGroupSystem(ctx, target);
+        if (ctx.MatchFlag("show-embed", "se"))
+        {
+            await ctx.Reply(text: EmbedService.LEGACY_EMBED_WARNING, embed: await _embeds.CreateGroupEmbed(ctx, system, target));
+            return;
+        }
+
         await ctx.Reply(components: await _embeds.CreateGroupMessageComponents(ctx, system, target));
     }
 
