@@ -126,7 +126,7 @@ public class EmbedService
             });
         }
 
-        if (system.BannerPrivacy.CanAccess(ctx))
+        if (system.BannerPrivacy.CanAccess(ctx) && !string.IsNullOrWhiteSpace(system.BannerImage))
             descComponents.Add(new()
             {
                 Type = ComponentType.MediaGallery,
@@ -139,23 +139,25 @@ public class EmbedService
             new MessageComponent()
             {
                 Type = ComponentType.Text,
-                Content = $"## [{systemName}](https://dash.pluralkit.me/profile/s/{system.Hid}){premiumText}",
+                Content = $"## [{systemName ?? $"`{system.DisplayHid(cctx.Config)}`"}](https://dash.pluralkit.me/profile/s/{system.Hid}){premiumText}",
             },
-            new MessageComponent()
+        ];
+
+        if (!string.IsNullOrWhiteSpace(headerText))
+            header.Add(new MessageComponent()
             {
                 Type = ComponentType.Text,
                 Content = headerText,
-            },
-        ];
+            });
 
         if (cctx.Guild != null)
         {
             var guildAvatar = guildSettings.AvatarUrl.TryGetCleanCdnUrl();
-            if (guildAvatar != null)
+            if (!string.IsNullOrWhiteSpace(guildAvatar))
                 avatar = guildAvatar;
         }
 
-        if (avatar != null)
+        if (!string.IsNullOrWhiteSpace(avatar))
             header = [
                 new MessageComponent()
                 {
@@ -304,14 +306,16 @@ public class EmbedService
                 Type = ComponentType.Text,
                 Content = $"## [{name}](https://dash.pluralkit.me/profile/m/{member.Hid}){(systemName != null ? $" ({systemName})" : "")}",
             },
-            new MessageComponent()
+        ];
+
+        if (!string.IsNullOrWhiteSpace(headerText))
+            header.Add(new MessageComponent()
             {
                 Type = ComponentType.Text,
                 Content = headerText,
-            },
-        ];
+            });
 
-        if (avatar != null)
+        if (!string.IsNullOrWhiteSpace(avatar))
             header = [
                 new MessageComponent()
                 {
@@ -476,12 +480,14 @@ public class EmbedService
                 Type = ComponentType.Text,
                 Content = $"## [{name}](https://dash.pluralkit.me/profile/g/{target.Hid}){(systemName != null ? $" ({systemName})" : "")}",
             },
-            new MessageComponent()
+        ];
+
+        if (!string.IsNullOrWhiteSpace(headerText))
+            header.Add(new MessageComponent()
             {
                 Type = ComponentType.Text,
                 Content = headerText,
-            },
-        ];
+            });
 
         if (target.IconFor(pctx) is { } icon)
             header = [
