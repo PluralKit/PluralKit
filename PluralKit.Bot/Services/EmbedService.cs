@@ -352,11 +352,18 @@ public class EmbedService
 
         List<MessageComponent> extraData = [];
         if (member.HasProxyTags && member.ProxyPrivacy.CanAccess(ctx))
+        {
+            extraData.Add(new MessageComponent
+            {
+                Type = ComponentType.Separator,
+            });
+
             extraData.Add(new MessageComponent
             {
                 Type = ComponentType.Text,
                 Content = $"**Proxy tags:**\n{member.ProxyTagsString("\n").Truncate(1024)}",
             });
+        }
 
         if (groups.Count > 0)
         {
@@ -367,16 +374,15 @@ public class EmbedService
 
             extraData.Add(new MessageComponent
             {
+                Type = ComponentType.Separator,
+            });
+
+            extraData.Add(new MessageComponent
+            {
                 Type = ComponentType.Text,
                 Content = $"**Groups ({groups.Count}):**\n{content.Truncate(1000)}",
             });
         }
-
-        if (extraData.Count > 0)
-            extraData.Insert(0, new MessageComponent
-            {
-                Type = ComponentType.Separator,
-            });
 
         List<MessageComponent> descComponents = [];
         if (member.DescriptionFor(ctx) is { } desc)
