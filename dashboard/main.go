@@ -64,6 +64,10 @@ func main() {
 		createEmbed(rw, r)
 	})
 
+	r.Get("/status", func(rw http.ResponseWriter, r *http.Request) {
+		http.Redirect(rw, r, "https://status.pluralkit.me/", http.StatusMovedPermanently)
+	})
+
 	http.ListenAndServe(":8080", r)
 }
 

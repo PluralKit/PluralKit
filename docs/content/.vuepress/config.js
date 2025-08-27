@@ -18,7 +18,7 @@ module.exports = {
   },
 
   themeConfig: {
-    repo: 'PluralKit/PluralKit',
+    repo: false,
     docsDir: 'docs/content/',
     docsBranch: 'main',
     editLinks: true,
@@ -29,7 +29,8 @@ module.exports = {
     nav: [
       { text: "Web dashboard", link: "https://dash.pluralkit.me" },
       { text: "Support server", link: "https://discord.gg/PczBt78" },
-      { text: "Invite bot", link: "https://discord.com/oauth2/authorize?client_id=466378653216014359&scope=bot%20applications.commands&permissions=536995904" }
+      { text: "Invite bot", link: "https://discord.com/oauth2/authorize?client_id=466378653216014359&scope=bot%20applications.commands&permissions=536995904" },
+      { text: "Bot status", link: "https://status.pluralkit.me/" }
     ],
     sidebar: [
       "/",

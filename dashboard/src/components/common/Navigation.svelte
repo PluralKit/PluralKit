@@ -53,7 +53,7 @@
                     <Link to="/profile" class="nav-link">Public</Link>
                 </NavItem>
                 <NavItem>
-                    <Link to="/status" class="nav-link">Bot status</Link>
+                    <a href="https://status.pluralkit.me/" class="nav-link">Bot status</a>
                 </NavItem>
             </Nav>
         </Collapse>
