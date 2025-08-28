@@ -109,12 +109,15 @@ async fn main() -> anyhow::Result<()> {
                         };
                     }
                     ShardStateEvent::Closed => {
-                        if let Err(error) = shard_state.socket_closed(shard_id.number(), false).await {
+                        if let Err(error) =
+                            shard_state.socket_closed(shard_id.number(), false).await
+                        {
                             error!("failed to update shard state for closed: {error}")
                         };
                     }
                     ShardStateEvent::Reconnect => {
-                        if let Err(error) = shard_state.socket_closed(shard_id.number(), true).await {
+                        if let Err(error) = shard_state.socket_closed(shard_id.number(), true).await
+                        {
                             error!("failed to update shard state for reconnect: {error}")
                         };
                     }

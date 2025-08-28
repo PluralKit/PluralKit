@@ -6,7 +6,7 @@ use std::sync::Arc;
 use tokio::sync::mpsc::Sender;
 use tracing::{error, info, warn};
 use twilight_gateway::{
-    create_iterator, ConfigBuilder, Event, EventTypeFlags, Message, Shard, ShardId, CloseFrame
+    create_iterator, CloseFrame, ConfigBuilder, Event, EventTypeFlags, Message, Shard, ShardId,
 };
 use twilight_model::gateway::{
     payload::outgoing::update_presence::UpdatePresencePayload,
@@ -135,9 +135,7 @@ pub async fn runner(
                     )
                     .increment(1);
 
-                    if let Err(error) =
-                        tx_state.try_send((shard.id(), state_event, None, None))
-                    {
+                    if let Err(error) = tx_state.try_send((shard.id(), state_event, None, None)) {
                         error!("failed to update shard state for socket closure: {error}");
                     }
 
