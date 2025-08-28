@@ -8,11 +8,13 @@ pub struct ShardState {
     /// unix timestamp
     pub last_heartbeat: i32,
     pub last_connection: i32,
+    pub last_reconnect: i32,
     pub cluster_id: Option<i32>,
 }
 
 pub enum ShardStateEvent {
     Closed,
     Heartbeat,
+    Reconnect,
     Other,
 }
