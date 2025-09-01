@@ -97,7 +97,9 @@ impl ShardStateManager {
         info.shard_id = shard_id as i32;
         info.cluster_id = Some(cluster_config().node_id as i32);
         info.up = false;
-        info.last_reconnect = chrono::offset::Utc::now().timestamp() as i32;
+        if reconnect {
+            info.last_reconnect = chrono::offset::Utc::now().timestamp() as i32
+        }
         info.disconnection_count += 1;
 
         self.save_shard(shard_id, info).await?;
