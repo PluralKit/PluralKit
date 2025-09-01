@@ -4,7 +4,8 @@ WORKDIR /build
 
 RUN apk add rustup build-base
 # todo: arm64 target
-RUN rustup-init --default-host x86_64-unknown-linux-musl --default-toolchain nightly-2024-08-20 --profile default -y
+COPY rust-toolchain.toml .
+RUN rustup-init --no-update-default-toolchain -y
 
 ENV PATH=/root/.cargo/bin:$PATH
 ENV RUSTFLAGS='-C link-arg=-s'

@@ -1,7 +1,7 @@
 use std::time::Instant;
 
 use axum::{extract::MatchedPath, extract::Request, middleware::Next, response::Response};
-use tracing::{info, span, warn, Instrument, Level};
+use tracing::{Instrument, Level, info, span, warn};
 
 // log any requests that take longer than 2 seconds
 // todo: change as necessary

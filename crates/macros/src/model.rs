@@ -1,6 +1,6 @@
 use proc_macro2::{Span, TokenStream};
 use quote::quote;
-use syn::{parse_macro_input, DeriveInput, Expr, Ident, Meta, Type};
+use syn::{DeriveInput, Expr, Ident, Meta, Type, parse_macro_input};
 
 #[derive(Clone, Debug)]
 enum ElemPatchability {

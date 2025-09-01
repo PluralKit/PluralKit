@@ -8,10 +8,10 @@ use anyhow::Context;
 use axum::extract::State;
 use axum::routing::get;
 use axum::{
+    Json, Router,
     http::StatusCode,
     response::{IntoResponse, Response},
     routing::post,
-    Json, Router,
 };
 use libpk::_config::AvatarsConfig;
 use libpk::db::repository::avatars as db;
@@ -153,7 +153,7 @@ async fn verify(
     )
     .await?;
 
-    let encoded = process::process_async(result.data, req.kind).await?;
+    process::process_async(result.data, req.kind).await?;
 
     Ok(())
 }

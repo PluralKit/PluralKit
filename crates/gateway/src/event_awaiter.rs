@@ -3,7 +3,7 @@
 // - interaction: (custom_id where not_includes "help-menu")
 
 use std::{
-    collections::{hash_map::Entry, HashMap},
+    collections::{HashMap, hash_map::Entry},
     net::{IpAddr, SocketAddr},
     time::Duration,
 };
@@ -15,8 +15,8 @@ use twilight_gateway::Event;
 use twilight_model::{
     application::interaction::InteractionData,
     id::{
-        marker::{ChannelMarker, MessageMarker, UserMarker},
         Id,
+        marker::{ChannelMarker, MessageMarker, UserMarker},
     },
 };
 
@@ -103,7 +103,13 @@ impl EventAwaiter {
                     }
                 }
             }
-            info!("ran event_awaiter cleanup loop, took {}us, {} reactions, {} messages, {} interactions", Instant::now().duration_since(now).as_micros(), counts.0, counts.1, counts.2);
+            info!(
+                "ran event_awaiter cleanup loop, took {}us, {} reactions, {} messages, {} interactions",
+                Instant::now().duration_since(now).as_micros(),
+                counts.0,
+                counts.1,
+                counts.2
+            );
         }
     }
 

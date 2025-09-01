@@ -4,7 +4,7 @@ use axum::{
     extract::MatchedPath, extract::Request, http::StatusCode, middleware::Next, response::Response,
 };
 use metrics::{counter, histogram};
-use tracing::{info, span, warn, Instrument, Level};
+use tracing::{Instrument, Level, info, span, warn};
 
 // log any requests that take longer than 2 seconds
 // todo: change as necessary

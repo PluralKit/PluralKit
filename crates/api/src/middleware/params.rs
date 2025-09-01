@@ -6,11 +6,11 @@ use axum::{
     routing::url_params::UrlParams,
 };
 
-use sqlx::{types::Uuid, Postgres};
+use sqlx::{Postgres, types::Uuid};
 use tracing::error;
 
 use crate::auth::AuthState;
-use crate::{util::json_err, ApiContext};
+use crate::{ApiContext, util::json_err};
 use pluralkit_models::PKSystem;
 
 // move this somewhere else
@@ -31,7 +31,7 @@ pub async fn params(State(ctx): State<ApiContext>, mut req: Request, next: Next)
                 StatusCode::BAD_REQUEST,
                 r#"{"message":"400: Bad Request","code": 0}"#.to_string(),
             )
-            .into()
+            .into();
         }
     };
 

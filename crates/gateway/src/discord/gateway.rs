@@ -6,17 +6,17 @@ use std::sync::Arc;
 use tokio::sync::mpsc::Sender;
 use tracing::{error, info, warn};
 use twilight_gateway::{
-    create_iterator, CloseFrame, ConfigBuilder, Event, EventTypeFlags, Message, Shard, ShardId,
+    CloseFrame, ConfigBuilder, Event, EventTypeFlags, Message, Shard, ShardId, create_iterator,
 };
 use twilight_model::gateway::{
+    Intents,
     payload::outgoing::update_presence::UpdatePresencePayload,
     presence::{Activity, ActivityType, Status},
-    Intents,
 };
 
 use crate::{
-    discord::identify_queue::{self, RedisQueue},
     RUNTIME_CONFIG_KEY_EVENT_TARGET,
+    discord::identify_queue::{self, RedisQueue},
 };
 
 use super::cache::DiscordCache;

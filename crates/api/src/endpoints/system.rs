@@ -1,11 +1,11 @@
-use axum::{extract::State, response::IntoResponse, Extension, Json};
+use axum::{Extension, Json, extract::State, response::IntoResponse};
 use pk_macros::api_endpoint;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use sqlx::Postgres;
 
 use pluralkit_models::{PKSystem, PKSystemConfig, PrivacyLevel};
 
-use crate::{auth::AuthState, error::fail, ApiContext};
+use crate::{ApiContext, auth::AuthState, error::fail};
 
 #[api_endpoint]
 pub async fn get_system_settings(

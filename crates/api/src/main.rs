@@ -1,16 +1,14 @@
-#![feature(let_chains)]
-
 use auth::{AuthState, INTERNAL_APPID_HEADER, INTERNAL_SYSTEMID_HEADER};
 use axum::{
+    Extension, Router,
     body::Body,
     extract::{Request as ExtractRequest, State},
     http::Uri,
     response::{IntoResponse, Response},
     routing::{delete, get, patch, post},
-    Extension, Router,
 };
 use hyper_util::{
-    client::legacy::{connect::HttpConnector, Client},
+    client::legacy::{Client, connect::HttpConnector},
     rt::TokioExecutor,
 };
 use tracing::info;

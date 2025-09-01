@@ -4,9 +4,10 @@ use fred::interfaces::*;
 use libpk::state::ShardState;
 use pk_macros::api_endpoint;
 use serde::Deserialize;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use std::collections::HashMap;
 
+#[allow(dead_code)]
 #[derive(Deserialize)]
 #[serde(rename_all = "PascalCase")]
 struct ClusterStats {

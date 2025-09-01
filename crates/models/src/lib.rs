@@ -18,7 +18,7 @@ pub enum PrivacyLevel {
 }
 
 // this sucks, put it somewhere else
-use sqlx::{postgres::PgTypeInfo, Database, Decode, Postgres, Type};
+use sqlx::{Database, Decode, Postgres, Type, postgres::PgTypeInfo};
 use std::error::Error;
 _util::fake_enum_impls!(PrivacyLevel);
 

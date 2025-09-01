@@ -4,18 +4,18 @@ use serde::Serialize;
 use std::{collections::HashMap, sync::Arc};
 use tokio::sync::RwLock;
 use twilight_cache_inmemory::{
+    InMemoryCache, ResourceType,
     model::CachedMember,
     permission::{MemberRoles, RootError},
     traits::CacheableChannel,
-    InMemoryCache, ResourceType,
 };
 use twilight_gateway::Event;
 use twilight_model::{
     channel::{Channel, ChannelType},
     guild::{Guild, Member, Permissions},
     id::{
-        marker::{ChannelMarker, GuildMarker, MessageMarker, UserMarker},
         Id,
+        marker::{ChannelMarker, GuildMarker, MessageMarker, UserMarker},
     },
 };
 use twilight_util::permission_calculator::PermissionCalculator;

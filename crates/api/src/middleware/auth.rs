@@ -10,7 +10,7 @@ use subtle::ConstantTimeEq;
 use tracing::error;
 
 use crate::auth::AuthState;
-use crate::{util::json_err, ApiContext};
+use crate::{ApiContext, util::json_err};
 
 pub async fn auth(State(ctx): State<ApiContext>, mut req: Request, next: Next) -> Response {
     let mut authed_system_id: Option<i32> = None;

@@ -1,4 +1,3 @@
-#![feature(let_chains)]
 #![feature(if_let_guard)]
 #![feature(duration_constructors)]
 
@@ -10,7 +9,7 @@ use libpk::{runtime_config::RuntimeConfig, state::ShardStateEvent};
 use reqwest::{ClientBuilder, StatusCode};
 use std::{sync::Arc, time::Duration, vec::Vec};
 use tokio::{
-    signal::unix::{signal, SignalKind},
+    signal::unix::{SignalKind, signal},
     sync::mpsc::channel,
     task::JoinSet,
 };

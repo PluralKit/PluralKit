@@ -72,9 +72,7 @@
             programs.nixfmt.enable = true;
           };
 
-          nci.toolchainConfig = {
-            channel = "nightly";
-          };
+          nci.toolchainConfig = ./rust-toolchain.toml;
           nci.projects."pluralkit-services" = {
             path = ./.;
             export = false;

@@ -1,7 +1,7 @@
 use quote::quote;
-use syn::{parse_macro_input, FnArg, ItemFn, Pat};
+use syn::{FnArg, ItemFn, Pat, parse_macro_input};
 
-fn pretty_print(ts: &proc_macro2::TokenStream) -> String {
+fn _pretty_print(ts: &proc_macro2::TokenStream) -> String {
     let file = syn::parse_file(&ts.to_string()).unwrap();
     prettyplease::unparse(&file)
 }

@@ -4,7 +4,7 @@ use std::io::Cursor;
 use std::time::Instant;
 use tracing::{debug, error, info, instrument};
 
-use crate::{hash::Hash, ImageKind, PKAvatarError};
+use crate::{ImageKind, PKAvatarError, hash::Hash};
 
 const MAX_DIMENSION: u32 = 4000;
 
