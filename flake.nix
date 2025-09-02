@@ -4,7 +4,7 @@
   inputs = {
     nixpkgs.url = "nixpkgs/nixpkgs-unstable";
     parts.url = "github:hercules-ci/flake-parts";
-    systems.url = "github:nix-systems/x86_64-linux";
+    systems.url = "github:nix-systems/default";
     # process compose
     process-compose.url = "github:Platonic-Systems/process-compose-flake";
     services.url = "github:juspay/services-flake";
