@@ -115,6 +115,8 @@ fn router(ctx: ApiContext) -> Router {
 
         .route("/v2/messages/{message_id}", get(rproxy))
 
+        .route("/v2/bulk", post(endpoints::bulk::bulk))
+
         .route("/private/bulk_privacy/member", post(rproxy))
         .route("/private/bulk_privacy/group", post(rproxy))
         .route("/private/discord/callback", post(rproxy))
