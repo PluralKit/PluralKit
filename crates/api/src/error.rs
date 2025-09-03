@@ -2,6 +2,7 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
+use pluralkit_models::ValidationError;
 use std::fmt;
 
 // todo: model parse errors
@@ -10,6 +11,8 @@ pub struct PKError {
     pub response_code: StatusCode,
     pub json_code: i32,
     pub message: &'static str,
+
+    pub errors: Vec<ValidationError>,
 
     pub inner: Option<anyhow::Error>,
 }
@@ -29,6 +32,21 @@ impl Clone for PKError {
             response_code: self.response_code,
             json_code: self.json_code,
             message: self.message,
+            inner: None,
+            errors: self.errors.clone(),
+        }
+    }
+}
+
+// can't `impl From<Vec<ValidationError>>`
+// because "upstream crate may add a new impl" >:(
+impl PKError {
+    pub fn from_validation_errors(errs: Vec<ValidationError>) -> Self {
+        Self {
+            message: "Error parsing JSON model",
+            json_code: 40001,
+            errors: errs,
+            response_code: StatusCode::BAD_REQUEST,
             inner: None,
         }
     }
@@ -50,14 +68,19 @@ impl IntoResponse for PKError {
         if let Some(inner) = self.inner {
             tracing::error!(?inner, "error returned from handler");
         }
-        crate::util::json_err(
-            self.response_code,
-            serde_json::to_string(&serde_json::json!({
+        let json = if self.errors.len() > 0 {
+            serde_json::json!({
                 "message": self.message,
                 "code": self.json_code,
-            }))
-            .unwrap(),
-        )
+                "errors": self.errors,
+            })
+        } else {
+            serde_json::json!({
+                "message": self.message,
+                "code": self.json_code,
+            })
+        };
+        crate::util::json_err(self.response_code, serde_json::to_string(&json).unwrap())
     }
 }
 
@@ -78,9 +101,17 @@ macro_rules! define_error {
             json_code: $json_code,
             message: $message,
             inner: None,
+            errors: vec![],
         };
     };
 }
 
+define_error! { GENERIC_AUTH_ERROR, StatusCode::UNAUTHORIZED, 0, "401: Missing or invalid Authorization header" }
 define_error! { GENERIC_BAD_REQUEST, StatusCode::BAD_REQUEST, 0, "400: Bad Request" }
 define_error! { GENERIC_SERVER_ERROR, StatusCode::INTERNAL_SERVER_ERROR, 0, "500: Internal Server Error" }
+
+define_error! { NOT_OWN_MEMBER, StatusCode::FORBIDDEN, 30006, "Target member is not part of your system." }
+define_error! { NOT_OWN_GROUP, StatusCode::FORBIDDEN, 30007, "Target group is not part of your system." }
+
+define_error! { TARGET_MEMBER_NOT_FOUND, StatusCode::BAD_REQUEST, 40010, "Target member not found." }
+define_error! { TARGET_GROUP_NOT_FOUND, StatusCode::BAD_REQUEST, 40011, "Target group not found." }
