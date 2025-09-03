@@ -9,6 +9,8 @@ macro_rules! model {
 
 model!(system);
 model!(system_config);
+model!(member);
+model!(group);
 
 // todo: move these into model files later
 pub type MemberId = i32;
@@ -33,6 +35,33 @@ impl From<i32> for PrivacyLevel {
             1 => PrivacyLevel::Public,
             2 => PrivacyLevel::Private,
             _ => unreachable!(),
+        }
+    }
+}
+
+impl From<PrivacyLevel> for sea_query::Value {
+    fn from(level: PrivacyLevel) -> sea_query::Value {
+        match level {
+            PrivacyLevel::Public => sea_query::Value::Int(Some(1)),
+            PrivacyLevel::Private => sea_query::Value::Int(Some(2)),
+        }
+    }
+}
+
+#[derive(serde::Serialize, Debug, Clone)]
+pub enum ValidationError {
+    Simple { key: String, value: String },
+}
+
+impl ValidationError {
+    fn new(key: &str) -> Self {
+        Self::simple(key, "is invalid")
+    }
+
+    fn simple(key: &str, value: &str) -> Self {
+        Self::Simple {
+            key: key.to_string(),
+            value: value.to_string(),
         }
     }
 }
