@@ -44,6 +44,11 @@ public partial class CommandTree
             Commands.MemberServerKeepproxyShow(var param, _) => ctx.Execute<MemberEdit>(MemberServerKeepProxy, m => m.ShowServerKeepProxy(ctx, param.target)),
             Commands.MemberServerKeepproxyUpdate(var param, _) => ctx.Execute<MemberEdit>(MemberServerKeepProxy, m => m.ChangeServerKeepProxy(ctx, param.target, param.value)),
             Commands.MemberServerKeepproxyClear(var param, var flags) => ctx.Execute<MemberEdit>(MemberServerKeepProxy, m => m.ClearServerKeepProxy(ctx, param.target, flags.yes)),
+            Commands.MemberProxyShow(var param, _) => ctx.Execute<MemberProxy>(MemberProxy, m => m.ShowProxy(ctx, param.target)),
+            Commands.MemberProxyClear(var param, var flags) => ctx.Execute<MemberProxy>(MemberProxy, m => m.ClearProxy(ctx, param.target)),
+            Commands.MemberProxyAdd(var param, _) => ctx.Execute<MemberProxy>(MemberProxy, m => m.AddProxy(ctx, param.target, param.tag)),
+            Commands.MemberProxyRemove(var param, _) => ctx.Execute<MemberProxy>(MemberProxy, m => m.RemoveProxy(ctx, param.target, param.tag)),
+            Commands.MemberProxySet(var param, _) => ctx.Execute<MemberProxy>(MemberProxy, m => m.SetProxy(ctx, param.target, param.tags)),
             Commands.MemberTtsShow(var param, _) => ctx.Execute<MemberEdit>(MemberTts, m => m.ShowTts(ctx, param.target)),
             Commands.MemberTtsUpdate(var param, _) => ctx.Execute<MemberEdit>(MemberTts, m => m.ChangeTts(ctx, param.target, param.value)),
             Commands.MemberAutoproxyShow(var param, _) => ctx.Execute<MemberEdit>(MemberAutoproxy, m => m.ShowAutoproxy(ctx, param.target)),
@@ -430,9 +435,7 @@ public partial class CommandTree
     private async Task HandleMemberCommandTargeted(Context ctx, PKMember target)
     {
         // Commands that have a member target (eg. pk;member <member> delete)
-        if (ctx.Match("proxy", "tags", "proxytags", "brackets"))
-            await ctx.Execute<MemberProxy>(MemberProxy, m => m.Proxy(ctx, target));
-        else if (ctx.Match("avatar", "profile", "picture", "icon", "image", "pfp", "pic"))
+        if (ctx.Match("avatar", "profile", "picture", "icon", "image", "pfp", "pic"))
             await ctx.Execute<MemberAvatar>(MemberAvatar, m => m.Avatar(ctx, target));
         else if (ctx.Match("proxyavatar", "proxypfp", "webhookavatar", "webhookpfp", "pa", "pavatar", "ppfp"))
             await ctx.Execute<MemberAvatar>(MemberAvatar, m => m.WebhookAvatar(ctx, target));

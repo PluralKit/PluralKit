@@ -17,20 +17,20 @@ pub fn cmds() -> impl Iterator<Item = Command> {
     let keep_proxy = ("keepproxy", ["kp"]);
     let server_keep_proxy = ("serverkeepproxy", ["skp"]);
     let autoproxy = ("autoproxy", ["ap"]);
+    let proxy = ("proxy", ["tags", "proxytags", "brackets"]);
     let tts = ("tts", ["texttospeech"]);
     let delete = ("delete", ["del", "remove"]);
 
-    // Group commands by functionality
     let member_new_cmd = [
         command!(member, new, ("name", OpaqueString) => "member_new")
             .help("Creates a new system member"),
-    ].into_iter();
+    ]
+    .into_iter();
 
-    let member_info_cmd = [
-        command!(member_target => "member_show")
-            .flag("pt")
-            .help("Shows information about a member"),
-    ].into_iter();
+    let member_info_cmd = [command!(member_target => "member_show")
+        .flag("pt")
+        .help("Shows information about a member")]
+    .into_iter();
 
     let member_name_cmd = {
         let member_name = tokens!(member_target, name);
@@ -38,7 +38,8 @@ pub fn cmds() -> impl Iterator<Item = Command> {
             command!(member_name => "member_name_show").help("Shows a member's name"),
             command!(member_name, ("name", OpaqueStringRemainder) => "member_name_update")
                 .help("Changes a member's name"),
-        ].into_iter()
+        ]
+        .into_iter()
     };
 
     let member_description_cmd = {
@@ -50,7 +51,8 @@ pub fn cmds() -> impl Iterator<Item = Command> {
                 .help("Clears a member's description"),
             command!(member_desc, ("description", OpaqueStringRemainder) => "member_desc_update")
                 .help("Changes a member's description"),
-        ].into_iter()
+        ]
+        .into_iter()
     };
 
     let member_privacy_cmd = {
@@ -63,7 +65,8 @@ pub fn cmds() -> impl Iterator<Item = Command> {
                 => "member_privacy_update"
             )
             .help("Changes a member's privacy settings"),
-        ].into_iter()
+        ]
+        .into_iter()
     };
 
     let member_pronouns_cmd = {
@@ -82,40 +85,40 @@ pub fn cmds() -> impl Iterator<Item = Command> {
     let member_banner_cmd = {
         let member_banner = tokens!(member_target, banner);
         [
-            command!(member_banner => "member_banner_show")
-                .help("Shows a member's banner image"),
+            command!(member_banner => "member_banner_show").help("Shows a member's banner image"),
             command!(member_banner, ("banner", Avatar) => "member_banner_update")
                 .help("Changes a member's banner image"),
             command!(member_banner, ("clear", ["c"]) => "member_banner_clear")
                 .flag(("yes", ["y"]))
                 .help("Clears a member's banner image"),
-        ].into_iter()
+        ]
+        .into_iter()
     };
 
     let member_color_cmd = {
         let member_color = tokens!(member_target, color);
         [
-            command!(member_color => "member_color_show")
-                .help("Shows a member's color"),
+            command!(member_color => "member_color_show").help("Shows a member's color"),
             command!(member_color, ("color", OpaqueString) => "member_color_update")
                 .help("Changes a member's color"),
             command!(member_color, ("clear", ["c"]) => "member_color_clear")
                 .flag(("yes", ["y"]))
                 .help("Clears a member's color"),
-        ].into_iter()
+        ]
+        .into_iter()
     };
 
     let member_birthday_cmd = {
         let member_birthday = tokens!(member_target, birthday);
         [
-            command!(member_birthday => "member_birthday_show")
-                .help("Shows a member's birthday"),
+            command!(member_birthday => "member_birthday_show").help("Shows a member's birthday"),
             command!(member_birthday, ("birthday", OpaqueString) => "member_birthday_update")
                 .help("Changes a member's birthday"),
             command!(member_birthday, ("clear", ["c"]) => "member_birthday_clear")
                 .flag(("yes", ["y"]))
                 .help("Clears a member's birthday"),
-        ].into_iter()
+        ]
+        .into_iter()
     };
 
     let member_display_name_cmd = {
@@ -141,6 +144,23 @@ pub fn cmds() -> impl Iterator<Item = Command> {
             command!(member_server_name, ("clear", ["c"]) => "member_servername_clear")
                 .flag(("yes", ["y"]))
                 .help("Clears a member's server name"),
+        ].into_iter()
+    };
+
+    let member_proxy_cmd = {
+        let member_proxy = tokens!(member_target, proxy);
+        [
+            command!(member_proxy => "member_proxy_show")
+                .help("Shows a member's proxy tags"),
+            command!(member_proxy, ("tags", OpaqueString) => "member_proxy_set")
+                .help("Sets a member's proxy tags"),
+            command!(member_proxy, ("add", ["a"]), ("tag", OpaqueString) => "member_proxy_add")
+                .help("Adds proxy tag to a member"),
+            command!(member_proxy, ("remove", ["r", "rm"]), ("tag", OpaqueString) => "member_proxy_remove")
+                .help("Removes proxy tag from a member"),
+            command!(member_proxy, ("clear", ["c"]) => "member_proxy_clear")
+                .flag(("yes", ["y"]))
+                .help("Clears all proxy tags from a member"),
         ].into_iter()
     };
 
@@ -174,17 +194,16 @@ pub fn cmds() -> impl Iterator<Item = Command> {
                 .help("Shows whether a member can be autoproxied"),
             command!(member_autoproxy, ("value", Toggle) => "member_autoproxy_update")
                 .help("Changes whether a member can be autoproxied"),
-        ].into_iter()
+        ]
+        .into_iter()
     };
 
-    let member_delete_cmd = [
-        command!(member_target, delete => "member_delete")
-            .help("Deletes a member"),
-    ].into_iter();
+    let member_delete_cmd =
+        [command!(member_target, delete => "member_delete").help("Deletes a member")].into_iter();
 
-    let member_easter_eggs = [
-        command!(member_target, "soulscream" => "member_soulscream").show_in_suggestions(false),
-    ].into_iter();
+    let member_easter_eggs =
+        [command!(member_target, "soulscream" => "member_soulscream").show_in_suggestions(false)]
+            .into_iter();
 
     member_new_cmd
         .chain(member_info_cmd)
@@ -197,6 +216,7 @@ pub fn cmds() -> impl Iterator<Item = Command> {
         .chain(member_birthday_cmd)
         .chain(member_display_name_cmd)
         .chain(member_server_name_cmd)
+        .chain(member_proxy_cmd)
         .chain(member_proxy_settings_cmd)
         .chain(member_message_settings_cmd)
         .chain(member_delete_cmd)
