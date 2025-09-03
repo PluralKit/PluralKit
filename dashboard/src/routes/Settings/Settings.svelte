@@ -154,7 +154,7 @@
                 </CardHeader>
                 <CardBody>
                     <p>If you've lost access to your discord account, you can retrieve your token here.</p>
-                    <p>Send a direct message to a staff member (a helper, moderator or developer <a href="https://discord.gg/PczBt78">in the support server</a>), they can recover your system with this token.</p>
+                    <p>Ask in the #bot-support channel <a href="https://discord.gg/PczBt78">of the support server</a> for a staff member to DM you, they can recover your system with this token. <b>Do not post the token in the channel.</b></p>
                     <Button color="danger" on:click={() => revealToken()}>Reveal token</Button>
                     {#if showToken}
                         <Row>
