@@ -14,6 +14,7 @@ fred = { workspace = true }
 lazy_static = { workspace = true }
 metrics = { workspace = true }
 reqwest = { workspace = true }
+sea-query = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 sqlx = { workspace = true }
@@ -28,3 +29,4 @@ serde_urlencoded = "0.7.1"
 tower = "0.4.13"
 tower-http = { version = "0.5.2", features = ["catch-panic"] }
 subtle = "2.6.1"
+sea-query-sqlx = { version = "0.8.0-rc.8", features = ["sqlx-postgres", "with-chrono"] }
