@@ -16,6 +16,41 @@ public partial class CommandTree
             Commands.MemberShow(var param, _) => ctx.Execute<Member>(MemberInfo, m => m.ViewMember(ctx, param.target)),
             Commands.MemberNew(var param, _) => ctx.Execute<Member>(MemberNew, m => m.NewMember(ctx, param.name)),
             Commands.MemberSoulscream(var param, _) => ctx.Execute<Member>(MemberInfo, m => m.Soulscream(ctx, param.target)),
+            Commands.MemberPronounsShow(var param, var flags) => ctx.Execute<MemberEdit>(MemberPronouns, m => m.ShowPronouns(ctx, param.target, flags.GetReplyFormat())),
+            Commands.MemberPronounsClear(var param, var flags) => ctx.Execute<MemberEdit>(MemberPronouns, m => m.ClearPronouns(ctx, param.target, flags.yes)),
+            Commands.MemberPronounsUpdate(var param, _) => ctx.Execute<MemberEdit>(MemberPronouns, m => m.ChangePronouns(ctx, param.target, param.pronouns)),
+            Commands.MemberDescShow(var param, var flags) => ctx.Execute<MemberEdit>(MemberDesc, m => m.ShowDescription(ctx, param.target, flags.GetReplyFormat())),
+            Commands.MemberDescClear(var param, var flags) => ctx.Execute<MemberEdit>(MemberDesc, m => m.ClearDescription(ctx, param.target, flags.yes)),
+            Commands.MemberDescUpdate(var param, _) => ctx.Execute<MemberEdit>(MemberDesc, m => m.ChangeDescription(ctx, param.target, param.description)),
+            Commands.MemberNameShow(var param, var flags) => ctx.Execute<MemberEdit>(MemberInfo, m => m.ShowName(ctx, param.target, flags.GetReplyFormat())),
+            Commands.MemberNameUpdate(var param, _) => ctx.Execute<MemberEdit>(MemberInfo, m => m.ChangeName(ctx, param.target, param.name)),
+            Commands.MemberBannerShow(var param, var flags) => ctx.Execute<MemberEdit>(MemberBannerImage, m => m.ShowBannerImage(ctx, param.target, flags.GetReplyFormat())),
+            Commands.MemberBannerClear(var param, var flags) => ctx.Execute<MemberEdit>(MemberBannerImage, m => m.ClearBannerImage(ctx, param.target, flags.yes)),
+            Commands.MemberBannerUpdate(var param, _) => ctx.Execute<MemberEdit>(MemberBannerImage, m => m.ChangeBannerImage(ctx, param.target, param.banner)),
+            Commands.MemberColorShow(var param, var flags) => ctx.Execute<MemberEdit>(MemberColor, m => m.ShowColor(ctx, param.target, flags.GetReplyFormat())),
+            Commands.MemberColorClear(var param, var flags) => ctx.Execute<MemberEdit>(MemberColor, m => m.ClearColor(ctx, param.target, flags.yes)),
+            Commands.MemberColorUpdate(var param, _) => ctx.Execute<MemberEdit>(MemberColor, m => m.ChangeColor(ctx, param.target, param.color)),
+            Commands.MemberBirthdayShow(var param, var flags) => ctx.Execute<MemberEdit>(MemberBirthday, m => m.ShowBirthday(ctx, param.target, flags.GetReplyFormat())),
+            Commands.MemberBirthdayClear(var param, var flags) => ctx.Execute<MemberEdit>(MemberBirthday, m => m.ClearBirthday(ctx, param.target, flags.yes)),
+            Commands.MemberBirthdayUpdate(var param, _) => ctx.Execute<MemberEdit>(MemberBirthday, m => m.ChangeBirthday(ctx, param.target, param.birthday)),
+            Commands.MemberDisplaynameShow(var param, var flags) => ctx.Execute<MemberEdit>(MemberDisplayName, m => m.ShowDisplayName(ctx, param.target, flags.GetReplyFormat())),
+            Commands.MemberDisplaynameClear(var param, var flags) => ctx.Execute<MemberEdit>(MemberDisplayName, m => m.ClearDisplayName(ctx, param.target, flags.yes)),
+            Commands.MemberDisplaynameUpdate(var param, _) => ctx.Execute<MemberEdit>(MemberDisplayName, m => m.ChangeDisplayName(ctx, param.target, param.name)),
+            Commands.MemberServernameShow(var param, var flags) => ctx.Execute<MemberEdit>(MemberServerName, m => m.ShowServerName(ctx, param.target, flags.GetReplyFormat())),
+            Commands.MemberServernameClear(var param, var flags) => ctx.Execute<MemberEdit>(MemberServerName, m => m.ClearServerName(ctx, param.target, flags.yes)),
+            Commands.MemberServernameUpdate(var param, _) => ctx.Execute<MemberEdit>(MemberServerName, m => m.ChangeServerName(ctx, param.target, param.name)),
+            Commands.MemberKeepproxyShow(var param, _) => ctx.Execute<MemberEdit>(MemberKeepProxy, m => m.ShowKeepProxy(ctx, param.target)),
+            Commands.MemberKeepproxyUpdate(var param, _) => ctx.Execute<MemberEdit>(MemberKeepProxy, m => m.ChangeKeepProxy(ctx, param.target, param.value)),
+            Commands.MemberServerKeepproxyShow(var param, _) => ctx.Execute<MemberEdit>(MemberServerKeepProxy, m => m.ShowServerKeepProxy(ctx, param.target)),
+            Commands.MemberServerKeepproxyUpdate(var param, _) => ctx.Execute<MemberEdit>(MemberServerKeepProxy, m => m.ChangeServerKeepProxy(ctx, param.target, param.value)),
+            Commands.MemberServerKeepproxyClear(var param, var flags) => ctx.Execute<MemberEdit>(MemberServerKeepProxy, m => m.ClearServerKeepProxy(ctx, param.target, flags.yes)),
+            Commands.MemberTtsShow(var param, _) => ctx.Execute<MemberEdit>(MemberTts, m => m.ShowTts(ctx, param.target)),
+            Commands.MemberTtsUpdate(var param, _) => ctx.Execute<MemberEdit>(MemberTts, m => m.ChangeTts(ctx, param.target, param.value)),
+            Commands.MemberAutoproxyShow(var param, _) => ctx.Execute<MemberEdit>(MemberAutoproxy, m => m.ShowAutoproxy(ctx, param.target)),
+            Commands.MemberAutoproxyUpdate(var param, _) => ctx.Execute<MemberEdit>(MemberAutoproxy, m => m.ChangeAutoproxy(ctx, param.target, param.value)),
+            Commands.MemberDelete(var param, _) => ctx.Execute<MemberEdit>(MemberDelete, m => m.Delete(ctx, param.target)),
+            Commands.MemberPrivacyShow(var param, _) => ctx.Execute<MemberEdit>(MemberPrivacy, m => m.ShowPrivacy(ctx, param.target)),
+            Commands.MemberPrivacyUpdate(var param, _) => ctx.Execute<MemberEdit>(MemberPrivacy, m => m.ChangePrivacy(ctx, param.target, param.member_privacy_target, param.new_privacy_level)),
             Commands.CfgApAccountShow => ctx.Execute<Config>(null, m => m.ViewAutoproxyAccount(ctx)),
             Commands.CfgApAccountUpdate(var param, _) => ctx.Execute<Config>(null, m => m.EditAutoproxyAccount(ctx, param.toggle)),
             Commands.CfgApTimeoutShow => ctx.Execute<Config>(null, m => m.ViewAutoproxyTimeout(ctx)),
@@ -378,45 +413,29 @@ public partial class CommandTree
     private async Task HandleMemberCommand(Context ctx)
     {
         // TODO: implement
-        // if (ctx.Match("new", "n", "add", "create", "register"))
-        //     await ctx.Execute<Member>(MemberNew, m => m.NewMember(ctx));
-        // else if (ctx.Match("list"))
-        //     await ctx.Execute<SystemList>(SystemList, m => m.MemberList(ctx, ctx.System));
-        // else if (ctx.Match("commands", "help"))
-        //     await PrintCommandList(ctx, "members", MemberCommands);
-        // else if (await ctx.MatchMember() is PKMember target)
-        //     await HandleMemberCommandTargeted(ctx, target);
-        // else if (!ctx.HasNext())
-        //     await PrintCommandExpectedError(ctx, MemberNew, MemberInfo, MemberRename, MemberDisplayName,
-        //         MemberServerName, MemberDesc, MemberPronouns,
-        //         MemberColor, MemberBirthday, MemberProxy, MemberDelete, MemberAvatar);
-        // else
-        //     await ctx.Reply($"{Emojis.Error} {ctx.CreateNotFoundError("Member", ctx.PopArgument())}");
+        if (ctx.Match("list"))
+            await ctx.Execute<SystemList>(SystemList, m => m.MemberList(ctx, ctx.System));
+        else if (ctx.Match("commands", "help"))
+            await PrintCommandList(ctx, "members", MemberCommands);
+        else if (await ctx.MatchMember() is PKMember target)
+            await HandleMemberCommandTargeted(ctx, target);
+        else if (!ctx.HasNext())
+            await PrintCommandExpectedError(ctx, MemberNew, MemberInfo, MemberRename, MemberDisplayName,
+                MemberServerName, MemberDesc, MemberPronouns,
+                MemberColor, MemberBirthday, MemberProxy, MemberDelete, MemberAvatar);
+        else
+            await ctx.Reply($"{Emojis.Error} {ctx.CreateNotFoundError("Member", ctx.PopArgument())}");
     }
 
     private async Task HandleMemberCommandTargeted(Context ctx, PKMember target)
     {
         // Commands that have a member target (eg. pk;member <member> delete)
-        if (ctx.Match("rename", "name", "changename", "setname", "rn"))
-            await ctx.Execute<MemberEdit>(MemberRename, m => m.Name(ctx, target));
-        else if (ctx.Match("description", "desc", "describe", "d", "bio", "info", "text", "intro"))
-            await ctx.Execute<MemberEdit>(MemberDesc, m => m.Description(ctx, target));
-        else if (ctx.Match("pronouns", "pronoun", "prns", "pn"))
-            await ctx.Execute<MemberEdit>(MemberPronouns, m => m.Pronouns(ctx, target));
-        else if (ctx.Match("color", "colour"))
-            await ctx.Execute<MemberEdit>(MemberColor, m => m.Color(ctx, target));
-        else if (ctx.Match("birthday", "birth", "bday", "birthdate", "cakeday", "bdate", "bd"))
-            await ctx.Execute<MemberEdit>(MemberBirthday, m => m.Birthday(ctx, target));
-        else if (ctx.Match("proxy", "tags", "proxytags", "brackets"))
+        if (ctx.Match("proxy", "tags", "proxytags", "brackets"))
             await ctx.Execute<MemberProxy>(MemberProxy, m => m.Proxy(ctx, target));
-        else if (ctx.Match("delete", "remove", "destroy", "erase", "yeet"))
-            await ctx.Execute<MemberEdit>(MemberDelete, m => m.Delete(ctx, target));
         else if (ctx.Match("avatar", "profile", "picture", "icon", "image", "pfp", "pic"))
             await ctx.Execute<MemberAvatar>(MemberAvatar, m => m.Avatar(ctx, target));
         else if (ctx.Match("proxyavatar", "proxypfp", "webhookavatar", "webhookpfp", "pa", "pavatar", "ppfp"))
             await ctx.Execute<MemberAvatar>(MemberAvatar, m => m.WebhookAvatar(ctx, target));
-        else if (ctx.Match("banner", "splash", "cover"))
-            await ctx.Execute<MemberEdit>(MemberBannerImage, m => m.BannerImage(ctx, target));
         else if (ctx.Match("group", "groups", "g"))
             if (ctx.Match("add", "a"))
                 await ctx.Execute<GroupMember>(MemberGroupAdd,
@@ -429,27 +448,8 @@ public partial class CommandTree
         else if (ctx.Match("serveravatar", "sa", "servericon", "serverimage", "serverpfp", "serverpic", "savatar", "spic",
                      "guildavatar", "guildpic", "guildicon", "sicon", "spfp"))
             await ctx.Execute<MemberAvatar>(MemberServerAvatar, m => m.ServerAvatar(ctx, target));
-        else if (ctx.Match("displayname", "dn", "dname", "nick", "nickname", "dispname"))
-            await ctx.Execute<MemberEdit>(MemberDisplayName, m => m.DisplayName(ctx, target));
-        else if (ctx.Match("servername", "sn", "sname", "snick", "snickname", "servernick", "servernickname",
-                     "serverdisplayname", "guildname", "guildnick", "guildnickname", "serverdn"))
-            await ctx.Execute<MemberEdit>(MemberServerName, m => m.ServerName(ctx, target));
-        else if (ctx.Match("autoproxy", "ap"))
-            await ctx.Execute<MemberEdit>(MemberAutoproxy, m => m.MemberAutoproxy(ctx, target));
-        else if (ctx.Match("keepproxy", "keeptags", "showtags", "kp"))
-            await ctx.Execute<MemberEdit>(MemberKeepProxy, m => m.KeepProxy(ctx, target));
-        else if (ctx.Match("texttospeech", "text-to-speech", "tts"))
-            await ctx.Execute<MemberEdit>(MemberTts, m => m.Tts(ctx, target));
-        else if (ctx.Match("serverkeepproxy", "servershowtags", "guildshowtags", "guildkeeptags", "serverkeeptags", "skp"))
-            await ctx.Execute<MemberEdit>(MemberServerKeepProxy, m => m.ServerKeepProxy(ctx, target));
         else if (ctx.Match("id"))
             await ctx.Execute<Member>(MemberId, m => m.DisplayId(ctx, target));
-        else if (ctx.Match("privacy"))
-            await ctx.Execute<MemberEdit>(MemberPrivacy, m => m.Privacy(ctx, target, null));
-        else if (ctx.Match("private", "hidden", "hide"))
-            await ctx.Execute<MemberEdit>(MemberPrivacy, m => m.Privacy(ctx, target, PrivacyLevel.Private));
-        else if (ctx.Match("public", "shown", "show", "unhide", "unhidden"))
-            await ctx.Execute<MemberEdit>(MemberPrivacy, m => m.Privacy(ctx, target, PrivacyLevel.Public));
         else
             await PrintCommandNotFoundError(ctx, MemberInfo, MemberRename, MemberDisplayName, MemberServerName,
                 MemberDesc, MemberPronouns, MemberColor, MemberBirthday, MemberProxy, MemberDelete, MemberAvatar,
