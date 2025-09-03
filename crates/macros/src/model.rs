@@ -85,8 +85,14 @@ fn parse_field(field: syn::Field) -> ModelField {
         panic!("must have json name to be publicly patchable");
     }
 
-    if f.json.is_some() && f.is_privacy {
-        panic!("cannot set custom json name for privacy field");
+    if f.is_privacy && f.json.is_none() {
+        f.json = Some(syn::Expr::Lit(syn::ExprLit {
+            attrs: vec![],
+            lit: syn::Lit::Str(syn::LitStr::new(
+                f.name.clone().to_string().as_str(),
+                proc_macro2::Span::call_site(),
+            )),
+        }))
     }
 
     f
@@ -122,17 +128,17 @@ pub fn macro_impl(
 
     let fields: Vec<ModelField> = fields
         .iter()
-        .filter(|f| !matches!(f.patch, ElemPatchability::None))
+        .filter(|f| f.is_privacy || !matches!(f.patch, ElemPatchability::None))
         .cloned()
         .collect();
 
     let patch_fields = mk_patch_fields(fields.clone());
-    let patch_from_json = mk_patch_from_json(fields.clone());
     let patch_validate = mk_patch_validate(fields.clone());
+    let patch_validate_bulk = mk_patch_validate_bulk(fields.clone());
     let patch_to_json = mk_patch_to_json(fields.clone());
     let patch_to_sql = mk_patch_to_sql(fields.clone());
 
-    return quote! {
+    let code = quote! {
         #[derive(sqlx::FromRow, Debug, Clone)]
         pub struct #tname {
             #tfields
@@ -146,31 +152,42 @@ pub fn macro_impl(
             #to_json
         }
 
-        #[derive(Debug, Clone)]
+        #[derive(Debug, Clone, Default)]
         pub struct #patchable_name {
             #patch_fields
+
+            errors: Vec<crate::ValidationError>,
         }
 
         impl #patchable_name {
-            pub fn from_json(input: String) -> Self {
-                #patch_from_json
-            }
-
-            pub fn validate(self) -> bool {
+            pub fn validate(&mut self) {
                 #patch_validate
             }
 
+            pub fn errors(&self) -> Vec<crate::ValidationError> {
+                self.errors.clone()
+            }
+
+            pub fn validate_bulk(&mut self) {
+                #patch_validate_bulk
+            }
+
             pub fn to_sql(self) -> sea_query::UpdateStatement {
-                // sea_query::Query::update()
-                    #patch_to_sql
+                use sea_query::types::*;
+                let mut patch = &mut sea_query::Query::update();
+                #patch_to_sql
+                patch.clone()
             }
 
             pub fn to_json(self) -> serde_json::Value {
                 #patch_to_json
             }
         }
-    }
-    .into();
+    };
+
+    // panic!("{:#?}", code.to_string());
+
+    return code.into();
 }
 
 fn mk_tfields(fields: Vec<ModelField>) -> TokenStream {
@@ -225,7 +242,7 @@ fn mk_tto_json(fields: Vec<ModelField>) -> TokenStream {
         .filter_map(|f| {
             if f.is_privacy {
                 let tname = f.name.clone();
-                let tnamestr = f.name.clone().to_string();
+                let tnamestr = f.json.clone();
                 Some(quote! {
                     #tnamestr: self.#tname,
                 })
@@ -280,13 +297,48 @@ fn mk_patch_fields(fields: Vec<ModelField>) -> TokenStream {
         .collect()
 }
 fn mk_patch_validate(_fields: Vec<ModelField>) -> TokenStream {
-    quote! { true }
-}
-fn mk_patch_from_json(_fields: Vec<ModelField>) -> TokenStream {
     quote! { unimplemented!(); }
 }
-fn mk_patch_to_sql(_fields: Vec<ModelField>) -> TokenStream {
-    quote! { unimplemented!(); }
+fn mk_patch_validate_bulk(fields: Vec<ModelField>) -> TokenStream {
+    // iterate over all nullable patchable fields other than privacy
+    // add an error if any field is set to a value other than null
+    fields
+        .iter()
+        .map(|f| {
+            if let syn::Type::Path(path) = &f.ty && let Some(inner) = path.path.segments.last() && inner.ident != "Option" {
+                return quote! {};
+            }
+            let name = f.name.clone();
+            if matches!(f.patch, ElemPatchability::Public) {
+                let json = f.json.clone().unwrap();
+                quote! {
+                    if let Some(val) = self.#name.clone() && val.is_some() {
+                        self.errors.push(ValidationError::simple(#json, "Only null values are supported in bulk endpoint"));
+                    }
+                }
+            } else {
+                quote! {}
+            }
+        })
+        .collect()
+}
+fn mk_patch_to_sql(fields: Vec<ModelField>) -> TokenStream {
+    fields
+        .iter()
+        .filter_map(|f| {
+            if !matches!(f.patch, ElemPatchability::None) || f.is_privacy {
+                let name = f.name.clone();
+                let column = f.name.to_string();
+                Some(quote! {
+                    if let Some(value) = self.#name {
+                        patch = patch.value(#column, value);
+                    }
+                })
+            } else {
+                None
+            }
+        })
+        .collect()
 }
 fn mk_patch_to_json(_fields: Vec<ModelField>) -> TokenStream {
     quote! { unimplemented!(); }
