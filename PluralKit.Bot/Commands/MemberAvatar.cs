@@ -19,6 +19,9 @@ public class MemberAvatar
 
     private async Task AvatarClear(MemberAvatarLocation location, Context ctx, PKMember target, MemberGuildSettings? mgs)
     {
+        ctx.CheckSystem().CheckOwnMember(target);
+        await ctx.ConfirmClear("this member's " + location.Name());
+
         await UpdateAvatar(location, ctx, target, null);
         if (location == MemberAvatarLocation.Server)
         {
@@ -47,7 +50,7 @@ public class MemberAvatar
     }
 
     private async Task AvatarShow(MemberAvatarLocation location, Context ctx, PKMember target,
-                                  MemberGuildSettings? guildData)
+                                  MemberGuildSettings? guildData, ReplyFormat format)
     {
         // todo: this privacy code is really confusing
         // for now, we skip privacy flag/config parsing for this, but it would be good to fix that at some point
@@ -86,7 +89,6 @@ public class MemberAvatar
         if (location == MemberAvatarLocation.Server)
             field += $" (for {ctx.Guild.Name})";
 
-        var format = ctx.MatchFormat();
         if (format == ReplyFormat.Raw)
         {
             await ctx.Reply($"`{currentValue?.TryGetCleanCdnUrl()}`");
@@ -110,58 +112,89 @@ public class MemberAvatar
         else throw new PKError("Format Not Recognized");
     }
 
-    public async Task ServerAvatar(Context ctx, PKMember target)
+    private async Task AvatarChange(MemberAvatarLocation location, Context ctx, PKMember target,
+                                    MemberGuildSettings? guildData, ParsedImage avatar)
     {
-        ctx.CheckGuildContext();
-        var guildData = await ctx.Repository.GetMemberGuild(ctx.Guild.Id, target.Id);
-        await AvatarCommandTree(MemberAvatarLocation.Server, ctx, target, guildData);
-    }
-
-    public async Task Avatar(Context ctx, PKMember target)
-    {
-        var guildData = ctx.Guild != null
-            ? await ctx.Repository.GetMemberGuild(ctx.Guild.Id, target.Id)
-            : null;
-
-        await AvatarCommandTree(MemberAvatarLocation.Member, ctx, target, guildData);
-    }
-
-    public async Task WebhookAvatar(Context ctx, PKMember target)
-    {
-        var guildData = ctx.Guild != null
-            ? await ctx.Repository.GetMemberGuild(ctx.Guild.Id, target.Id)
-            : null;
-
-        await AvatarCommandTree(MemberAvatarLocation.MemberWebhook, ctx, target, guildData);
-    }
-
-    private async Task AvatarCommandTree(MemberAvatarLocation location, Context ctx, PKMember target,
-                                         MemberGuildSettings? guildData)
-    {
-        // First, see if we need to *clear*
-        if (ctx.MatchClear())
-        {
-            ctx.CheckSystem().CheckOwnMember(target);
-            await ctx.ConfirmClear("this member's " + location.Name());
-            await AvatarClear(location, ctx, target, guildData);
-            return;
-        }
-
-        // Then, parse an image from the command (from various sources...)
-        var avatarArg = await ctx.MatchImage();
-        if (avatarArg == null)
-        {
-            // If we didn't get any, just show the current avatar
-            await AvatarShow(location, ctx, target, guildData);
-            return;
-        }
-
         ctx.CheckSystem().CheckOwnMember(target);
 
-        avatarArg = await _avatarHosting.TryRehostImage(avatarArg.Value, AvatarHostingService.RehostedImageType.Avatar, ctx.Author.Id, ctx.System);
-        await _avatarHosting.VerifyAvatarOrThrow(avatarArg.Value.Url);
-        await UpdateAvatar(location, ctx, target, avatarArg.Value.CleanUrl ?? avatarArg.Value.Url);
-        await PrintResponse(location, ctx, target, avatarArg.Value, guildData);
+        avatar = await _avatarHosting.TryRehostImage(avatar, AvatarHostingService.RehostedImageType.Avatar, ctx.Author.Id, ctx.System);
+        await _avatarHosting.VerifyAvatarOrThrow(avatar.Url);
+        await UpdateAvatar(location, ctx, target, avatar.CleanUrl ?? avatar.Url);
+        await PrintResponse(location, ctx, target, avatar, guildData);
+    }
+
+    private Task<MemberGuildSettings> GetServerAvatarGuildData(Context ctx, PKMember target)
+    {
+        ctx.CheckGuildContext();
+        return ctx.Repository.GetMemberGuild(ctx.Guild.Id, target.Id);
+    }
+
+    private async Task<MemberGuildSettings?> GetAvatarGuildData(Context ctx, PKMember target)
+    {
+        return ctx.Guild != null
+            ? await ctx.Repository.GetMemberGuild(ctx.Guild.Id, target.Id)
+            : null;
+    }
+
+    private async Task<MemberGuildSettings?> GetWebhookAvatarGuildData(Context ctx, PKMember target)
+    {
+        return ctx.Guild != null
+            ? await ctx.Repository.GetMemberGuild(ctx.Guild.Id, target.Id)
+            : null;
+    }
+
+    public async Task ShowServerAvatar(Context ctx, PKMember target, ReplyFormat format)
+    {
+        var guildData = await GetServerAvatarGuildData(ctx, target);
+        await AvatarShow(MemberAvatarLocation.Server, ctx, target, guildData, format);
+    }
+
+    public async Task ClearServerAvatar(Context ctx, PKMember target)
+    {
+        var guildData = await GetServerAvatarGuildData(ctx, target);
+        await AvatarClear(MemberAvatarLocation.Server, ctx, target, guildData);
+    }
+
+    public async Task ChangeServerAvatar(Context ctx, PKMember target, ParsedImage avatar)
+    {
+        var guildData = await GetServerAvatarGuildData(ctx, target);
+        await AvatarChange(MemberAvatarLocation.Server, ctx, target, guildData, avatar);
+    }
+
+    public async Task ShowAvatar(Context ctx, PKMember target, ReplyFormat format)
+    {
+        var guildData = await GetAvatarGuildData(ctx, target);
+        await AvatarShow(MemberAvatarLocation.Member, ctx, target, guildData, format);
+    }
+
+    public async Task ClearAvatar(Context ctx, PKMember target)
+    {
+        var guildData = await GetAvatarGuildData(ctx, target);
+        await AvatarClear(MemberAvatarLocation.Member, ctx, target, guildData);
+    }
+
+    public async Task ChangeAvatar(Context ctx, PKMember target, ParsedImage avatar)
+    {
+        var guildData = await GetAvatarGuildData(ctx, target);
+        await AvatarChange(MemberAvatarLocation.Member, ctx, target, guildData, avatar);
+    }
+
+    public async Task ShowWebhookAvatar(Context ctx, PKMember target, ReplyFormat format)
+    {
+        var guildData = await GetWebhookAvatarGuildData(ctx, target);
+        await AvatarShow(MemberAvatarLocation.MemberWebhook, ctx, target, guildData, format);
+    }
+
+    public async Task ClearWebhookAvatar(Context ctx, PKMember target)
+    {
+        var guildData = await GetWebhookAvatarGuildData(ctx, target);
+        await AvatarClear(MemberAvatarLocation.MemberWebhook, ctx, target, guildData);
+    }
+
+    public async Task ChangeWebhookAvatar(Context ctx, PKMember target, ParsedImage avatar)
+    {
+        var guildData = await GetWebhookAvatarGuildData(ctx, target);
+        await AvatarChange(MemberAvatarLocation.MemberWebhook, ctx, target, guildData, avatar);
     }
 
     private Task PrintResponse(MemberAvatarLocation location, Context ctx, PKMember target, ParsedImage avatar,

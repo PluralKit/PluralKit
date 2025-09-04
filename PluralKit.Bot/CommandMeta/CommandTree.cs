@@ -16,6 +16,15 @@ public partial class CommandTree
             Commands.MemberShow(var param, _) => ctx.Execute<Member>(MemberInfo, m => m.ViewMember(ctx, param.target)),
             Commands.MemberNew(var param, _) => ctx.Execute<Member>(MemberNew, m => m.NewMember(ctx, param.name)),
             Commands.MemberSoulscream(var param, _) => ctx.Execute<Member>(MemberInfo, m => m.Soulscream(ctx, param.target)),
+            Commands.MemberAvatarShow(var param, var flags) => ctx.Execute<MemberAvatar>(MemberAvatar, m => m.ShowAvatar(ctx, param.target, flags.GetReplyFormat())),
+            Commands.MemberAvatarClear(var param, var flags) => ctx.Execute<MemberAvatar>(MemberAvatar, m => m.ClearAvatar(ctx, param.target)),
+            Commands.MemberAvatarUpdate(var param, _) => ctx.Execute<MemberAvatar>(MemberAvatar, m => m.ChangeAvatar(ctx, param.target, param.avatar)),
+            Commands.MemberWebhookAvatarShow(var param, var flags) => ctx.Execute<MemberAvatar>(MemberAvatar, m => m.ShowWebhookAvatar(ctx, param.target, flags.GetReplyFormat())),
+            Commands.MemberWebhookAvatarClear(var param, var flags) => ctx.Execute<MemberAvatar>(MemberAvatar, m => m.ClearWebhookAvatar(ctx, param.target)),
+            Commands.MemberWebhookAvatarUpdate(var param, _) => ctx.Execute<MemberAvatar>(MemberAvatar, m => m.ChangeWebhookAvatar(ctx, param.target, param.avatar)),
+            Commands.MemberServerAvatarShow(var param, var flags) => ctx.Execute<MemberAvatar>(MemberAvatar, m => m.ShowServerAvatar(ctx, param.target, flags.GetReplyFormat())),
+            Commands.MemberServerAvatarClear(var param, var flags) => ctx.Execute<MemberAvatar>(MemberAvatar, m => m.ClearServerAvatar(ctx, param.target)),
+            Commands.MemberServerAvatarUpdate(var param, _) => ctx.Execute<MemberAvatar>(MemberAvatar, m => m.ChangeServerAvatar(ctx, param.target, param.avatar)),
             Commands.MemberPronounsShow(var param, var flags) => ctx.Execute<MemberEdit>(MemberPronouns, m => m.ShowPronouns(ctx, param.target, flags.GetReplyFormat())),
             Commands.MemberPronounsClear(var param, var flags) => ctx.Execute<MemberEdit>(MemberPronouns, m => m.ClearPronouns(ctx, param.target, flags.yes)),
             Commands.MemberPronounsUpdate(var param, _) => ctx.Execute<MemberEdit>(MemberPronouns, m => m.ChangePronouns(ctx, param.target, param.pronouns)),
@@ -435,11 +444,7 @@ public partial class CommandTree
     private async Task HandleMemberCommandTargeted(Context ctx, PKMember target)
     {
         // Commands that have a member target (eg. pk;member <member> delete)
-        if (ctx.Match("avatar", "profile", "picture", "icon", "image", "pfp", "pic"))
-            await ctx.Execute<MemberAvatar>(MemberAvatar, m => m.Avatar(ctx, target));
-        else if (ctx.Match("proxyavatar", "proxypfp", "webhookavatar", "webhookpfp", "pa", "pavatar", "ppfp"))
-            await ctx.Execute<MemberAvatar>(MemberAvatar, m => m.WebhookAvatar(ctx, target));
-        else if (ctx.Match("group", "groups", "g"))
+        if (ctx.Match("group", "groups", "g"))
             if (ctx.Match("add", "a"))
                 await ctx.Execute<GroupMember>(MemberGroupAdd,
                     m => m.AddRemoveGroups(ctx, target, Groups.AddRemoveOperation.Add));
@@ -448,9 +453,6 @@ public partial class CommandTree
                     m => m.AddRemoveGroups(ctx, target, Groups.AddRemoveOperation.Remove));
             else
                 await ctx.Execute<GroupMember>(MemberGroups, m => m.ListMemberGroups(ctx, target));
-        else if (ctx.Match("serveravatar", "sa", "servericon", "serverimage", "serverpfp", "serverpic", "savatar", "spic",
-                     "guildavatar", "guildpic", "guildicon", "sicon", "spfp"))
-            await ctx.Execute<MemberAvatar>(MemberServerAvatar, m => m.ServerAvatar(ctx, target));
         else if (ctx.Match("id"))
             await ctx.Execute<Member>(MemberId, m => m.DisplayId(ctx, target));
         else

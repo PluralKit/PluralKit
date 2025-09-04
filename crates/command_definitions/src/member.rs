@@ -198,6 +198,89 @@ pub fn cmds() -> impl Iterator<Item = Command> {
         .into_iter()
     };
 
+    let member_avatar_cmd = {
+        let member_avatar = tokens!(
+            member_target,
+            (
+                "avatar",
+                ["profile", "picture", "icon", "image", "pfp", "pic"]
+            )
+        );
+        [
+            command!(member_avatar => "member_avatar_show").help("Shows a member's avatar"),
+            command!(member_avatar, ("avatar", Avatar) => "member_avatar_update")
+                .help("Changes a member's avatar"),
+            command!(member_avatar, ("clear", ["c"]) => "member_avatar_clear")
+                .flag(("yes", ["y"]))
+                .help("Clears a member's avatar"),
+        ]
+        .into_iter()
+    };
+
+    let member_webhook_avatar_cmd = {
+        let member_webhook_avatar = tokens!(
+            member_target,
+            (
+                "proxyavatar",
+                [
+                    "proxypfp",
+                    "webhookavatar",
+                    "webhookpfp",
+                    "pa",
+                    "pavatar",
+                    "ppfp"
+                ]
+            )
+        );
+        [
+            command!(member_webhook_avatar => "member_webhook_avatar_show")
+                .help("Shows a member's proxy avatar"),
+            command!(member_webhook_avatar, ("avatar", Avatar) => "member_webhook_avatar_update")
+                .help("Changes a member's proxy avatar"),
+            command!(member_webhook_avatar, ("clear", ["c"]) => "member_webhook_avatar_clear")
+                .flag(("yes", ["y"]))
+                .help("Clears a member's proxy avatar"),
+        ]
+        .into_iter()
+    };
+
+    let member_server_avatar_cmd = {
+        let member_server_avatar = tokens!(
+            member_target,
+            (
+                "serveravatar",
+                [
+                    "sa",
+                    "servericon",
+                    "serverimage",
+                    "serverpfp",
+                    "serverpic",
+                    "savatar",
+                    "spic",
+                    "guildavatar",
+                    "guildpic",
+                    "guildicon",
+                    "sicon",
+                    "spfp"
+                ]
+            )
+        );
+        [
+            command!(member_server_avatar => "member_server_avatar_show")
+                .help("Shows a member's server-specific avatar"),
+            command!(member_server_avatar, ("avatar", Avatar) => "member_server_avatar_update")
+                .help("Changes a member's server-specific avatar"),
+            command!(member_server_avatar, ("clear", ["c"]) => "member_server_avatar_clear")
+                .flag(("yes", ["y"]))
+                .help("Clears a member's server-specific avatar"),
+        ]
+        .into_iter()
+    };
+
+    let member_avatar_cmds = member_avatar_cmd
+        .chain(member_webhook_avatar_cmd)
+        .chain(member_server_avatar_cmd);
+
     let member_delete_cmd =
         [command!(member_target, delete => "member_delete").help("Deletes a member")].into_iter();
 
@@ -217,6 +300,7 @@ pub fn cmds() -> impl Iterator<Item = Command> {
         .chain(member_display_name_cmd)
         .chain(member_server_name_cmd)
         .chain(member_proxy_cmd)
+        .chain(member_avatar_cmds)
         .chain(member_proxy_settings_cmd)
         .chain(member_message_settings_cmd)
         .chain(member_delete_cmd)
