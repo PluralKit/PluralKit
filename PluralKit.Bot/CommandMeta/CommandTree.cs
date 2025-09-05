@@ -592,6 +592,8 @@ public partial class CommandTree
             return ctx.Execute<Config>(null, m => m.HidDisplayCaps(ctx));
         if (ctx.MatchMultiple(new[] { "pad" }, new[] { "id", "ids" }) || ctx.MatchMultiple(new[] { "id" }, new[] { "pad", "padding" }) || ctx.Match("idpad", "padid", "padids"))
             return ctx.Execute<Config>(null, m => m.HidListPadding(ctx));
+        if (ctx.MatchMultiple(new[] { "show" }, new[] { "color", "colour", "colors", "colours" }) || ctx.Match("showcolor", "showcolour", "showcolors", "showcolours", "colorcode", "colorhex"))
+            return ctx.Execute<Config>(null, m => m.CardShowColorHex(ctx));
         if (ctx.MatchMultiple(new[] { "name" }, new[] { "format" }) || ctx.Match("nameformat", "nf"))
             return ctx.Execute<Config>(null, m => m.NameFormat(ctx));
         if (ctx.MatchMultiple(new[] { "member", "group" }, new[] { "limit" }) || ctx.Match("limit"))

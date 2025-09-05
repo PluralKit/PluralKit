@@ -75,12 +75,15 @@ public class EmbedService
         if (system.Tag != null)
             headerText += $"\n**Tag:** {system.Tag.EscapeMarkdown()}";
 
+        if (cctx.Config.CardShowColorHex && !system.Color.EmptyOrNull())
+            headerText += $"\n**Color:** #{system.Color}";
+
         if (cctx.Guild != null)
         {
             if (guildSettings.Tag != null && guildSettings.TagEnabled)
-                headerText += $"**Tag (in server '{cctx.Guild.Name}'):** {guildSettings.Tag.EscapeMarkdown()}";
+                headerText += $"\n**Tag (in server '{cctx.Guild.Name}'):** {guildSettings.Tag.EscapeMarkdown()}";
             if (!guildSettings.TagEnabled)
-                headerText += $"**Tag (in server '{cctx.Guild.Name}'):** *(tag is disabled in this server)*";
+                headerText += $"\n**Tag (in server '{cctx.Guild.Name}'):** *(tag is disabled in this server)*";
         }
 
         if (system.MemberListPrivacy.CanAccess(ctx))
@@ -358,6 +361,8 @@ public class EmbedService
             headerText += $"\n**Display name:** {member.DisplayName.Truncate(1024)}";
         if (guild != null && guildDisplayName != null)
             headerText += $"\n**Server nickname (for '{guild.Name}'):** {guildDisplayName.Truncate(1024)}";
+        if (ccfg.CardShowColorHex && !member.Color.EmptyOrNull())
+            headerText += $"\n**Color:** #{member.Color}";
         if (member.PronounsFor(ctx) is { } pronouns && !string.IsNullOrWhiteSpace(pronouns))
             headerText += $"\n**Pronouns:** {pronouns}";
         if (member.BirthdayFor(ctx) != null)
@@ -576,6 +581,9 @@ public class EmbedService
 
         if (target.NamePrivacy.CanAccess(pctx) && target.DisplayName != null)
             headerText += $"\n**Display name:** {target.DisplayName}";
+
+        if (ctx.Config.CardShowColorHex && !target.Color.EmptyOrNull())
+            headerText += $"\n**Color:** #{target.Color}";
 
         if (target.ListPrivacy.CanAccess(pctx))
         {

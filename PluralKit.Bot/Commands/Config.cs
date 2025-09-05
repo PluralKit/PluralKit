@@ -124,6 +124,13 @@ public class Config
         ));
 
         items.Add(new(
+            "show color",
+            "Whether to show color codes in system/member/group cards",
+            EnabledDisabled(ctx.Config.CardShowColorHex),
+            "disabled"
+        ));
+
+        items.Add(new(
             "Proxy Switch",
             "Switching behavior when proxy tags are used",
             ctx.Config.ProxySwitch.ToUserString(),
@@ -568,6 +575,20 @@ public class Config
             await ctx.Reply("5-character IDs displayed in lists will now have a padding space added to the end.");
         }
         else throw new PKError(badInputError);
+    }
+
+    public async Task CardShowColorHex(Context ctx)
+    {
+        if (!ctx.HasNext())
+        {
+            var msg = $"Showing color codes on system/member/group cards is currently **{EnabledDisabled(ctx.Config.CardShowColorHex)}**.";
+            await ctx.Reply(msg);
+            return;
+        }
+
+        var newVal = ctx.MatchToggle(false);
+        await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { CardShowColorHex = newVal });
+        await ctx.Reply($"Showing color codes on system/member/group cards is now {EnabledDisabled(newVal)}.");
     }
 
     public async Task ProxySwitch(Context ctx)
