@@ -119,6 +119,41 @@ public class Context
         return msg;
     }
 
+    public async Task<Message> Reply(MessageComponent[] components = null, AllowedMentions? mentions = null, MultipartFile[]? files = null)
+    {
+        var botPerms = await BotPermissions;
+
+        if (!botPerms.HasFlag(PermissionSet.SendMessages))
+            // Will be "swallowed" during the error handler anyway, this message is never shown.
+            throw new PKError("PluralKit does not have permission to send messages in this channel.");
+
+        if (files != null && !botPerms.HasFlag(PermissionSet.AttachFiles))
+            throw new PKError("PluralKit does not have permission to attach files in this channel. Please ensure I have the **Attach Files** permission enabled.");
+
+        var msg = await Rest.CreateMessage(Channel.Id, new MessageRequest
+        {
+            Components = components,
+            Flags = Message.MessageFlags.IsComponentsV2,
+
+            // Default to an empty allowed mentions object instead of null (which means no mentions allowed)
+            AllowedMentions = mentions ?? new AllowedMentions()
+        }, files: files);
+
+        // store log of sent message, so it can be queried or deleted later
+        // skip DMs as DM messages can always be deleted
+        if (Guild != null)
+            await Repository.AddCommandMessage(new Core.CommandMessage
+            {
+                Mid = msg.Id,
+                Guild = Guild!.Id,
+                Channel = Channel.Id,
+                Sender = Author.Id,
+                OriginalMid = Message.Id,
+            });
+
+        return msg;
+    }
+
     public async Task Execute<T>(Command? commandDef, Func<T, Task> handler, bool deprecated = false)
     {
         _currentCommand = commandDef;

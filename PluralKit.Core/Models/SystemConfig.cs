@@ -23,6 +23,7 @@ public class SystemConfig
     public bool ProxyErrorMessageEnabled { get; }
     public bool HidDisplaySplit { get; }
     public bool HidDisplayCaps { get; }
+    public bool CardShowColorHex { get; }
     public HidPadFormat HidListPadding { get; }
     public ProxySwitchAction ProxySwitch { get; }
     public string NameFormat { get; }
@@ -60,6 +61,7 @@ public static class SystemConfigExt
         o.Add("hid_display_split", cfg.HidDisplaySplit);
         o.Add("hid_display_caps", cfg.HidDisplayCaps);
         o.Add("hid_list_padding", cfg.HidListPadding.ToUserString());
+        o.Add("card_show_color_hex", cfg.CardShowColorHex);
         o.Add("proxy_switch", cfg.ProxySwitch.ToUserString());
         o.Add("name_format", cfg.NameFormat);
 

@@ -16,6 +16,7 @@ public class CoreConfig
     public string? SeqLogUrl { get; set; }
     public string? DispatchProxyUrl { get; set; }
     public string? DispatchProxyToken { get; set; }
+    public string DashboardBaseUrl { get; set; } = "https://dash.pluralkit.local";
 
     public LogEventLevel ConsoleLogLevel { get; set; } = LogEventLevel.Debug;
     public LogEventLevel ElasticLogLevel { get; set; } = LogEventLevel.Information;

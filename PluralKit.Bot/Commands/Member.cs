@@ -122,8 +122,16 @@ public class Member
     public async Task ViewMember(Context ctx, PKMember target)
     {
         var system = await ctx.Repository.GetSystem(target.System);
+        if (ctx.MatchFlag("show-embed", "se"))
+        {
+            await ctx.Reply(
+                text: EmbedService.LEGACY_EMBED_WARNING,
+                embed: await _embeds.CreateMemberEmbed(system, target, ctx.Guild, ctx.Config, ctx.LookupContextFor(system.Id), ctx.Zone));
+            return;
+        }
+
         await ctx.Reply(
-            embed: await _embeds.CreateMemberEmbed(system, target, ctx.Guild, ctx.Config, ctx.LookupContextFor(system.Id), ctx.Zone));
+            components: await _embeds.CreateMemberMessageComponents(system, target, ctx.Guild, ctx.Config, ctx.LookupContextFor(system.Id), ctx.Zone));
     }
 
     public async Task Soulscream(Context ctx, PKMember target)
