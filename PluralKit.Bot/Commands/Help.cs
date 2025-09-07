@@ -7,12 +7,94 @@ namespace PluralKit.Bot;
 
 public class Help
 {
+    public Task HelpRoot(Context ctx)
+    {
+        if (ctx.MatchFlag("show-embed", "se"))
+            return HelpRootOld(ctx);
+
+        return ctx.Reply(BuildComponents(ctx.Author.Id, Help.Description.Replace("{prefix}", ctx.DefaultPrefix), -1));
+    }
+
+    public static Task ButtonClick(InteractionContext ctx, string prefix)
+    {
+        if (!ctx.CustomId.Contains(ctx.User.Id.ToString()))
+            return ctx.Ignore();
+
+        if (ctx.CustomId.StartsWith("new-"))
+        {
+            Console.WriteLine($"{ctx.Event.Message.Components.First().Components.Length}");
+            if (ctx.Event.Message.Components.First().Components[1].Components.Where(x => x.CustomId == ctx.CustomId).First().Style == ButtonStyle.Primary)
+                return ctx.Respond(InteractionResponse.ResponseType.UpdateMessage, new()
+                {
+                    Components = BuildComponents(ctx.User.Id, Help.Description.Replace("{prefix}", prefix), -1),
+                    Flags = Message.MessageFlags.IsComponentsV2,
+                });
+
+            var text = helpEmbedPages.GetValueOrDefault(ctx.CustomId.Split("-")[3]).Select(
+                (item, index) => $"### {item.Name.Replace("{prefix}", prefix)}\n{item.Value.Replace("{prefix}", prefix)}"
+            ).ToArray();
+
+            var index = Array.FindIndex(ctx.Event.Message.Components.First().Components[1].Components, x => x.CustomId == ctx.CustomId);
+            var components = BuildComponents(ctx.User.Id, Help.Description.Replace("{prefix}", prefix), index);
+
+            components.First().Components[ctx.Event.Message.Components.First().Components.Length - 1] = new MessageComponent()
+            {
+                Type = ComponentType.Text,
+                Content = String.Join("\n", text),
+            };
+
+            return ctx.Respond(InteractionResponse.ResponseType.UpdateMessage, new()
+            {
+                Components = components,
+                Flags = Message.MessageFlags.IsComponentsV2,
+            });
+        }
+
+        return ButtonClickOld(ctx, prefix);
+    }
+
+    private static MessageComponent[] BuildComponents(ulong userId, string textContent, int menuIndex)
+    {
+        return [
+            new MessageComponent()
+            {
+                Type = ComponentType.Container,
+                AccentColor = DiscordUtils.Blue,
+                Components = [
+                    new MessageComponent()
+                    {
+                        Type = ComponentType.Text,
+                        Content = "# PluralKit\n-# Use the buttons below to see more info!"
+                    },
+                    helpPageButtons(userId, "new-", menuIndex),
+                    new MessageComponent()
+                    {
+                        Type = ComponentType.Separator,
+                    },
+                    new MessageComponent()
+                    {
+                        Type = ComponentType.Text,
+                        Content = textContent,
+                    },
+                ],
+            },
+            new MessageComponent()
+            {
+                Type = ComponentType.Text,
+                Content = EmbedFooter("\n-# "),
+            },
+        ];
+    }
+
+    ///
+
     private static string Description = "PluralKit is a bot designed for plural communities on Discord, and is open for anyone to use. It allows you to register systems, maintain system information, set up message proxying, log switches, and more.\n\n" +
                 "**System recovery:** in the case of your Discord account getting lost or deleted, the PluralKit staff can help you recover your system, **only if you save the system token from `{prefix}token`**. See [this FAQ entry](https://pluralkit.me/faq/#can-i-recover-my-system-if-i-lose-access-to-my-discord-account) for more details.\n\n" +
-                "If PluralKit is useful to you, please consider donating on [Patreon](https://patreon.com/pluralkit) or [Buy Me A Coffee](https://buymeacoffee.com/pluralkit).\n" +
-                "## Use the buttons below to see more info!";
+                "If PluralKit is useful to you, please consider donating on [Patreon](https://patreon.com/pluralkit) or [Buy Me A Coffee](https://buymeacoffee.com/pluralkit).";
 
-    public static string EmbedFooter = "-# PluralKit by @ske and contributors | Myriad design by @layl, icon by @tedkalashnikov, banner by @fulmine | GitHub: https://github.com/PluralKit/PluralKit/ | Website: https://pluralkit.me/";
+    private static string DescriptionOld = $"{Description}\n## Use the buttons below to see more info!";
+
+    public static string EmbedFooter(string linkSeparator) => $"-# PluralKit by @ske and contributors | Myriad design by @layl, icon by @tedkalashnikov, banner by @fulmine{linkSeparator}GitHub: https://github.com/PluralKit/PluralKit/ | Website: https://pluralkit.me/";
 
     public static Embed helpEmbed = new()
     {
@@ -98,7 +180,7 @@ public class Help
         }
     };
 
-    private static MessageComponent helpPageButtons(ulong userId) => new MessageComponent
+    private static MessageComponent helpPageButtons(ulong userId, string pfx = "", int menuIndex = -1) => new MessageComponent
     {
         Type = ComponentType.ActionRow,
         Components = new[]
@@ -106,58 +188,54 @@ public class Help
             new MessageComponent
             {
                 Type = ComponentType.Button,
-                Style = ButtonStyle.Secondary,
+                Style = menuIndex == 0 ? ButtonStyle.Primary : ButtonStyle.Secondary,
                 Label = "Basic Info",
-                CustomId = $"help-menu-basicinfo-{userId}",
+                CustomId = $"{pfx}help-menu-basicinfo-{userId}",
                 Emoji = new() { Name = "\u2139" },
             },
             new()
             {
                 Type = ComponentType.Button,
-                Style = ButtonStyle.Secondary,
+                Style = menuIndex == 1 ? ButtonStyle.Primary : ButtonStyle.Secondary,
                 Label = "Getting Started",
-                CustomId = $"help-menu-gettingstarted-{userId}",
+                CustomId = $"{pfx}help-menu-gettingstarted-{userId}",
                 Emoji = new() { Name = "\u2753", },
             },
             new()
             {
                 Type = ComponentType.Button,
-                Style = ButtonStyle.Secondary,
+                Style = menuIndex == 2 ? ButtonStyle.Primary : ButtonStyle.Secondary,
                 Label = "Useful Tips",
-                CustomId = $"help-menu-usefultips-{userId}",
+                CustomId = $"{pfx}help-menu-usefultips-{userId}",
                 Emoji = new() { Name = "\U0001f4a1", },
-
             },
             new()
             {
                 Type = ComponentType.Button,
-                Style = ButtonStyle.Secondary,
+                Style = menuIndex == 3 ? ButtonStyle.Primary : ButtonStyle.Secondary,
                 Label = "More Info",
-                CustomId = $"help-menu-moreinfo-{userId}",
+                CustomId = $"{pfx}help-menu-moreinfo-{userId}",
                 Emoji = new() { Id = 986379675066593330, },
             }
         }
     };
 
-    public Task HelpRoot(Context ctx)
+    public Task HelpRootOld(Context ctx)
         => ctx.Rest.CreateMessage(ctx.Channel.Id, new MessageRequest
         {
             Content = $"{Emojis.Warn} If you cannot see the rest of this message see [the FAQ](<https://pluralkit.me/faq/#why-do-most-of-pluralkit-s-messages-look-blank-or-empty>)",
-            Embeds = new[] { helpEmbed with { Description = Help.Description.Replace("{prefix}", ctx.DefaultPrefix), Fields = new Embed.Field[] { new("", EmbedFooter) } } },
+            Embeds = new[] { helpEmbed with { Description = Help.DescriptionOld.Replace("{prefix}", ctx.DefaultPrefix), Fields = new Embed.Field[] { new("", EmbedFooter(" | ")) } } },
             Components = new[] { helpPageButtons(ctx.Author.Id) },
         });
 
-    public static Task ButtonClick(InteractionContext ctx, string prefix)
+    public static Task ButtonClickOld(InteractionContext ctx, string prefix)
     {
-        if (!ctx.CustomId.Contains(ctx.User.Id.ToString()))
-            return ctx.Ignore();
-
         var buttons = helpPageButtons(ctx.User.Id);
 
         if (ctx.Event.Message.Components.First().Components.Where(x => x.CustomId == ctx.CustomId).First().Style == ButtonStyle.Primary)
             return ctx.Respond(InteractionResponse.ResponseType.UpdateMessage, new()
             {
-                Embeds = new[] { helpEmbed with { Description = Help.Description.Replace("{prefix}", prefix), Fields = new Embed.Field[] { new("", EmbedFooter) } } },
+                Embeds = new[] { helpEmbed with { Description = Help.DescriptionOld.Replace("{prefix}", prefix), Fields = new Embed.Field[] { new("", EmbedFooter(" | ")) } } },
                 Components = new[] { buttons }
             });
 
@@ -167,7 +245,7 @@ public class Help
         {
             Embeds = new[] { helpEmbed with { Fields = helpEmbedPages.GetValueOrDefault(ctx.CustomId.Split("-")[2]).Select(
                 (item, index) => new Embed.Field(item.Name.Replace("{prefix}", prefix), item.Value.Replace("{prefix}", prefix))
-            ).Append(new("", EmbedFooter)).ToArray() } },
+            ).Append(new("", EmbedFooter(" | "))).ToArray() } },
             Components = new[] { buttons }
         });
     }
