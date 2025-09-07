@@ -92,7 +92,7 @@ public class Misc
                                        + $"**{stats.db.switches:N0}** switches, **{stats.db.messages:N0}** messages\n" +
                                          $"**{stats.db.guilds:N0}** servers with **{stats.db.channels:N0}** channels"));
 
-        embed.Field(new("", Help.EmbedFooter));
+        embed.Field(new("", Help.EmbedFooter(" | ")));
 
         var uptime = ((DateTimeOffset)process.StartTime).ToUnixTimeSeconds();
         embed.Description($"### PluralKit [{BuildInfoService.Version}](https://github.com/pluralkit/pluralkit/commit/{BuildInfoService.FullVersion})\n" +
