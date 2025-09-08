@@ -39,6 +39,9 @@ public static class DiscordUtils
     public static Instant SnowflakeToInstant(ulong snowflake) =>
         Instant.FromUtc(2015, 1, 1, 0, 0, 0) + Duration.FromMilliseconds(snowflake >> 22);
 
+    public static ulong SnowflakeToTimestamp(ulong snowflake) =>
+        ((ulong)Instant.FromUtc(2015, 1, 1, 0, 0, 0).ToUnixTimeMilliseconds() + (snowflake >> 22)) / 1000;
+
     public static ulong InstantToSnowflake(Instant time) =>
         (ulong)(time - Instant.FromUtc(2015, 1, 1, 0, 0, 0)).TotalMilliseconds << 22;
 

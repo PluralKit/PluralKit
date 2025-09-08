@@ -76,6 +76,16 @@ public class InteractionContext
             });
     }
 
+    public async Task Reply(MessageComponent[] components = null)
+    {
+        await Respond(InteractionResponse.ResponseType.ChannelMessageWithSource,
+            new InteractionApplicationCommandCallbackData
+            {
+                Components = components,
+                Flags = Message.MessageFlags.Ephemeral | Message.MessageFlags.IsComponentsV2
+            });
+    }
+
     public async Task Defer()
     {
         await Respond(InteractionResponse.ResponseType.DeferredChannelMessageWithSource,

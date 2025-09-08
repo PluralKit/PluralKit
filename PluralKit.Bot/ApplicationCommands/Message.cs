@@ -43,11 +43,27 @@ public class ApplicationCommandProxiedMessage
         if (channel == null)
             showContent = false;
 
-        var embeds = new List<Embed>();
+        // var embeds = new List<Embed>();
 
+        // var guild = await _cache.GetGuild(ctx.GuildId);
+        // if (msg.Member != null)
+        //     embeds.Add(await _embeds.CreateMemberEmbed(
+        //         msg.System,
+        //         msg.Member,
+        //         guild,
+        //         ctx.Config,
+        //         LookupContext.ByNonOwner,
+        //         DateTimeZone.Utc
+        //     ));
+
+        // embeds.Add(await _embeds.CreateMessageInfoEmbed(msg, showContent, ctx.Config));
+
+        // await ctx.Reply(embeds: embeds.ToArray());
+
+        var components = new List<MessageComponent>();
         var guild = await _cache.GetGuild(ctx.GuildId);
         if (msg.Member != null)
-            embeds.Add(await _embeds.CreateMemberEmbed(
+            components.AddRange(await _embeds.CreateMemberMessageComponents(
                 msg.System,
                 msg.Member,
                 guild,
@@ -56,9 +72,8 @@ public class ApplicationCommandProxiedMessage
                 DateTimeZone.Utc
             ));
 
-        embeds.Add(await _embeds.CreateMessageInfoEmbed(msg, showContent, ctx.Config));
-
-        await ctx.Reply(embeds: embeds.ToArray());
+        components.AddRange(await _embeds.CreateMessageInfoMessageComponents(msg, showContent, ctx.Config));
+        await ctx.Reply(components: components.ToArray());
     }
 
     private async Task QueryCommandMessage(InteractionContext ctx)

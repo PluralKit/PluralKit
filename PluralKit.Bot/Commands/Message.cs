@@ -426,21 +426,82 @@ public class ProxiedMessage
         if (ctx.Match("author") || ctx.MatchFlag("author"))
         {
             var user = await _rest.GetUser(message.Message.Sender);
-            var eb = new EmbedBuilder()
-                .Author(new Embed.EmbedAuthor(
-                    user != null
-                        ? $"{user.Username}#{user.Discriminator}"
-                        : $"Deleted user ${message.Message.Sender}",
-                    IconUrl: user != null ? user.AvatarUrl() : null))
-                .Description(message.Message.Sender.ToString());
+            if (ctx.MatchFlag("show-embed", "se"))
+            {
+                var eb = new EmbedBuilder()
+                    .Author(new Embed.EmbedAuthor(
+                        user != null
+                            ? $"{user.Username}#{user.Discriminator}"
+                            : $"Deleted user ${message.Message.Sender}",
+                        IconUrl: user != null ? user.AvatarUrl() : null))
+                    .Description(message.Message.Sender.ToString());
 
-            await ctx.Reply(
-                user != null ? $"{user.Mention()} ({user.Id})" : $"*(deleted user {message.Message.Sender})*",
-                eb.Build());
+                await ctx.Reply(
+                    user != null ? $"{user.Mention()} ({user.Id})" : $"*(deleted user {message.Message.Sender})*",
+                    eb.Build());
+                return;
+            }
+
+
+            MessageComponent authorInfo;
+            var author = user != null
+                ? $"{user.Username}#{user.Discriminator}"
+                : $"Deleted user ${message.Message.Sender}";
+            var avatarUrl = user?.AvatarUrl();
+            var authorString = $"{author}\n**ID: **`{message.Message.Sender.ToString()}`";
+            if (user != null && avatarUrl != "")
+            {
+                authorInfo = new MessageComponent()
+                {
+                    Type = ComponentType.Section,
+                    Components = [
+                        new MessageComponent()
+                        {
+                            Type = ComponentType.Text,
+                            Content = authorString
+                        }
+                    ],
+                    Accessory = new MessageComponent()
+                    {
+                        Type = ComponentType.Thumbnail,
+                        Media = new ComponentMedia()
+                        {
+                            Url = avatarUrl
+                        }
+                    }
+                };
+            }
+            else
+            {
+                authorInfo = new MessageComponent()
+                {
+                    Type = ComponentType.Text,
+                    Content = authorString
+                };
+            }
+            MessageComponent container = new MessageComponent()
+            {
+                Type = ComponentType.Container,
+                Components = [
+                    authorInfo,
+                ]
+            };
+
+            await ctx.Reply(components: [new MessageComponent()
+                    {
+                        Type = ComponentType.Text,
+                        Content = user != null ? $"{user.Mention()} ({user.Id})" : $"*(deleted user {message.Message.Sender})*"
+                    },container]);
             return;
         }
 
-        await ctx.Reply(embed: await _embeds.CreateMessageInfoEmbed(message, showContent, ctx.Config));
+        if (ctx.MatchFlag("show-embed", "se"))
+        {
+            await ctx.Reply(embed: await _embeds.CreateMessageInfoEmbed(message, showContent, ctx.Config));
+            return;
+        }
+
+        await ctx.Reply(components: await _embeds.CreateMessageInfoMessageComponents(message, showContent, ctx.Config));
     }
 
     private async Task GetCommandMessage(Context ctx, ulong messageId, bool isDelete)

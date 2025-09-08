@@ -186,10 +186,25 @@ public class ReactionAdded: IEventHandler<MessageReactionAddEvent>
         {
             var dm = await _dmCache.GetOrCreateDmChannel(evt.UserId);
 
-            var embeds = new List<Embed>();
+            // var embeds = new List<Embed>();
 
+            // if (msg.Member != null)
+            //     embeds.Add(await _embeds.CreateMemberEmbed(
+            //         msg.System,
+            //         msg.Member,
+            //         guild,
+            //         config,
+            //         LookupContext.ByNonOwner,
+            //         DateTimeZone.Utc
+            //     ));
+
+            // embeds.Add(await _embeds.CreateMessageInfoEmbed(msg, true, config));
+
+            // await _rest.CreateMessage(dm, new MessageRequest { Embeds = embeds.ToArray() });
+
+            var components = new List<MessageComponent>();
             if (msg.Member != null)
-                embeds.Add(await _embeds.CreateMemberEmbed(
+                components.AddRange(await _embeds.CreateMemberMessageComponents(
                     msg.System,
                     msg.Member,
                     guild,
@@ -198,9 +213,8 @@ public class ReactionAdded: IEventHandler<MessageReactionAddEvent>
                     DateTimeZone.Utc
                 ));
 
-            embeds.Add(await _embeds.CreateMessageInfoEmbed(msg, true, config));
-
-            await _rest.CreateMessage(dm, new MessageRequest { Embeds = embeds.ToArray() });
+            components.AddRange(await _embeds.CreateMessageInfoMessageComponents(msg, true, config));
+            await _rest.CreateMessage(dm, new MessageRequest { Components = components.ToArray(), Flags = Message.MessageFlags.IsComponentsV2 });
         }
         catch (ForbiddenException) { } // No permissions to DM, can't check for this :(
 
