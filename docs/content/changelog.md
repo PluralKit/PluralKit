@@ -14,7 +14,7 @@ a more complete list of code changes can be found [in the git repo](https://gith
 ### new/updated
 - **new "ComponentsV2" format for system/member/group cards and help menu** (use -show-embed or -se flag to get the old view)
   - [we have written a blog post giving some context behind this change](/posts/2025-09-08-components-v2/) - please read this also!
-  - a config option to toggle showing color codes on the new cards was also added as `pk;config show color`
+  - color codes are now hidden by default on cards, and a config option to show them again was added: `pk;config show color on`
 - **new status page at <https://status.pluralkit.me>**
 - replies to commands can now be deleted forever (previously 24h)
 - logclean support for [Zeppelin](https://zeppelin.gg/) bot

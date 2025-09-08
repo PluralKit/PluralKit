@@ -61,6 +61,16 @@ the entire card, which can be split however we like. this means that once the
 old embed-based cards are removed, we will be able to raise the description
 character limit!
 
+### where'd the color codes go?
+
+one of the design choices we made for the new system/member/group cards was
+to hide the hex color codes by default - this has been a near-constantly
+requested feature, and the Components V2 rework gave us a good opportunity
+to implement it.
+
+we added a configuration toggle for this - if you *do* want to see the hex
+codes for colors, you can use `pk;config show color on` to re-enable them.
+
 ### other small improvements
 
 - Components V2 allows us to use real code blocks in the card footers for
