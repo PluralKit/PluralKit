@@ -119,7 +119,7 @@ public class EmbedService
         }
 
         List<MessageComponent> descComponents = [];
-        if (system.DescriptionFor(ctx) is { } desc)
+        if (system.DescriptionFor(ctx) is { } desc && !string.IsNullOrWhiteSpace(desc))
         {
             descComponents.Add(new()
             {
@@ -405,7 +405,7 @@ public class EmbedService
         }
 
         List<MessageComponent> descComponents = [];
-        if (member.DescriptionFor(ctx) is { } desc)
+        if (member.DescriptionFor(ctx) is { } desc && !string.IsNullOrWhiteSpace(desc))
         {
             descComponents.Add(new()
             {
@@ -595,7 +595,7 @@ public class EmbedService
         }
 
         List<MessageComponent> descComponents = [];
-        if (target.DescriptionFor(pctx) is { } desc)
+        if (target.DescriptionFor(pctx) is { } desc && !string.IsNullOrWhiteSpace(desc))
         {
             descComponents.Add(new()
             {
