@@ -98,18 +98,30 @@ the old cards will still show in some places in the bot (the most prominent
 example being when querying message info with the ❓ reaction) also,
 until we migrate those parts of the bot to use Components V2. 
 
-the old embed-based cards will be removed from the bot in future - although
-we do not have any specific timeframe in mind for this yet.
+the old embed-based cards **will be removed from the bot in future** -
+although we do not have any specific timeframe in mind for this yet.
+because of this, we will not be supporting a way to persistently show
+the old cards (such as a config option) - the `-show-embed` flag is the
+only way to pull up the old cards when using a command to query info.
 
 ### in closing
 
 we hope that this gives you a bit more context as to why we've made this
 change - although there are some new design choices here, this was not
-a change made just for the sake of changing.
+a change made just for the sake of changing. moving to Components V2 not only
+gives us a lot more freedom to do things that weren't previously possible,
+but means we can fix a lot of the long-standing issues with PK cards!
+
+we know this is a significant change for PluralKit, but we hope you can
+understand that this is a change for the better.
 
 a lot of the decisions that went into the new versions of the cards were
 iterated on with feedback from members of the community who help beta test
 new PluralKit features - i want to thank those people immensely for their
 input!
 
-if you have any questions, please let us know in [the support server](https://discord.gg/PczBt78).
+if you'd like to help beta-test new features in future, check out the pins
+in the `#beta-testing` channel in [the support server](https://discord.gg/PczBt78)
+for the beta testing announcement role.
+
+if you have any questions, please let us know in the support server!
