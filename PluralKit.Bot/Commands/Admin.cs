@@ -9,6 +9,7 @@ using Myriad.Extensions;
 using Myriad.Cache;
 using Myriad.Rest;
 using Myriad.Types;
+using Myriad.Rest.Types.Requests;
 
 using PluralKit.Core;
 
@@ -495,5 +496,34 @@ public class Admin
 
         await ctx.Repository.DeleteAbuseLog(abuseLog.Id);
         await ctx.Reply($"{Emojis.Success} Successfully deleted abuse log entry.");
+    }
+
+    public async Task SendAdminMessage(Context ctx)
+    {
+        ctx.AssertBotAdmin();
+
+        var account = await ctx.MatchUser();
+        if (account == null)
+            throw new PKError("You must pass an account to send an admin message to (either ID or @mention).");
+        if (!ctx.HasNext())
+            throw new PKError("You must provide a message to send.");
+
+        var content = ctx.RemainderOrNull(false).NormalizeLineEndSpacing();
+        var messageContent = $"## [Admin Message]\n\n{content}\n\nWe cannot read replies sent to this DM. If you wish to contact the staff team, please join the support server (<https://discord.gg/PczBt78>) or send us an email at <legal@pluralkit.me>.";
+
+        try
+        {
+            var dm = await _rest.CreateDm(account.Id);
+            var msg = await ctx.Rest.CreateMessage(dm.Id,
+                new MessageRequest { Content = messageContent }
+            );
+        }
+        catch (Exception)
+        {
+            await ctx.Reply(
+                $"{Emojis.Error} Error while sending DM.");
+        }
+
+        await ctx.Reply($"{Emojis.Success} Successfully sent message.");
     }
 }
