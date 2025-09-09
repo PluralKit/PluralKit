@@ -10,6 +10,7 @@ using Myriad.Cache;
 using Myriad.Rest;
 using Myriad.Types;
 using Myriad.Rest.Types.Requests;
+using Myriad.Rest.Exceptions;
 
 using PluralKit.Core;
 
@@ -20,12 +21,14 @@ public class Admin
     private readonly BotConfig _botConfig;
     private readonly DiscordApiClient _rest;
     private readonly IDiscordCache _cache;
+    private readonly PrivateChannelService _dmCache;
 
-    public Admin(BotConfig botConfig, DiscordApiClient rest, IDiscordCache cache)
+    public Admin(BotConfig botConfig, DiscordApiClient rest, IDiscordCache cache, PrivateChannelService dmCache)
     {
         _botConfig = botConfig;
         _rest = rest;
         _cache = cache;
+        _dmCache = dmCache;
     }
 
     private Task<(ulong Id, User? User)[]> GetUsers(IEnumerable<ulong> ids)
@@ -513,15 +516,16 @@ public class Admin
 
         try
         {
-            var dm = await _rest.CreateDm(account.Id);
-            var msg = await ctx.Rest.CreateMessage(dm.Id,
+            var dm = await _dmCache.GetOrCreateDmChannel(account.Id);
+            var msg = await ctx.Rest.CreateMessage(dm,
                 new MessageRequest { Content = messageContent }
             );
         }
-        catch (Exception)
+        catch (ForbiddenException)
         {
             await ctx.Reply(
                 $"{Emojis.Error} Error while sending DM.");
+            return;
         }
 
         await ctx.Reply($"{Emojis.Success} Successfully sent message.");
