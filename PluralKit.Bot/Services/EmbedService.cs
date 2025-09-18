@@ -57,7 +57,7 @@ public class EmbedService
         var countctx = LookupContext.ByNonOwner;
         if (cctx.MatchFlag("a", "all"))
         {
-            if (system.Id == cctx.System.Id)
+            if (system.Id == cctx.System?.Id)
                 countctx = LookupContext.ByOwner;
             else
                 throw Errors.LookupNotAllowed;
@@ -89,7 +89,7 @@ public class EmbedService
         if (system.MemberListPrivacy.CanAccess(ctx))
         {
             headerText += $"\n**Members:** {memberCount}";
-            if (system.Id == cctx.System.Id)
+            if (system.Id == cctx.System?.Id)
                 if (memberCount > 0)
                     headerText += $" (see `{cctx.DefaultPrefix}system list`)";
                 else
@@ -215,7 +215,7 @@ public class EmbedService
         var countctx = LookupContext.ByNonOwner;
         if (cctx.MatchFlag("a", "all"))
         {
-            if (system.Id == cctx.System.Id)
+            if (system.Id == cctx.System?.Id)
                 countctx = LookupContext.ByOwner;
             else
                 throw Errors.LookupNotAllowed;
@@ -570,7 +570,7 @@ public class EmbedService
         var countctx = LookupContext.ByNonOwner;
         if (ctx.MatchFlag("a", "all"))
         {
-            if (system.Id == ctx.System.Id)
+            if (system.Id == ctx.System?.Id)
                 countctx = LookupContext.ByOwner;
             else
                 throw Errors.LookupNotAllowed;
@@ -588,7 +588,7 @@ public class EmbedService
         if (target.ListPrivacy.CanAccess(pctx))
         {
             headerText += $"\n**Members:** {memberCount}";
-            if (system.Id == ctx.System.Id && memberCount == 0)
+            if (system.Id == ctx.System?.Id && memberCount == 0)
                 headerText += $" (add one with `{ctx.DefaultPrefix}group {target.Reference(ctx)} add <member>`!)";
             else if (memberCount > 0)
                 headerText += $" (see `{ctx.DefaultPrefix}group {target.Reference(ctx)} list`)";
@@ -680,7 +680,7 @@ public class EmbedService
         var countctx = LookupContext.ByNonOwner;
         if (ctx.MatchFlag("a", "all"))
         {
-            if (system.Id == ctx.System.Id)
+            if (system.Id == ctx.System?.Id)
                 countctx = LookupContext.ByOwner;
             else
                 throw Errors.LookupNotAllowed;
