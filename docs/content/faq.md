@@ -99,4 +99,9 @@ It is not possible to edit messages via ID. Please use the full link, or reply t
 You cannot reply-@ a proxied messages due to their nature as webhooks. If you want to "reply-@" a proxied message, you must react to the message with 🔔, 🛎, or 🏓. This will send a message from PluralKit that reads "Psst, MEMBER (@User), you have been pinged by @You", which will ping the Discord account behind the proxied message.
 
 ### Why do most of PluralKit's messages look blank or empty?
-A lot of PluralKit's command responses use Discord embeds. If you can't see them, it's likely you have embeds turned off. To change this, go into your discord settings and find the tab "Chat" under "App Settings". Find the setting "Show embeds and preview website links" and turn it on. If it's already on, try turning it off and then on again. 
+PluralKit now uses Discord's "Components V2" for system/member/group cards - if the cards no longer show, your Discord app is too old to show the new components, and you should update it.
+A temporary workaround to show the old version of the cards exists as the -show-embed (or -se) flag to pk;system / pk;member / pk;group - however, we will be removing the old embed-based cards in the future (and as such, we will not add a config option to always use the old cards).
+
+Please read the announcement post for more details: <https://pluralkit.me/posts/2025-09-08-components-v2/>
+
+Some of PluralKit's command responses still use Discord embeds. If you can't see them, it's likely you have embeds turned off. To change this, go into your discord settings and find the tab "Chat" under "App Settings". Find the setting "Show embeds and preview website links" and turn it on. If it's already on, try turning it off and then on again.
