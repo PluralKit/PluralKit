@@ -6,7 +6,7 @@ use std::sync::Arc;
 use tokio::sync::mpsc::Sender;
 use tracing::{error, info, warn};
 use twilight_gateway::{
-    CloseFrame, ConfigBuilder, Event, EventTypeFlags, Message, Shard, ShardId, create_iterator,
+    ConfigBuilder, Event, EventTypeFlags, Message, Shard, ShardId, create_iterator,
 };
 use twilight_model::gateway::{
     Intents,
@@ -118,8 +118,11 @@ pub async fn runner(
                 Message::Close(frame) => {
                     let mut state_event = ShardStateEvent::Closed;
                     let close_code = if let Some(close) = frame {
-                        if close == CloseFrame::RESUME {
-                            state_event = ShardStateEvent::Reconnect;
+                        match close.code {
+                            4000..=4003 | 4005..=4009 => {
+                                state_event = ShardStateEvent::Reconnect;
+                            }
+                            _ => {}
                         }
                         close.code.to_string()
                     } else {
@@ -176,32 +179,45 @@ pub async fn runner(
         )
         .increment(1);
 
-        // update shard state and discord cache
-        if matches!(event, Event::Ready(_)) || matches!(event, Event::Resumed) {
-            if let Err(error) = tx_state.try_send((
-                shard.id(),
-                ShardStateEvent::Other,
-                Some(event.clone()),
-                None,
-            )) {
-                tracing::error!(?error, "error updating shard state");
+        // check for shard status events
+        match event {
+            Event::Ready(_) | Event::Resumed => {
+                if let Err(error) = tx_state.try_send((
+                    shard.id(),
+                    ShardStateEvent::Other,
+                    Some(event.clone()),
+                    None,
+                )) {
+                    tracing::error!(?error, "error updating shard state");
+                }
             }
-        }
-        // need to do heartbeat separately, to get the latency
-        let latency_num = shard
-            .latency()
-            .recent()
-            .first()
-            .map_or_else(|| 0, |d| d.as_millis()) as i32;
-        if let Event::GatewayHeartbeatAck = event
-            && let Err(error) = tx_state.try_send((
-                shard.id(),
-                ShardStateEvent::Heartbeat,
-                Some(event.clone()),
-                Some(latency_num),
-            ))
-        {
-            tracing::error!(?error, "error updating shard state for latency");
+            Event::GatewayReconnect => {
+                if let Err(error) = tx_state.try_send((
+                    shard.id(),
+                    ShardStateEvent::Reconnect,
+                    Some(event.clone()),
+                    None,
+                )) {
+                    tracing::error!(?error, "error updating shard state for reconnect");
+                }
+            }
+            Event::GatewayHeartbeatAck => {
+                // need to do heartbeat separately, to get the latency
+                let latency_num = shard
+                    .latency()
+                    .recent()
+                    .first()
+                    .map_or_else(|| 0, |d| d.as_millis()) as i32;
+                if let Err(error) = tx_state.try_send((
+                    shard.id(),
+                    ShardStateEvent::Heartbeat,
+                    Some(event.clone()),
+                    Some(latency_num),
+                )) {
+                    tracing::error!(?error, "error updating shard state for latency");
+                }
+            }
+            _ => {}
         }
 
         if let Event::Ready(_) = event {
