@@ -57,7 +57,7 @@ public class GroupMember
         var opts = ctx.ParseListOptions(ctx.DirectLookupContextFor(target.System), ctx.LookupContextFor(target.System));
         opts.MemberFilter = target.Id;
 
-        var title = new StringBuilder($"Groups containing {target.Name} (`{target.DisplayHid(ctx.Config)}`) in ");
+        var title = new StringBuilder($"Groups containing {target.NameFor(ctx)} (`{target.DisplayHid(ctx.Config)}`) in ");
         if (ctx.Guild != null)
         {
             var guildSettings = await ctx.Repository.GetSystemGuild(ctx.Guild.Id, targetSystem.Id);
