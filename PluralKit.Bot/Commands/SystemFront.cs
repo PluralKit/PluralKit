@@ -23,7 +23,12 @@ public class SystemFront
         var sw = await ctx.Repository.GetLatestSwitch(system.Id);
         if (sw == null) throw Errors.NoRegisteredSwitches;
 
-        await ctx.Reply(embed: await _embeds.CreateFronterEmbed(sw, ctx.Zone, ctx.LookupContextFor(system.Id)));
+        if (ctx.MatchFlag("show-embed", "se"))
+        {
+            await ctx.Reply(text: EmbedService.LEGACY_EMBED_WARNING, embed: await _embeds.CreateFronterEmbed(sw, ctx.Zone, ctx.LookupContextFor(system.Id)));
+            return;
+        }
+        await ctx.Reply(components: await _embeds.CreateFronterMessageComponents(ctx, system, sw, ctx.LookupContextFor(system.Id)));
     }
 
     public async Task SystemFrontHistory(Context ctx, PKSystem system)

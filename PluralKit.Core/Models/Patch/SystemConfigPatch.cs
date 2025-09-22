@@ -25,6 +25,7 @@ public class SystemConfigPatch: PatchObject
     public Partial<bool> CardShowColorHex { get; set; }
     public Partial<string?> NameFormat { get; set; }
     public Partial<SystemConfig.HidPadFormat> HidListPadding { get; set; }
+    public Partial<SystemConfig.ListFormat> FronterListFormat { get; set; }
     public Partial<SystemConfig.ProxySwitchAction> ProxySwitch { get; set; }
 
     public override Query Apply(Query q) => q.ApplyPatch(wrapper => wrapper
@@ -43,6 +44,7 @@ public class SystemConfigPatch: PatchObject
         .With("hid_display_caps", HidDisplayCaps)
         .With("hid_list_padding", HidListPadding)
         .With("card_show_color_hex", CardShowColorHex)
+        .With("fronter_list_format", FronterListFormat)
         .With("proxy_switch", ProxySwitch)
         .With("name_format", NameFormat)
     );
@@ -112,6 +114,9 @@ public class SystemConfigPatch: PatchObject
         if (CardShowColorHex.IsPresent)
             o.Add("card_show_color_hex", CardShowColorHex.Value);
 
+        if (FronterListFormat.IsPresent)
+            o.Add("fronter_list_format", FronterListFormat.Value.ToUserString());
+
         if (ProxySwitch.IsPresent)
             o.Add("proxy_switch", ProxySwitch.Value.ToUserString());
 
@@ -157,6 +162,13 @@ public class SystemConfigPatch: PatchObject
 
         if (o.ContainsKey("card_show_color_hex"))
             patch.CardShowColorHex = o.Value<bool>("card_show_color_hex");
+
+        if (o.ContainsKey("fronter_list_format"))
+            patch.FronterListFormat = o.Value<string>("fronter_list_format") switch
+            {
+                "full" => SystemConfig.ListFormat.Full,
+                _ => SystemConfig.ListFormat.Short,
+            };
 
         if (o.ContainsKey("proxy_switch"))
             patch.ProxySwitch = o.Value<string>("proxy_switch") switch
