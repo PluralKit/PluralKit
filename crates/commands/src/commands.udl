@@ -9,6 +9,7 @@ interface CommandResult {
 [Enum]
 interface Parameter {
 	MemberRef(string member);
+	MemberRefs(sequence<string> members);
 	SystemRef(string system);
 	GuildRef(string guild);
 	MemberPrivacyTarget(string target);

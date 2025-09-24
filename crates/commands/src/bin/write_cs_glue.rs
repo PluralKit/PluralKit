@@ -167,6 +167,7 @@ fn get_param_ty(kind: ParameterKind) -> &'static str {
     match kind {
         ParameterKind::OpaqueString | ParameterKind::OpaqueStringRemainder => "string",
         ParameterKind::MemberRef => "PKMember",
+        ParameterKind::MemberRefs => "List<PKMember>",
         ParameterKind::SystemRef => "PKSystem",
         ParameterKind::MemberPrivacyTarget => "MemberPrivacySubject",
         ParameterKind::SystemPrivacyTarget => "SystemPrivacySubject",
@@ -181,6 +182,7 @@ fn get_param_param_ty(kind: ParameterKind) -> &'static str {
     match kind {
         ParameterKind::OpaqueString | ParameterKind::OpaqueStringRemainder => "Opaque",
         ParameterKind::MemberRef => "Member",
+        ParameterKind::MemberRefs => "Members",
         ParameterKind::SystemRef => "System",
         ParameterKind::MemberPrivacyTarget => "MemberPrivacyTarget",
         ParameterKind::SystemPrivacyTarget => "SystemPrivacyTarget",

@@ -152,6 +152,13 @@ public partial class CommandTree
             Commands.SystemShowPrivacy(var param, _) => ctx.Execute<SystemEdit>(SystemPrivacy, m => m.ShowSystemPrivacy(ctx, ctx.System)),
             Commands.SystemChangePrivacyAll(var param, _) => ctx.Execute<SystemEdit>(SystemPrivacy, m => m.ChangeSystemPrivacyAll(ctx, ctx.System, param.level)),
             Commands.SystemChangePrivacy(var param, _) => ctx.Execute<SystemEdit>(SystemPrivacy, m => m.ChangeSystemPrivacy(ctx, ctx.System, param.privacy, param.level)),
+            Commands.SwitchOut(_, _) => ctx.Execute<Switch>(SwitchOut, m => m.SwitchOut(ctx)),
+            Commands.SwitchDo(var param, _) => ctx.Execute<Switch>(Switch, m => m.SwitchDo(ctx, param.targets)),
+            Commands.SwitchMove(var param, _) => ctx.Execute<Switch>(SwitchMove, m => m.SwitchMove(ctx, param.@string)),
+            Commands.SwitchEdit(var param, var flags) => ctx.Execute<Switch>(SwitchEdit, m => m.SwitchEdit(ctx, param.targets, false, flags.first, flags.remove, flags.append, flags.prepend)),
+            Commands.SwitchEditOut(_, _) => ctx.Execute<Switch>(SwitchEditOut, m => m.SwitchEditOut(ctx)),
+            Commands.SwitchDelete(var param, var flags) => ctx.Execute<Switch>(SwitchDelete, m => m.SwitchDelete(ctx, flags.all)),
+            Commands.SwitchCopy(var param, var flags) => ctx.Execute<Switch>(SwitchCopy, m => m.SwitchEdit(ctx, param.targets, true, flags.first, flags.remove, flags.append, flags.prepend)),
             _ =>
             // this should only ever occur when deving if commands are not implemented...
             ctx.Reply(
@@ -521,26 +528,8 @@ public partial class CommandTree
 
     private async Task HandleSwitchCommand(Context ctx)
     {
-        if (ctx.Match("out"))
-            await ctx.Execute<Switch>(SwitchOut, m => m.SwitchOut(ctx));
-        else if (ctx.Match("move", "m", "shift", "offset"))
-            await ctx.Execute<Switch>(SwitchMove, m => m.SwitchMove(ctx));
-        else if (ctx.Match("edit", "e", "replace"))
-            if (ctx.Match("out"))
-                await ctx.Execute<Switch>(SwitchEditOut, m => m.SwitchEditOut(ctx));
-            else
-                await ctx.Execute<Switch>(SwitchEdit, m => m.SwitchEdit(ctx));
-        else if (ctx.Match("delete", "remove", "erase", "cancel", "yeet"))
-            await ctx.Execute<Switch>(SwitchDelete, m => m.SwitchDelete(ctx));
-        else if (ctx.Match("copy", "add", "duplicate", "dupe"))
-            await ctx.Execute<Switch>(SwitchCopy, m => m.SwitchEdit(ctx, true));
-        else if (ctx.Match("commands", "help"))
-            await PrintCommandList(ctx, "switching", SwitchCommands);
-        else if (ctx.HasNext()) // there are following arguments
-            await ctx.Execute<Switch>(Switch, m => m.SwitchDo(ctx));
-        else
-            await PrintCommandNotFoundError(ctx, Switch, SwitchOut, SwitchMove, SwitchEdit, SwitchEditOut,
-                SwitchDelete, SwitchCopy, SystemFronter, SystemFrontHistory);
+        await PrintCommandNotFoundError(ctx, Switch, SwitchOut, SwitchMove, SwitchEdit, SwitchEditOut,
+            SwitchDelete, SwitchCopy, SystemFronter, SystemFrontHistory);
     }
 
     private async Task CommandHelpRoot(Context ctx)

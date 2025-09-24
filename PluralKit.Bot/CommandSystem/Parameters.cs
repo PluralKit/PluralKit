@@ -1,3 +1,4 @@
+using Humanizer;
 using Myriad.Types;
 using PluralKit.Core;
 using uniffi.commands;
@@ -8,6 +9,7 @@ namespace PluralKit.Bot;
 public abstract record Parameter()
 {
     public record MemberRef(PKMember member): Parameter;
+    public record MemberRefs(List<PKMember> members): Parameter;
     public record SystemRef(PKSystem system): Parameter;
     public record GuildRef(Guild guild): Parameter;
     public record MemberPrivacyTarget(MemberPrivacySubject target): Parameter;
@@ -56,13 +58,20 @@ public class Parameters
 
     private async Task<Parameter?> ResolveFfiParam(Context ctx, uniffi.commands.Parameter ffi_param)
     {
+        var byId = HasFlag("id", "by-id");
         switch (ffi_param)
         {
             case uniffi.commands.Parameter.MemberRef memberRef:
-                var byId = HasFlag("id", "by-id");
                 return new Parameter.MemberRef(
                     await ctx.ParseMember(memberRef.member, byId)
                     ?? throw new PKError(ctx.CreateNotFoundError("Member", memberRef.member, byId))
+                );
+            case uniffi.commands.Parameter.MemberRefs memberRefs:
+                return new Parameter.MemberRefs(
+                    await memberRefs.members.ToAsyncEnumerable().SelectAwait(async m =>
+                        await ctx.ParseMember(m, byId)
+                        ?? throw new PKError(ctx.CreateNotFoundError("Member", m, byId))
+                    ).ToListAsync()
                 );
             case uniffi.commands.Parameter.SystemRef systemRef:
                 // todo: do we need byId here?

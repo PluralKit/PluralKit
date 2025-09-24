@@ -11,6 +11,7 @@ use crate::token::{Token, TokenMatchResult};
 pub enum ParameterValue {
     OpaqueString(String),
     MemberRef(String),
+    MemberRefs(Vec<String>),
     SystemRef(String),
     GuildRef(String),
     MemberPrivacyTarget(String),
@@ -39,10 +40,14 @@ impl Parameter {
 impl Display for Parameter {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self.kind {
-            ParameterKind::OpaqueString | ParameterKind::OpaqueStringRemainder => {
+            ParameterKind::OpaqueString => {
                 write!(f, "[{}]", self.name)
             }
+            ParameterKind::OpaqueStringRemainder => {
+                write!(f, "[{}]...", self.name)
+            }
             ParameterKind::MemberRef => write!(f, "<target member>"),
+            ParameterKind::MemberRefs => write!(f, "<member 1> <member 2> <member 3>..."),
             ParameterKind::SystemRef => write!(f, "<target system>"),
             ParameterKind::GuildRef => write!(f, "<target guild>"),
             ParameterKind::MemberPrivacyTarget => write!(f, "<privacy target>"),
@@ -77,6 +82,7 @@ pub enum ParameterKind {
     OpaqueString,
     OpaqueStringRemainder,
     MemberRef,
+    MemberRefs,
     SystemRef,
     GuildRef,
     MemberPrivacyTarget,
@@ -92,6 +98,7 @@ impl ParameterKind {
             ParameterKind::OpaqueString => "string",
             ParameterKind::OpaqueStringRemainder => "string",
             ParameterKind::MemberRef => "target",
+            ParameterKind::MemberRefs => "targets",
             ParameterKind::SystemRef => "target",
             ParameterKind::GuildRef => "target",
             ParameterKind::MemberPrivacyTarget => "member_privacy_target",
@@ -103,7 +110,10 @@ impl ParameterKind {
     }
 
     pub(crate) fn remainder(&self) -> bool {
-        matches!(self, ParameterKind::OpaqueStringRemainder)
+        matches!(
+            self,
+            ParameterKind::OpaqueStringRemainder | ParameterKind::MemberRefs
+        )
     }
 
     pub(crate) fn match_value(&self, input: &str) -> Result<ParameterValue, SmolStr> {
@@ -113,12 +123,14 @@ impl ParameterKind {
                 Ok(ParameterValue::OpaqueString(input.into()))
             }
             ParameterKind::MemberRef => Ok(ParameterValue::MemberRef(input.into())),
+            ParameterKind::MemberRefs => Ok(ParameterValue::MemberRefs(
+                input.split(' ').map(|s| s.trim().to_string()).collect(),
+            )),
             ParameterKind::SystemRef => Ok(ParameterValue::SystemRef(input.into())),
             ParameterKind::MemberPrivacyTarget => MemberPrivacyTargetKind::from_str(input)
                 .map(|target| ParameterValue::MemberPrivacyTarget(target.as_ref().into())),
-            ParameterKind::SystemPrivacyTarget => SystemPrivacyTargetKind::from_str(input).map(
-                |target| ParameterValue::SystemPrivacyTarget(target.as_ref().into()),
-            ),
+            ParameterKind::SystemPrivacyTarget => SystemPrivacyTargetKind::from_str(input)
+                .map(|target| ParameterValue::SystemPrivacyTarget(target.as_ref().into())),
             ParameterKind::PrivacyLevel => PrivacyLevelKind::from_str(input)
                 .map(|level| ParameterValue::PrivacyLevel(level.as_ref().into())),
             ParameterKind::Toggle => {
