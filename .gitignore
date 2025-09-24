@@ -9,6 +9,7 @@ target/
 .idea/
 .run/
 .vscode/
+.zed/
 .mono/
 tags/
 .DS_Store

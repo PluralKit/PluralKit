@@ -20,6 +20,14 @@ public static class ContextParametersExt
         );
     }
 
+    public static async Task<List<PKMember>> ParamResolveMembers(this Context ctx, string param_name)
+    {
+        return await ctx.Parameters.ResolveParameter(
+            ctx, param_name,
+            param => (param as Parameter.MemberRefs)?.members
+        );
+    }
+
     public static async Task<PKSystem?> ParamResolveSystem(this Context ctx, string param_name)
     {
         return await ctx.Parameters.ResolveParameter(

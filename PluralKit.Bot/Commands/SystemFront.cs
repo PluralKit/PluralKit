@@ -30,7 +30,7 @@ public class SystemFront
     {
         if (ctx.MatchFlag("clear", "c") || ctx.PeekArgument() == "clear")
         {
-            await new Switch().SwitchDelete(ctx);
+            await new Switch().SwitchDelete(ctx, true);
             return;
         }
 

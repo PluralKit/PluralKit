@@ -199,7 +199,7 @@
                     depends_on.redis.condition = "process_healthy";
                     depends_on.pluralkit-gateway.condition = "process_log_ready";
                     # TODO: add liveness check
-                    ready_log_line = "Received Ready";
+                    ready_log_line = "Connected! All is good (probably).";
                     availability.restart = "on_failure";
                     availability.max_restarts = 3;
                   };
