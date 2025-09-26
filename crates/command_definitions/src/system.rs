@@ -223,6 +223,18 @@ pub fn edit() -> impl Iterator<Item = Command> {
             .help("Changes a specific privacy setting for your system"),
     ].into_iter();
 
+    let system_front = tokens!(system_target, ("front", ["fronter", "fronters", "f"]));
+    let system_front_cmd = [
+        command!(system_front => "system_fronter"),
+        command!(system_front, ("history", ["h"]) => "system_fronter_history")
+            .flag(("clear", ["c"])),
+        command!(system_front, ("percent", ["p", "%"]) => "system_fronter_percent")
+            .flag(("duration", OpaqueString))
+            .flag(("fronters-only", ["fo"]))
+            .flag("flat"),
+    ]
+    .into_iter();
+
     system_new_cmd
         .chain(system_name_self_cmd)
         .chain(system_server_name_self_cmd)
@@ -248,4 +260,5 @@ pub fn edit() -> impl Iterator<Item = Command> {
         .chain(system_server_avatar_cmd)
         .chain(system_banner_cmd)
         .chain(system_info_cmd)
+        .chain(system_front_cmd)
 }

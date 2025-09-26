@@ -15,7 +15,7 @@ public class SystemFront
         _embeds = embeds;
     }
 
-    public async Task SystemFronter(Context ctx, PKSystem system)
+    public async Task Fronter(Context ctx, PKSystem system)
     {
         if (system == null) throw Errors.NoSystemError(ctx.DefaultPrefix);
         ctx.CheckSystemPrivacy(system.Id, system.FrontPrivacy);
@@ -26,9 +26,9 @@ public class SystemFront
         await ctx.Reply(embed: await _embeds.CreateFronterEmbed(sw, ctx.Zone, ctx.LookupContextFor(system.Id)));
     }
 
-    public async Task SystemFrontHistory(Context ctx, PKSystem system)
+    public async Task FrontHistory(Context ctx, PKSystem system, bool clear = false)
     {
-        if (ctx.MatchFlag("clear", "c") || ctx.PeekArgument() == "clear")
+        if (clear)
         {
             await new Switch().SwitchDelete(ctx, true);
             return;
@@ -106,7 +106,7 @@ public class SystemFront
         );
     }
 
-    public async Task FrontPercent(Context ctx, PKSystem? system = null, PKGroup? group = null)
+    public async Task FrontPercent(Context ctx, PKSystem? system = null, string durationStr = "30d", bool ignoreNoFronters = false, bool showFlat = false, PKGroup? group = null)
     {
         if (system == null && group == null) throw Errors.NoSystemError(ctx.DefaultPrefix);
         if (system == null) system = await GetGroupSystem(ctx, group);
@@ -115,11 +115,6 @@ public class SystemFront
 
         var totalSwitches = await ctx.Repository.GetSwitchCount(system.Id);
         if (totalSwitches == 0) throw Errors.NoRegisteredSwitches;
-
-        var ignoreNoFronters = ctx.MatchFlag("fo", "fronters-only");
-        var showFlat = ctx.MatchFlag("flat");
-
-        var durationStr = ctx.RemainderOrNull() ?? "30d";
 
         // Picked the UNIX epoch as a random date
         // even though we don't store switch timestamps in UNIX time

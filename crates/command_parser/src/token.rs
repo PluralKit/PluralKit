@@ -76,7 +76,7 @@ impl Token {
                             msg: err,
                         }
                     }
-                },
+                }
             }),
             // don't add a _ match here!
         }

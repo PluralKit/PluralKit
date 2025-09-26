@@ -58,10 +58,14 @@ pub fn parse_command(
                 match &result {
                     // todo: better error messages for these?
                     TokenMatchResult::MissingParameter { name } => {
-                        return Err(format!("Expected parameter `{name}` in command `{prefix}{input} {found_token}`."));
+                        return Err(format!(
+                            "Expected parameter `{name}` in command `{prefix}{input} {found_token}`."
+                        ));
                     }
                     TokenMatchResult::ParameterMatchError { input: raw, msg } => {
-                        return Err(format!("Parameter `{raw}` in command `{prefix}{input}` could not be parsed: {msg}."));
+                        return Err(format!(
+                            "Parameter `{raw}` in command `{prefix}{input}` could not be parsed: {msg}."
+                        ));
                     }
                     // don't use a catch-all here, we want to make sure compiler errors when new errors are added
                     TokenMatchResult::MatchedParameter { .. } | TokenMatchResult::MatchedValue => {}
@@ -109,7 +113,9 @@ pub fn parse_command(
             raw_flags.push((current_token_idx, matched_flag));
         }
         // if we have a command, stop parsing and return it (only if there is no remaining input)
-        if current_pos >= input.len() && let Some(command) = local_tree.command() {
+        if current_pos >= input.len()
+            && let Some(command) = local_tree.command()
+        {
             // match the flags against this commands flags
             let mut flags: HashMap<String, Option<ParameterValue>> = HashMap::new();
             let mut misplaced_flags: Vec<MatchedFlag> = Vec::new();
@@ -182,8 +188,11 @@ pub fn parse_command(
                 write!(
                     &mut error,
                     " {} seem to be applicable in this command (`{prefix}{command}`).",
-                    (invalid_flags.len() > 1).then_some("don't").unwrap_or("doesn't")
-                ).expect("oom");
+                    (invalid_flags.len() > 1)
+                        .then_some("don't")
+                        .unwrap_or("doesn't")
+                )
+                .expect("oom");
                 return Err(error);
             }
             println!("{} {flags:?} {params:?}", command.cb);

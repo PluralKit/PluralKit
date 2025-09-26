@@ -159,6 +159,9 @@ public partial class CommandTree
             Commands.SwitchEditOut(_, _) => ctx.Execute<Switch>(SwitchEditOut, m => m.SwitchEditOut(ctx)),
             Commands.SwitchDelete(var param, var flags) => ctx.Execute<Switch>(SwitchDelete, m => m.SwitchDelete(ctx, flags.all)),
             Commands.SwitchCopy(var param, var flags) => ctx.Execute<Switch>(SwitchCopy, m => m.SwitchEdit(ctx, param.targets, true, flags.first, flags.remove, flags.append, flags.prepend)),
+            Commands.SystemFronter(var param, var flags) => ctx.Execute<SystemFront>(SystemFronter, m => m.Fronter(ctx, param.target)),
+            Commands.SystemFronterHistory(var param, var flags) => ctx.Execute<SystemFront>(SystemFrontHistory, m => m.FrontHistory(ctx, param.target, flags.clear)),
+            Commands.SystemFronterPercent(var param, var flags) => ctx.Execute<SystemFront>(SystemFrontPercent, m => m.FrontPercent(ctx, param.target, flags.duration, flags.fronters_only, flags.flat)),
             _ =>
             // this should only ever occur when deving if commands are not implemented...
             ctx.Reply(
@@ -407,19 +410,6 @@ public partial class CommandTree
             await ctx.CheckSystem(target).Execute<SystemList>(SystemList, m => m.MemberList(ctx, target));
         else if (ctx.Match("find", "search", "query", "fd", "s"))
             await ctx.CheckSystem(target).Execute<SystemList>(SystemFind, m => m.MemberList(ctx, target));
-        else if (ctx.Match("f", "front", "fronter", "fronters"))
-        {
-            if (ctx.Match("h", "history"))
-                await ctx.CheckSystem(target).Execute<SystemFront>(SystemFrontHistory, m => m.SystemFrontHistory(ctx, target));
-            else if (ctx.Match("p", "percent", "%"))
-                await ctx.CheckSystem(target).Execute<SystemFront>(SystemFrontPercent, m => m.FrontPercent(ctx, system: target));
-            else
-                await ctx.CheckSystem(target).Execute<SystemFront>(SystemFronter, m => m.SystemFronter(ctx, target));
-        }
-        else if (ctx.Match("fh", "fronthistory", "history", "switches"))
-            await ctx.CheckSystem(target).Execute<SystemFront>(SystemFrontHistory, m => m.SystemFrontHistory(ctx, target));
-        else if (ctx.Match("fp", "frontpercent", "front%", "frontbreakdown"))
-            await ctx.CheckSystem(target).Execute<SystemFront>(SystemFrontPercent, m => m.FrontPercent(ctx, system: target));
         else if (ctx.Match("groups", "gs"))
             await ctx.CheckSystem(target).Execute<Groups>(GroupList, g => g.ListSystemGroups(ctx, target));
         else if (ctx.Match("id"))
