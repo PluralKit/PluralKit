@@ -5,7 +5,7 @@ use hickory_client::{
     rr::{DNSClass, Name, RData, RecordType},
     udp::UdpClientStream,
 };
-use reqwest::{redirect::Policy, StatusCode};
+use reqwest::{StatusCode, redirect::Policy};
 use std::{
     net::{Ipv4Addr, SocketAddr, SocketAddrV4},
     sync::Arc,
@@ -14,7 +14,7 @@ use std::{
 use tokio::{net::UdpSocket, sync::RwLock};
 use tracing::{debug, error};
 
-use axum::{extract::State, http::Uri, routing::post, Json, Router};
+use axum::{Json, Router, extract::State, http::Uri, routing::post};
 
 mod logger;
 
@@ -127,7 +127,7 @@ async fn dispatch(
 
     match res {
         Ok(res) if res.status() != 200 => {
-            return DispatchResponse::InvalidResponseCode(res.status()).to_string()
+            return DispatchResponse::InvalidResponseCode(res.status()).to_string();
         }
         Err(error) => {
             error!(?error, url = req.url.clone(), "failed to fetch");

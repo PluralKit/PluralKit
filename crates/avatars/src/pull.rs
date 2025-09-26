@@ -62,7 +62,7 @@ pub async fn pull(
     let size = match response.content_length() {
         None => return Err(PKAvatarError::MissingHeader("Content-Length")),
         Some(size) if size > MAX_SIZE => {
-            return Err(PKAvatarError::ImageFileSizeTooLarge(size, MAX_SIZE))
+            return Err(PKAvatarError::ImageFileSizeTooLarge(size, MAX_SIZE));
         }
         Some(size) => size,
     };
@@ -162,7 +162,7 @@ pub fn parse_url(url: &str) -> anyhow::Result<ParsedUrl> {
                 attachment_id: 0,
                 filename: "".to_string(),
                 full_url: url.to_string(),
-            })
+            });
         }
         _ => anyhow::bail!("not a discord cdn url"),
     }

@@ -3,7 +3,7 @@ use lazy_static::lazy_static;
 use serde::Deserialize;
 use std::sync::Arc;
 
-use twilight_model::id::{marker::UserMarker, Id};
+use twilight_model::id::{Id, marker::UserMarker};
 
 #[derive(Clone, Deserialize, Debug)]
 pub struct ClusterSettings {
@@ -128,6 +128,9 @@ pub struct PKConfig {
 
     #[serde(default)]
     pub sentry_url: Option<String>,
+
+    #[serde(default)]
+    pub internal_auth: Option<String>,
 }
 
 impl PKConfig {
@@ -148,15 +151,11 @@ lazy_static! {
         // hacks
         if let Ok(var) = std::env::var("NOMAD_ALLOC_INDEX")
             && std::env::var("pluralkit__discord__cluster__total_nodes").is_ok() {
-            unsafe {
-                std::env::set_var("pluralkit__discord__cluster__node_id", var);
-            }
+            unsafe { std::env::set_var("pluralkit__discord__cluster__node_id", var); }
         }
         if let Ok(var) = std::env::var("STATEFULSET_NAME_FOR_INDEX")
             && std::env::var("pluralkit__discord__cluster__total_nodes").is_ok() {
-            unsafe {
-                std::env::set_var("pluralkit__discord__cluster__node_id", var.split("-").last().unwrap());
-            }
+                unsafe { std::env::set_var("pluralkit__discord__cluster__node_id", var.split("-").last().unwrap()); }
         }
 
         Arc::new(Config::builder()

@@ -2,7 +2,7 @@ use std::net::SocketAddr;
 
 use metrics_exporter_prometheus::PrometheusBuilder;
 use sentry::IntoDsn;
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
+use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
 
 use sentry_tracing::event_from_event;
 

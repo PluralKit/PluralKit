@@ -51,7 +51,7 @@ pub async fn remove_deletion_queue(pool: &PgPool, attachment_id: u64) -> anyhow:
 }
 
 pub async fn pop_queue(
-    pool: &'_ PgPool,
+    pool: &PgPool,
 ) -> anyhow::Result<Option<(Transaction<'_, Postgres>, ImageQueueEntry)>> {
     let mut tx = pool.begin().await?;
     let res: Option<ImageQueueEntry> = sqlx::query_as("delete from image_queue where itemid = (select itemid from image_queue order by itemid for update skip locked limit 1) returning *")

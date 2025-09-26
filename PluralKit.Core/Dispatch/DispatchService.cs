@@ -97,7 +97,7 @@ public class DispatchService
 
         var repo = _provider.Resolve<ModelRepository>();
         var system = await repo.GetSystem(systemId);
-        if (system.WebhookUrl == null)
+        if (system == null || system.WebhookUrl == null)
             return;
 
         data.SigningToken = system.WebhookToken;

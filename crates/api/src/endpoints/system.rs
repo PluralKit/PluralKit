@@ -1,22 +1,18 @@
-use axum::{
-    extract::State,
-    http::StatusCode,
-    response::{IntoResponse, Response},
-    Extension, Json,
-};
-use serde_json::json;
+use axum::{Extension, Json, extract::State, response::IntoResponse};
+use pk_macros::api_endpoint;
+use serde_json::{Value, json};
 use sqlx::Postgres;
-use tracing::error;
 
 use pluralkit_models::{PKSystem, PKSystemConfig, PrivacyLevel};
 
-use crate::{auth::AuthState, util::json_err, ApiContext};
+use crate::{ApiContext, auth::AuthState, error::fail};
 
+#[api_endpoint]
 pub async fn get_system_settings(
     Extension(auth): Extension<AuthState>,
     Extension(system): Extension<PKSystem>,
     State(ctx): State<ApiContext>,
-) -> Response {
+) -> Json<Value> {
     let access_level = auth.access_level_for(&system);
 
     let mut config = match sqlx::query_as::<Postgres, PKSystemConfig>(
@@ -27,23 +23,11 @@ pub async fn get_system_settings(
     .await
     {
         Ok(Some(config)) => config,
-        Ok(None) => {
-            error!(
-                system = system.id,
-                "failed to find system config for existing system"
-            );
-            return json_err(
-                StatusCode::INTERNAL_SERVER_ERROR,
-                r#"{"message": "500: Internal Server Error", "code": 0}"#.to_string(),
-            );
-        }
-        Err(err) => {
-            error!(?err, "failed to query system config");
-            return json_err(
-                StatusCode::INTERNAL_SERVER_ERROR,
-                r#"{"message": "500: Internal Server Error", "code": 0}"#.to_string(),
-            );
-        }
+        Ok(None) => fail!(
+            system = system.id,
+            "failed to find system config for existing system"
+        ),
+        Err(err) => fail!(?err, "failed to query system config"),
     };
 
     // fix this
@@ -51,7 +35,7 @@ pub async fn get_system_settings(
         config.name_format = Some("{name} {tag}".to_string());
     }
 
-    Json(&match access_level {
+    Ok(Json(match access_level {
         PrivacyLevel::Private => config.to_json(),
         PrivacyLevel::Public => json!({
             "pings_enabled": config.pings_enabled,
@@ -64,6 +48,5 @@ pub async fn get_system_settings(
             "proxy_switch": config.proxy_switch,
             "name_format": config.name_format,
         }),
-    })
-    .into_response()
+    }))
 }

@@ -6,17 +6,17 @@ use std::sync::Arc;
 use tokio::sync::mpsc::Sender;
 use tracing::{error, info, warn};
 use twilight_gateway::{
-    create_iterator, ConfigBuilder, Event, EventTypeFlags, Message, Shard, ShardId,
+    ConfigBuilder, Event, EventTypeFlags, Message, Shard, ShardId, create_iterator,
 };
 use twilight_model::gateway::{
+    Intents,
     payload::outgoing::update_presence::UpdatePresencePayload,
     presence::{Activity, ActivityType, Status},
-    Intents,
 };
 
 use crate::{
-    discord::identify_queue::{self, RedisQueue},
     RUNTIME_CONFIG_KEY_EVENT_TARGET,
+    discord::identify_queue::{self, RedisQueue},
 };
 
 use super::cache::DiscordCache;
@@ -116,7 +116,14 @@ pub async fn runner(
         let raw_event = match item {
             Ok(evt) => match evt {
                 Message::Close(frame) => {
+                    let mut state_event = ShardStateEvent::Closed;
                     let close_code = if let Some(close) = frame {
+                        match close.code {
+                            4000..=4003 | 4005..=4009 => {
+                                state_event = ShardStateEvent::Reconnect;
+                            }
+                            _ => {}
+                        }
                         close.code.to_string()
                     } else {
                         "unknown".to_string()
@@ -131,9 +138,7 @@ pub async fn runner(
                     )
                     .increment(1);
 
-                    if let Err(error) =
-                        tx_state.try_send((shard.id(), ShardStateEvent::Closed, None, None))
-                    {
+                    if let Err(error) = tx_state.try_send((shard.id(), state_event, None, None)) {
                         error!("failed to update shard state for socket closure: {error}");
                     }
 
@@ -174,32 +179,45 @@ pub async fn runner(
         )
         .increment(1);
 
-        // update shard state and discord cache
-        if matches!(event, Event::Ready(_)) || matches!(event, Event::Resumed) {
-            if let Err(error) = tx_state.try_send((
-                shard.id(),
-                ShardStateEvent::Other,
-                Some(event.clone()),
-                None,
-            )) {
-                tracing::error!(?error, "error updating shard state");
+        // check for shard status events
+        match event {
+            Event::Ready(_) | Event::Resumed => {
+                if let Err(error) = tx_state.try_send((
+                    shard.id(),
+                    ShardStateEvent::Other,
+                    Some(event.clone()),
+                    None,
+                )) {
+                    tracing::error!(?error, "error updating shard state");
+                }
             }
-        }
-        // need to do heartbeat separately, to get the latency
-        let latency_num = shard
-            .latency()
-            .recent()
-            .first()
-            .map_or_else(|| 0, |d| d.as_millis()) as i32;
-        if let Event::GatewayHeartbeatAck = event
-            && let Err(error) = tx_state.try_send((
-                shard.id(),
-                ShardStateEvent::Heartbeat,
-                Some(event.clone()),
-                Some(latency_num),
-            ))
-        {
-            tracing::error!(?error, "error updating shard state for latency");
+            Event::GatewayReconnect => {
+                if let Err(error) = tx_state.try_send((
+                    shard.id(),
+                    ShardStateEvent::Reconnect,
+                    Some(event.clone()),
+                    None,
+                )) {
+                    tracing::error!(?error, "error updating shard state for reconnect");
+                }
+            }
+            Event::GatewayHeartbeatAck => {
+                // need to do heartbeat separately, to get the latency
+                let latency_num = shard
+                    .latency()
+                    .recent()
+                    .first()
+                    .map_or_else(|| 0, |d| d.as_millis()) as i32;
+                if let Err(error) = tx_state.try_send((
+                    shard.id(),
+                    ShardStateEvent::Heartbeat,
+                    Some(event.clone()),
+                    Some(latency_num),
+                )) {
+                    tracing::error!(?error, "error updating shard state for latency");
+                }
+            }
+            _ => {}
         }
 
         if let Event::Ready(_) = event {
@@ -227,7 +245,9 @@ pub async fn runner(
         }
 
         if runtime_config.exists(RUNTIME_CONFIG_KEY_EVENT_TARGET).await {
-            tx.send((shard.id(), event, raw_event)).await.unwrap();
+            if let Err(error) = tx.try_send((shard.id(), event, raw_event)) {
+                tracing::error!(?error, "error sending shard event");
+            }
         }
     }
 }

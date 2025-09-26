@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use sqlx::{
-    types::chrono::{DateTime, Utc},
     FromRow,
+    types::chrono::{DateTime, Utc},
 };
 use uuid::Uuid;
 

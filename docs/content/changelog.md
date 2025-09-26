@@ -9,6 +9,51 @@ the below is a lightly edited copy of the changelog messages posted on discord. 
 
 a more complete list of code changes can be found [in the git repo](https://github.com/pluralkit/pluralkit/commits/main)
 
+## 2025-09-08
+
+### new/updated
+- **new "ComponentsV2" format for system/member/group cards and help menu** (use -show-embed or -se flag to get the old view)
+  - [we have written a blog post giving some context behind this change](/posts/2025-09-08-components-v2/) - please read this also!
+  - color codes are now hidden by default on cards, and a config option to show them again was added: `pk;config show color on`
+- **new status page at <https://status.pluralkit.me>**
+- replies to commands can now be deleted forever (previously 24h)
+- logclean support for [Zeppelin](https://zeppelin.gg/) bot
+- `pk;system` command now can be used with `pk;account` alias
+- creating a new system now shows a note about the terms of service
+- the announcements/changelog are now cross-posted from discord to the website
+- `pk;member <member> name` command now can show the member name as well as setting it
+- clarified wording and updated formatting for some messages
+
+### fixed
+- reply embeds now strip out excessive newlines
+- cleaned up some error messages
+- bot now correctly checks privacy in a few commands
+- made a better attempt to not delete images uploaded to CDN on export/import
+- importing system data with a large amount of switches should no longer throw an error
+
+### API changes
+- api no longer breaks when the redis server is restarted
+- some error messages have been fixed to use the correct JSON format
+- document that short IDs are accepted in any format displayable by the bot
+- added public/unauthenticated partial view for `/systems/:id/settings` endpoint
+- autoproxy endpoint now allows changing the currently latched member
+- discord guild endpoints now try harder at checking if the system is in the guild
+- many docs fixes
+
+### Internal changes
+- updated docker-compose configuration for self-hosting
+- modernised the development documentation
+- the Myriad Discord library has been relicensed to MIT to facilitate external use
+- the C# code now correctly builds in Visual Studio 2022
+- the C# services now log in JSON format; this required a fork of Serilog and thus a git submodule
+- code to generate colour previews has been rewritten, since the third-party site went offline
+- fixed a bug where shards would never reconnect and require manual intervention
+- bumped Rust language version to 2024
+- rewrote scheduled tasks and database migrations in Rust
+- the Rust entrypoint macro has been rewritten as a proc macro to clean up call sites
+- all (well, most) Rust errors correctly use fields for values instead of formatting them into the error string
+- gateway events are now sent to the C# bot code through HTTP
+
 ## 2025-01-01
 
 ### Added

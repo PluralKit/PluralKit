@@ -1,4 +1,3 @@
-#![feature(duration_constructors_lite)]
 #![feature(if_let_guard)]
 
 use chrono::Timelike;
@@ -9,7 +8,7 @@ use libpk::{runtime_config::RuntimeConfig, state::ShardStateEvent};
 use reqwest::{ClientBuilder, StatusCode};
 use std::{sync::Arc, time::Duration, vec::Vec};
 use tokio::{
-    signal::unix::{signal, SignalKind},
+    signal::unix::{SignalKind, signal},
     sync::mpsc::channel,
     task::JoinSet,
 };
@@ -108,8 +107,16 @@ async fn main() -> anyhow::Result<()> {
                         };
                     }
                     ShardStateEvent::Closed => {
-                        if let Err(error) = shard_state.socket_closed(shard_id.number()).await {
-                            error!("failed to update shard state for heartbeat: {error}")
+                        if let Err(error) =
+                            shard_state.socket_closed(shard_id.number(), false).await
+                        {
+                            error!("failed to update shard state for closed: {error}")
+                        };
+                    }
+                    ShardStateEvent::Reconnect => {
+                        if let Err(error) = shard_state.socket_closed(shard_id.number(), true).await
+                        {
+                            error!("failed to update shard state for reconnect: {error}")
                         };
                     }
                     ShardStateEvent::Other => {
@@ -120,7 +127,7 @@ async fn main() -> anyhow::Result<()> {
                             )
                             .await
                         {
-                            error!("failed to update shard state for heartbeat: {error}")
+                            error!("failed to update shard state for other evt: {error}")
                         };
                     }
                 }

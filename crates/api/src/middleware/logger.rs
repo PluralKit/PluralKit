@@ -2,7 +2,7 @@ use std::time::Instant;
 
 use axum::{extract::MatchedPath, extract::Request, middleware::Next, response::Response};
 use metrics::{counter, histogram};
-use tracing::{info, span, warn, Instrument, Level};
+use tracing::{Instrument, Level, info, span, warn};
 
 use crate::{auth::AuthState, util::header_or_unknown};
 

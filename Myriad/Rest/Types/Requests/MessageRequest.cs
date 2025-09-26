@@ -9,6 +9,7 @@ public record MessageRequest
     public bool Tts { get; set; }
     public AllowedMentions? AllowedMentions { get; set; }
     public Embed[]? Embeds { get; set; }
+    public Message.MessageFlags Flags { get; set; }
     public MessageComponent[]? Components { get; set; }
     public Message.Reference? MessageReference { get; set; }
 }

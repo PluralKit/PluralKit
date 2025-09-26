@@ -99,13 +99,25 @@ async fn main() -> anyhow::Result<()> {
         update_db_message_meta
     );
     doforever!("* * * * *", "discord stats updater", update_discord_stats);
-    // on :00 and :30
+    // on hh:00 and hh:30
     doforever!(
         "0,30 * * * *",
         "queue deleted image cleanup job",
         queue_deleted_image_cleanup
     );
+    // non-standard cron: at hh:mm:00, hh:mm:30
     doforever!("0,30 * * * * *", "stats api updater", update_stats_api);
+    // every hour (could probably even be less frequent, basebackups are taken rarely)
+    doforever!(
+        "* * * * *",
+        "data basebackup info updater",
+        update_data_basebackup_prometheus
+    );
+    doforever!(
+        "* * * * *",
+        "messages basebackup info updater",
+        update_messages_basebackup_prometheus
+    );
 
     set.join_next()
         .await

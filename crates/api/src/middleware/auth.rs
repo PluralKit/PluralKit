@@ -5,10 +5,12 @@ use axum::{
     response::Response,
 };
 
+use subtle::ConstantTimeEq;
+
 use tracing::error;
 
 use crate::auth::AuthState;
-use crate::{util::json_err, ApiContext};
+use crate::{ApiContext, util::json_err};
 
 pub async fn auth(State(ctx): State<ApiContext>, mut req: Request, next: Next) -> Response {
     let mut authed_system_id: Option<i32> = None;
@@ -48,15 +50,31 @@ pub async fn auth(State(ctx): State<ApiContext>, mut req: Request, next: Next) -
             .expect("missing api config")
             .temp_token2
             .as_ref()
-        // this is NOT how you validate tokens
-        // but this is low abuse risk so we're keeping it for now
-        && app_auth_header == config_token2
+        && app_auth_header
+            .as_bytes()
+            .ct_eq(config_token2.as_bytes())
+            .into()
     {
         authed_app_id = Some(1);
     }
 
+    // todo: fix syntax
+    let internal = if req.headers().get("x-pluralkit-client-ip").is_none()
+        && let Some(auth_header) = req
+            .headers()
+            .get("x-pluralkit-internalauth")
+            .map(|h| h.to_str().ok())
+            .flatten()
+        && let Some(real_token) = libpk::config.internal_auth.clone()
+        && auth_header.as_bytes().ct_eq(real_token.as_bytes()).into()
+    {
+        true
+    } else {
+        false
+    };
+
     req.extensions_mut()
-        .insert(AuthState::new(authed_system_id, authed_app_id));
+        .insert(AuthState::new(authed_system_id, authed_app_id, internal));
 
     next.run(req).await
 }

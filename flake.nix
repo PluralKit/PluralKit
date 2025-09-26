@@ -4,7 +4,7 @@
   inputs = {
     nixpkgs.url = "nixpkgs/nixpkgs-unstable";
     parts.url = "github:hercules-ci/flake-parts";
-    systems.url = "github:nix-systems/x86_64-linux";
+    systems.url = "github:nix-systems/default";
     # process compose
     process-compose.url = "github:Platonic-Systems/process-compose-flake";
     services.url = "github:juspay/services-flake";
@@ -62,7 +62,8 @@
             programs.nixfmt.enable = true;
           };
 
-          nci.projects."pk-services" = {
+          nci.toolchainConfig = ./rust-toolchain.toml;
+          nci.projects."pluralkit-services" = {
             path = ./.;
             export = false;
           };
@@ -183,6 +184,10 @@
                     };
                 in
                 {
+                  ### migrations ###
+                  pluralkit-migrate = mkServiceProcess "migrate" {
+                    depends_on.postgres.condition = "process_healthy";
+                  };
                   ### bot ###
                   pluralkit-bot = {
                     command = pkgs.writeShellApplication {
@@ -198,6 +203,7 @@
                     depends_on.postgres.condition = "process_healthy";
                     depends_on.redis.condition = "process_healthy";
                     depends_on.pluralkit-gateway.condition = "process_log_ready";
+                    depends_on.pluralkit-migrate.condition = "process_completed_successfully";
                     # TODO: add liveness check
                     ready_log_line = "Connected! All is good (probably).";
                     availability.restart = "on_failure";

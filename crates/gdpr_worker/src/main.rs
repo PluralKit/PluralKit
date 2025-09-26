@@ -3,8 +3,8 @@ use std::{sync::Arc, time::Duration};
 use tracing::{error, info, warn};
 use twilight_http::api_error::{ApiError, GeneralApiError};
 use twilight_model::id::{
-    marker::{ChannelMarker, MessageMarker},
     Id,
+    marker::{ChannelMarker, MessageMarker},
 };
 
 // create table messages_gdpr_jobs (mid bigint not null references messages(mid) on delete cascade, channel bigint not null);

@@ -1,17 +1,19 @@
 use auth::{AuthState, INTERNAL_APPID_HEADER, INTERNAL_SYSTEMID_HEADER};
 use axum::{
+    Extension, Router,
     body::Body,
     extract::{Request as ExtractRequest, State},
-    http::{Response, StatusCode, Uri},
-    response::IntoResponse,
+    http::Uri,
+    response::{IntoResponse, Response},
     routing::{delete, get, patch, post},
-    Extension, Router,
 };
 use hyper_util::{
-    client::legacy::{connect::HttpConnector, Client},
+    client::legacy::{Client, connect::HttpConnector},
     rt::TokioExecutor,
 };
-use tracing::{error, info};
+use tracing::info;
+
+use pk_macros::api_endpoint;
 
 mod auth;
 mod endpoints;
@@ -28,11 +30,12 @@ pub struct ApiContext {
     rproxy_client: Client<HttpConnector, Body>,
 }
 
+#[api_endpoint]
 async fn rproxy(
     Extension(auth): Extension<AuthState>,
     State(ctx): State<ApiContext>,
     mut req: ExtractRequest<Body>,
-) -> Result<Response<Body>, StatusCode> {
+) -> Response {
     let path = req.uri().path();
     let path_query = req
         .uri()
@@ -57,15 +60,7 @@ async fn rproxy(
         headers.append(INTERNAL_APPID_HEADER, aid.into());
     }
 
-    Ok(ctx
-        .rproxy_client
-        .request(req)
-        .await
-        .map_err(|error| {
-            error!(?error, "failed to serve reverse proxy to dotnet-api");
-            StatusCode::BAD_GATEWAY
-        })?
-        .into_response())
+    Ok(ctx.rproxy_client.request(req).await?.into_response())
 }
 
 // this function is manually formatted for easier legibility of route_services

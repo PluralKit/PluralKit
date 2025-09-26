@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 pluralkit_models = { path = "../models" }
+pk_macros = { path = "../macros" }
 libpk = { path = "../libpk" }
 
 anyhow = { workspace = true } 
@@ -26,3 +27,4 @@ reverse-proxy-service = { version = "0.2.1", features = ["axum"] }
 serde_urlencoded = "0.7.1"
 tower = "0.4.13"
 tower-http = { version = "0.5.2", features = ["catch-panic"] }
+subtle = "2.6.1"

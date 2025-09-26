@@ -4,7 +4,7 @@ use std::io::Cursor;
 use std::time::Instant;
 use tracing::{debug, error, info, instrument};
 
-use crate::{hash::Hash, ImageKind, PKAvatarError};
+use crate::{ImageKind, PKAvatarError, hash::Hash};
 
 const MAX_DIMENSION: u32 = 4000;
 
@@ -211,8 +211,8 @@ fn process_gif_inner(
     }))
 }
 
-fn reader_for(data: &[u8]) -> image::io::Reader<Cursor<&[u8]>> {
-    image::io::Reader::new(Cursor::new(data))
+fn reader_for(data: &[u8]) -> image::ImageReader<Cursor<&[u8]>> {
+    image::ImageReader::new(Cursor::new(data))
         .with_guessed_format()
         .expect("cursor i/o is infallible")
 }

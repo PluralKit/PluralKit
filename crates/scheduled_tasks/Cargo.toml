@@ -1,7 +1,7 @@
 [package]
 name = "scheduled_tasks"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 
 [dependencies]
 libpk = { path = "../libpk" }
@@ -9,6 +9,7 @@ libpk = { path = "../libpk" }
 anyhow = { workspace = true }
 chrono = { workspace = true }
 fred = { workspace = true }
+lazy_static = { workspace = true }
 metrics = { workspace = true }
 reqwest = { workspace = true }
 serde = { workspace = true }

@@ -3,7 +3,7 @@ use axum::{
     http::{HeaderValue, StatusCode},
     response::IntoResponse,
 };
-use serde_json::{json, to_string, Value};
+use serde_json::{Value, json, to_string};
 use tracing::error;
 
 pub fn header_or_unknown(header: Option<&HeaderValue>) -> &str {

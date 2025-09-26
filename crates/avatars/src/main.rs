@@ -8,10 +8,10 @@ use anyhow::Context;
 use axum::extract::State;
 use axum::routing::get;
 use axum::{
+    Json, Router,
     http::StatusCode,
     response::{IntoResponse, Response},
     routing::post,
-    Json, Router,
 };
 use libpk::_config::AvatarsConfig;
 use libpk::db::repository::avatars as db;

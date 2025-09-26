@@ -11,6 +11,7 @@
 
 !Cargo.toml
 !Cargo.lock
+!rust-toolchain.toml
 !PluralKit.sln
 !nuget.config
 !ci/dotnet-version.sh
