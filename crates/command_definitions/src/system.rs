@@ -1,12 +1,22 @@
+use command_parser::token::TokensIterator;
+
 use super::*;
 
 pub fn cmds() -> impl Iterator<Item = Command> {
     edit()
 }
 
+pub fn system() -> (&'static str, [&'static str; 1]) {
+    ("system", ["s"])
+}
+
+pub fn targeted() -> TokensIterator {
+    tokens!(system(), SystemRef)
+}
+
 pub fn edit() -> impl Iterator<Item = Command> {
-    let system = ("system", ["s"]);
-    let system_target = tokens!(system, SystemRef);
+    let system = system();
+    let system_target = targeted();
 
     let system_new = tokens!(system, ("new", ["n"]));
     let system_new_cmd = [

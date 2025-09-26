@@ -12,6 +12,7 @@ pub enum ParameterValue {
     OpaqueString(String),
     MemberRef(String),
     MemberRefs(Vec<String>),
+    GroupRef(String),
     SystemRef(String),
     GuildRef(String),
     MemberPrivacyTarget(String),
@@ -48,6 +49,7 @@ impl Display for Parameter {
             }
             ParameterKind::MemberRef => write!(f, "<target member>"),
             ParameterKind::MemberRefs => write!(f, "<member 1> <member 2> <member 3>..."),
+            ParameterKind::GroupRef => write!(f, "<target group>"),
             ParameterKind::SystemRef => write!(f, "<target system>"),
             ParameterKind::GuildRef => write!(f, "<target guild>"),
             ParameterKind::MemberPrivacyTarget => write!(f, "<privacy target>"),
@@ -83,6 +85,7 @@ pub enum ParameterKind {
     OpaqueStringRemainder,
     MemberRef,
     MemberRefs,
+    GroupRef,
     SystemRef,
     GuildRef,
     MemberPrivacyTarget,
@@ -99,6 +102,7 @@ impl ParameterKind {
             ParameterKind::OpaqueStringRemainder => "string",
             ParameterKind::MemberRef => "target",
             ParameterKind::MemberRefs => "targets",
+            ParameterKind::GroupRef => "target",
             ParameterKind::SystemRef => "target",
             ParameterKind::GuildRef => "target",
             ParameterKind::MemberPrivacyTarget => "member_privacy_target",
@@ -122,6 +126,7 @@ impl ParameterKind {
             ParameterKind::OpaqueString | ParameterKind::OpaqueStringRemainder => {
                 Ok(ParameterValue::OpaqueString(input.into()))
             }
+            ParameterKind::GroupRef => Ok(ParameterValue::GroupRef(input.into())),
             ParameterKind::MemberRef => Ok(ParameterValue::MemberRef(input.into())),
             ParameterKind::MemberRefs => Ok(ParameterValue::MemberRefs(
                 input.split(' ').map(|s| s.trim().to_string()).collect(),

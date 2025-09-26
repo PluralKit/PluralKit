@@ -10,6 +10,7 @@ public abstract record Parameter()
 {
     public record MemberRef(PKMember member): Parameter;
     public record MemberRefs(List<PKMember> members): Parameter;
+    public record GroupRef(PKGroup group): Parameter;
     public record SystemRef(PKSystem system): Parameter;
     public record GuildRef(Guild guild): Parameter;
     public record MemberPrivacyTarget(MemberPrivacySubject target): Parameter;
@@ -72,6 +73,11 @@ public class Parameters
                         await ctx.ParseMember(m, byId)
                         ?? throw new PKError(ctx.CreateNotFoundError("Member", m, byId))
                     ).ToListAsync()
+                );
+            case uniffi.commands.Parameter.GroupRef groupRef:
+                return new Parameter.GroupRef(
+                    await ctx.ParseGroup(groupRef.group, byId)
+                    ?? throw new PKError(ctx.CreateNotFoundError("Group", groupRef.group))
                 );
             case uniffi.commands.Parameter.SystemRef systemRef:
                 // todo: do we need byId here?

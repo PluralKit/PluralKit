@@ -147,13 +147,9 @@ public static class ContextEntityArgumentsExt
         return member;
     }
 
-    public static async Task<PKGroup> PeekGroup(this Context ctx, SystemId? restrictToSystem = null)
+    public static async Task<PKGroup> ParseGroup(this Context ctx, string input, bool byId, SystemId? restrictToSystem = null)
     {
-        var input = ctx.PeekArgument();
-
-        // see PeekMember for an explanation of the logic used here
-
-        if (ctx.System != null && !ctx.MatchFlag("id", "by-id"))
+        if (ctx.System != null && !byId)
         {
             if (await ctx.Repository.GetGroupByName(ctx.System.Id, input) is { } byName)
                 return byName;
@@ -168,6 +164,11 @@ public static class ContextEntityArgumentsExt
             return byHid;
 
         return null;
+    }
+
+    public static async Task<PKGroup> PeekGroup(this Context ctx, SystemId? restrictToSystem = null)
+    {
+        throw new NotImplementedException();
     }
 
     public static async Task<PKGroup> MatchGroup(this Context ctx, SystemId? restrictToSystem = null)

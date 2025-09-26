@@ -15,7 +15,7 @@ public class Random
 
     // todo: get postgresql to return one random member/group instead of querying all members/groups
 
-    public async Task Member(Context ctx, PKSystem target, bool showEmbed = false)
+    public async Task Member(Context ctx, PKSystem target, bool all, bool showEmbed = false)
     {
         if (target == null)
             throw Errors.NoSystemError(ctx.DefaultPrefix);
@@ -24,7 +24,7 @@ public class Random
 
         var members = await ctx.Repository.GetSystemMembers(target.Id).ToListAsync();
 
-        if (!ctx.MatchFlag("all", "a"))
+        if (!all)
             members = members.Where(m => m.MemberVisibility == PrivacyLevel.Public).ToList();
         else
             ctx.CheckOwnSystem(target);
@@ -49,7 +49,7 @@ public class Random
             components: await _embeds.CreateMemberMessageComponents(target, members[randInt], ctx.Guild, ctx.Config, ctx.LookupContextFor(target.Id), ctx.Zone));
     }
 
-    public async Task Group(Context ctx, PKSystem target, bool showEmbed = false)
+    public async Task Group(Context ctx, PKSystem target, bool all, bool showEmbed = false)
     {
         if (target == null)
             throw Errors.NoSystemError(ctx.DefaultPrefix);
@@ -57,7 +57,7 @@ public class Random
         ctx.CheckSystemPrivacy(target.Id, target.GroupListPrivacy);
 
         var groups = await ctx.Repository.GetSystemGroups(target.Id).ToListAsync();
-        if (!ctx.MatchFlag("all", "a"))
+        if (!all)
             groups = groups.Where(g => g.Visibility == PrivacyLevel.Public).ToList();
         else
             ctx.CheckOwnSystem(target);
@@ -82,7 +82,7 @@ public class Random
             components: await _embeds.CreateGroupMessageComponents(ctx, target, groups.ToArray()[randInt]));
     }
 
-    public async Task GroupMember(Context ctx, PKGroup group, bool showEmbed = false)
+    public async Task GroupMember(Context ctx, PKGroup group, bool all, bool showEmbed = false)
     {
         ctx.CheckSystemPrivacy(group.System, group.ListPrivacy);
 
@@ -96,7 +96,7 @@ public class Random
                 "This group has no members!"
                 + (ctx.System?.Id == group.System ? " Please add at least one member to this group before using this command." : ""));
 
-        if (!ctx.MatchFlag("all", "a"))
+        if (!all)
             members = members.Where(g => g.MemberVisibility == PrivacyLevel.Public);
         else
             ctx.CheckOwnGroup(group);

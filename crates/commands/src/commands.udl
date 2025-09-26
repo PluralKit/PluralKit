@@ -10,6 +10,7 @@ interface CommandResult {
 interface Parameter {
 	MemberRef(string member);
 	MemberRefs(sequence<string> members);
+	GroupRef(string group);
 	SystemRef(string system);
 	GuildRef(string guild);
 	MemberPrivacyTarget(string target);

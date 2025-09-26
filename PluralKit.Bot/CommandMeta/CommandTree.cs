@@ -162,6 +162,15 @@ public partial class CommandTree
             Commands.SystemFronter(var param, var flags) => ctx.Execute<SystemFront>(SystemFronter, m => m.Fronter(ctx, param.target)),
             Commands.SystemFronterHistory(var param, var flags) => ctx.Execute<SystemFront>(SystemFrontHistory, m => m.FrontHistory(ctx, param.target, flags.clear)),
             Commands.SystemFronterPercent(var param, var flags) => ctx.Execute<SystemFront>(SystemFrontPercent, m => m.FrontPercent(ctx, param.target, flags.duration, flags.fronters_only, flags.flat)),
+            Commands.RandomSelf(_, var flags) =>
+            flags.group
+                ? ctx.Execute<Random>(GroupRandom, m => m.Group(ctx, ctx.System, flags.all, flags.show_embed))
+                : ctx.Execute<Random>(MemberRandom, m => m.Member(ctx, ctx.System, flags.all, flags.show_embed)),
+            Commands.SystemRandom(var param, var flags) =>
+            flags.group
+                ? ctx.Execute<Random>(GroupRandom, m => m.Group(ctx, param.target, flags.all, flags.show_embed))
+                : ctx.Execute<Random>(MemberRandom, m => m.Member(ctx, param.target, flags.all, flags.show_embed)),
+            Commands.GroupRandomMember(var param, var flags) => ctx.Execute<Random>(GroupMemberRandom, m => m.GroupMember(ctx, param.target, flags.all, flags.show_embed)),
             _ =>
             // this should only ever occur when deving if commands are not implemented...
             ctx.Reply(
@@ -252,11 +261,6 @@ public partial class CommandTree
             return HandleDebugCommand(ctx);
         if (ctx.Match("admin"))
             return HandleAdminCommand(ctx);
-        if (ctx.Match("random", "rand", "r"))
-            if (ctx.Match("group", "g") || ctx.MatchFlag("group", "g"))
-                return ctx.Execute<Random>(GroupRandom, r => r.Group(ctx, ctx.System));
-            else
-                return ctx.Execute<Random>(MemberRandom, m => m.Member(ctx, ctx.System));
         if (ctx.Match("dashboard", "dash"))
             return ctx.Execute<Help>(Dashboard, m => m.Dashboard(ctx));
     }
@@ -416,11 +420,6 @@ public partial class CommandTree
             await ctx.CheckSystem(target).Execute<Groups>(GroupList, g => g.ListSystemGroups(ctx, target));
         else if (ctx.Match("id"))
             await ctx.CheckSystem(target).Execute<System>(SystemId, m => m.DisplayId(ctx, target));
-        else if (ctx.Match("random", "rand", "r"))
-            if (ctx.Match("group", "g") || ctx.MatchFlag("group", "g"))
-                await ctx.CheckSystem(target).Execute<Random>(GroupRandom, r => r.Group(ctx, target));
-            else
-                await ctx.CheckSystem(target).Execute<Random>(MemberRandom, m => m.Member(ctx, target));
     }
 
     private async Task HandleMemberCommand(Context ctx)

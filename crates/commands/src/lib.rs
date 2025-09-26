@@ -24,6 +24,7 @@ pub enum CommandResult {
 pub enum Parameter {
     MemberRef { member: String },
     MemberRefs { members: Vec<String> },
+    GroupRef { group: String },
     SystemRef { system: String },
     GuildRef { guild: String },
     MemberPrivacyTarget { target: String },
@@ -39,6 +40,7 @@ impl From<ParameterValue> for Parameter {
         match value {
             ParameterValue::MemberRef(member) => Self::MemberRef { member },
             ParameterValue::MemberRefs(members) => Self::MemberRefs { members },
+            ParameterValue::GroupRef(group) => Self::GroupRef { group },
             ParameterValue::SystemRef(system) => Self::SystemRef { system },
             ParameterValue::MemberPrivacyTarget(target) => Self::MemberPrivacyTarget { target },
             ParameterValue::SystemPrivacyTarget(target) => Self::SystemPrivacyTarget { target },
