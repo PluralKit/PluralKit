@@ -63,7 +63,7 @@
           };
 
           nci.toolchainConfig = ./rust-toolchain.toml;
-          nci.projects."pluralkit-services" = {
+          nci.projects."pk-services" = {
             path = ./.;
             export = false;
           };
