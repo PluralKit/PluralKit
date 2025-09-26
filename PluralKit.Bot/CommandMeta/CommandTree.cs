@@ -8,12 +8,12 @@ public partial class CommandTree
     {
         return command switch
         {
-            Commands.Help => ctx.Execute<Help>(Help, m => m.HelpRoot(ctx)),
+            Commands.Help(_, var flags) => ctx.Execute<Help>(Help, m => m.HelpRoot(ctx, flags.show_embed)),
             Commands.HelpCommands => ctx.Reply(
                     "For the list of commands, see the website: <https://pluralkit.me/commands>"),
             Commands.HelpProxy => ctx.Reply(
                     "The proxy help page has been moved! See the website: https://pluralkit.me/guide#proxying"),
-            Commands.MemberShow(var param, _) => ctx.Execute<Member>(MemberInfo, m => m.ViewMember(ctx, param.target)),
+            Commands.MemberShow(var param, var flags) => ctx.Execute<Member>(MemberInfo, m => m.ViewMember(ctx, param.target, flags.show_embed)),
             Commands.MemberNew(var param, _) => ctx.Execute<Member>(MemberNew, m => m.NewMember(ctx, param.name)),
             Commands.MemberSoulscream(var param, _) => ctx.Execute<Member>(MemberInfo, m => m.Soulscream(ctx, param.target)),
             Commands.MemberAvatarShow(var param, var flags) => ctx.Execute<MemberAvatar>(MemberAvatar, m => m.ShowAvatar(ctx, param.target, flags.GetReplyFormat())),

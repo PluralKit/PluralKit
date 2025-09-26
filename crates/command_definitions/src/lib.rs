@@ -27,7 +27,11 @@ pub fn all() -> impl Iterator<Item = Command> {
         .chain(config::cmds())
         .chain(fun::cmds())
         .chain(switch::cmds())
-        .map(|cmd| cmd.flag(("plaintext", ["pt"])).flag(("raw", ["r"])))
+        .map(|cmd| {
+            cmd.flag(("plaintext", ["pt"]))
+                .flag(("raw", ["r"]))
+                .flag(("show-embed", ["se"]))
+        })
 }
 
 pub const RESET: (&str, [&str; 2]) = ("reset", ["clear", "default"]);

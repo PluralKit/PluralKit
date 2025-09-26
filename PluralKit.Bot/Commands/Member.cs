@@ -120,10 +120,10 @@ public class Member
         await ctx.Reply(replyStr);
     }
 
-    public async Task ViewMember(Context ctx, PKMember target)
+    public async Task ViewMember(Context ctx, PKMember target, bool showEmbed = false)
     {
         var system = await ctx.Repository.GetSystem(target.System);
-        if (ctx.MatchFlag("show-embed", "se"))
+        if (showEmbed)
         {
             await ctx.Reply(
                 text: EmbedService.LEGACY_EMBED_WARNING,

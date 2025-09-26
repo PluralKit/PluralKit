@@ -517,10 +517,10 @@ public class Groups
         return title.ToString();
     }
 
-    public async Task ShowGroupCard(Context ctx, PKGroup target)
+    public async Task ShowGroupCard(Context ctx, PKGroup target, bool showEmbed = false)
     {
         var system = await GetGroupSystem(ctx, target);
-        if (ctx.MatchFlag("show-embed", "se"))
+        if (showEmbed)
         {
             await ctx.Reply(text: EmbedService.LEGACY_EMBED_WARNING, embed: await _embeds.CreateGroupEmbed(ctx, system, target));
             return;

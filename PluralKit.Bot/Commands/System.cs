@@ -14,16 +14,16 @@ public class System
         _embeds = embeds;
     }
 
-    public async Task Query(Context ctx, PKSystem system, bool all, bool @public, bool @private)
+    public async Task Query(Context ctx, PKSystem system, bool all, bool @public, bool @private, bool showEmbed = false)
     {
         if (system == null) throw Errors.NoSystemError(ctx.DefaultPrefix);
-        if (ctx.MatchFlag("show-embed", "se"))
+        if (showEmbed)
         {
             await ctx.Reply(text: EmbedService.LEGACY_EMBED_WARNING, embed: await _embeds.CreateSystemEmbed(ctx, system, ctx.LookupContextFor(system.Id), all));
             return;
         }
 
-        await ctx.Reply(components: await _embeds.CreateSystemMessageComponents(ctx, system, ctx.LookupContextFor(system.Id)));
+        await ctx.Reply(components: await _embeds.CreateSystemMessageComponents(ctx, system, ctx.LookupContextFor(system.Id), all));
     }
 
     public async Task New(Context ctx, string? systemName)
