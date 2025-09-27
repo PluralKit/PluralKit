@@ -1,4 +1,7 @@
-use std::fmt::{Debug, Display};
+use std::{
+    collections::HashSet,
+    fmt::{Debug, Display},
+};
 
 use smol_str::SmolStr;
 
@@ -13,6 +16,7 @@ pub struct Command {
     pub cb: SmolStr,
     pub show_in_suggestions: bool,
     pub parse_flags_before: usize,
+    pub hidden_flags: HashSet<SmolStr>,
 }
 
 impl Command {
@@ -22,19 +26,11 @@ impl Command {
         // figure out which token to parse / put flags after
         // (by default, put flags after the last token)
         let mut parse_flags_before = tokens.len();
-        let mut was_parameter = true;
         for (idx, token) in tokens.iter().enumerate().rev() {
             match token {
                 // we want flags to go before any parameters
-                Token::Parameter(_) => {
-                    parse_flags_before = idx;
-                    was_parameter = true;
-                }
-                Token::Value { .. } => {
-                    if was_parameter {
-                        break;
-                    }
-                }
+                Token::Parameter(_) => parse_flags_before = idx,
+                Token::Value { .. } => break,
             }
         }
         Self {
@@ -44,6 +40,7 @@ impl Command {
             show_in_suggestions: true,
             parse_flags_before,
             tokens,
+            hidden_flags: HashSet::new(),
         }
     }
 
@@ -61,15 +58,35 @@ impl Command {
         self.flags.push(flag.into());
         self
     }
+
+    pub fn hidden_flag(mut self, flag: impl Into<Flag>) -> Self {
+        let flag = flag.into();
+        self.hidden_flags.insert(flag.get_name().into());
+        self.flags.push(flag);
+        self
+    }
 }
 
 impl Display for Command {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let write_flags = |f: &mut std::fmt::Formatter<'_>, space: bool| {
+            for flag in &self.flags {
+                if self.hidden_flags.contains(flag.get_name()) {
+                    continue;
+                }
+                write!(
+                    f,
+                    "{}[{flag}]{}",
+                    space.then_some(" ").unwrap_or(""),
+                    space.then_some("").unwrap_or(" ")
+                )?;
+            }
+            std::fmt::Result::Ok(())
+        };
+
         for (idx, token) in self.tokens.iter().enumerate() {
             if idx == self.parse_flags_before {
-                for flag in &self.flags {
-                    write!(f, "[{flag}] ")?;
-                }
+                write_flags(f, false)?;
             }
             write!(
                 f,
@@ -78,9 +95,7 @@ impl Display for Command {
             )?;
         }
         if self.tokens.len() == self.parse_flags_before {
-            for flag in &self.flags {
-                write!(f, " [{flag}]")?;
-            }
+            write_flags(f, true)?;
         }
         Ok(())
     }

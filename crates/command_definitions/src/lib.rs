@@ -29,9 +29,9 @@ pub fn all() -> impl Iterator<Item = Command> {
         .chain(switch::cmds())
         .chain(random::cmds())
         .map(|cmd| {
-            cmd.flag(("plaintext", ["pt"]))
-                .flag(("raw", ["r"]))
-                .flag(("show-embed", ["se"]))
+            cmd.hidden_flag(("plaintext", ["pt"]))
+                .hidden_flag(("raw", ["r"]))
+                .hidden_flag(("show-embed", ["se"]))
         })
 }
 
