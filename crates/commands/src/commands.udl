@@ -1,0 +1,27 @@
+namespace commands {
+    CommandResult parse_command(string prefix, string input);
+};
+[Enum]
+interface CommandResult {
+	Ok(ParsedCommand command);
+	Err(string error);
+};
+[Enum]
+interface Parameter {
+	MemberRef(string member);
+	MemberRefs(sequence<string> members);
+	GroupRef(string group);
+	SystemRef(string system);
+	GuildRef(string guild);
+	MemberPrivacyTarget(string target);
+	SystemPrivacyTarget(string target);
+	PrivacyLevel(string level);
+	OpaqueString(string raw);
+	Toggle(boolean toggle);
+	Avatar(string avatar);
+};
+dictionary ParsedCommand {
+	string command_ref;
+	record<string, Parameter> params;
+	record<string, Parameter?> flags;
+};

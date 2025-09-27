@@ -8,11 +8,10 @@ namespace PluralKit.Bot;
 public class Switch
 {
 
-    public async Task SwitchDo(Context ctx)
+    public async Task SwitchDo(Context ctx, ICollection<PKMember> members)
     {
         ctx.CheckSystem();
 
-        var members = await ctx.ParseMemberList(ctx.System.Id);
         await DoSwitchCommand(ctx, members);
     }
 
@@ -21,7 +20,7 @@ public class Switch
         ctx.CheckSystem();
 
         // Switch with no members = switch-out
-        await DoSwitchCommand(ctx, new PKMember[] { });
+        await DoSwitchCommand(ctx, []);
     }
 
     private async Task DoSwitchCommand(Context ctx, ICollection<PKMember> members)
@@ -57,12 +56,10 @@ public class Switch
                 $"{Emojis.Success} Switch registered. Current fronters are now {string.Join(", ", members.Select(m => m.NameFor(ctx)))}.");
     }
 
-    public async Task SwitchMove(Context ctx)
+    public async Task SwitchMove(Context ctx, string timeToMove)
     {
         ctx.CheckSystem();
 
-        var timeToMove = ctx.RemainderOrNull() ??
-                         throw new PKSyntaxError("Must pass a date or time to move the switch to.");
         var tz = TzdbDateTimeZoneSource.Default.ForId(ctx.Config?.UiTz ?? "UTC");
 
         var result = DateUtils.ParseDateTime(timeToMove, true, tz);
@@ -104,11 +101,9 @@ public class Switch
         await ctx.Reply($"{Emojis.Success} Switch moved to <t:{newSwitchTime}> ({newSwitchDeltaStr} ago).");
     }
 
-    public async Task SwitchEdit(Context ctx, bool newSwitch = false)
+    public async Task SwitchEdit(Context ctx, List<PKMember> newMembers, bool newSwitch = false, bool first = false, bool remove = false, bool append = false, bool prepend = false)
     {
         ctx.CheckSystem();
-
-        var newMembers = await ctx.ParseMemberList(ctx.System.Id);
 
         await using var conn = await ctx.Database.Obtain();
         var currentSwitch = await ctx.Repository.GetLatestSwitch(ctx.System.Id);
@@ -116,19 +111,19 @@ public class Switch
             throw Errors.NoRegisteredSwitches;
         var currentSwitchMembers = await ctx.Repository.GetSwitchMembers(conn, currentSwitch.Id).ToListAsync().AsTask();
 
-        if (ctx.MatchFlag("first", "f"))
+        if (first)
             newMembers = FirstInSwitch(newMembers[0], currentSwitchMembers);
-        else if (ctx.MatchFlag("remove", "r"))
+        else if (remove)
             newMembers = RemoveFromSwitch(newMembers, currentSwitchMembers);
-        else if (ctx.MatchFlag("append", "a"))
+        else if (append)
             newMembers = AppendToSwitch(newMembers, currentSwitchMembers);
-        else if (ctx.MatchFlag("prepend", "p"))
+        else if (prepend)
             newMembers = PrependToSwitch(newMembers, currentSwitchMembers);
 
         if (newSwitch)
         {
             // if there's no edit flag, assume we're appending
-            if (!ctx.MatchFlag("first", "f", "remove", "r", "append", "a", "prepend", "p"))
+            if (!prepend && !append && !remove && !first)
                 newMembers = AppendToSwitch(newMembers, currentSwitchMembers);
             await DoSwitchCommand(ctx, newMembers);
         }
@@ -172,7 +167,7 @@ public class Switch
     public async Task SwitchEditOut(Context ctx)
     {
         ctx.CheckSystem();
-        await DoEditCommand(ctx, new PKMember[] { });
+        await DoEditCommand(ctx, []);
     }
 
     public async Task DoEditCommand(Context ctx, ICollection<PKMember> members)
@@ -217,11 +212,11 @@ public class Switch
             await ctx.Reply($"{Emojis.Success} Switch edited. Current fronters are now {newSwitchMemberStr}.");
     }
 
-    public async Task SwitchDelete(Context ctx)
+    public async Task SwitchDelete(Context ctx, bool all)
     {
         ctx.CheckSystem();
 
-        if (ctx.Match("all", "clear") || ctx.MatchFlag("all", "clear", "c"))
+        if (all)
         {
             // Subcommand: "delete all"
             var purgeMsg =
