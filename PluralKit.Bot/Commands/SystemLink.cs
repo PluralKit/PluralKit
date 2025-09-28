@@ -26,12 +26,12 @@ public class SystemLink
         await ctx.Reply($"{Emojis.Success} Account linked to system.");
     }
 
-    public async Task UnlinkAccount(Context ctx)
+    public async Task UnlinkAccount(Context ctx, string idRaw)
     {
         ctx.CheckSystem();
 
         ulong id;
-        if (!ctx.MatchUserRaw(out id))
+        if (!idRaw.TryParseMention(out id))
             throw new PKSyntaxError("You must pass an account to unlink from (either ID or @mention).");
 
         var accountIds = (await ctx.Repository.GetSystemAccounts(ctx.System.Id)).ToList();

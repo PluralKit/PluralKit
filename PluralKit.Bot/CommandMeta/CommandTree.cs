@@ -171,6 +171,8 @@ public partial class CommandTree
                 ? ctx.Execute<Random>(GroupRandom, m => m.Group(ctx, param.target, flags.all, flags.show_embed))
                 : ctx.Execute<Random>(MemberRandom, m => m.Member(ctx, param.target, flags.all, flags.show_embed)),
             Commands.GroupRandomMember(var param, var flags) => ctx.Execute<Random>(GroupMemberRandom, m => m.GroupMember(ctx, param.target, flags.all, flags.show_embed)),
+            Commands.SystemLink => ctx.Execute<SystemLink>(Link, m => m.LinkSystem(ctx)),
+            Commands.SystemUnlink(var param, _) => ctx.Execute<SystemLink>(Unlink, m => m.UnlinkAccount(ctx, param.target)),
             _ =>
             // this should only ever occur when deving if commands are not implemented...
             ctx.Reply(
@@ -194,10 +196,6 @@ public partial class CommandTree
             return HandleServerConfigCommand(ctx);
         if (ctx.Match("list", "find", "members", "search", "query", "l", "f", "fd", "ls"))
             return ctx.Execute<SystemList>(SystemList, m => m.MemberList(ctx, ctx.System));
-        if (ctx.Match("link"))
-            return ctx.Execute<SystemLink>(Link, m => m.LinkSystem(ctx));
-        if (ctx.Match("unlink"))
-            return ctx.Execute<SystemLink>(Unlink, m => m.UnlinkAccount(ctx));
         if (ctx.Match("token"))
             if (ctx.Match("refresh", "renew", "invalidate", "reroll", "regen"))
                 return ctx.Execute<Api>(TokenRefresh, m => m.RefreshToken(ctx));
