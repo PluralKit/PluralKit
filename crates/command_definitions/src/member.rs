@@ -1,8 +1,18 @@
+use command_parser::token::TokensIterator;
+
 use super::*;
 
+pub fn member() -> (&'static str, [&'static str; 1]) {
+    ("member", ["m"])
+}
+
+pub fn targetted() -> TokensIterator {
+    tokens!(member(), MemberRef)
+}
+
 pub fn cmds() -> impl Iterator<Item = Command> {
-    let member = ("member", ["m"]);
-    let member_target = tokens!(member, MemberRef);
+    let member = member();
+    let member_target = targetted();
 
     let name = ("name", ["n"]);
     let description = ("description", ["desc"]);
@@ -288,7 +298,10 @@ pub fn cmds() -> impl Iterator<Item = Command> {
         [command!(member_target, "soulscream" => "member_soulscream").show_in_suggestions(false)]
             .into_iter();
 
+    let member_list = [command!(member, "list" => "members_list")].into_iter();
+
     member_new_cmd
+        .chain(member_list)
         .chain(member_info_cmd)
         .chain(member_name_cmd)
         .chain(member_description_cmd)

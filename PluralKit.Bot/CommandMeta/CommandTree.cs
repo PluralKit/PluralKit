@@ -173,6 +173,8 @@ public partial class CommandTree
             Commands.GroupRandomMember(var param, var flags) => ctx.Execute<Random>(GroupMemberRandom, m => m.GroupMember(ctx, param.target, flags.all, flags.show_embed)),
             Commands.SystemLink => ctx.Execute<SystemLink>(Link, m => m.LinkSystem(ctx)),
             Commands.SystemUnlink(var param, _) => ctx.Execute<SystemLink>(Unlink, m => m.UnlinkAccount(ctx, param.target)),
+            Commands.MembersList => ctx.Execute<SystemList>(SystemList, m => m.MemberList(ctx, ctx.System)),
+            Commands.SystemMembersList(var param, _) => ctx.Execute<SystemList>(SystemList, m => m.MemberList(ctx, param.target)),
             _ =>
             // this should only ever occur when deving if commands are not implemented...
             ctx.Reply(
@@ -410,10 +412,8 @@ public partial class CommandTree
 
     private async Task HandleSystemCommandTargeted(Context ctx, PKSystem target)
     {
-        if (ctx.Match("list", "l", "members", "ls"))
-            await ctx.CheckSystem(target).Execute<SystemList>(SystemList, m => m.MemberList(ctx, target));
-        else if (ctx.Match("find", "search", "query", "fd", "s"))
-            await ctx.CheckSystem(target).Execute<SystemList>(SystemFind, m => m.MemberList(ctx, target));
+        if (ctx.Match("find", "search", "query", "fd", "s"))
+            await ctx.CheckSystem(target).Execute<SystemList>(SystemFind, m => m.MemberList(ctx, target)); // TODO: this lmao (ParseListOptions)
         else if (ctx.Match("groups", "gs"))
             await ctx.CheckSystem(target).Execute<Groups>(GroupList, g => g.ListSystemGroups(ctx, target));
         else if (ctx.Match("id"))

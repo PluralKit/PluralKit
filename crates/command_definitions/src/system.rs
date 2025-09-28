@@ -251,6 +251,9 @@ pub fn edit() -> impl Iterator<Item = Command> {
     ]
     .into_iter();
 
+    let system_list =
+        [command!(system_target, ("members", ["list"]) => "system_members_list")].into_iter();
+
     system_new_cmd
         .chain(system_name_self_cmd)
         .chain(system_server_name_self_cmd)
@@ -278,4 +281,5 @@ pub fn edit() -> impl Iterator<Item = Command> {
         .chain(system_info_cmd)
         .chain(system_front_cmd)
         .chain(system_link)
+        .chain(system_list)
 }
