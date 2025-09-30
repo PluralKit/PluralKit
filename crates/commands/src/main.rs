@@ -17,7 +17,7 @@ fn main() {
         }
     } else {
         for command in command_definitions::all() {
-            println!("{} - {}", command, command.help);
+            println!("{} => {} - {}", command.cb, command, command.help);
         }
     }
 }

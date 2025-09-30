@@ -1,4 +1,4 @@
-use std::{env, fmt::Write, fs, path::PathBuf, str::FromStr};
+use std::{collections::HashSet, env, fmt::Write, fs, path::PathBuf, str::FromStr};
 
 use command_parser::{
     parameter::{Parameter, ParameterKind},
@@ -20,16 +20,26 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     writeln!(&mut glue, "using Myriad.Types;")?;
     writeln!(&mut glue, "namespace PluralKit.Bot;\n")?;
 
+    let mut commands_seen = HashSet::new();
     let mut record_fields = String::new();
     for command in &commands {
+        if commands_seen.contains(&command.cb) {
+            continue;
+        }
         writeln!(
             &mut record_fields,
             r#"public record {command_name}({command_name}Params parameters, {command_name}Flags flags): Commands;"#,
             command_name = command_callback_to_name(&command.cb),
         )?;
+        commands_seen.insert(command.cb.clone());
     }
+
+    commands_seen.clear();
     let mut match_branches = String::new();
     for command in &commands {
+        if commands_seen.contains(&command.cb) {
+            continue;
+        }
         let mut command_params_init = String::new();
         let command_params = find_parameters(&command.tokens);
         for param in &command_params {
@@ -68,6 +78,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             command_name = command_callback_to_name(&command.cb),
             command_callback = command.cb,
         )?;
+        commands_seen.insert(command.cb.clone());
     }
     write!(
         &mut glue,
@@ -87,7 +98,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }}
         "#,
     )?;
+
+    commands_seen.clear();
     for command in &commands {
+        if commands_seen.contains(&command.cb) {
+            continue;
+        }
         let mut command_params_fields = String::new();
         let command_params = find_parameters(&command.tokens);
         for param in &command_params {
@@ -133,6 +149,76 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             )?;
         }
         command_reply_format.push_str("return ReplyFormat.Standard;\n");
+        let mut command_list_options = String::new();
+        let mut command_list_options_class = String::new();
+        let list_flags = command_definitions::utils::get_list_flags();
+        if list_flags.iter().all(|flag| command.flags.contains(&flag)) {
+            write!(&mut command_list_options_class, ": IHasListOptions")?;
+            writeln!(
+                &mut command_list_options,
+                r#"
+                public ListOptions GetListOptions(Context ctx, SystemId target)
+                {{
+                    var directLookupCtx = ctx.DirectLookupContextFor(target);
+                    var lookupCtx = ctx.LookupContextFor(target);
+                    
+                    var p = new ListOptions();
+                    p.Type = full ? ListType.Long : ListType.Short;
+                    // Search description filter
+                    p.SearchDescription = search_description;
+
+                    // Sort property
+                    if (by_name) p.SortProperty = SortProperty.Name;
+                    if (by_display_name) p.SortProperty = SortProperty.DisplayName;
+                    if (by_id) p.SortProperty = SortProperty.Hid;
+                    if (by_message_count) p.SortProperty = SortProperty.MessageCount;
+                    if (by_created) p.SortProperty = SortProperty.CreationDate;
+                    if (by_last_fronted) p.SortProperty = SortProperty.LastSwitch;
+                    if (by_last_message) p.SortProperty = SortProperty.LastMessage;
+                    if (by_birthday) p.SortProperty = SortProperty.Birthdate;
+                    if (random) p.SortProperty = SortProperty.Random;
+
+                    // Sort reverse
+                    p.Reverse = reverse;
+
+                    // Privacy filter
+                    if (all) p.PrivacyFilter = null;
+                    if (private_only) p.PrivacyFilter = PrivacyLevel.Private;
+                    // PERM CHECK: If we're trying to access non-public members of another system, error
+                    if (p.PrivacyFilter != PrivacyLevel.Public && directLookupCtx != LookupContext.ByOwner)
+                        // TODO: should this just return null instead of throwing or something? >.>
+                        throw Errors.NotOwnInfo;
+                    
+                    // this is for searching
+                    p.Context = lookupCtx;
+
+                    // Additional fields to include
+                    p.IncludeLastSwitch = with_last_switch;
+                    p.IncludeLastMessage = with_last_message;
+                    p.IncludeMessageCount = with_message_count;
+                    p.IncludeCreated = with_created;
+                    p.IncludeAvatar = with_avatar;
+                    p.IncludePronouns = with_pronouns;
+                    p.IncludeDisplayName = with_displayname;
+                    p.IncludeBirthday = with_birthday;
+
+                    // Always show the sort property (unless short list and already showing something else)
+                    if (p.Type != ListType.Short || p.includedCount == 0)
+                    {{
+                        if (p.SortProperty == SortProperty.DisplayName) p.IncludeDisplayName = true;
+                        if (p.SortProperty == SortProperty.MessageCount) p.IncludeMessageCount = true;
+                        if (p.SortProperty == SortProperty.CreationDate) p.IncludeCreated = true;
+                        if (p.SortProperty == SortProperty.LastSwitch) p.IncludeLastSwitch = true;
+                        if (p.SortProperty == SortProperty.LastMessage) p.IncludeLastMessage = true;
+                        if (p.SortProperty == SortProperty.Birthdate) p.IncludeBirthday = true;
+                    }}
+
+                    p.AssertIsValid();
+                    return p;
+                }}
+                "#,
+            )?;
+        }
         write!(
             &mut glue,
             r#"
@@ -140,7 +226,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             {{
                 {command_params_fields}
             }}
-            public class {command_name}Flags
+            public class {command_name}Flags {command_list_options_class}
             {{
                 {command_flags_fields}
 
@@ -148,10 +234,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 {{
                     {command_reply_format}
                 }}
+                
+                {command_list_options}
             }}
             "#,
             command_name = command_callback_to_name(&command.cb),
         )?;
+        commands_seen.insert(command.cb.clone());
     }
     fs::write(write_location, glue)?;
     Ok(())

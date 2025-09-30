@@ -478,7 +478,7 @@ public class Groups
         }
     }
 
-    public async Task ListSystemGroups(Context ctx, PKSystem system)
+    public async Task ListSystemGroups(Context ctx, PKSystem system, string? query, IHasListOptions flags)
     {
         if (system == null)
         {
@@ -492,7 +492,9 @@ public class Groups
         // - ParseListOptions checks list access privacy and sets the privacy filter (which members show up in list)
         // - RenderGroupList checks the indivual privacy for each member (NameFor, etc)
         // the own system is always allowed to look up their list
-        var opts = ctx.ParseListOptions(ctx.DirectLookupContextFor(system.Id), ctx.LookupContextFor(system.Id));
+        var opts = flags.GetListOptions(ctx, system.Id);
+        opts.Search = query;
+
         await ctx.RenderGroupList(
             ctx.LookupContextFor(system.Id),
             system.Id,

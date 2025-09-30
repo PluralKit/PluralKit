@@ -170,11 +170,21 @@ public partial class CommandTree
             flags.group
                 ? ctx.Execute<Random>(GroupRandom, m => m.Group(ctx, param.target, flags.all, flags.show_embed))
                 : ctx.Execute<Random>(MemberRandom, m => m.Member(ctx, param.target, flags.all, flags.show_embed)),
-            Commands.GroupRandomMember(var param, var flags) => ctx.Execute<Random>(GroupMemberRandom, m => m.GroupMember(ctx, param.target, flags.all, flags.show_embed)),
+            Commands.GroupRandomMember(var param, var flags) => ctx.Execute<Random>(GroupMemberRandom, m => m.GroupMember(ctx, param.target, flags)),
             Commands.SystemLink => ctx.Execute<SystemLink>(Link, m => m.LinkSystem(ctx)),
             Commands.SystemUnlink(var param, _) => ctx.Execute<SystemLink>(Unlink, m => m.UnlinkAccount(ctx, param.target)),
-            Commands.MembersList => ctx.Execute<SystemList>(SystemList, m => m.MemberList(ctx, ctx.System)),
-            Commands.SystemMembersList(var param, _) => ctx.Execute<SystemList>(SystemList, m => m.MemberList(ctx, param.target)),
+            Commands.SystemMembersListSelf(var param, var flags) => ctx.Execute<SystemList>(SystemList, m => m.MemberList(ctx, ctx.System, null, flags)),
+            Commands.SystemMembersSearchSelf(var param, var flags) => ctx.Execute<SystemList>(SystemFind, m => m.MemberList(ctx, ctx.System, param.query, flags)),
+            Commands.SystemMembersList(var param, var flags) => ctx.Execute<SystemList>(SystemList, m => m.MemberList(ctx, param.target, null, flags)),
+            Commands.SystemMembersSearch(var param, var flags) => ctx.Execute<SystemList>(SystemFind, m => m.MemberList(ctx, param.target, param.query, flags)),
+            Commands.MemberListGroups(var param, var flags) => ctx.Execute<GroupMember>(MemberGroups, m => m.ListMemberGroups(ctx, param.target, null, flags)),
+            Commands.MemberSearchGroups(var param, var flags) => ctx.Execute<GroupMember>(MemberGroups, m => m.ListMemberGroups(ctx, param.target, param.query, flags)),
+            Commands.GroupListMembers(var param, var flags) => ctx.Execute<GroupMember>(GroupMemberList, m => m.ListGroupMembers(ctx, param.target, null, flags)),
+            Commands.GroupSearchMembers(var param, var flags) => ctx.Execute<GroupMember>(GroupMemberList, m => m.ListGroupMembers(ctx, param.target, param.query, flags)),
+            Commands.SystemListGroups(var param, var flags) => ctx.Execute<Groups>(GroupList, g => g.ListSystemGroups(ctx, param.target, null, flags)),
+            Commands.SystemSearchGroups(var param, var flags) => ctx.Execute<Groups>(GroupList, g => g.ListSystemGroups(ctx, param.target, param.query, flags)),
+            Commands.GroupListGroups(var param, var flags) => ctx.Execute<Groups>(GroupList, g => g.ListSystemGroups(ctx, ctx.System, null, flags)),
+            Commands.GroupSearchGroups(var param, var flags) => ctx.Execute<Groups>(GroupList, g => g.ListSystemGroups(ctx, ctx.System, param.query, flags)),
             _ =>
             // this should only ever occur when deving if commands are not implemented...
             ctx.Reply(
@@ -196,8 +206,6 @@ public partial class CommandTree
             return HandleConfigCommand(ctx);
         if (ctx.Match("serverconfig", "guildconfig", "scfg"))
             return HandleServerConfigCommand(ctx);
-        if (ctx.Match("list", "find", "members", "search", "query", "l", "f", "fd", "ls"))
-            return ctx.Execute<SystemList>(SystemList, m => m.MemberList(ctx, ctx.System));
         if (ctx.Match("token"))
             if (ctx.Match("refresh", "renew", "invalidate", "reroll", "regen"))
                 return ctx.Execute<Api>(TokenRefresh, m => m.RefreshToken(ctx));
@@ -412,20 +420,13 @@ public partial class CommandTree
 
     private async Task HandleSystemCommandTargeted(Context ctx, PKSystem target)
     {
-        if (ctx.Match("find", "search", "query", "fd", "s"))
-            await ctx.CheckSystem(target).Execute<SystemList>(SystemFind, m => m.MemberList(ctx, target)); // TODO: this lmao (ParseListOptions)
-        else if (ctx.Match("groups", "gs"))
-            await ctx.CheckSystem(target).Execute<Groups>(GroupList, g => g.ListSystemGroups(ctx, target));
-        else if (ctx.Match("id"))
+        if (ctx.Match("id"))
             await ctx.CheckSystem(target).Execute<System>(SystemId, m => m.DisplayId(ctx, target));
     }
 
     private async Task HandleMemberCommand(Context ctx)
     {
-        // TODO: implement
-        if (ctx.Match("list"))
-            await ctx.Execute<SystemList>(SystemList, m => m.MemberList(ctx, ctx.System));
-        else if (ctx.Match("commands", "help"))
+        if (ctx.Match("commands", "help"))
             await PrintCommandList(ctx, "members", MemberCommands);
         else if (await ctx.MatchMember() is PKMember target)
             await HandleMemberCommandTargeted(ctx, target);
@@ -447,72 +448,63 @@ public partial class CommandTree
             else if (ctx.Match("remove", "rem"))
                 await ctx.Execute<GroupMember>(MemberGroupRemove,
                     m => m.AddRemoveGroups(ctx, target, Groups.AddRemoveOperation.Remove));
+            else if (ctx.Match("id"))
+                await ctx.Execute<Member>(MemberId, m => m.DisplayId(ctx, target));
             else
-                await ctx.Execute<GroupMember>(MemberGroups, m => m.ListMemberGroups(ctx, target));
-        else if (ctx.Match("id"))
-            await ctx.Execute<Member>(MemberId, m => m.DisplayId(ctx, target));
-        else
-            await PrintCommandNotFoundError(ctx, MemberInfo, MemberRename, MemberDisplayName, MemberServerName,
-                MemberDesc, MemberPronouns, MemberColor, MemberBirthday, MemberProxy, MemberDelete, MemberAvatar,
-                SystemList);
+                await PrintCommandNotFoundError(ctx, MemberInfo, MemberRename, MemberDisplayName, MemberServerName,
+                    MemberDesc, MemberPronouns, MemberColor, MemberBirthday, MemberProxy, MemberDelete, MemberAvatar,
+                    SystemList);
     }
 
     private async Task HandleGroupCommand(Context ctx)
     {
-        // TODO: implement
-        // // Commands with no group argument
-        // if (ctx.Match("n", "new"))
-        //     await ctx.Execute<Groups>(GroupNew, g => g.CreateGroup(ctx));
-        // else if (ctx.Match("list", "l"))
-        //     await ctx.Execute<Groups>(GroupList, g => g.ListSystemGroups(ctx, null));
-        // else if (ctx.Match("commands", "help"))
-        //     await PrintCommandList(ctx, "groups", GroupCommands);
-        // else if (await ctx.MatchGroup() is { } target)
-        // {
-        //     // Commands with group argument
-        //     if (ctx.Match("rename", "name", "changename", "setname", "rn"))
-        //         await ctx.Execute<Groups>(GroupRename, g => g.RenameGroup(ctx, target));
-        //     else if (ctx.Match("nick", "dn", "displayname", "nickname"))
-        //         await ctx.Execute<Groups>(GroupDisplayName, g => g.GroupDisplayName(ctx, target));
-        //     else if (ctx.Match("description", "desc", "describe", "d", "bio", "info", "text", "intro"))
-        //         await ctx.Execute<Groups>(GroupDesc, g => g.GroupDescription(ctx, target));
-        //     else if (ctx.Match("add", "a"))
-        //         await ctx.Execute<GroupMember>(GroupAdd,
-        //             g => g.AddRemoveMembers(ctx, target, Groups.AddRemoveOperation.Add));
-        //     else if (ctx.Match("remove", "rem"))
-        //         await ctx.Execute<GroupMember>(GroupRemove,
-        //             g => g.AddRemoveMembers(ctx, target, Groups.AddRemoveOperation.Remove));
-        //     else if (ctx.Match("members", "list", "ms", "l", "ls"))
-        //         await ctx.Execute<GroupMember>(GroupMemberList, g => g.ListGroupMembers(ctx, target));
-        //     else if (ctx.Match("random", "rand", "r"))
-        //         await ctx.Execute<Random>(GroupMemberRandom, r => r.GroupMember(ctx, target));
-        //     else if (ctx.Match("privacy"))
-        //         await ctx.Execute<Groups>(GroupPrivacy, g => g.GroupPrivacy(ctx, target, null));
-        //     else if (ctx.Match("public", "pub"))
-        //         await ctx.Execute<Groups>(GroupPrivacy, g => g.GroupPrivacy(ctx, target, PrivacyLevel.Public));
-        //     else if (ctx.Match("private", "priv"))
-        //         await ctx.Execute<Groups>(GroupPrivacy, g => g.GroupPrivacy(ctx, target, PrivacyLevel.Private));
-        //     else if (ctx.Match("delete", "destroy", "erase", "yeet"))
-        //         await ctx.Execute<Groups>(GroupDelete, g => g.DeleteGroup(ctx, target));
-        //     else if (ctx.Match("avatar", "picture", "icon", "image", "pic", "pfp"))
-        //         await ctx.Execute<Groups>(GroupIcon, g => g.GroupIcon(ctx, target));
-        //     else if (ctx.Match("banner", "splash", "cover"))
-        //         await ctx.Execute<Groups>(GroupBannerImage, g => g.GroupBannerImage(ctx, target));
-        //     else if (ctx.Match("fp", "frontpercent", "front%", "frontbreakdown"))
-        //         await ctx.Execute<SystemFront>(GroupFrontPercent, g => g.FrontPercent(ctx, group: target));
-        //     else if (ctx.Match("color", "colour"))
-        //         await ctx.Execute<Groups>(GroupColor, g => g.GroupColor(ctx, target));
-        //     else if (ctx.Match("id"))
-        //         await ctx.Execute<Groups>(GroupId, g => g.DisplayId(ctx, target));
-        //     else if (!ctx.HasNext())
-        //         await ctx.Execute<Groups>(GroupInfo, g => g.ShowGroupCard(ctx, target));
-        //     else
-        //         await PrintCommandNotFoundError(ctx, GroupCommandsTargeted);
-        // }
-        // else if (!ctx.HasNext())
-        //     await PrintCommandExpectedError(ctx, GroupCommands);
-        // else
-        //     await ctx.Reply($"{Emojis.Error} {ctx.CreateNotFoundError("Group", ctx.PopArgument())}");
+        // Commands with no group argument
+        if (ctx.Match("n", "new"))
+            await ctx.Execute<Groups>(GroupNew, g => g.CreateGroup(ctx));
+        else if (ctx.Match("commands", "help"))
+            await PrintCommandList(ctx, "groups", GroupCommands);
+        else if (await ctx.MatchGroup() is { } target)
+        {
+            // Commands with group argument
+            if (ctx.Match("rename", "name", "changename", "setname", "rn"))
+                await ctx.Execute<Groups>(GroupRename, g => g.RenameGroup(ctx, target));
+            else if (ctx.Match("nick", "dn", "displayname", "nickname"))
+                await ctx.Execute<Groups>(GroupDisplayName, g => g.GroupDisplayName(ctx, target));
+            else if (ctx.Match("description", "desc", "describe", "d", "bio", "info", "text", "intro"))
+                await ctx.Execute<Groups>(GroupDesc, g => g.GroupDescription(ctx, target));
+            else if (ctx.Match("add", "a"))
+                await ctx.Execute<GroupMember>(GroupAdd,
+                    g => g.AddRemoveMembers(ctx, target, Groups.AddRemoveOperation.Add));
+            else if (ctx.Match("remove", "rem"))
+                await ctx.Execute<GroupMember>(GroupRemove,
+                    g => g.AddRemoveMembers(ctx, target, Groups.AddRemoveOperation.Remove));
+            else if (ctx.Match("privacy"))
+                await ctx.Execute<Groups>(GroupPrivacy, g => g.GroupPrivacy(ctx, target, null));
+            else if (ctx.Match("public", "pub"))
+                await ctx.Execute<Groups>(GroupPrivacy, g => g.GroupPrivacy(ctx, target, PrivacyLevel.Public));
+            else if (ctx.Match("private", "priv"))
+                await ctx.Execute<Groups>(GroupPrivacy, g => g.GroupPrivacy(ctx, target, PrivacyLevel.Private));
+            else if (ctx.Match("delete", "destroy", "erase", "yeet"))
+                await ctx.Execute<Groups>(GroupDelete, g => g.DeleteGroup(ctx, target));
+            else if (ctx.Match("avatar", "picture", "icon", "image", "pic", "pfp"))
+                await ctx.Execute<Groups>(GroupIcon, g => g.GroupIcon(ctx, target));
+            else if (ctx.Match("banner", "splash", "cover"))
+                await ctx.Execute<Groups>(GroupBannerImage, g => g.GroupBannerImage(ctx, target));
+            else if (ctx.Match("fp", "frontpercent", "front%", "frontbreakdown"))
+                await ctx.Execute<SystemFront>(GroupFrontPercent, g => g.FrontPercent(ctx, group: target));
+            else if (ctx.Match("color", "colour"))
+                await ctx.Execute<Groups>(GroupColor, g => g.GroupColor(ctx, target));
+            else if (ctx.Match("id"))
+                await ctx.Execute<Groups>(GroupId, g => g.DisplayId(ctx, target));
+            else if (!ctx.HasNext())
+                await ctx.Execute<Groups>(GroupInfo, g => g.ShowGroupCard(ctx, target));
+            else
+                await PrintCommandNotFoundError(ctx, GroupCommandsTargeted);
+        }
+        else if (!ctx.HasNext())
+            await PrintCommandExpectedError(ctx, GroupCommands);
+        else
+            await ctx.Reply($"{Emojis.Error} {ctx.CreateNotFoundError("Group", ctx.PopArgument())}");
     }
 
     private async Task HandleSwitchCommand(Context ctx)

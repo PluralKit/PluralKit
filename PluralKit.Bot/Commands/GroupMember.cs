@@ -51,11 +51,12 @@ public class GroupMember
             groups.Count - toAction.Count));
     }
 
-    public async Task ListMemberGroups(Context ctx, PKMember target)
+    public async Task ListMemberGroups(Context ctx, PKMember target, string? query, IHasListOptions flags)
     {
         var targetSystem = await ctx.Repository.GetSystem(target.System);
-        var opts = ctx.ParseListOptions(ctx.DirectLookupContextFor(target.System), ctx.LookupContextFor(target.System));
+        var opts = flags.GetListOptions(ctx, target.System);
         opts.MemberFilter = target.Id;
+        opts.Search = query;
 
         var title = new StringBuilder($"Groups containing {target.NameFor(ctx)} (`{target.DisplayHid(ctx.Config)}`) in ");
         if (ctx.Guild != null)
@@ -137,15 +138,16 @@ public class GroupMember
             members.Count - toAction.Count));
     }
 
-    public async Task ListGroupMembers(Context ctx, PKGroup target)
+    public async Task ListGroupMembers(Context ctx, PKGroup target, string? query, IHasListOptions flags)
     {
         // see global system list for explanation of how privacy settings are used here
 
         var targetSystem = await GetGroupSystem(ctx, target);
         ctx.CheckSystemPrivacy(targetSystem.Id, target.ListPrivacy);
 
-        var opts = ctx.ParseListOptions(ctx.DirectLookupContextFor(target.System), ctx.LookupContextFor(target.System));
+        var opts = flags.GetListOptions(ctx, target.System);
         opts.GroupFilter = target.Id;
+        opts.Search = query;
 
         var title = new StringBuilder($"Members of {target.DisplayName ?? target.Name} (`{target.DisplayHid(ctx.Config)}`) in ");
         if (ctx.Guild != null)

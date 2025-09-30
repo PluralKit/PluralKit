@@ -11,7 +11,7 @@ use crate::{flag::Flag, token::Token};
 pub struct Command {
     // TODO: fix hygiene
     pub tokens: Vec<Token>,
-    pub flags: Vec<Flag>,
+    pub flags: HashSet<Flag>,
     pub help: SmolStr,
     pub cb: SmolStr,
     pub show_in_suggestions: bool,
@@ -34,7 +34,7 @@ impl Command {
             }
         }
         Self {
-            flags: Vec::new(),
+            flags: HashSet::new(),
             help: SmolStr::new_static("<no help text>"),
             cb: cb.into(),
             show_in_suggestions: true,
@@ -54,34 +54,57 @@ impl Command {
         self
     }
 
+    pub fn flags(mut self, flags: impl IntoIterator<Item = impl Into<Flag>>) -> Self {
+        self.flags.extend(flags.into_iter().map(Into::into));
+        self
+    }
+
     pub fn flag(mut self, flag: impl Into<Flag>) -> Self {
-        self.flags.push(flag.into());
+        self.flags.insert(flag.into());
         self
     }
 
     pub fn hidden_flag(mut self, flag: impl Into<Flag>) -> Self {
         let flag = flag.into();
         self.hidden_flags.insert(flag.get_name().into());
-        self.flags.push(flag);
+        self.flags.insert(flag);
         self
     }
 }
 
 impl Display for Command {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let visible_flags = self
+            .flags
+            .iter()
+            .filter(|flag| !self.hidden_flags.contains(flag.get_name()))
+            .collect::<Vec<_>>();
         let write_flags = |f: &mut std::fmt::Formatter<'_>, space: bool| {
-            for flag in &self.flags {
-                if self.hidden_flags.contains(flag.get_name()) {
-                    continue;
+            if visible_flags.is_empty() {
+                return Ok(());
+            }
+            write!(f, "{}(", space.then_some(" ").unwrap_or(""))?;
+            let mut written = 0;
+            let max_flags = visible_flags.len().min(5);
+            for flag in &visible_flags {
+                if written > max_flags {
+                    break;
                 }
+                write!(f, "{flag}")?;
+                if max_flags - 1 > written {
+                    write!(f, " ")?;
+                }
+                written += 1;
+            }
+            if visible_flags.len() > written {
+                let rest_count = visible_flags.len() - written;
                 write!(
                     f,
-                    "{}[{flag}]{}",
-                    space.then_some(" ").unwrap_or(""),
-                    space.then_some("").unwrap_or(" ")
+                    " ...and {rest_count} flag{}...",
+                    (rest_count > 1).then_some("s").unwrap_or(""),
                 )?;
             }
-            std::fmt::Result::Ok(())
+            write!(f, "){}", space.then_some("").unwrap_or(" "))
         };
 
         for (idx, token) in self.tokens.iter().enumerate() {

@@ -82,11 +82,11 @@ public class Random
             components: await _embeds.CreateGroupMessageComponents(ctx, target, groups.ToArray()[randInt]));
     }
 
-    public async Task GroupMember(Context ctx, PKGroup group, bool all, bool showEmbed = false)
+    public async Task GroupMember(Context ctx, PKGroup group, GroupRandomMemberFlags flags)
     {
         ctx.CheckSystemPrivacy(group.System, group.ListPrivacy);
 
-        var opts = ctx.ParseListOptions(ctx.DirectLookupContextFor(group.System), ctx.LookupContextFor(group.System));
+        var opts = flags.GetListOptions(ctx, group.System);
         opts.GroupFilter = group.Id;
 
         var members = await ctx.Database.Execute(conn => conn.QueryMemberList(group.System, opts.ToQueryOptions()));
@@ -96,7 +96,7 @@ public class Random
                 "This group has no members!"
                 + (ctx.System?.Id == group.System ? " Please add at least one member to this group before using this command." : ""));
 
-        if (!all)
+        if (!flags.all)
             members = members.Where(g => g.MemberVisibility == PrivacyLevel.Public);
         else
             ctx.CheckOwnGroup(group);
@@ -112,7 +112,7 @@ public class Random
 
         var randInt = randGen.Next(ms.Count);
 
-        if (showEmbed)
+        if (flags.show_embed)
         {
             await ctx.Reply(
                 text: EmbedService.LEGACY_EMBED_WARNING,

@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{fmt::Display, hash::Hash};
 
 use smol_str::SmolStr;
 
@@ -25,6 +25,20 @@ impl Display for Flag {
             Parameter::from(*value).fmt(f)?;
         }
         Ok(())
+    }
+}
+
+impl PartialEq for Flag {
+    fn eq(&self, other: &Self) -> bool {
+        self.name.eq(&other.name)
+    }
+}
+
+impl Eq for Flag {}
+
+impl Hash for Flag {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.name.hash(state);
     }
 }
 

@@ -18,11 +18,14 @@ pub mod server_config;
 pub mod switch;
 pub mod system;
 
+pub mod utils;
+
 use command_parser::{command, command::Command, parameter::ParameterKind::*, tokens};
 
 pub fn all() -> impl Iterator<Item = Command> {
     (help::cmds())
         .chain(system::cmds())
+        .chain(group::cmds())
         .chain(member::cmds())
         .chain(config::cmds())
         .chain(fun::cmds())

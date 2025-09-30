@@ -9,95 +9,13 @@ using PluralKit.Core;
 
 namespace PluralKit.Bot;
 
+public interface IHasListOptions
+{
+    ListOptions GetListOptions(Context ctx, SystemId system);
+}
+
 public static class ContextListExt
 {
-    public static ListOptions ParseListOptions(this Context ctx, LookupContext directLookupCtx, LookupContext lookupContext)
-    {
-        var p = new ListOptions();
-
-        // Short or long list? (parse this first, as it can potentially take a positional argument)
-        var isFull = ctx.Match("f", "full", "big", "details", "long") || ctx.MatchFlag("f", "full");
-        p.Type = isFull ? ListType.Long : ListType.Short;
-
-        // Search query
-        if (ctx.HasNext())
-            p.Search = ctx.RemainderOrNull();
-
-        // Include description in search?
-        if (ctx.MatchFlag(
-            "search-description",
-            "filter-description",
-            "in-description",
-            "sd",
-            "description",
-            "desc"
-        ))
-            p.SearchDescription = true;
-
-        // Sort property (default is by name, but adding a flag anyway, 'cause why not)
-        if (ctx.MatchFlag("by-name", "bn")) p.SortProperty = SortProperty.Name;
-        if (ctx.MatchFlag("by-display-name", "bdn")) p.SortProperty = SortProperty.DisplayName;
-        if (ctx.MatchFlag("by-id", "bid")) p.SortProperty = SortProperty.Hid;
-        if (ctx.MatchFlag("by-message-count", "bmc")) p.SortProperty = SortProperty.MessageCount;
-        if (ctx.MatchFlag("by-created", "bc", "bcd")) p.SortProperty = SortProperty.CreationDate;
-        if (ctx.MatchFlag("by-last-fronted", "by-last-front", "by-last-switch", "blf", "bls"))
-            p.SortProperty = SortProperty.LastSwitch;
-        if (ctx.MatchFlag("by-last-message", "blm", "blp")) p.SortProperty = SortProperty.LastMessage;
-        if (ctx.MatchFlag("by-birthday", "by-birthdate", "bbd")) p.SortProperty = SortProperty.Birthdate;
-        if (ctx.MatchFlag("random", "rand")) p.SortProperty = SortProperty.Random;
-
-        // Sort reverse?
-        if (ctx.MatchFlag("r", "rev", "reverse"))
-            p.Reverse = true;
-
-        // Privacy filter (default is public only)
-        if (ctx.MatchFlag("a", "all")) p.PrivacyFilter = null;
-        if (ctx.MatchFlag("private-only", "po")) p.PrivacyFilter = PrivacyLevel.Private;
-
-        // PERM CHECK: If we're trying to access non-public members of another system, error
-        if (p.PrivacyFilter != PrivacyLevel.Public && directLookupCtx != LookupContext.ByOwner)
-            // TODO: should this just return null instead of throwing or something? >.>
-            throw Errors.NotOwnInfo;
-
-        //this is for searching
-        p.Context = lookupContext;
-
-        // Additional fields to include in the search results
-        if (ctx.MatchFlag("with-last-switch", "with-last-fronted", "with-last-front", "wls", "wlf"))
-            p.IncludeLastSwitch = true;
-        if (ctx.MatchFlag("with-last-message", "with-last-proxy", "wlm", "wlp"))
-            p.IncludeLastMessage = true;
-        if (ctx.MatchFlag("with-message-count", "wmc"))
-            p.IncludeMessageCount = true;
-        if (ctx.MatchFlag("with-created", "wc"))
-            p.IncludeCreated = true;
-        if (ctx.MatchFlag("with-avatar", "with-image", "with-icon", "wa", "wi", "ia", "ii", "img"))
-            p.IncludeAvatar = true;
-        if (ctx.MatchFlag("with-pronouns", "wp", "wprns"))
-            p.IncludePronouns = true;
-        if (ctx.MatchFlag("with-displayname", "wdn"))
-            p.IncludeDisplayName = true;
-        if (ctx.MatchFlag("with-birthday", "wbd", "wb"))
-            p.IncludeBirthday = true;
-
-        // Always show the sort property, too (unless this is the short list and we are already showing something else)
-        if (p.Type != ListType.Short || p.includedCount == 0)
-        {
-            if (p.SortProperty == SortProperty.DisplayName) p.IncludeDisplayName = true;
-            if (p.SortProperty == SortProperty.MessageCount) p.IncludeMessageCount = true;
-            if (p.SortProperty == SortProperty.CreationDate) p.IncludeCreated = true;
-            if (p.SortProperty == SortProperty.LastSwitch) p.IncludeLastSwitch = true;
-            if (p.SortProperty == SortProperty.LastMessage) p.IncludeLastMessage = true;
-            if (p.SortProperty == SortProperty.Birthdate) p.IncludeBirthday = true;
-        }
-
-        // Make sure the options are valid
-        p.AssertIsValid();
-
-        // Done!
-        return p;
-    }
-
     public static async Task RenderMemberList(this Context ctx, LookupContext lookupCtx,
                                 SystemId system, string embedTitle, string color, ListOptions opts)
     {

@@ -1,5 +1,7 @@
 use command_parser::token::TokensIterator;
 
+use crate::utils::get_list_flags;
+
 use super::*;
 
 pub fn member() -> (&'static str, [&'static str; 1]) {
@@ -291,6 +293,16 @@ pub fn cmds() -> impl Iterator<Item = Command> {
         .chain(member_webhook_avatar_cmd)
         .chain(member_server_avatar_cmd);
 
+    let member_group = tokens!(member_target, group::group());
+    let member_list_group_cmds = [
+        command!(member_group => "member_list_groups"),
+        command!(member_group, "list" => "member_list_groups"),
+        command!(member_group, ("search", ["find", "query"]), ("query", OpaqueStringRemainder) => "member_search_groups"),
+    ]
+    .into_iter()
+    .map(|cmd| cmd.flags(get_list_flags()));
+    let member_group_cmds = member_list_group_cmds;
+
     let member_delete_cmd =
         [command!(member_target, delete => "member_delete").help("Deletes a member")].into_iter();
 
@@ -298,10 +310,7 @@ pub fn cmds() -> impl Iterator<Item = Command> {
         [command!(member_target, "soulscream" => "member_soulscream").show_in_suggestions(false)]
             .into_iter();
 
-    let member_list = [command!(member, "list" => "members_list")].into_iter();
-
     member_new_cmd
-        .chain(member_list)
         .chain(member_info_cmd)
         .chain(member_name_cmd)
         .chain(member_description_cmd)
@@ -318,4 +327,5 @@ pub fn cmds() -> impl Iterator<Item = Command> {
         .chain(member_message_settings_cmd)
         .chain(member_delete_cmd)
         .chain(member_easter_eggs)
+        .chain(member_group_cmds)
 }

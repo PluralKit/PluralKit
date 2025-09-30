@@ -1,7 +1,7 @@
 #![feature(anonymous_lifetime_in_impl_trait)]
 
 pub mod command;
-mod flag;
+pub mod flag;
 pub mod parameter;
 mod string;
 pub mod token;

@@ -1,5 +1,7 @@
 use command_parser::token::TokensIterator;
 
+use crate::utils::get_list_flags;
+
 use super::*;
 
 pub fn cmds() -> impl Iterator<Item = Command> {
@@ -251,8 +253,33 @@ pub fn edit() -> impl Iterator<Item = Command> {
     ]
     .into_iter();
 
-    let system_list =
-        [command!(system_target, ("members", ["list"]) => "system_members_list")].into_iter();
+    let system_list = ("members", ["list"]);
+    let system_search = tokens!(
+        ("search", ["query", "find"]),
+        ("query", OpaqueStringRemainder),
+    );
+    let add_list_flags = |cmd: Command| cmd.flags(get_list_flags());
+    let system_list_cmd = [
+        command!(system_target, system_list => "system_members_list"),
+        command!(system_target, system_search => "system_members_search"),
+    ]
+    .into_iter()
+    .map(add_list_flags);
+    let system_list_self_cmd = [
+        command!(system, system_list => "system_members_list_self"),
+        command!(system, system_search => "system_members_search_self"),
+    ]
+    .into_iter()
+    .map(add_list_flags);
+
+    let system_groups = tokens!(system_target, ("groups", ["gs"]));
+    let system_groups_cmd = [
+        command!(system_groups => "system_list_groups"),
+        command!(system_groups, ("list", ["ls"]) => "system_list_groups"),
+        command!(system_groups, ("search", ["find", "query"]), ("query", OpaqueStringRemainder) => "system_search_groups"),
+    ]
+    .into_iter()
+    .map(add_list_flags);
 
     system_new_cmd
         .chain(system_name_self_cmd)
@@ -265,6 +292,7 @@ pub fn edit() -> impl Iterator<Item = Command> {
         .chain(system_avatar_self_cmd)
         .chain(system_server_avatar_self_cmd)
         .chain(system_banner_self_cmd)
+        .chain(system_list_self_cmd)
         .chain(system_delete)
         .chain(system_privacy_cmd)
         .chain(system_proxy_cmd)
@@ -281,5 +309,6 @@ pub fn edit() -> impl Iterator<Item = Command> {
         .chain(system_info_cmd)
         .chain(system_front_cmd)
         .chain(system_link)
-        .chain(system_list)
+        .chain(system_list_cmd)
+        .chain(system_groups_cmd)
 }
