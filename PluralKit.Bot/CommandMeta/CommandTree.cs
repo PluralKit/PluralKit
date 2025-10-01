@@ -76,6 +76,14 @@ public partial class CommandTree
             Commands.CfgApTimeoutUpdate(var param, _) => ctx.Execute<Config>(null, m => m.EditAutoproxyTimeout(ctx, param.timeout)),
             Commands.FunThunder => ctx.Execute<Fun>(null, m => m.Thunder(ctx)),
             Commands.FunMeow => ctx.Execute<Fun>(null, m => m.Meow(ctx)),
+            Commands.FunPokemon => ctx.Execute<Fun>(null, m => m.Mn(ctx)),
+            Commands.FunFire => ctx.Execute<Fun>(null, m => m.Fire(ctx)),
+            Commands.FunFreeze => ctx.Execute<Fun>(null, m => m.Freeze(ctx)),
+            Commands.FunStarstorm => ctx.Execute<Fun>(null, m => m.Starstorm(ctx)),
+            Commands.FunFlash => ctx.Execute<Fun>(null, m => m.Flash(ctx)),
+            Commands.FunRool => ctx.Execute<Fun>(null, m => m.Rool(ctx)),
+            Commands.Amogus => ctx.Execute<Fun>(null, m => m.Sus(ctx)),
+            Commands.FunError => ctx.Execute<Fun>(null, m => m.Error(ctx)),
             Commands.SystemInfo(var param, var flags) => ctx.Execute<System>(SystemInfo, m => m.Query(ctx, param.target, flags.all, flags.@public, flags.@private)),
             Commands.SystemInfoSelf(_, var flags) => ctx.Execute<System>(SystemInfo, m => m.Query(ctx, ctx.System, flags.all, flags.@public, flags.@private)),
             Commands.SystemNew(var param, _) => ctx.Execute<System>(SystemNew, m => m.New(ctx, null)),
@@ -279,15 +287,6 @@ public partial class CommandTree
             if (ctx.Match("debug"))
                 return ctx.Execute<Checks>(ProxyCheck, m => m.MessageProxyCheck(ctx));
         if (ctx.Match("invite")) return ctx.Execute<Misc>(Invite, m => m.Invite(ctx));
-        if (ctx.Match("mn")) return ctx.Execute<Fun>(null, m => m.Mn(ctx));
-        if (ctx.Match("fire")) return ctx.Execute<Fun>(null, m => m.Fire(ctx));
-        if (ctx.Match("thunder")) return ctx.Execute<Fun>(null, m => m.Thunder(ctx));
-        if (ctx.Match("freeze")) return ctx.Execute<Fun>(null, m => m.Freeze(ctx));
-        if (ctx.Match("starstorm")) return ctx.Execute<Fun>(null, m => m.Starstorm(ctx));
-        if (ctx.Match("flash")) return ctx.Execute<Fun>(null, m => m.Flash(ctx));
-        if (ctx.Match("rool")) return ctx.Execute<Fun>(null, m => m.Rool(ctx));
-        if (ctx.Match("sus")) return ctx.Execute<Fun>(null, m => m.Sus(ctx));
-        if (ctx.Match("error")) return ctx.Execute<Fun>(null, m => m.Error(ctx));
         if (ctx.Match("stats", "status")) return ctx.Execute<Misc>(null, m => m.Stats(ctx));
         if (ctx.Match("permcheck"))
             return ctx.Execute<Checks>(PermCheck, m => m.PermCheckGuild(ctx));
