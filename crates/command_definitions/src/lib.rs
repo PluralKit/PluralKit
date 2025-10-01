@@ -31,6 +31,7 @@ pub fn all() -> impl Iterator<Item = Command> {
         .chain(fun::cmds())
         .chain(switch::cmds())
         .chain(random::cmds())
+        .chain(api::cmds())
         .map(|cmd| {
             cmd.hidden_flag(("plaintext", ["pt"]))
                 .hidden_flag(("raw", ["r"]))

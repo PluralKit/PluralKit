@@ -229,6 +229,8 @@ public partial class CommandTree
             Commands.GroupDelete(var param, var flags) => ctx.Execute<Groups>(GroupDelete, g => g.DeleteGroup(ctx, param.target)),
             Commands.GroupId(var param, _) => ctx.Execute<Groups>(GroupId, g => g.DisplayId(ctx, param.target)),
             Commands.GroupFronterPercent(var param, var flags) => ctx.Execute<SystemFront>(GroupFrontPercent, g => g.FrontPercent(ctx, null, flags.duration, flags.fronters_only, flags.flat, param.target)),
+            Commands.TokenDisplay => ctx.Execute<Api>(TokenGet, m => m.GetToken(ctx)),
+            Commands.TokenRefresh => ctx.Execute<Api>(TokenRefresh, m => m.RefreshToken(ctx)),
             _ =>
             // this should only ever occur when deving if commands are not implemented...
             ctx.Reply(
@@ -242,11 +244,6 @@ public partial class CommandTree
             return HandleConfigCommand(ctx);
         if (ctx.Match("serverconfig", "guildconfig", "scfg"))
             return HandleServerConfigCommand(ctx);
-        if (ctx.Match("token"))
-            if (ctx.Match("refresh", "renew", "invalidate", "reroll", "regen"))
-                return ctx.Execute<Api>(TokenRefresh, m => m.RefreshToken(ctx));
-            else
-                return ctx.Execute<Api>(TokenGet, m => m.GetToken(ctx));
         if (ctx.Match("import"))
             return ctx.Execute<ImportExport>(Import, m => m.Import(ctx));
         if (ctx.Match("export"))
