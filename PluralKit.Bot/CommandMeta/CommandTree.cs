@@ -231,6 +231,11 @@ public partial class CommandTree
             Commands.GroupFronterPercent(var param, var flags) => ctx.Execute<SystemFront>(GroupFrontPercent, g => g.FrontPercent(ctx, null, flags.duration, flags.fronters_only, flags.flat, param.target)),
             Commands.TokenDisplay => ctx.Execute<Api>(TokenGet, m => m.GetToken(ctx)),
             Commands.TokenRefresh => ctx.Execute<Api>(TokenRefresh, m => m.RefreshToken(ctx)),
+            Commands.AutoproxyShow => ctx.Execute<Autoproxy>(AutoproxySet, m => m.SetAutoproxyMode(ctx, null)),
+            Commands.AutoproxyOff => ctx.Execute<Autoproxy>(AutoproxySet, m => m.SetAutoproxyMode(ctx, new Autoproxy.Mode.Off())),
+            Commands.AutoproxyLatch => ctx.Execute<Autoproxy>(AutoproxySet, m => m.SetAutoproxyMode(ctx, new Autoproxy.Mode.Latch())),
+            Commands.AutoproxyFront => ctx.Execute<Autoproxy>(AutoproxySet, m => m.SetAutoproxyMode(ctx, new Autoproxy.Mode.Front())),
+            Commands.AutoproxyMember(var param, _) => ctx.Execute<Autoproxy>(AutoproxySet, m => m.SetAutoproxyMode(ctx, new Autoproxy.Mode.Member(param.target))),
             _ =>
             // this should only ever occur when deving if commands are not implemented...
             ctx.Reply(
@@ -238,8 +243,6 @@ public partial class CommandTree
         };
         if (ctx.Match("commands", "cmd", "c"))
             return CommandHelpRoot(ctx);
-        if (ctx.Match("ap", "autoproxy", "auto"))
-            return HandleAutoproxyCommand(ctx);
         if (ctx.Match("config", "cfg", "configure"))
             return HandleConfigCommand(ctx);
         if (ctx.Match("serverconfig", "guildconfig", "scfg"))
@@ -449,17 +452,6 @@ public partial class CommandTree
                 await ctx.Reply("For the full list of commands, see the website: <https://pluralkit.me/commands>");
                 break;
         }
-    }
-
-    private Task HandleAutoproxyCommand(Context ctx)
-    {
-        // ctx.CheckSystem();
-        // oops, that breaks stuff! PKErrors before ctx.Execute don't actually do anything.
-        // so we just emulate checking and throwing an error.
-        if (ctx.System == null)
-            return ctx.Reply($"{Emojis.Error} {Errors.NoSystemError(ctx.DefaultPrefix).Message}");
-
-        return ctx.Execute<Autoproxy>(AutoproxySet, m => m.SetAutoproxyMode(ctx));
     }
 
     private Task HandleConfigCommand(Context ctx)
