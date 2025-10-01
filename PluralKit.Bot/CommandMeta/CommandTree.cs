@@ -165,6 +165,9 @@ public partial class CommandTree
             Commands.SystemFronter(var param, var flags) => ctx.Execute<SystemFront>(SystemFronter, m => m.Fronter(ctx, param.target)),
             Commands.SystemFronterHistory(var param, var flags) => ctx.Execute<SystemFront>(SystemFrontHistory, m => m.FrontHistory(ctx, param.target, flags.clear)),
             Commands.SystemFronterPercent(var param, var flags) => ctx.Execute<SystemFront>(SystemFrontPercent, m => m.FrontPercent(ctx, param.target, flags.duration, flags.fronters_only, flags.flat)),
+            Commands.SystemDisplayId(var param, _) => ctx.Execute<System>(SystemId, m => m.DisplayId(ctx, param.target)),
+            Commands.SystemDisplayIdSelf => ctx.Execute<System>(SystemId, m => m.DisplayId(ctx, ctx.System)),
+            Commands.SystemWebhook => ctx.Execute<Api>(null, m => m.SystemWebhook(ctx)),
             Commands.RandomSelf(_, var flags) =>
             flags.group
                 ? ctx.Execute<Random>(GroupRandom, m => m.Group(ctx, ctx.System, flags.all, flags.show_embed))
@@ -223,14 +226,6 @@ public partial class CommandTree
             ctx.Reply(
                 $"{Emojis.Error} Parsed command {ctx.Parameters.Callback().AsCode()} not implemented in PluralKit.Bot!"),
         };
-        if (ctx.Match("system", "s", "account", "acc"))
-            return HandleSystemCommand(ctx);
-        if (ctx.Match("member", "m"))
-            return HandleMemberCommand(ctx);
-        if (ctx.Match("group", "g"))
-            return HandleGroupCommand(ctx);
-        if (ctx.Match("switch", "sw"))
-            return HandleSwitchCommand(ctx);
         if (ctx.Match("commands", "cmd", "c"))
             return CommandHelpRoot(ctx);
         if (ctx.Match("ap", "autoproxy", "auto"))
@@ -396,94 +391,6 @@ public partial class CommandTree
         else
             await ctx.Reply(
                 $"{Emojis.Error} Unknown debug command {ctx.PeekArgument().AsCode()}. {availableCommandsStr}");
-    }
-
-    private async Task HandleSystemCommand(Context ctx)
-    {
-        if (ctx.Match("commands", "help"))
-            await PrintCommandList(ctx, "systems", SystemCommands);
-
-        // todo: these aren't deprecated but also shouldn't be here
-        else if (ctx.Match("webhook", "hook"))
-            await ctx.Execute<Api>(null, m => m.SystemWebhook(ctx));
-
-        // finally, parse commands that *can* take a system target
-        else
-        {
-            // TODO: actually implement this
-            // // try matching a system ID
-            // var target = await ctx.MatchSystem();
-            // var previousPtr = ctx.Parameters._ptr;
-
-            // // if we have a parsed target and no more commands, don't bother with the command flow
-            // // we skip the `target != null` check here since the argument isn't be popped if it's not a system
-            // if (!ctx.HasNext())
-            // {
-            //     await ctx.Execute<System>(SystemInfo, m => m.Query(ctx, target ?? ctx.System));
-            //     return;
-            // }
-
-            // // hacky, but we need to CheckSystem(target) which throws a PKError
-            // // normally PKErrors are only handled in ctx.Execute
-            // try
-            // {
-            //     await HandleSystemCommandTargeted(ctx, target ?? ctx.System);
-            // }
-            // catch (PKError e)
-            // {
-            //     await ctx.Reply($"{Emojis.Error} {e.Message}");
-            //     return;
-            // }
-
-            // // if we *still* haven't matched anything, the user entered an invalid command name or system reference
-            // if (ctx.Parameters._ptr == previousPtr)
-            // {
-            //     if (!ctx.Parameters.Peek().TryParseHid(out _) && !ctx.Parameters.Peek().TryParseMention(out _))
-            //     {
-            //         await PrintCommandNotFoundError(ctx, SystemCommands);
-            //         return;
-            //     }
-
-            //     var list = CreatePotentialCommandList(ctx.DefaultPrefix, SystemCommands);
-            //     await ctx.Reply($"{Emojis.Error} {await CreateSystemNotFoundError(ctx)}\n\n"
-            //             + $"Perhaps you meant to use one of the following commands?\n{list}");
-            // }
-        }
-    }
-
-    private async Task HandleSystemCommandTargeted(Context ctx, PKSystem target)
-    {
-        if (ctx.Match("id"))
-            await ctx.CheckSystem(target).Execute<System>(SystemId, m => m.DisplayId(ctx, target));
-    }
-
-    private async Task HandleMemberCommand(Context ctx)
-    {
-        if (ctx.Match("commands", "help"))
-            await PrintCommandList(ctx, "members", MemberCommands);
-        else if (!ctx.HasNext())
-            await PrintCommandExpectedError(ctx, MemberNew, MemberInfo, MemberRename, MemberDisplayName,
-                MemberServerName, MemberDesc, MemberPronouns,
-                MemberColor, MemberBirthday, MemberProxy, MemberDelete, MemberAvatar);
-        else
-            await ctx.Reply($"{Emojis.Error} {ctx.CreateNotFoundError("Member", ctx.PopArgument())}");
-    }
-
-    private async Task HandleGroupCommand(Context ctx)
-    {
-        // Commands with no group argument
-        if (ctx.Match("commands", "help"))
-            await PrintCommandList(ctx, "groups", GroupCommands);
-        else if (!ctx.HasNext())
-            await PrintCommandExpectedError(ctx, GroupCommands);
-        else
-            await ctx.Reply($"{Emojis.Error} {ctx.CreateNotFoundError("Group", ctx.PopArgument())}");
-    }
-
-    private async Task HandleSwitchCommand(Context ctx)
-    {
-        await PrintCommandNotFoundError(ctx, Switch, SwitchOut, SwitchMove, SwitchEdit, SwitchEditOut,
-            SwitchDelete, SwitchCopy, SystemFronter, SystemFrontHistory);
     }
 
     private async Task CommandHelpRoot(Context ctx)

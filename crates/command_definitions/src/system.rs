@@ -28,6 +28,10 @@ pub fn edit() -> impl Iterator<Item = Command> {
     ]
     .into_iter();
 
+    let system_webhook_cmd = [command!(system, ("webhook", ["hook"]) => "system_webhook")
+        .help("Creates a webhook for your system")]
+    .into_iter();
+
     let system_info_cmd = [
         command!(system => "system_info_self").help("Shows information about your system"),
         command!(system_target, ("info", ["show", "view"]) => "system_info")
@@ -281,7 +285,12 @@ pub fn edit() -> impl Iterator<Item = Command> {
     .into_iter()
     .map(add_list_flags);
 
+    let system_display_id_self_cmd =
+        [command!(system, "id" => "system_display_id_self")].into_iter();
+    let system_display_id_cmd = [command!(system_target, "id" => "system_display_id")].into_iter();
+
     system_new_cmd
+        .chain(system_webhook_cmd)
         .chain(system_name_self_cmd)
         .chain(system_server_name_self_cmd)
         .chain(system_description_self_cmd)
@@ -293,6 +302,7 @@ pub fn edit() -> impl Iterator<Item = Command> {
         .chain(system_server_avatar_self_cmd)
         .chain(system_banner_self_cmd)
         .chain(system_list_self_cmd)
+        .chain(system_display_id_self_cmd)
         .chain(system_delete)
         .chain(system_privacy_cmd)
         .chain(system_proxy_cmd)
@@ -311,4 +321,5 @@ pub fn edit() -> impl Iterator<Item = Command> {
         .chain(system_link)
         .chain(system_list_cmd)
         .chain(system_groups_cmd)
+        .chain(system_display_id_cmd)
 }
