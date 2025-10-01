@@ -127,16 +127,6 @@ public static class ContextArgumentsExt
         ctx.PopArgument();
         return (messageId, channelId);
     }
-
-    public static async Task<List<PKMember>> ParseMemberList(this Context ctx, SystemId? restrictToSystem)
-    {
-        throw new NotImplementedException();
-    }
-
-    public static async Task<List<PKGroup>> ParseGroupList(this Context ctx, SystemId? restrictToSystem)
-    {
-        throw new NotImplementedException();
-    }
 }
 
 public enum ReplyFormat

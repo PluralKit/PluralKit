@@ -65,6 +65,9 @@ public partial class CommandTree
             Commands.MemberDelete(var param, _) => ctx.Execute<MemberEdit>(MemberDelete, m => m.Delete(ctx, param.target)),
             Commands.MemberPrivacyShow(var param, _) => ctx.Execute<MemberEdit>(MemberPrivacy, m => m.ShowPrivacy(ctx, param.target)),
             Commands.MemberPrivacyUpdate(var param, _) => ctx.Execute<MemberEdit>(MemberPrivacy, m => m.ChangePrivacy(ctx, param.target, param.member_privacy_target, param.new_privacy_level)),
+            Commands.MemberGroupAdd(var param, _) => ctx.Execute<GroupMember>(MemberGroupAdd, m => m.AddRemoveGroups(ctx, param.target, param.groups, Groups.AddRemoveOperation.Add)),
+            Commands.MemberGroupRemove(var param, _) => ctx.Execute<GroupMember>(MemberGroupRemove, m => m.AddRemoveGroups(ctx, param.target, param.groups, Groups.AddRemoveOperation.Remove)),
+            Commands.MemberId(var param, _) => ctx.Execute<Member>(MemberId, m => m.DisplayId(ctx, param.target)),
             Commands.CfgApAccountShow => ctx.Execute<Config>(null, m => m.ViewAutoproxyAccount(ctx)),
             Commands.CfgApAccountUpdate(var param, _) => ctx.Execute<Config>(null, m => m.EditAutoproxyAccount(ctx, param.toggle)),
             Commands.CfgApTimeoutShow => ctx.Execute<Config>(null, m => m.ViewAutoproxyTimeout(ctx)),
@@ -185,6 +188,36 @@ public partial class CommandTree
             Commands.SystemSearchGroups(var param, var flags) => ctx.Execute<Groups>(GroupList, g => g.ListSystemGroups(ctx, param.target, param.query, flags)),
             Commands.GroupListGroups(var param, var flags) => ctx.Execute<Groups>(GroupList, g => g.ListSystemGroups(ctx, ctx.System, null, flags)),
             Commands.GroupSearchGroups(var param, var flags) => ctx.Execute<Groups>(GroupList, g => g.ListSystemGroups(ctx, ctx.System, param.query, flags)),
+            Commands.GroupNew(var param, _) => ctx.Execute<Groups>(GroupNew, g => g.CreateGroup(ctx, param.name)),
+            Commands.GroupInfo(var param, _) => ctx.Execute<Groups>(GroupInfo, g => g.ShowGroupCard(ctx, param.target)),
+            Commands.GroupShowName(var param, var flags) => ctx.Execute<Groups>(GroupRename, g => g.ShowGroupDisplayName(ctx, param.target, flags.GetReplyFormat())),
+            Commands.GroupClearName(var param, var flags) => ctx.Execute<Groups>(GroupRename, g => g.RenameGroup(ctx, param.target, null)),
+            Commands.GroupRename(var param, _) => ctx.Execute<Groups>(GroupRename, g => g.RenameGroup(ctx, param.target, param.name)),
+            Commands.GroupShowDisplayName(var param, var flags) => ctx.Execute<Groups>(GroupDisplayName, g => g.ShowGroupDisplayName(ctx, param.target, flags.GetReplyFormat())),
+            Commands.GroupClearDisplayName(var param, var flags) => ctx.Execute<Groups>(GroupDisplayName, g => g.ClearGroupDisplayName(ctx, param.target)),
+            Commands.GroupChangeDisplayName(var param, _) => ctx.Execute<Groups>(GroupDisplayName, g => g.ChangeGroupDisplayName(ctx, param.target, param.name)),
+            Commands.GroupShowDescription(var param, var flags) => ctx.Execute<Groups>(GroupDesc, g => g.ShowGroupDescription(ctx, param.target, flags.GetReplyFormat())),
+            Commands.GroupClearDescription(var param, var flags) => ctx.Execute<Groups>(GroupDesc, g => g.ClearGroupDescription(ctx, param.target)),
+            Commands.GroupChangeDescription(var param, _) => ctx.Execute<Groups>(GroupDesc, g => g.ChangeGroupDescription(ctx, param.target, param.description)),
+            Commands.GroupShowIcon(var param, var flags) => ctx.Execute<Groups>(GroupIcon, g => g.ShowGroupIcon(ctx, param.target, flags.GetReplyFormat())),
+            Commands.GroupClearIcon(var param, var flags) => ctx.Execute<Groups>(GroupIcon, g => g.ClearGroupIcon(ctx, param.target)),
+            Commands.GroupChangeIcon(var param, _) => ctx.Execute<Groups>(GroupIcon, g => g.ChangeGroupIcon(ctx, param.target, param.icon)),
+            Commands.GroupShowBanner(var param, var flags) => ctx.Execute<Groups>(GroupBannerImage, g => g.ShowGroupBanner(ctx, param.target, flags.GetReplyFormat())),
+            Commands.GroupClearBanner(var param, var flags) => ctx.Execute<Groups>(GroupBannerImage, g => g.ClearGroupBanner(ctx, param.target)),
+            Commands.GroupChangeBanner(var param, _) => ctx.Execute<Groups>(GroupBannerImage, g => g.ChangeGroupBanner(ctx, param.target, param.banner)),
+            Commands.GroupShowColor(var param, var flags) => ctx.Execute<Groups>(GroupColor, g => g.ShowGroupColor(ctx, param.target, flags.GetReplyFormat())),
+            Commands.GroupClearColor(var param, var flags) => ctx.Execute<Groups>(GroupColor, g => g.ClearGroupColor(ctx, param.target)),
+            Commands.GroupChangeColor(var param, _) => ctx.Execute<Groups>(GroupColor, g => g.ChangeGroupColor(ctx, param.target, param.color)),
+            Commands.GroupAddMember(var param, var flags) => ctx.Execute<GroupMember>(GroupAdd, g => g.AddRemoveMembers(ctx, param.target, param.targets, Groups.AddRemoveOperation.Add, flags.all)),
+            Commands.GroupRemoveMember(var param, var flags) => ctx.Execute<GroupMember>(GroupRemove, g => g.AddRemoveMembers(ctx, param.target, param.targets, Groups.AddRemoveOperation.Remove, flags.all)),
+            Commands.GroupShowPrivacy(var param, _) => ctx.Execute<Groups>(GroupPrivacy, g => g.ShowGroupPrivacy(ctx, param.target)),
+            Commands.GroupChangePrivacyAll(var param, _) => ctx.Execute<Groups>(GroupPrivacy, g => g.SetAllGroupPrivacy(ctx, param.target, param.level)),
+            Commands.GroupChangePrivacy(var param, _) => ctx.Execute<Groups>(GroupPrivacy, g => g.SetGroupPrivacy(ctx, param.target, param.privacy, param.level)),
+            Commands.GroupSetPublic(var param, _) => ctx.Execute<Groups>(GroupPrivacy, g => g.SetAllGroupPrivacy(ctx, param.target, PrivacyLevel.Public)),
+            Commands.GroupSetPrivate(var param, _) => ctx.Execute<Groups>(GroupPrivacy, g => g.SetAllGroupPrivacy(ctx, param.target, PrivacyLevel.Private)),
+            Commands.GroupDelete(var param, var flags) => ctx.Execute<Groups>(GroupDelete, g => g.DeleteGroup(ctx, param.target)),
+            Commands.GroupId(var param, _) => ctx.Execute<Groups>(GroupId, g => g.DisplayId(ctx, param.target)),
+            Commands.GroupFronterPercent(var param, var flags) => ctx.Execute<SystemFront>(GroupFrontPercent, g => g.FrontPercent(ctx, null, flags.duration, flags.fronters_only, flags.flat, param.target)),
             _ =>
             // this should only ever occur when deving if commands are not implemented...
             ctx.Reply(
@@ -428,8 +461,6 @@ public partial class CommandTree
     {
         if (ctx.Match("commands", "help"))
             await PrintCommandList(ctx, "members", MemberCommands);
-        else if (await ctx.MatchMember() is PKMember target)
-            await HandleMemberCommandTargeted(ctx, target);
         else if (!ctx.HasNext())
             await PrintCommandExpectedError(ctx, MemberNew, MemberInfo, MemberRename, MemberDisplayName,
                 MemberServerName, MemberDesc, MemberPronouns,
@@ -438,69 +469,11 @@ public partial class CommandTree
             await ctx.Reply($"{Emojis.Error} {ctx.CreateNotFoundError("Member", ctx.PopArgument())}");
     }
 
-    private async Task HandleMemberCommandTargeted(Context ctx, PKMember target)
-    {
-        // Commands that have a member target (eg. pk;member <member> delete)
-        if (ctx.Match("group", "groups", "g"))
-            if (ctx.Match("add", "a"))
-                await ctx.Execute<GroupMember>(MemberGroupAdd,
-                    m => m.AddRemoveGroups(ctx, target, Groups.AddRemoveOperation.Add));
-            else if (ctx.Match("remove", "rem"))
-                await ctx.Execute<GroupMember>(MemberGroupRemove,
-                    m => m.AddRemoveGroups(ctx, target, Groups.AddRemoveOperation.Remove));
-            else if (ctx.Match("id"))
-                await ctx.Execute<Member>(MemberId, m => m.DisplayId(ctx, target));
-            else
-                await PrintCommandNotFoundError(ctx, MemberInfo, MemberRename, MemberDisplayName, MemberServerName,
-                    MemberDesc, MemberPronouns, MemberColor, MemberBirthday, MemberProxy, MemberDelete, MemberAvatar,
-                    SystemList);
-    }
-
     private async Task HandleGroupCommand(Context ctx)
     {
         // Commands with no group argument
-        if (ctx.Match("n", "new"))
-            await ctx.Execute<Groups>(GroupNew, g => g.CreateGroup(ctx));
-        else if (ctx.Match("commands", "help"))
+        if (ctx.Match("commands", "help"))
             await PrintCommandList(ctx, "groups", GroupCommands);
-        else if (await ctx.MatchGroup() is { } target)
-        {
-            // Commands with group argument
-            if (ctx.Match("rename", "name", "changename", "setname", "rn"))
-                await ctx.Execute<Groups>(GroupRename, g => g.RenameGroup(ctx, target));
-            else if (ctx.Match("nick", "dn", "displayname", "nickname"))
-                await ctx.Execute<Groups>(GroupDisplayName, g => g.GroupDisplayName(ctx, target));
-            else if (ctx.Match("description", "desc", "describe", "d", "bio", "info", "text", "intro"))
-                await ctx.Execute<Groups>(GroupDesc, g => g.GroupDescription(ctx, target));
-            else if (ctx.Match("add", "a"))
-                await ctx.Execute<GroupMember>(GroupAdd,
-                    g => g.AddRemoveMembers(ctx, target, Groups.AddRemoveOperation.Add));
-            else if (ctx.Match("remove", "rem"))
-                await ctx.Execute<GroupMember>(GroupRemove,
-                    g => g.AddRemoveMembers(ctx, target, Groups.AddRemoveOperation.Remove));
-            else if (ctx.Match("privacy"))
-                await ctx.Execute<Groups>(GroupPrivacy, g => g.GroupPrivacy(ctx, target, null));
-            else if (ctx.Match("public", "pub"))
-                await ctx.Execute<Groups>(GroupPrivacy, g => g.GroupPrivacy(ctx, target, PrivacyLevel.Public));
-            else if (ctx.Match("private", "priv"))
-                await ctx.Execute<Groups>(GroupPrivacy, g => g.GroupPrivacy(ctx, target, PrivacyLevel.Private));
-            else if (ctx.Match("delete", "destroy", "erase", "yeet"))
-                await ctx.Execute<Groups>(GroupDelete, g => g.DeleteGroup(ctx, target));
-            else if (ctx.Match("avatar", "picture", "icon", "image", "pic", "pfp"))
-                await ctx.Execute<Groups>(GroupIcon, g => g.GroupIcon(ctx, target));
-            else if (ctx.Match("banner", "splash", "cover"))
-                await ctx.Execute<Groups>(GroupBannerImage, g => g.GroupBannerImage(ctx, target));
-            else if (ctx.Match("fp", "frontpercent", "front%", "frontbreakdown"))
-                await ctx.Execute<SystemFront>(GroupFrontPercent, g => g.FrontPercent(ctx, group: target));
-            else if (ctx.Match("color", "colour"))
-                await ctx.Execute<Groups>(GroupColor, g => g.GroupColor(ctx, target));
-            else if (ctx.Match("id"))
-                await ctx.Execute<Groups>(GroupId, g => g.DisplayId(ctx, target));
-            else if (!ctx.HasNext())
-                await ctx.Execute<Groups>(GroupInfo, g => g.ShowGroupCard(ctx, target));
-            else
-                await PrintCommandNotFoundError(ctx, GroupCommandsTargeted);
-        }
         else if (!ctx.HasNext())
             await PrintCommandExpectedError(ctx, GroupCommands);
         else

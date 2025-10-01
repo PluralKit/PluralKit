@@ -68,8 +68,14 @@ impl Token {
                     value: matched,
                 },
                 Err(err) => {
-                    if param.kind().skip_if_cant_match() {
-                        return None;
+                    if let Some(maybe_empty) = param.kind().skip_if_cant_match() {
+                        match maybe_empty {
+                            Some(matched) => TokenMatchResult::MatchedParameter {
+                                name: param.name().into(),
+                                value: matched,
+                            },
+                            None => return None,
+                        }
                     } else {
                         TokenMatchResult::ParameterMatchError {
                             input: input.into(),

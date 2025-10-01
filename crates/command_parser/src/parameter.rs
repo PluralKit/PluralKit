@@ -13,9 +13,11 @@ pub enum ParameterValue {
     MemberRef(String),
     MemberRefs(Vec<String>),
     GroupRef(String),
+    GroupRefs(Vec<String>),
     SystemRef(String),
     GuildRef(String),
     MemberPrivacyTarget(String),
+    GroupPrivacyTarget(String),
     SystemPrivacyTarget(String),
     PrivacyLevel(String),
     Toggle(bool),
@@ -50,9 +52,11 @@ impl Display for Parameter {
             ParameterKind::MemberRef => write!(f, "<target member>"),
             ParameterKind::MemberRefs => write!(f, "<member 1> <member 2> <member 3>..."),
             ParameterKind::GroupRef => write!(f, "<target group>"),
+            ParameterKind::GroupRefs => write!(f, "<group 1> <group 2> <group 3>..."),
             ParameterKind::SystemRef => write!(f, "<target system>"),
             ParameterKind::GuildRef => write!(f, "<target guild>"),
             ParameterKind::MemberPrivacyTarget => write!(f, "<privacy target>"),
+            ParameterKind::GroupPrivacyTarget => write!(f, "<privacy target>"),
             ParameterKind::SystemPrivacyTarget => write!(f, "<privacy target>"),
             ParameterKind::PrivacyLevel => write!(f, "[privacy level]"),
             ParameterKind::Toggle => write!(f, "on/off"),
@@ -86,9 +90,11 @@ pub enum ParameterKind {
     MemberRef,
     MemberRefs,
     GroupRef,
+    GroupRefs,
     SystemRef,
     GuildRef,
     MemberPrivacyTarget,
+    GroupPrivacyTarget,
     SystemPrivacyTarget,
     PrivacyLevel,
     Toggle,
@@ -103,9 +109,11 @@ impl ParameterKind {
             ParameterKind::MemberRef => "target",
             ParameterKind::MemberRefs => "targets",
             ParameterKind::GroupRef => "target",
+            ParameterKind::GroupRefs => "targets",
             ParameterKind::SystemRef => "target",
             ParameterKind::GuildRef => "target",
             ParameterKind::MemberPrivacyTarget => "member_privacy_target",
+            ParameterKind::GroupPrivacyTarget => "group_privacy_target",
             ParameterKind::SystemPrivacyTarget => "system_privacy_target",
             ParameterKind::PrivacyLevel => "privacy_level",
             ParameterKind::Toggle => "toggle",
@@ -116,7 +124,9 @@ impl ParameterKind {
     pub(crate) fn remainder(&self) -> bool {
         matches!(
             self,
-            ParameterKind::OpaqueStringRemainder | ParameterKind::MemberRefs
+            ParameterKind::OpaqueStringRemainder
+                | ParameterKind::MemberRefs
+                | ParameterKind::GroupRefs
         )
     }
 
@@ -127,6 +137,9 @@ impl ParameterKind {
                 Ok(ParameterValue::OpaqueString(input.into()))
             }
             ParameterKind::GroupRef => Ok(ParameterValue::GroupRef(input.into())),
+            ParameterKind::GroupRefs => Ok(ParameterValue::GroupRefs(
+                input.split(' ').map(|s| s.trim().to_string()).collect(),
+            )),
             ParameterKind::MemberRef => Ok(ParameterValue::MemberRef(input.into())),
             ParameterKind::MemberRefs => Ok(ParameterValue::MemberRefs(
                 input.split(' ').map(|s| s.trim().to_string()).collect(),
@@ -134,6 +147,8 @@ impl ParameterKind {
             ParameterKind::SystemRef => Ok(ParameterValue::SystemRef(input.into())),
             ParameterKind::MemberPrivacyTarget => MemberPrivacyTargetKind::from_str(input)
                 .map(|target| ParameterValue::MemberPrivacyTarget(target.as_ref().into())),
+            ParameterKind::GroupPrivacyTarget => GroupPrivacyTargetKind::from_str(input)
+                .map(|target| ParameterValue::GroupPrivacyTarget(target.as_ref().into())),
             ParameterKind::SystemPrivacyTarget => SystemPrivacyTargetKind::from_str(input)
                 .map(|target| ParameterValue::SystemPrivacyTarget(target.as_ref().into())),
             ParameterKind::PrivacyLevel => PrivacyLevelKind::from_str(input)
@@ -146,8 +161,13 @@ impl ParameterKind {
         }
     }
 
-    pub(crate) fn skip_if_cant_match(&self) -> bool {
-        matches!(self, ParameterKind::Toggle)
+    pub(crate) fn skip_if_cant_match(&self) -> Option<Option<ParameterValue>> {
+        match self {
+            ParameterKind::Toggle => Some(None),
+            ParameterKind::MemberRefs => Some(Some(ParameterValue::MemberRefs(Vec::new()))),
+            ParameterKind::GroupRefs => Some(Some(ParameterValue::GroupRefs(Vec::new()))),
+            _ => None,
+        }
     }
 }
 
@@ -196,6 +216,48 @@ impl FromStr for MemberPrivacyTargetKind {
             "proxy" => Ok(Self::Proxy),
             "metadata" => Ok(Self::Metadata),
             _ => Err("invalid member privacy target".into()),
+        }
+    }
+}
+
+pub enum GroupPrivacyTargetKind {
+    Name,
+    Icon,
+    Description,
+    Banner,
+    List,
+    Metadata,
+    Visibility,
+}
+
+impl AsRef<str> for GroupPrivacyTargetKind {
+    fn as_ref(&self) -> &str {
+        match self {
+            Self::Name => "name",
+            Self::Icon => "icon",
+            Self::Description => "description",
+            Self::Banner => "banner",
+            Self::List => "list",
+            Self::Metadata => "metadata",
+            Self::Visibility => "visibility",
+        }
+    }
+}
+
+impl FromStr for GroupPrivacyTargetKind {
+    type Err = SmolStr;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        // todo: this doesnt parse all the possible ways
+        match s.to_lowercase().as_str() {
+            "name" => Ok(Self::Name),
+            "avatar" | "icon" => Ok(Self::Icon),
+            "description" => Ok(Self::Description),
+            "banner" => Ok(Self::Banner),
+            "list" => Ok(Self::List),
+            "metadata" => Ok(Self::Metadata),
+            "visibility" => Ok(Self::Visibility),
+            _ => Err("invalid group privacy target".into()),
         }
     }
 }

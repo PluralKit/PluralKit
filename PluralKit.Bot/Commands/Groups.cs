@@ -32,12 +32,11 @@ public class Groups
         _avatarHosting = avatarHosting;
     }
 
-    public async Task CreateGroup(Context ctx)
+    public async Task CreateGroup(Context ctx, string groupName)
     {
         ctx.CheckSystem();
 
         // Check group name length
-        var groupName = ctx.RemainderOrNull() ?? throw new PKSyntaxError("You must pass a group name.");
         if (groupName.Length > Limits.MaxGroupNameLength)
             throw new PKError($"Group name too long ({groupName.Length}/{Limits.MaxGroupNameLength} characters).");
 
@@ -99,12 +98,11 @@ public class Groups
         await ctx.Reply(replyStr, eb.Build());
     }
 
-    public async Task RenameGroup(Context ctx, PKGroup target)
+    public async Task RenameGroup(Context ctx, PKGroup target, string newName)
     {
         ctx.CheckOwnGroup(target);
 
         // Check group name length
-        var newName = ctx.RemainderOrNull() ?? throw new PKSyntaxError("You must pass a new group name.");
         if (newName.Length > Limits.MaxGroupNameLength)
             throw new PKError(
                 $"New group name too long ({newName.Length}/{Limits.MaxMemberNameLength} characters).");
@@ -124,7 +122,7 @@ public class Groups
         await ctx.Reply($"{Emojis.Success} Group name changed from **{target.Name}** to **{newName}** (using {newName.Length}/{Limits.MaxGroupNameLength} characters).");
     }
 
-    public async Task GroupDisplayName(Context ctx, PKGroup target)
+    public async Task ShowGroupDisplayName(Context ctx, PKGroup target, ReplyFormat format)
     {
         var noDisplayNameSetMessage = "This group does not have a display name set" +
             (ctx.System?.Id == target.System
@@ -133,8 +131,6 @@ public class Groups
 
         // Whether displayname is shown or not should depend on if group name privacy is set.
         // If name privacy is on then displayname should look like name.
-
-        var format = ctx.MatchFormat();
 
         // if we're doing a raw or plaintext query check for null
         if (format != ReplyFormat.Standard)
@@ -157,69 +153,62 @@ public class Groups
             return;
         }
 
-        if (!ctx.HasNext(false))
-        {
-            var showDisplayName = target.NamePrivacy.CanAccess(ctx.LookupContextFor(target.System)) && target.DisplayName != null;
+        var showDisplayName = target.NamePrivacy.CanAccess(ctx.LookupContextFor(target.System)) && target.DisplayName != null;
 
-            var eb = new EmbedBuilder()
-                .Title("Group names")
-                .Field(new Embed.Field("Name", target.NameFor(ctx)))
-                .Field(new Embed.Field("Display Name", showDisplayName ? target.DisplayName : "*(no displayname set or name is private)*"));
+        var eb2 = new EmbedBuilder()
+            .Title("Group names")
+            .Field(new Embed.Field("Name", target.NameFor(ctx)))
+            .Field(new Embed.Field("Display Name", showDisplayName ? target.DisplayName : "*(no displayname set or name is private)*"));
 
-            var reference = target.Reference(ctx);
+        var reference = target.Reference(ctx);
 
-            if (ctx.System?.Id == target.System)
-                eb.Description(
-                    $"To change display name, type `{ctx.DefaultPrefix}group {reference} displayname <display name>`.\n"
-                    + $"To clear it, type `{ctx.DefaultPrefix}group {reference} displayname -clear`.\n"
-                    + $"To print the raw display name, type `{ctx.DefaultPrefix}group {reference} displayname -raw`.");
+        if (ctx.System?.Id == target.System)
+            eb2.Description(
+                $"To change display name, type `{ctx.DefaultPrefix}group {reference} displayname <display name>`.\n"
+                + $"To clear it, type `{ctx.DefaultPrefix}group {reference} displayname -clear`.\n"
+                + $"To print the raw display name, type `{ctx.DefaultPrefix}group {reference} displayname -raw`.");
 
-            if (ctx.System?.Id == target.System && showDisplayName)
-                eb.Footer(new Embed.EmbedFooter($"Using {target.DisplayName.Length}/{Limits.MaxGroupNameLength} characters."));
+        if (ctx.System?.Id == target.System && showDisplayName)
+            eb2.Footer(new Embed.EmbedFooter($"Using {target.DisplayName.Length}/{Limits.MaxGroupNameLength} characters."));
 
-            await ctx.Reply(embed: eb.Build());
-
-            return;
-        }
-
-        ctx.CheckOwnGroup(target);
-
-        if (ctx.MatchClear() && await ctx.ConfirmClear("this group's display name"))
-        {
-            var patch = new GroupPatch { DisplayName = Partial<string>.Null() };
-            await ctx.Repository.UpdateGroup(target.Id, patch);
-
-            var replyStr = $"{Emojis.Success} Group display name cleared.";
-            if (target.NamePrivacy == PrivacyLevel.Private)
-                replyStr += $"\n{Emojis.Warn} Since this group no longer has a display name set, their name privacy **can no longer take effect**.";
-            await ctx.Reply(replyStr);
-        }
-        else
-        {
-            var newDisplayName = ctx.RemainderOrNull(false).NormalizeLineEndSpacing();
-            if (newDisplayName.Length > Limits.MaxGroupNameLength)
-                throw new PKError($"Group name too long ({newDisplayName.Length}/{Limits.MaxGroupNameLength} characters).");
-
-            var patch = new GroupPatch { DisplayName = Partial<string>.Present(newDisplayName) };
-            await ctx.Repository.UpdateGroup(target.Id, patch);
-
-            await ctx.Reply($"{Emojis.Success} Group display name changed (using {newDisplayName.Length}/{Limits.MaxGroupNameLength} characters).");
-        }
+        await ctx.Reply(embed: eb2.Build());
     }
 
-    public async Task GroupDescription(Context ctx, PKGroup target)
+    public async Task ClearGroupDisplayName(Context ctx, PKGroup target)
     {
-        ctx.CheckSystemPrivacy(target.System, target.DescriptionPrivacy);
+        ctx.CheckOwnGroup(target);
 
-        var noDescriptionSetMessage = "This group does not have a description set.";
-        if (ctx.System?.Id == target.System)
-            noDescriptionSetMessage +=
-                $" To set one, type `{ctx.DefaultPrefix}group {target.Reference(ctx)} description <description>`.";
+        var patch = new GroupPatch { DisplayName = Partial<string>.Null() };
+        await ctx.Repository.UpdateGroup(target.Id, patch);
 
-        var format = ctx.MatchFormat();
+        var replyStr = $"{Emojis.Success} Group display name cleared.";
+        if (target.NamePrivacy == PrivacyLevel.Private)
+            replyStr += $"\n{Emojis.Warn} Since this group no longer has a display name set, their name privacy **can no longer take effect**.";
+        await ctx.Reply(replyStr);
+    }
 
-        // if there's nothing next or what's next is "raw"/"plaintext" we're doing a query, so check for null
-        if (!ctx.HasNext(false) || format != ReplyFormat.Standard)
+    public async Task ChangeGroupDisplayName(Context ctx, PKGroup target, string newDisplayName)
+    {
+        ctx.CheckOwnGroup(target);
+
+        if (newDisplayName.Length > Limits.MaxGroupNameLength)
+            throw new PKError($"Group name too long ({newDisplayName.Length}/{Limits.MaxGroupNameLength} characters).");
+
+        var patch = new GroupPatch { DisplayName = Partial<string>.Present(newDisplayName) };
+        await ctx.Repository.UpdateGroup(target.Id, patch);
+
+        await ctx.Reply($"{Emojis.Success} Group display name changed (using {newDisplayName.Length}/{Limits.MaxGroupNameLength} characters).");
+    }
+
+    public async Task ShowGroupDescription(Context ctx, PKGroup target, ReplyFormat format)
+    {
+        var noDescriptionSetMessage = "This group does not have a description set" +
+            (ctx.System?.Id == target.System
+                ? $". To set one, type `{ctx.DefaultPrefix}group {target.Reference(ctx)} description <description>`."
+                : ".");
+
+        // if we're doing a raw or plaintext query check for null
+        if (format != ReplyFormat.Standard)
             if (target.Description == null)
             {
                 await ctx.Reply(noDescriptionSetMessage);
@@ -239,243 +228,282 @@ public class Groups
             return;
         }
 
-        if (!ctx.HasNext(false))
+        if (target.Description == null)
         {
-            await ctx.Reply(embed: new EmbedBuilder()
-                .Title("Group description")
-                .Description(target.Description)
-                .Field(new Embed.Field("\u200B",
-                    $"To print the description with formatting, type `{ctx.DefaultPrefix}group {target.Reference(ctx)} description -raw`."
-                    + (ctx.System?.Id == target.System
-                        ? $" To clear it, type `{ctx.DefaultPrefix}group {target.Reference(ctx)} description -clear`."
-                        : "")
-                        + $" Using {target.Description.Length}/{Limits.MaxDescriptionLength} characters."))
-                .Build());
+            await ctx.Reply(noDescriptionSetMessage);
             return;
         }
 
+        var eb2 = new EmbedBuilder()
+            .Title("Group description")
+            .Description(target.Description);
+
+        var reference = target.Reference(ctx);
+
+        if (ctx.System?.Id == target.System)
+            eb2.Field(new Embed.Field("\u200B",
+                $"To print the description with formatting, type `{ctx.DefaultPrefix}group {reference} description -raw`."
+                + $" To clear it, type `{ctx.DefaultPrefix}group {reference} description -clear`."
+                + $" Using {target.Description.Length}/{Limits.MaxDescriptionLength} characters."));
+        else
+            eb2.Field(new Embed.Field("\u200B",
+                $"To print the description with formatting, type `{ctx.DefaultPrefix}group {reference} description -raw`."
+                + $" Using {target.Description.Length}/{Limits.MaxDescriptionLength} characters."));
+
+        await ctx.Reply(embed: eb2.Build());
+    }
+
+    public async Task ClearGroupDescription(Context ctx, PKGroup target)
+    {
         ctx.CheckOwnGroup(target);
 
-        if (ctx.MatchClear() && await ctx.ConfirmClear("this group's description"))
-        {
-            var patch = new GroupPatch { Description = Partial<string>.Null() };
-            await ctx.Repository.UpdateGroup(target.Id, patch);
-            await ctx.Reply($"{Emojis.Success} Group description cleared.");
-        }
-        else
-        {
-            var description = ctx.RemainderOrNull(false).NormalizeLineEndSpacing();
-            if (description.IsLongerThan(Limits.MaxDescriptionLength))
-                throw Errors.StringTooLongError("Description", description.Length, Limits.MaxDescriptionLength);
+        var patch = new GroupPatch { Description = Partial<string>.Null() };
+        await ctx.Repository.UpdateGroup(target.Id, patch);
 
-            var patch = new GroupPatch { Description = Partial<string>.Present(description) };
-            await ctx.Repository.UpdateGroup(target.Id, patch);
-
-            await ctx.Reply($"{Emojis.Success} Group description changed (using {description.Length}/{Limits.MaxDescriptionLength} characters).");
-        }
+        await ctx.Reply($"{Emojis.Success} Group description cleared.");
     }
 
-    public async Task GroupIcon(Context ctx, PKGroup target)
+    public async Task ChangeGroupDescription(Context ctx, PKGroup target, string newDescription)
     {
-        async Task ClearIcon()
-        {
-            await ctx.ConfirmClear("this group's icon");
-            ctx.CheckOwnGroup(target);
+        ctx.CheckOwnGroup(target);
 
-            await ctx.Repository.UpdateGroup(target.Id, new GroupPatch { Icon = null });
-            await ctx.Reply($"{Emojis.Success} Group icon cleared.");
-        }
+        if (newDescription.IsLongerThan(Limits.MaxDescriptionLength))
+            throw Errors.StringTooLongError("Description", newDescription.Length, Limits.MaxDescriptionLength);
 
-        async Task SetIcon(ParsedImage img)
-        {
-            ctx.CheckOwnGroup(target);
+        var patch = new GroupPatch { Description = Partial<string>.Present(newDescription) };
+        await ctx.Repository.UpdateGroup(target.Id, patch);
 
-            img = await _avatarHosting.TryRehostImage(img, AvatarHostingService.RehostedImageType.Avatar, ctx.Author.Id, ctx.System);
-            await _avatarHosting.VerifyAvatarOrThrow(img.Url);
+        await ctx.Reply($"{Emojis.Success} Group description changed (using {newDescription.Length}/{Limits.MaxDescriptionLength} characters).");
+    }
 
-            await ctx.Repository.UpdateGroup(target.Id, new GroupPatch { Icon = img.CleanUrl ?? img.Url });
+    public async Task ShowGroupIcon(Context ctx, PKGroup target, ReplyFormat format)
+    {
+        var noIconSetMessage = "This group does not have an avatar set" +
+            (ctx.System?.Id == target.System
+                ? ". Set one by attaching an image to this command, or by passing an image URL or @mention."
+                : ".");
 
-            var msg = img.Source switch
+        ctx.CheckSystemPrivacy(target.System, target.IconPrivacy);
+
+        // if we're doing a raw or plaintext query check for null
+        if (format != ReplyFormat.Standard)
+            if ((target.Icon?.Trim() ?? "").Length == 0)
             {
-                AvatarSource.User =>
-                    $"{Emojis.Success} Group icon changed to {img.SourceUser?.Username}'s avatar!\n{Emojis.Warn} If {img.SourceUser?.Username} changes their avatar, the group icon will need to be re-set.",
-                AvatarSource.Url => $"{Emojis.Success} Group icon changed to the image at the given URL.",
-                AvatarSource.HostedCdn => $"{Emojis.Success} Group icon changed to attached image.",
-                AvatarSource.Attachment =>
-                    $"{Emojis.Success} Group icon changed to attached image.\n{Emojis.Warn} If you delete the message containing the attachment, the group icon will stop working.",
-                _ => throw new ArgumentOutOfRangeException()
-            };
+                await ctx.Reply(noIconSetMessage);
+                return;
+            }
 
-            // The attachment's already right there, no need to preview it.
-            var hasEmbed = img.Source != AvatarSource.Attachment && img.Source != AvatarSource.HostedCdn;
-            await (hasEmbed
-                ? ctx.Reply(msg, new EmbedBuilder().Image(new Embed.EmbedImage(img.Url)).Build())
-                : ctx.Reply(msg));
-        }
-
-        async Task ShowIcon()
+        if (format == ReplyFormat.Raw)
         {
-            ctx.CheckSystemPrivacy(target.System, target.IconPrivacy);
-
-            if ((target.Icon?.Trim() ?? "").Length > 0)
-                switch (ctx.MatchFormat())
-                {
-                    case ReplyFormat.Raw:
-                        await ctx.Reply($"`{target.Icon.TryGetCleanCdnUrl()}`");
-                        break;
-                    case ReplyFormat.Plaintext:
-                        var ebP = new EmbedBuilder()
-                            .Description($"Showing avatar for group {target.NameFor(ctx)} (`{target.DisplayHid(ctx.Config)}`)");
-                        await ctx.Reply(text: $"<{target.Icon.TryGetCleanCdnUrl()}>", embed: ebP.Build());
-                        break;
-                    default:
-                        var ebS = new EmbedBuilder()
-                            .Title("Group icon")
-                            .Image(new Embed.EmbedImage(target.Icon.TryGetCleanCdnUrl()));
-                        if (target.System == ctx.System?.Id)
-                            ebS.Description($"To clear, use `{ctx.DefaultPrefix}group {target.Reference(ctx)} icon -clear`.");
-                        await ctx.Reply(embed: ebS.Build());
-                        break;
-                }
-            else
-                throw new PKSyntaxError(
-                    "This group does not have an avatar set. Set one by attaching an image to this command, or by passing an image URL or @mention.");
+            await ctx.Reply($"`{target.Icon.TryGetCleanCdnUrl()}`");
+            return;
         }
-
-        if (ctx.MatchClear())
-            await ClearIcon();
-        else if (await ctx.MatchImage() is { } img)
-            await SetIcon(img);
-        else
-            await ShowIcon();
-    }
-
-    public async Task GroupBannerImage(Context ctx, PKGroup target)
-    {
-        async Task ClearBannerImage()
+        if (format == ReplyFormat.Plaintext)
         {
-            ctx.CheckOwnGroup(target);
-            await ctx.ConfirmClear("this group's banner image");
-
-            await ctx.Repository.UpdateGroup(target.Id, new GroupPatch { BannerImage = null });
-            await ctx.Reply($"{Emojis.Success} Group banner image cleared.");
-        }
-
-        async Task SetBannerImage(ParsedImage img)
-        {
-            ctx.CheckOwnGroup(target);
-
-            img = await _avatarHosting.TryRehostImage(img, AvatarHostingService.RehostedImageType.Banner, ctx.Author.Id, ctx.System);
-            await _avatarHosting.VerifyAvatarOrThrow(img.Url, true);
-
-            await ctx.Repository.UpdateGroup(target.Id, new GroupPatch { BannerImage = img.CleanUrl ?? img.Url });
-
-            var msg = img.Source switch
-            {
-                AvatarSource.Url => $"{Emojis.Success} Group banner image changed to the image at the given URL.",
-                AvatarSource.HostedCdn => $"{Emojis.Success} Group banner image changed to attached image.",
-                AvatarSource.Attachment =>
-                    $"{Emojis.Success} Group banner image changed to attached image.\n{Emojis.Warn} If you delete the message containing the attachment, the banner image will stop working.",
-                AvatarSource.User => throw new PKError("Cannot set a banner image to an user's avatar."),
-                _ => throw new ArgumentOutOfRangeException()
-            };
-
-            // The attachment's already right there, no need to preview it.
-            var hasEmbed = img.Source != AvatarSource.Attachment && img.Source != AvatarSource.HostedCdn;
-            await (hasEmbed
-                ? ctx.Reply(msg, new EmbedBuilder().Image(new Embed.EmbedImage(img.Url)).Build())
-                : ctx.Reply(msg));
-        }
-
-        async Task ShowBannerImage()
-        {
-            ctx.CheckSystemPrivacy(target.System, target.BannerPrivacy);
-
-            if ((target.BannerImage?.Trim() ?? "").Length > 0)
-                switch (ctx.MatchFormat())
-                {
-                    case ReplyFormat.Raw:
-                        await ctx.Reply($"`{target.BannerImage.TryGetCleanCdnUrl()}`");
-                        break;
-                    case ReplyFormat.Plaintext:
-                        var ebP = new EmbedBuilder()
-                            .Description($"Showing banner for group {target.NameFor(ctx)} (`{target.DisplayHid(ctx.Config)}`)");
-                        await ctx.Reply(text: $"<{target.BannerImage.TryGetCleanCdnUrl()}>", embed: ebP.Build());
-                        break;
-                    default:
-                        var ebS = new EmbedBuilder()
-                            .Title("Group banner image")
-                            .Image(new Embed.EmbedImage(target.BannerImage.TryGetCleanCdnUrl()));
-                        if (target.System == ctx.System?.Id)
-                            ebS.Description($"To clear, use `{ctx.DefaultPrefix}group {target.Reference(ctx)} banner clear`.");
-                        await ctx.Reply(embed: ebS.Build());
-                        break;
-                }
-            else
-                throw new PKSyntaxError(
-                    "This group does not have a banner image set. Set one by attaching an image to this command, or by passing an image URL or @mention.");
-        }
-
-        if (ctx.MatchClear())
-            await ClearBannerImage();
-        else if (await ctx.MatchImage() is { } img)
-            await SetBannerImage(img);
-        else
-            await ShowBannerImage();
-    }
-
-    public async Task GroupColor(Context ctx, PKGroup target)
-    {
-        var isOwnSystem = ctx.System?.Id == target.System;
-        var matchedFormat = ctx.MatchFormat();
-        var matchedClear = ctx.MatchClear();
-
-        if (!isOwnSystem || !(ctx.HasNext() || matchedClear))
-        {
-            if (target.Color == null)
-                await ctx.Reply(
-                    "This group does not have a color set." + (isOwnSystem ? $" To set one, type `{ctx.DefaultPrefix}group {target.Reference(ctx)} color <color>`." : ""));
-            else if (matchedFormat == ReplyFormat.Raw)
-                await ctx.Reply("```\n#" + target.Color + "\n```");
-            else if (matchedFormat == ReplyFormat.Plaintext)
-                await ctx.Reply(target.Color);
-            else
-                await ctx.Reply(embed: new EmbedBuilder()
-                    .Title("Group color")
-                    .Color(target.Color.ToDiscordColor())
-                    .Thumbnail(new Embed.EmbedThumbnail($"attachment://color.gif"))
-                    .Description($"This group's color is **#{target.Color}**."
-                        + (isOwnSystem ? $" To clear it, type `{ctx.DefaultPrefix}group {target.Reference(ctx)} color -clear`." : ""))
-                    .Build(),
-                    files: [MiscUtils.GenerateColorPreview(target.Color)]);
+            var ebP = new EmbedBuilder()
+                .Description($"Showing avatar for group {target.NameFor(ctx)} (`{target.DisplayHid(ctx.Config)}`)");
+            await ctx.Reply(text: $"<{target.Icon.TryGetCleanCdnUrl()}>", embed: ebP.Build());
             return;
         }
 
-        ctx.CheckSystem().CheckOwnGroup(target);
-
-        if (matchedClear)
+        if ((target.Icon?.Trim() ?? "").Length == 0)
         {
-            await ctx.Repository.UpdateGroup(target.Id, new() { Color = Partial<string>.Null() });
-
-            await ctx.Reply($"{Emojis.Success} Group color cleared.");
+            await ctx.Reply(noIconSetMessage);
+            return;
         }
-        else
+
+        var ebS = new EmbedBuilder()
+            .Title("Group icon")
+            .Image(new Embed.EmbedImage(target.Icon.TryGetCleanCdnUrl()));
+        if (target.System == ctx.System?.Id)
+            ebS.Description($"To clear, use `{ctx.DefaultPrefix}group {target.Reference(ctx)} icon -clear`.");
+        await ctx.Reply(embed: ebS.Build());
+    }
+
+    public async Task ClearGroupIcon(Context ctx, PKGroup target)
+    {
+        ctx.CheckOwnGroup(target);
+        await ctx.ConfirmClear("this group's icon");
+
+        await ctx.Repository.UpdateGroup(target.Id, new GroupPatch { Icon = null });
+        await ctx.Reply($"{Emojis.Success} Group icon cleared.");
+    }
+
+    public async Task ChangeGroupIcon(Context ctx, PKGroup target, ParsedImage img)
+    {
+        ctx.CheckOwnGroup(target);
+
+        img = await _avatarHosting.TryRehostImage(img, AvatarHostingService.RehostedImageType.Avatar, ctx.Author.Id, ctx.System);
+        await _avatarHosting.VerifyAvatarOrThrow(img.Url);
+
+        await ctx.Repository.UpdateGroup(target.Id, new GroupPatch { Icon = img.CleanUrl ?? img.Url });
+
+        var msg = img.Source switch
         {
-            var color = ctx.RemainderOrNull();
+            AvatarSource.User =>
+                $"{Emojis.Success} Group icon changed to {img.SourceUser?.Username}'s avatar!\n{Emojis.Warn} If {img.SourceUser?.Username} changes their avatar, the group icon will need to be re-set.",
+            AvatarSource.Url => $"{Emojis.Success} Group icon changed to the image at the given URL.",
+            AvatarSource.HostedCdn => $"{Emojis.Success} Group icon changed to attached image.",
+            AvatarSource.Attachment =>
+                $"{Emojis.Success} Group icon changed to attached image.\n{Emojis.Warn} If you delete the message containing the attachment, the group icon will stop working.",
+            _ => throw new ArgumentOutOfRangeException()
+        };
 
-            if (color.StartsWith("#")) color = color.Substring(1);
-            if (!Regex.IsMatch(color, "^[0-9a-fA-F]{6}$")) throw Errors.InvalidColorError(color);
+        // The attachment's already right there, no need to preview it.
+        var hasEmbed = img.Source != AvatarSource.Attachment && img.Source != AvatarSource.HostedCdn;
+        await (hasEmbed
+            ? ctx.Reply(msg, new EmbedBuilder().Image(new Embed.EmbedImage(img.Url)).Build())
+            : ctx.Reply(msg));
+    }
 
-            var patch = new GroupPatch { Color = Partial<string>.Present(color.ToLowerInvariant()) };
-            await ctx.Repository.UpdateGroup(target.Id, patch);
+    public async Task ShowGroupBanner(Context ctx, PKGroup target, ReplyFormat format)
+    {
+        var noBannerSetMessage = "This group does not have a banner image set" +
+            (ctx.System?.Id == target.System
+                ? ". Set one by attaching an image to this command, or by passing an image URL or @mention."
+                : ".");
 
-            await ctx.Reply(embed: new EmbedBuilder()
-                .Title($"{Emojis.Success} Group color changed.")
-                .Color(color.ToDiscordColor())
-                .Thumbnail(new Embed.EmbedThumbnail($"attachment://color.gif"))
-                .Build(),
-                files: [MiscUtils.GenerateColorPreview(color)]);
+        ctx.CheckSystemPrivacy(target.System, target.BannerPrivacy);
+
+        // if we're doing a raw or plaintext query check for null
+        if (format != ReplyFormat.Standard)
+            if ((target.BannerImage?.Trim() ?? "").Length == 0)
+            {
+                await ctx.Reply(noBannerSetMessage);
+                return;
+            }
+
+        if (format == ReplyFormat.Raw)
+        {
+            await ctx.Reply($"`{target.BannerImage.TryGetCleanCdnUrl()}`");
+            return;
         }
+        if (format == ReplyFormat.Plaintext)
+        {
+            var ebP = new EmbedBuilder()
+                .Description($"Showing banner for group {target.NameFor(ctx)} (`{target.DisplayHid(ctx.Config)}`)");
+            await ctx.Reply(text: $"<{target.BannerImage.TryGetCleanCdnUrl()}>", embed: ebP.Build());
+            return;
+        }
+
+        if ((target.BannerImage?.Trim() ?? "").Length == 0)
+        {
+            await ctx.Reply(noBannerSetMessage);
+            return;
+        }
+
+        var ebS = new EmbedBuilder()
+            .Title("Group banner image")
+            .Image(new Embed.EmbedImage(target.BannerImage.TryGetCleanCdnUrl()));
+        if (target.System == ctx.System?.Id)
+            ebS.Description($"To clear, use `{ctx.DefaultPrefix}group {target.Reference(ctx)} banner clear`.");
+        await ctx.Reply(embed: ebS.Build());
+    }
+
+    public async Task ClearGroupBanner(Context ctx, PKGroup target)
+    {
+        ctx.CheckOwnGroup(target);
+        await ctx.ConfirmClear("this group's banner image");
+
+        await ctx.Repository.UpdateGroup(target.Id, new GroupPatch { BannerImage = null });
+        await ctx.Reply($"{Emojis.Success} Group banner image cleared.");
+    }
+
+    public async Task ChangeGroupBanner(Context ctx, PKGroup target, ParsedImage img)
+    {
+        ctx.CheckOwnGroup(target);
+
+        img = await _avatarHosting.TryRehostImage(img, AvatarHostingService.RehostedImageType.Banner, ctx.Author.Id, ctx.System);
+        await _avatarHosting.VerifyAvatarOrThrow(img.Url, true);
+
+        await ctx.Repository.UpdateGroup(target.Id, new GroupPatch { BannerImage = img.CleanUrl ?? img.Url });
+
+        var msg = img.Source switch
+        {
+            AvatarSource.Url => $"{Emojis.Success} Group banner image changed to the image at the given URL.",
+            AvatarSource.HostedCdn => $"{Emojis.Success} Group banner image changed to attached image.",
+            AvatarSource.Attachment =>
+                $"{Emojis.Success} Group banner image changed to attached image.\n{Emojis.Warn} If you delete the message containing the attachment, the banner image will stop working.",
+            AvatarSource.User => throw new PKError("Cannot set a banner image to an user's avatar."),
+            _ => throw new ArgumentOutOfRangeException()
+        };
+
+        // The attachment's already right there, no need to preview it.
+        var hasEmbed = img.Source != AvatarSource.Attachment && img.Source != AvatarSource.HostedCdn;
+        await (hasEmbed
+            ? ctx.Reply(msg, new EmbedBuilder().Image(new Embed.EmbedImage(img.Url)).Build())
+            : ctx.Reply(msg));
+    }
+
+    public async Task ShowGroupColor(Context ctx, PKGroup target, ReplyFormat format)
+    {
+        var noColorSetMessage = "This group does not have a color set" +
+            (ctx.System?.Id == target.System
+                ? $". To set one, type `{ctx.DefaultPrefix}group {target.Reference(ctx)} color <color>`."
+                : ".");
+
+        // if we're doing a raw or plaintext query check for null
+        if (format != ReplyFormat.Standard)
+            if (target.Color == null)
+            {
+                await ctx.Reply(noColorSetMessage);
+                return;
+            }
+
+        if (format == ReplyFormat.Raw)
+        {
+            await ctx.Reply("```\n#" + target.Color + "\n```");
+            return;
+        }
+        if (format == ReplyFormat.Plaintext)
+        {
+            await ctx.Reply(target.Color);
+            return;
+        }
+
+        if (target.Color == null)
+        {
+            await ctx.Reply(noColorSetMessage);
+            return;
+        }
+
+        var eb = new EmbedBuilder()
+            .Title("Group color")
+            .Color(target.Color.ToDiscordColor())
+            .Thumbnail(new Embed.EmbedThumbnail($"attachment://color.gif"))
+            .Description($"This group's color is **#{target.Color}**.");
+
+        if (ctx.System?.Id == target.System)
+            eb.Description(eb.Build().Description + $" To clear it, type `{ctx.DefaultPrefix}group {target.Reference(ctx)} color -clear`.");
+
+        await ctx.Reply(embed: eb.Build(), files: [MiscUtils.GenerateColorPreview(target.Color)]);
+    }
+
+    public async Task ClearGroupColor(Context ctx, PKGroup target)
+    {
+        ctx.CheckOwnGroup(target);
+
+        await ctx.Repository.UpdateGroup(target.Id, new GroupPatch { Color = Partial<string>.Null() });
+
+        await ctx.Reply($"{Emojis.Success} Group color cleared.");
+    }
+
+    public async Task ChangeGroupColor(Context ctx, PKGroup target, string color)
+    {
+        ctx.CheckOwnGroup(target);
+
+        if (color.StartsWith("#")) color = color.Substring(1);
+        if (!Regex.IsMatch(color, "^[0-9a-fA-F]{6}$")) throw Errors.InvalidColorError(color);
+
+        var patch = new GroupPatch { Color = Partial<string>.Present(color.ToLowerInvariant()) };
+        await ctx.Repository.UpdateGroup(target.Id, patch);
+
+        await ctx.Reply(embed: new EmbedBuilder()
+            .Title($"{Emojis.Success} Group color changed.")
+            .Color(color.ToDiscordColor())
+            .Thumbnail(new Embed.EmbedThumbnail($"attachment://color.gif"))
+            .Build(),
+            files: [MiscUtils.GenerateColorPreview(color)]);
     }
 
     public async Task ListSystemGroups(Context ctx, PKSystem system, string? query, IHasListOptions flags)
@@ -531,102 +559,97 @@ public class Groups
         await ctx.Reply(components: await _embeds.CreateGroupMessageComponents(ctx, system, target));
     }
 
-    public async Task GroupPrivacy(Context ctx, PKGroup target, PrivacyLevel? newValueFromCommand)
+    public async Task ShowGroupPrivacy(Context ctx, PKGroup target)
     {
         ctx.CheckSystem().CheckOwnGroup(target);
-        // Display privacy settings
-        if (!ctx.HasNext() && newValueFromCommand == null)
-        {
-            await ctx.Reply(embed: new EmbedBuilder()
-                .Title($"Current privacy settings for {target.Name}")
-                .Field(new Embed.Field("Name", target.NamePrivacy.Explanation()))
-                .Field(new Embed.Field("Description", target.DescriptionPrivacy.Explanation()))
-                .Field(new Embed.Field("Banner", target.BannerPrivacy.Explanation()))
-                .Field(new Embed.Field("Icon", target.IconPrivacy.Explanation()))
-                .Field(new Embed.Field("Member list", target.ListPrivacy.Explanation()))
-                .Field(new Embed.Field("Metadata (creation date)", target.MetadataPrivacy.Explanation()))
-                .Field(new Embed.Field("Visibility", target.Visibility.Explanation()))
-                .Description(
-                    $"To edit privacy settings, use the command:\n> {ctx.DefaultPrefix}group **{target.Reference(ctx)}** privacy **<subject>** **<level>**\n\n- `subject` is one of `name`, `description`, `banner`, `icon`, `members`, `metadata`, `visibility`, or `all`\n- `level` is either `public` or `private`.")
-                .Build());
-            return;
-        }
 
-        async Task SetAll(PrivacyLevel level)
-        {
-            await ctx.Repository.UpdateGroup(target.Id, new GroupPatch().WithAllPrivacy(level));
+        await ctx.Reply(embed: new EmbedBuilder()
+            .Title($"Current privacy settings for {target.Name}")
+            .Field(new Embed.Field("Name", target.NamePrivacy.Explanation()))
+            .Field(new Embed.Field("Description", target.DescriptionPrivacy.Explanation()))
+            .Field(new Embed.Field("Banner", target.BannerPrivacy.Explanation()))
+            .Field(new Embed.Field("Icon", target.IconPrivacy.Explanation()))
+            .Field(new Embed.Field("Member list", target.ListPrivacy.Explanation()))
+            .Field(new Embed.Field("Metadata (creation date)", target.MetadataPrivacy.Explanation()))
+            .Field(new Embed.Field("Visibility", target.Visibility.Explanation()))
+            .Description(
+                $"To edit privacy settings, use the command:\n> {ctx.DefaultPrefix}group **{target.Reference(ctx)}** privacy **<subject>** **<level>**\n\n- `subject` is one of `name`, `description`, `banner`, `icon`, `members`, `metadata`, `visibility`, or `all`\n- `level` is either `public` or `private`.")
+            .Build());
+    }
 
-            if (level == PrivacyLevel.Private)
-                await ctx.Reply(
-                    $"{Emojis.Success} All {target.Name}'s privacy settings have been set to **{level.LevelName()}**. Other accounts will now see nothing on the group card.");
-            else
-                await ctx.Reply(
-                    $"{Emojis.Success} All {target.Name}'s privacy settings have been set to **{level.LevelName()}**. Other accounts will now see everything on the group card.");
-        }
+    public async Task SetAllGroupPrivacy(Context ctx, PKGroup target, PrivacyLevel level)
+    {
+        ctx.CheckOwnGroup(target);
 
-        async Task SetLevel(GroupPrivacySubject subject, PrivacyLevel level)
-        {
-            await ctx.Repository.UpdateGroup(target.Id, new GroupPatch().WithPrivacy(subject, level));
+        await ctx.Repository.UpdateGroup(target.Id, new GroupPatch().WithAllPrivacy(level));
 
-            var subjectName = subject switch
-            {
-                GroupPrivacySubject.Name => "name privacy",
-                GroupPrivacySubject.Description => "description privacy",
-                GroupPrivacySubject.Banner => "banner privacy",
-                GroupPrivacySubject.Icon => "icon privacy",
-                GroupPrivacySubject.List => "member list",
-                GroupPrivacySubject.Metadata => "metadata",
-                GroupPrivacySubject.Visibility => "visibility",
-                _ => throw new ArgumentOutOfRangeException($"Unknown privacy subject {subject}")
-            };
-
-            var explanation = (subject, level) switch
-            {
-                (GroupPrivacySubject.Name, PrivacyLevel.Private) =>
-                    "This group's name is now hidden from other systems, and will be replaced by the group's display name.",
-                (GroupPrivacySubject.Description, PrivacyLevel.Private) =>
-                    "This group's description is now hidden from other systems.",
-                (GroupPrivacySubject.Banner, PrivacyLevel.Private) =>
-                    "This group's banner is now hidden from other systems.",
-                (GroupPrivacySubject.Icon, PrivacyLevel.Private) =>
-                    "This group's icon is now hidden from other systems.",
-                (GroupPrivacySubject.Visibility, PrivacyLevel.Private) =>
-                    "This group is now hidden from group lists and member cards.",
-                (GroupPrivacySubject.Metadata, PrivacyLevel.Private) =>
-                    "This group's metadata (eg. creation date) is now hidden from other systems.",
-                (GroupPrivacySubject.List, PrivacyLevel.Private) =>
-                    "This group's member list is now hidden from other systems.",
-
-                (GroupPrivacySubject.Name, PrivacyLevel.Public) =>
-                    "This group's name is no longer hidden from other systems.",
-                (GroupPrivacySubject.Description, PrivacyLevel.Public) =>
-                    "This group's description is no longer hidden from other systems.",
-                (GroupPrivacySubject.Banner, PrivacyLevel.Public) =>
-                    "This group's banner is no longer hidden from other systems.",
-                (GroupPrivacySubject.Icon, PrivacyLevel.Public) =>
-                    "This group's icon is no longer hidden from other systems.",
-                (GroupPrivacySubject.Visibility, PrivacyLevel.Public) =>
-                    "This group is no longer hidden from group lists and member cards.",
-                (GroupPrivacySubject.Metadata, PrivacyLevel.Public) =>
-                    "This group's metadata (eg. creation date) is no longer hidden from other systems.",
-                (GroupPrivacySubject.List, PrivacyLevel.Public) =>
-                    "This group's member list is no longer hidden from other systems.",
-
-                _ => throw new InvalidOperationException($"Invalid subject/level tuple ({subject}, {level})")
-            };
-
-            var replyStr = $"{Emojis.Success} {target.Name}'s **{subjectName}** has been set to **{level.LevelName()}**. {explanation}";
-
-            if (subject == GroupPrivacySubject.Name && level == PrivacyLevel.Private && target.DisplayName == null)
-                replyStr += $"\n{Emojis.Warn} This group does not have a display name set, and name privacy **will not take effect**.";
-
-            await ctx.Reply(replyStr);
-        }
-
-        if (ctx.Match("all") || newValueFromCommand != null)
-            await SetAll(newValueFromCommand ?? ctx.PopPrivacyLevel());
+        if (level == PrivacyLevel.Private)
+            await ctx.Reply(
+                $"{Emojis.Success} All {target.Name}'s privacy settings have been set to **{level.LevelName()}**. Other accounts will now see nothing on the group card.");
         else
-            await SetLevel(ctx.PopGroupPrivacySubject(), ctx.PopPrivacyLevel());
+            await ctx.Reply(
+                $"{Emojis.Success} All {target.Name}'s privacy settings have been set to **{level.LevelName()}**. Other accounts will now see everything on the group card.");
+    }
+
+    public async Task SetGroupPrivacy(Context ctx, PKGroup target, GroupPrivacySubject subject, PrivacyLevel level)
+    {
+        ctx.CheckOwnGroup(target);
+
+        await ctx.Repository.UpdateGroup(target.Id, new GroupPatch().WithPrivacy(subject, level));
+
+        var subjectName = subject switch
+        {
+            GroupPrivacySubject.Name => "name privacy",
+            GroupPrivacySubject.Description => "description privacy",
+            GroupPrivacySubject.Banner => "banner privacy",
+            GroupPrivacySubject.Icon => "icon privacy",
+            GroupPrivacySubject.List => "member list",
+            GroupPrivacySubject.Metadata => "metadata",
+            GroupPrivacySubject.Visibility => "visibility",
+            _ => throw new ArgumentOutOfRangeException($"Unknown privacy subject {subject}")
+        };
+
+        var explanation = (subject, level) switch
+        {
+            (GroupPrivacySubject.Name, PrivacyLevel.Private) =>
+                "This group's name is now hidden from other systems, and will be replaced by the group's display name.",
+            (GroupPrivacySubject.Description, PrivacyLevel.Private) =>
+                "This group's description is now hidden from other systems.",
+            (GroupPrivacySubject.Banner, PrivacyLevel.Private) =>
+                "This group's banner is now hidden from other systems.",
+            (GroupPrivacySubject.Icon, PrivacyLevel.Private) =>
+                "This group's icon is now hidden from other systems.",
+            (GroupPrivacySubject.Visibility, PrivacyLevel.Private) =>
+                "This group is now hidden from group lists and member cards.",
+            (GroupPrivacySubject.Metadata, PrivacyLevel.Private) =>
+                "This group's metadata (eg. creation date) is now hidden from other systems.",
+            (GroupPrivacySubject.List, PrivacyLevel.Private) =>
+                "This group's member list is now hidden from other systems.",
+
+            (GroupPrivacySubject.Name, PrivacyLevel.Public) =>
+                "This group's name is no longer hidden from other systems.",
+            (GroupPrivacySubject.Description, PrivacyLevel.Public) =>
+                "This group's description is no longer hidden from other systems.",
+            (GroupPrivacySubject.Banner, PrivacyLevel.Public) =>
+                "This group's banner is no longer hidden from other systems.",
+            (GroupPrivacySubject.Icon, PrivacyLevel.Public) =>
+                "This group's icon is no longer hidden from other systems.",
+            (GroupPrivacySubject.Visibility, PrivacyLevel.Public) =>
+                "This group is no longer hidden from group lists and member cards.",
+            (GroupPrivacySubject.Metadata, PrivacyLevel.Public) =>
+                "This group's metadata (eg. creation date) is no longer hidden from other systems.",
+            (GroupPrivacySubject.List, PrivacyLevel.Public) =>
+                "This group's member list is no longer hidden from other systems.",
+
+            _ => throw new InvalidOperationException($"Invalid subject/level tuple ({subject}, {level})")
+        };
+
+        var replyStr = $"{Emojis.Success} {target.Name}'s **{subjectName}** has been set to **{level.LevelName()}**. {explanation}";
+
+        if (subject == GroupPrivacySubject.Name && level == PrivacyLevel.Private && target.DisplayName == null)
+            replyStr += $"\n{Emojis.Warn} This group does not have a display name set, and name privacy **will not take effect**.";
+
+        await ctx.Reply(replyStr);
     }
 
     public async Task DeleteGroup(Context ctx, PKGroup target)

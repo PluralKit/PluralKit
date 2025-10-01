@@ -11,9 +11,11 @@ interface Parameter {
 	MemberRef(string member);
 	MemberRefs(sequence<string> members);
 	GroupRef(string group);
+	GroupRefs(sequence<string> groups);
 	SystemRef(string system);
 	GuildRef(string guild);
 	MemberPrivacyTarget(string target);
+	GroupPrivacyTarget(string target);
 	SystemPrivacyTarget(string target);
 	PrivacyLevel(string level);
 	OpaqueString(string raw);

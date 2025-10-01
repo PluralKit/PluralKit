@@ -301,7 +301,17 @@ pub fn cmds() -> impl Iterator<Item = Command> {
     ]
     .into_iter()
     .map(|cmd| cmd.flags(get_list_flags()));
-    let member_group_cmds = member_list_group_cmds;
+
+    let member_add_remove_group_cmds = [
+        command!(member_group, "add", ("groups", GroupRefs) => "member_group_add")
+            .help("Adds a member to one or more groups"),
+        command!(member_group, ("remove", ["rem"]), ("groups", GroupRefs) => "member_group_remove")
+            .help("Removes a member from one or more groups"),
+    ]
+    .into_iter();
+
+    let member_display_id_cmd =
+        [command!(member_target, "id" => "member_id").help("Displays a member's ID")].into_iter();
 
     let member_delete_cmd =
         [command!(member_target, delete => "member_delete").help("Deletes a member")].into_iter();
@@ -325,7 +335,9 @@ pub fn cmds() -> impl Iterator<Item = Command> {
         .chain(member_avatar_cmds)
         .chain(member_proxy_settings_cmd)
         .chain(member_message_settings_cmd)
+        .chain(member_display_id_cmd)
         .chain(member_delete_cmd)
         .chain(member_easter_eggs)
-        .chain(member_group_cmds)
+        .chain(member_list_group_cmds)
+        .chain(member_add_remove_group_cmds)
 }
