@@ -3,6 +3,7 @@ use super::*;
 pub fn cmds() -> impl Iterator<Item = Command> {
     let help = ("help", ["h"]);
     [
+        command!(("dashboard", ["dash"]) => "dashboard"),
         command!("explain" => "explain"),
         command!(help => "help")
             .flag(("foo", OpaqueString)) // todo: just for testing

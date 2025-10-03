@@ -220,7 +220,7 @@ pub fn edit() -> impl Iterator<Item = Command> {
     let system_proxy_cmd = [
         command!(system_proxy => "system_show_proxy_current")
             .help("Shows your system's proxy setting for the guild you are in"),
-        command!(system_proxy, Toggle => "system_toggle_proxy_current")
+        command!(system_proxy, Skip(Toggle) => "system_toggle_proxy_current")
             .help("Toggle your system's proxy for the guild you are in"),
         command!(system_proxy, GuildRef => "system_show_proxy")
             .help("Shows your system's proxy setting for a guild"),

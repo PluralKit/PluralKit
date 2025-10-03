@@ -126,6 +126,8 @@ public class Parameters
                 return new Parameter.ChannelRef(await ctx.Rest.GetChannelOrNull(channelId) ?? throw new PKError($"Channel {channelId} not found"));
             case uniffi.commands.Parameter.GuildRef(var guildId):
                 return new Parameter.GuildRef(await ctx.Rest.GetGuildOrNull(guildId) ?? throw new PKError($"Guild {guildId} not found"));
+            case uniffi.commands.Parameter.Null:
+                return null;
         }
         return null;
     }

@@ -24,12 +24,23 @@ pub enum ParameterValue {
     PrivacyLevel(String),
     Toggle(bool),
     Avatar(String),
+    Null,
+}
+
+fn is_remainder(kind: ParameterKind) -> bool {
+    matches!(
+        kind,
+        ParameterKind::OpaqueStringRemainder | ParameterKind::MemberRefs | ParameterKind::GroupRefs
+    )
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Parameter {
     name: SmolStr,
     kind: ParameterKind,
+    remainder: bool,
+    optional: bool,
+    skip: bool,
 }
 
 impl Parameter {
@@ -40,106 +51,36 @@ impl Parameter {
     pub fn kind(&self) -> ParameterKind {
         self.kind
     }
-}
 
-impl Display for Parameter {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    pub fn remainder(mut self) -> Self {
+        self.remainder = true;
+        self
+    }
+
+    pub fn optional(mut self) -> Self {
+        self.optional = true;
+        self
+    }
+
+    pub fn skip(mut self) -> Self {
+        self.skip = true;
+        self
+    }
+
+    pub fn is_remainder(&self) -> bool {
+        self.remainder
+    }
+
+    pub fn is_optional(&self) -> bool {
+        self.optional
+    }
+
+    pub fn is_skip(&self) -> bool {
+        self.skip
+    }
+
+    pub fn match_value(&self, input: &str) -> Result<ParameterValue, SmolStr> {
         match self.kind {
-            ParameterKind::OpaqueString => {
-                write!(f, "[{}]", self.name)
-            }
-            ParameterKind::OpaqueStringRemainder => {
-                write!(f, "[{}]...", self.name)
-            }
-            ParameterKind::MemberRef => write!(f, "<target member>"),
-            ParameterKind::MemberRefs => write!(f, "<member 1> <member 2> <member 3>..."),
-            ParameterKind::GroupRef => write!(f, "<target group>"),
-            ParameterKind::GroupRefs => write!(f, "<group 1> <group 2> <group 3>..."),
-            ParameterKind::SystemRef => write!(f, "<target system>"),
-            ParameterKind::MessageRef => write!(f, "<target message>"),
-            ParameterKind::ChannelRef => write!(f, "<target channel>"),
-            ParameterKind::GuildRef => write!(f, "<target guild>"),
-            ParameterKind::MemberPrivacyTarget => write!(f, "<privacy target>"),
-            ParameterKind::GroupPrivacyTarget => write!(f, "<privacy target>"),
-            ParameterKind::SystemPrivacyTarget => write!(f, "<privacy target>"),
-            ParameterKind::PrivacyLevel => write!(f, "[privacy level]"),
-            ParameterKind::Toggle => write!(f, "on/off"),
-            ParameterKind::Avatar => write!(f, "<url|@mention>"),
-        }
-    }
-}
-
-impl From<ParameterKind> for Parameter {
-    fn from(value: ParameterKind) -> Self {
-        Parameter {
-            name: value.default_name().into(),
-            kind: value,
-        }
-    }
-}
-
-impl From<(&str, ParameterKind)> for Parameter {
-    fn from((name, kind): (&str, ParameterKind)) -> Self {
-        Parameter {
-            name: name.into(),
-            kind,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum ParameterKind {
-    OpaqueString,
-    OpaqueStringRemainder,
-    MemberRef,
-    MemberRefs,
-    GroupRef,
-    GroupRefs,
-    SystemRef,
-    MessageRef,
-    ChannelRef,
-    GuildRef,
-    MemberPrivacyTarget,
-    GroupPrivacyTarget,
-    SystemPrivacyTarget,
-    PrivacyLevel,
-    Toggle,
-    Avatar,
-}
-
-impl ParameterKind {
-    pub(crate) fn default_name(&self) -> &str {
-        match self {
-            ParameterKind::OpaqueString => "string",
-            ParameterKind::OpaqueStringRemainder => "string",
-            ParameterKind::MemberRef => "target",
-            ParameterKind::MemberRefs => "targets",
-            ParameterKind::GroupRef => "target",
-            ParameterKind::GroupRefs => "targets",
-            ParameterKind::SystemRef => "target",
-            ParameterKind::MessageRef => "target",
-            ParameterKind::ChannelRef => "target",
-            ParameterKind::GuildRef => "target",
-            ParameterKind::MemberPrivacyTarget => "member_privacy_target",
-            ParameterKind::GroupPrivacyTarget => "group_privacy_target",
-            ParameterKind::SystemPrivacyTarget => "system_privacy_target",
-            ParameterKind::PrivacyLevel => "privacy_level",
-            ParameterKind::Toggle => "toggle",
-            ParameterKind::Avatar => "avatar",
-        }
-    }
-
-    pub(crate) fn remainder(&self) -> bool {
-        matches!(
-            self,
-            ParameterKind::OpaqueStringRemainder
-                | ParameterKind::MemberRefs
-                | ParameterKind::GroupRefs
-        )
-    }
-
-    pub(crate) fn match_value(&self, input: &str) -> Result<ParameterValue, SmolStr> {
-        match self {
             // TODO: actually parse image url
             ParameterKind::OpaqueString | ParameterKind::OpaqueStringRemainder => {
                 Ok(ParameterValue::OpaqueString(input.into()))
@@ -217,13 +158,130 @@ impl ParameterKind {
                 .map_err(|_| SmolStr::new("invalid guild ID")),
         }
     }
+}
 
-    pub(crate) fn skip_if_cant_match(&self) -> Option<Option<ParameterValue>> {
+impl Display for Parameter {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self.kind {
+            ParameterKind::OpaqueString => {
+                write!(f, "[{}]", self.name)
+            }
+            ParameterKind::OpaqueStringRemainder => {
+                write!(f, "[{}]...", self.name)
+            }
+            ParameterKind::MemberRef => write!(f, "<target member>"),
+            ParameterKind::MemberRefs => write!(f, "<member 1> <member 2> <member 3>..."),
+            ParameterKind::GroupRef => write!(f, "<target group>"),
+            ParameterKind::GroupRefs => write!(f, "<group 1> <group 2> <group 3>..."),
+            ParameterKind::SystemRef => write!(f, "<target system>"),
+            ParameterKind::MessageRef => write!(f, "<target message>"),
+            ParameterKind::ChannelRef => write!(f, "<target channel>"),
+            ParameterKind::GuildRef => write!(f, "<target guild>"),
+            ParameterKind::MemberPrivacyTarget => write!(f, "<privacy target>"),
+            ParameterKind::GroupPrivacyTarget => write!(f, "<privacy target>"),
+            ParameterKind::SystemPrivacyTarget => write!(f, "<privacy target>"),
+            ParameterKind::PrivacyLevel => write!(f, "[privacy level]"),
+            ParameterKind::Toggle => write!(f, "on/off"),
+            ParameterKind::Avatar => write!(f, "<url|@mention>"),
+        }
+    }
+}
+
+impl From<ParameterKind> for Parameter {
+    fn from(value: ParameterKind) -> Self {
+        Parameter {
+            name: value.default_name().into(),
+            kind: value,
+            remainder: is_remainder(value),
+            optional: false,
+            skip: false,
+        }
+    }
+}
+
+impl From<(&str, ParameterKind)> for Parameter {
+    fn from((name, kind): (&str, ParameterKind)) -> Self {
+        Parameter {
+            name: name.into(),
+            kind,
+            remainder: is_remainder(kind),
+            optional: false,
+            skip: false,
+        }
+    }
+}
+
+#[derive(Clone)]
+pub struct Optional<P: Into<Parameter>>(pub P);
+
+impl<P: Into<Parameter>> From<Optional<P>> for Parameter {
+    fn from(value: Optional<P>) -> Self {
+        let p = value.0.into();
+        p.optional()
+    }
+}
+
+#[derive(Clone)]
+pub struct Remainder<P: Into<Parameter>>(pub P);
+
+impl<P: Into<Parameter>> From<Remainder<P>> for Parameter {
+    fn from(value: Remainder<P>) -> Self {
+        let p = value.0.into();
+        p.remainder()
+    }
+}
+
+// todo(dusk): this is kind of annoying to use, should probably introduce
+// a way to match multiple parameters in a single parameter
+#[derive(Clone)]
+pub struct Skip<P: Into<Parameter>>(pub P);
+
+impl<P: Into<Parameter>> From<Skip<P>> for Parameter {
+    fn from(value: Skip<P>) -> Self {
+        let p = value.0.into();
+        p.skip()
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum ParameterKind {
+    OpaqueString,
+    OpaqueStringRemainder,
+    MemberRef,
+    MemberRefs,
+    GroupRef,
+    GroupRefs,
+    SystemRef,
+    MessageRef,
+    ChannelRef,
+    GuildRef,
+    MemberPrivacyTarget,
+    GroupPrivacyTarget,
+    SystemPrivacyTarget,
+    PrivacyLevel,
+    Toggle,
+    Avatar,
+}
+
+impl ParameterKind {
+    pub(crate) fn default_name(&self) -> &str {
         match self {
-            ParameterKind::Toggle => Some(None),
-            ParameterKind::MemberRefs => Some(Some(ParameterValue::MemberRefs(Vec::new()))),
-            ParameterKind::GroupRefs => Some(Some(ParameterValue::GroupRefs(Vec::new()))),
-            _ => None,
+            ParameterKind::OpaqueString => "string",
+            ParameterKind::OpaqueStringRemainder => "string",
+            ParameterKind::MemberRef => "target",
+            ParameterKind::MemberRefs => "targets",
+            ParameterKind::GroupRef => "target",
+            ParameterKind::GroupRefs => "targets",
+            ParameterKind::SystemRef => "target",
+            ParameterKind::MessageRef => "target",
+            ParameterKind::ChannelRef => "target",
+            ParameterKind::GuildRef => "target",
+            ParameterKind::MemberPrivacyTarget => "member_privacy_target",
+            ParameterKind::GroupPrivacyTarget => "group_privacy_target",
+            ParameterKind::SystemPrivacyTarget => "system_privacy_target",
+            ParameterKind::PrivacyLevel => "privacy_level",
+            ParameterKind::Toggle => "toggle",
+            ParameterKind::Avatar => "avatar",
         }
     }
 }

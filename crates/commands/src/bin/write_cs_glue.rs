@@ -45,19 +45,23 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         for param in &command_params {
             writeln!(
                 &mut command_params_init,
-                r#"@{name} = await ctx.ParamResolve{extract_fn_name}("{name}") ?? throw new PKError("this is a bug"),"#,
+                r#"@{name} = await ctx.ParamResolve{extract_fn_name}("{name}"){throw_null},"#,
                 name = param.name().replace("-", "_"),
                 extract_fn_name = get_param_param_ty(param.kind()),
+                throw_null = param
+                    .is_optional()
+                    .then_some("")
+                    .unwrap_or(" ?? throw new PKError(\"this is a bug\")"),
             )?;
         }
         let mut command_flags_init = String::new();
         for flag in &command.flags {
-            if let Some(kind) = flag.get_value() {
+            if let Some(param) = flag.get_value() {
                 writeln!(
                     &mut command_flags_init,
                     r#"@{name} = await ctx.FlagResolve{extract_fn_name}("{name}"),"#,
                     name = flag.get_name().replace("-", "_"),
-                    extract_fn_name = get_param_param_ty(kind),
+                    extract_fn_name = get_param_param_ty(param.kind()),
                 )?;
             } else {
                 writeln!(
@@ -109,19 +113,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         for param in &command_params {
             writeln!(
                 &mut command_params_fields,
-                r#"public required {ty} @{name};"#,
+                r#"public required {ty}{nullable} @{name};"#,
                 name = param.name().replace("-", "_"),
                 ty = get_param_ty(param.kind()),
+                nullable = param.is_optional().then_some("?").unwrap_or(""),
             )?;
         }
         let mut command_flags_fields = String::new();
         for flag in &command.flags {
-            if let Some(kind) = flag.get_value() {
+            if let Some(param) = flag.get_value() {
                 writeln!(
                     &mut command_flags_fields,
                     r#"public {ty}? @{name};"#,
                     name = flag.get_name().replace("-", "_"),
-                    ty = get_param_ty(kind),
+                    ty = get_param_ty(param.kind()),
                 )?;
             } else {
                 writeln!(

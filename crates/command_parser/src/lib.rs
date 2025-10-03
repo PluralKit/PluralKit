@@ -242,7 +242,7 @@ fn next_token<'a>(
     // iterate over tokens and run try_match
     for token in possible_tokens {
         let is_match_remaining_token =
-            |token: &Token| matches!(token, Token::Parameter(param) if param.kind().remainder());
+            |token: &Token| matches!(token, Token::Parameter(param) if param.is_remainder());
         // check if this is a token that matches the rest of the input
         let match_remaining = is_match_remaining_token(token);
         // either use matched param or rest of the input if matching remaining

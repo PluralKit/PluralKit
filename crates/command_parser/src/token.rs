@@ -2,7 +2,7 @@ use std::fmt::{Debug, Display};
 
 use smol_str::SmolStr;
 
-use crate::parameter::{Parameter, ParameterKind, ParameterValue};
+use crate::parameter::{Optional, Parameter, ParameterKind, ParameterValue};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Token {
@@ -46,9 +46,17 @@ impl Token {
                 // short circuit on:
                 return match self {
                     // missing paramaters
-                    Self::Parameter(param) => Some(TokenMatchResult::MissingParameter {
-                        name: param.name().into(),
-                    }),
+                    Self::Parameter(param) => Some(
+                        param
+                            .is_optional()
+                            .then(|| TokenMatchResult::MatchedParameter {
+                                name: param.name().into(),
+                                value: ParameterValue::Null,
+                            })
+                            .unwrap_or_else(|| TokenMatchResult::MissingParameter {
+                                name: param.name().into(),
+                            }),
+                    ),
                     // everything else doesnt match if no input anyway
                     Self::Value { .. } => None,
                     // don't add a _ match here!
@@ -62,20 +70,14 @@ impl Token {
             Self::Value { name, aliases } => (aliases.iter().chain(std::iter::once(name)))
                 .any(|v| v.eq(input))
                 .then(|| TokenMatchResult::MatchedValue),
-            Self::Parameter(param) => Some(match param.kind().match_value(input) {
+            Self::Parameter(param) => Some(match param.match_value(input) {
                 Ok(matched) => TokenMatchResult::MatchedParameter {
                     name: param.name().into(),
                     value: matched,
                 },
                 Err(err) => {
-                    if let Some(maybe_empty) = param.kind().skip_if_cant_match() {
-                        match maybe_empty {
-                            Some(matched) => TokenMatchResult::MatchedParameter {
-                                name: param.name().into(),
-                                value: matched,
-                            },
-                            None => return None,
-                        }
+                    if param.is_skip() {
+                        return None;
                     } else {
                         TokenMatchResult::ParameterMatchError {
                             input: input.into(),
@@ -115,21 +117,10 @@ impl From<&str> for Token {
     }
 }
 
-impl From<Parameter> for Token {
-    fn from(value: Parameter) -> Self {
-        Self::Parameter(value)
-    }
-}
-
-impl From<ParameterKind> for Token {
-    fn from(value: ParameterKind) -> Self {
-        Self::from(Parameter::from(value))
-    }
-}
-
-impl From<(&str, ParameterKind)> for Token {
-    fn from(value: (&str, ParameterKind)) -> Self {
-        Self::from(Parameter::from(value))
+// parameter -> Token::Parameter
+impl<P: Into<Parameter>> From<P> for Token {
+    fn from(value: P) -> Self {
+        Self::Parameter(value.into())
     }
 }
 

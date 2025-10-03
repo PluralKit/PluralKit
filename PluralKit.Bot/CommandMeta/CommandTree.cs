@@ -245,6 +245,8 @@ public partial class CommandTree
             Commands.MessageDelete(var param, var flags) => ctx.Execute<ProxiedMessage>(Message, m => m.GetMessage(ctx, param.target.MessageId, flags.GetReplyFormat(), true, false)),
             Commands.MessageEdit(var param, var flags) => ctx.Execute<ProxiedMessage>(MessageEdit, m => m.EditMessage(ctx, param.target.MessageId, param.new_content, flags.regex, flags.mutate_space, flags.append, flags.prepend, flags.clear_embeds, flags.clear_attachments)),
             Commands.MessageReproxy(var param, _) => ctx.Execute<ProxiedMessage>(MessageReproxy, m => m.ReproxyMessage(ctx, param.target.MessageId)),
+            Commands.Import(var param, _) => ctx.Execute<ImportExport>(Import, m => m.Import(ctx, param.url)),
+            Commands.Export(_, _) => ctx.Execute<ImportExport>(Export, m => m.Export(ctx)),
             _ =>
             // this should only ever occur when deving if commands are not implemented...
             ctx.Reply(
@@ -256,10 +258,6 @@ public partial class CommandTree
             return HandleConfigCommand(ctx);
         if (ctx.Match("serverconfig", "guildconfig", "scfg"))
             return HandleServerConfigCommand(ctx);
-        if (ctx.Match("import"))
-            return ctx.Execute<ImportExport>(Import, m => m.Import(ctx));
-        if (ctx.Match("export"))
-            return ctx.Execute<ImportExport>(Export, m => m.Export(ctx));
         if (ctx.Match("log"))
             if (ctx.Match("channel"))
                 return ctx.Execute<ServerConfig>(LogChannel, m => m.SetLogChannel(ctx), true);

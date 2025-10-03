@@ -182,11 +182,11 @@ pub fn cmds() -> impl Iterator<Item = Command> {
         [
             command!(member_keep_proxy => "member_keepproxy_show")
                 .help("Shows a member's keep-proxy setting"),
-            command!(member_keep_proxy, ("value", Toggle) => "member_keepproxy_update")
+            command!(member_keep_proxy, Skip(("value", Toggle)) => "member_keepproxy_update")
                 .help("Changes a member's keep-proxy setting"),
             command!(member_server_keep_proxy => "member_server_keepproxy_show")
                 .help("Shows a member's server-specific keep-proxy setting"),
-            command!(member_server_keep_proxy, ("value", Toggle) => "member_server_keepproxy_update")
+            command!(member_server_keep_proxy, Skip(("value", Toggle)) => "member_server_keepproxy_update")
                 .help("Changes a member's server-specific keep-proxy setting"),
             command!(member_server_keep_proxy, ("clear", ["c"]) => "member_server_keepproxy_clear")
                 .flag(("yes", ["y"]))
@@ -303,9 +303,9 @@ pub fn cmds() -> impl Iterator<Item = Command> {
     .map(|cmd| cmd.flags(get_list_flags()));
 
     let member_add_remove_group_cmds = [
-        command!(member_group, "add", ("groups", GroupRefs) => "member_group_add")
+        command!(member_group, "add", Optional(("groups", GroupRefs)) => "member_group_add")
             .help("Adds a member to one or more groups"),
-        command!(member_group, ("remove", ["rem"]), ("groups", GroupRefs) => "member_group_remove")
+        command!(member_group, ("remove", ["rem"]), Optional(("groups", GroupRefs)) => "member_group_remove")
             .help("Removes a member from one or more groups"),
     ]
     .into_iter();

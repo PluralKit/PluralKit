@@ -69,6 +69,7 @@ pub enum Parameter {
     Avatar {
         avatar: String,
     },
+    Null,
 }
 
 impl From<ParameterValue> for Parameter {
@@ -93,6 +94,7 @@ impl From<ParameterValue> for Parameter {
             },
             ParameterValue::ChannelRef(channel_id) => Self::ChannelRef { channel_id },
             ParameterValue::GuildRef(guild_id) => Self::GuildRef { guild_id },
+            ParameterValue::Null => Self::Null,
         }
     }
 }

@@ -23,6 +23,7 @@ interface Parameter {
 	OpaqueString(string raw);
 	Toggle(boolean toggle);
 	Avatar(string avatar);
+	Null();
 };
 dictionary ParsedCommand {
 	string command_ref;

@@ -20,7 +20,7 @@ public static class ContextParametersExt
         );
     }
 
-    public static async Task<List<PKMember>> ParamResolveMembers(this Context ctx, string param_name)
+    public static async Task<List<PKMember>?> ParamResolveMembers(this Context ctx, string param_name)
     {
         return await ctx.Parameters.ResolveParameter(
             ctx, param_name,
@@ -36,7 +36,7 @@ public static class ContextParametersExt
         );
     }
 
-    public static async Task<List<PKGroup>> ParamResolveGroups(this Context ctx, string param_name)
+    public static async Task<List<PKGroup>?> ParamResolveGroups(this Context ctx, string param_name)
     {
         return await ctx.Parameters.ResolveParameter(
             ctx, param_name,

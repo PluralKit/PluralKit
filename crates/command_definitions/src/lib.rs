@@ -19,7 +19,12 @@ pub mod system;
 
 pub mod utils;
 
-use command_parser::{command, command::Command, parameter::ParameterKind::*, tokens};
+use command_parser::{
+    command,
+    command::Command,
+    parameter::{Optional, Parameter, ParameterKind::*, Remainder, Skip},
+    tokens,
+};
 
 pub fn all() -> impl Iterator<Item = Command> {
     (help::cmds())
@@ -34,6 +39,7 @@ pub fn all() -> impl Iterator<Item = Command> {
         .chain(autoproxy::cmds())
         .chain(debug::cmds())
         .chain(message::cmds())
+        .chain(import_export::cmds())
         .map(|cmd| {
             cmd.hidden_flag(("plaintext", ["pt"]))
                 .hidden_flag(("raw", ["r"]))

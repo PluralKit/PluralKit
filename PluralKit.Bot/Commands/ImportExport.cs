@@ -31,9 +31,9 @@ public class ImportExport
         _dmCache = dmCache;
     }
 
-    public async Task Import(Context ctx)
+    public async Task Import(Context ctx, string? inputUrl)
     {
-        var inputUrl = ctx.RemainderOrNull() ?? ctx.Message.Attachments.FirstOrDefault()?.Url;
+        inputUrl = inputUrl ?? ctx.Message.Attachments.FirstOrDefault()?.Url;
         if (inputUrl == null) throw Errors.NoImportFilePassed;
 
         if (!Core.MiscUtils.TryMatchUri(inputUrl, out var url))

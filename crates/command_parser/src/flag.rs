@@ -14,7 +14,7 @@ pub enum FlagValueMatchError {
 pub struct Flag {
     name: SmolStr,
     aliases: Vec<SmolStr>,
-    value: Option<ParameterKind>,
+    value: Option<Parameter>,
 }
 
 impl Display for Flag {
@@ -22,7 +22,7 @@ impl Display for Flag {
         write!(f, "-{}", self.name)?;
         if let Some(value) = self.value.as_ref() {
             write!(f, "=")?;
-            Parameter::from(*value).fmt(f)?;
+            value.fmt(f)?;
         }
         Ok(())
     }
@@ -58,8 +58,8 @@ impl Flag {
         }
     }
 
-    pub fn value(mut self, param: ParameterKind) -> Self {
-        self.value = Some(param);
+    pub fn value(mut self, param: impl Into<Parameter>) -> Self {
+        self.value = Some(param.into());
         self
     }
 
@@ -72,8 +72,8 @@ impl Flag {
         &self.name
     }
 
-    pub fn get_value(&self) -> Option<ParameterKind> {
-        self.value
+    pub fn get_value(&self) -> Option<&Parameter> {
+        self.value.as_ref()
     }
 
     pub fn get_aliases(&self) -> impl Iterator<Item = &str> {

@@ -23,8 +23,9 @@ public class Switch
         await DoSwitchCommand(ctx, []);
     }
 
-    private async Task DoSwitchCommand(Context ctx, ICollection<PKMember> members)
+    private async Task DoSwitchCommand(Context ctx, ICollection<PKMember>? members)
     {
+        if (members == null) members = new List<PKMember>();
         // Make sure there are no dupes in the list
         // We do this by checking if removing duplicate member IDs results in a list of different length
         if (members.Select(m => m.Id).Distinct().Count() != members.Count) throw Errors.DuplicateSwitchMembers;
@@ -101,9 +102,11 @@ public class Switch
         await ctx.Reply($"{Emojis.Success} Switch moved to <t:{newSwitchTime}> ({newSwitchDeltaStr} ago).");
     }
 
-    public async Task SwitchEdit(Context ctx, List<PKMember> newMembers, bool newSwitch = false, bool first = false, bool remove = false, bool append = false, bool prepend = false)
+    public async Task SwitchEdit(Context ctx, List<PKMember>? newMembers, bool newSwitch = false, bool first = false, bool remove = false, bool append = false, bool prepend = false)
     {
         ctx.CheckSystem();
+
+        if (newMembers == null) newMembers = new List<PKMember>();
 
         await using var conn = await ctx.Database.Obtain();
         var currentSwitch = await ctx.Repository.GetLatestSwitch(ctx.System.Id);
@@ -170,8 +173,10 @@ public class Switch
         await DoEditCommand(ctx, []);
     }
 
-    public async Task DoEditCommand(Context ctx, ICollection<PKMember> members)
+    public async Task DoEditCommand(Context ctx, ICollection<PKMember>? members)
     {
+        if (members == null) members = new List<PKMember>();
+
         // Make sure there are no dupes in the list
         // We do this by checking if removing duplicate member IDs results in a list of different length
         if (members.Select(m => m.Id).Distinct().Count() != members.Count) throw Errors.DuplicateSwitchMembers;
