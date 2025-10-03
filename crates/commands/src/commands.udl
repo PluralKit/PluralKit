@@ -13,7 +13,9 @@ interface Parameter {
 	GroupRef(string group);
 	GroupRefs(sequence<string> groups);
 	SystemRef(string system);
-	GuildRef(string guild);
+	MessageRef(u64? guild_id, u64? channel_id, u64 message_id);
+	ChannelRef(u64 channel_id);
+	GuildRef(u64 guild_id);
 	MemberPrivacyTarget(string target);
 	GroupPrivacyTarget(string target);
 	SystemPrivacyTarget(string target);

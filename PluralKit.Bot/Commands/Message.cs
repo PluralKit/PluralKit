@@ -58,9 +58,9 @@ public class ProxiedMessage
         _redisService = redisService;
     }
 
-    public async Task ReproxyMessage(Context ctx)
+    public async Task ReproxyMessage(Context ctx, ulong? messageId)
     {
-        var (msg, systemId) = await GetMessageToEdit(ctx, ReproxyTimeout, true);
+        var (msg, systemId) = await GetMessageToEdit(ctx, messageId, ReproxyTimeout, true);
 
         if (ctx.System.Id != systemId)
             throw new PKError("Can't reproxy a message sent by a different system.");
@@ -93,9 +93,9 @@ public class ProxiedMessage
         }
     }
 
-    public async Task EditMessage(Context ctx, bool useRegex)
+    public async Task EditMessage(Context ctx, ulong? messageId, string newContent, bool useRegex, bool mutateSpace, bool append, bool prepend, bool clearEmbeds, bool clearAttachments)
     {
-        var (msg, systemId) = await GetMessageToEdit(ctx, EditTimeout, false);
+        var (msg, systemId) = await GetMessageToEdit(ctx, messageId, EditTimeout, false);
 
         if (ctx.System.Id != systemId)
             throw new PKError("Can't edit a message sent by a different system.");
@@ -104,21 +104,10 @@ public class ProxiedMessage
         if (originalMsg == null)
             throw new PKError("Could not edit message.");
 
-        // Regex flag
-        useRegex = useRegex || ctx.MatchFlag("regex", "x");
-
-        // Check if we should append or prepend
-        var mutateSpace = ctx.MatchFlag("nospace", "ns") ? "" : " ";
-        var append = ctx.MatchFlag("append", "a");
-        var prepend = ctx.MatchFlag("prepend", "p");
-
         // Grab the original message content and new message content
         var originalContent = originalMsg.Content;
-        var newContent = ctx.RemainderOrNull()?.NormalizeLineEndSpacing();
 
         // Should we clear embeds?
-        var clearEmbeds = ctx.MatchFlag("clear-embed", "ce");
-        var clearAttachments = ctx.MatchFlag("clear-attachments", "ca");
         if ((clearEmbeds || clearAttachments) && newContent == null)
             newContent = originalMsg.Content!;
 
@@ -249,14 +238,13 @@ public class ProxiedMessage
         }
     }
 
-    private async Task<(PKMessage, SystemId)> GetMessageToEdit(Context ctx, Duration timeout, bool isReproxy)
+    private async Task<(PKMessage, SystemId)> GetMessageToEdit(Context ctx, ulong? referencedMessage, Duration timeout, bool isReproxy)
     {
         var editType = isReproxy ? "reproxy" : "edit";
         var editTypeAction = isReproxy ? "reproxied" : "edited";
 
         PKMessage? msg = null;
 
-        var (referencedMessage, _) = ctx.MatchMessage(false);
         if (referencedMessage != null)
         {
             await using var conn = await ctx.Database.Obtain();
@@ -332,17 +320,14 @@ public class ProxiedMessage
         return lastMessage;
     }
 
-    public async Task GetMessage(Context ctx)
+    public async Task GetMessage(Context ctx, ulong? messageId, ReplyFormat format, bool isDelete, bool author)
     {
-        var (messageId, _) = ctx.MatchMessage(true);
         if (messageId == null)
         {
             if (!ctx.HasNext())
                 throw new PKSyntaxError("You must pass a message ID or link.");
             throw new PKSyntaxError($"Could not parse {ctx.PeekArgument().AsCode()} as a message ID or link.");
         }
-
-        var isDelete = ctx.Match("delete") || ctx.MatchFlag("delete");
 
         var message = await ctx.Repository.GetFullMessage(messageId.Value);
         if (message == null)
@@ -359,8 +344,6 @@ public class ProxiedMessage
             showContent = false;
         else if (!await ctx.CheckPermissionsInGuildChannel(channel, PermissionSet.ViewChannel))
             showContent = false;
-
-        var format = ctx.MatchFormat();
 
         if (format != ReplyFormat.Standard)
         {
@@ -423,7 +406,7 @@ public class ProxiedMessage
             return;
         }
 
-        if (ctx.Match("author") || ctx.MatchFlag("author"))
+        if (author)
         {
             var user = await _rest.GetUser(message.Message.Sender);
             var eb = new EmbedBuilder()

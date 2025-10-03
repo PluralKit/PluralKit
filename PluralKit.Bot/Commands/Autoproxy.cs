@@ -13,10 +13,10 @@ public class Autoproxy
 
     public abstract record Mode()
     {
-        public record Off() : Mode;
-        public record Latch() : Mode;
-        public record Front() : Mode;
-        public record Member(PKMember member) : Mode;
+        public record Off(): Mode;
+        public record Latch(): Mode;
+        public record Front(): Mode;
+        public record Member(PKMember member): Mode;
     }
 
     public Autoproxy(IClock clock)

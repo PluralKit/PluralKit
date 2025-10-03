@@ -1,7 +1,6 @@
 pub mod admin;
 pub mod api;
 pub mod autoproxy;
-pub mod checks;
 pub mod commands;
 pub mod config;
 pub mod dashboard;
@@ -33,6 +32,8 @@ pub fn all() -> impl Iterator<Item = Command> {
         .chain(random::cmds())
         .chain(api::cmds())
         .chain(autoproxy::cmds())
+        .chain(debug::cmds())
+        .chain(message::cmds())
         .map(|cmd| {
             cmd.hidden_flag(("plaintext", ["pt"]))
                 .hidden_flag(("raw", ["r"]))

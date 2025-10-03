@@ -1,1 +1,32 @@
+use super::*;
 
+pub fn cmds() -> impl Iterator<Item = Command> {
+    let message = tokens!(("message", ["msg", "messageinfo"]), MessageRef);
+
+    let edit = tokens!(("edit", ["e"]), ("new_content", OpaqueStringRemainder));
+    let apply_edit = |cmd: Command| {
+        cmd.flag(("append", ["a"]))
+            .flag(("prepend", ["p"]))
+            .flag(("regex", ["r"]))
+            .flag(("mutate-space", ["ms"]))
+            .flag(("clear-embeds", ["ce"]))
+            .flag(("clear-attachments", ["ca"]))
+            .help("Edits a proxied message")
+    };
+
+    [
+        command!(message => "message_info")
+            .flag(("delete", ["d"]))
+            .flag(("author", ["a"]))
+            .help("Shows information about a proxied message"),
+        command!(message, ("author", ["sender"]) => "message_author")
+            .help("Shows the author of a proxied message"),
+        command!(message, ("delete", ["del"]) => "message_delete")
+            .help("Deletes a proxied message"),
+        apply_edit(command!(message, edit => "message_edit")),
+        apply_edit(command!(edit => "message_edit")),
+        command!(("reproxy", ["rp", "crimes", "crime"]), MessageRef => "message_reproxy")
+            .help("Reproxies a message with a different member"),
+    ]
+    .into_iter()
+}

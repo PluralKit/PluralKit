@@ -15,7 +15,9 @@ pub enum ParameterValue {
     GroupRef(String),
     GroupRefs(Vec<String>),
     SystemRef(String),
-    GuildRef(String),
+    MessageRef(Option<u64>, Option<u64>, u64),
+    ChannelRef(u64),
+    GuildRef(u64),
     MemberPrivacyTarget(String),
     GroupPrivacyTarget(String),
     SystemPrivacyTarget(String),
@@ -54,6 +56,8 @@ impl Display for Parameter {
             ParameterKind::GroupRef => write!(f, "<target group>"),
             ParameterKind::GroupRefs => write!(f, "<group 1> <group 2> <group 3>..."),
             ParameterKind::SystemRef => write!(f, "<target system>"),
+            ParameterKind::MessageRef => write!(f, "<target message>"),
+            ParameterKind::ChannelRef => write!(f, "<target channel>"),
             ParameterKind::GuildRef => write!(f, "<target guild>"),
             ParameterKind::MemberPrivacyTarget => write!(f, "<privacy target>"),
             ParameterKind::GroupPrivacyTarget => write!(f, "<privacy target>"),
@@ -92,6 +96,8 @@ pub enum ParameterKind {
     GroupRef,
     GroupRefs,
     SystemRef,
+    MessageRef,
+    ChannelRef,
     GuildRef,
     MemberPrivacyTarget,
     GroupPrivacyTarget,
@@ -111,6 +117,8 @@ impl ParameterKind {
             ParameterKind::GroupRef => "target",
             ParameterKind::GroupRefs => "targets",
             ParameterKind::SystemRef => "target",
+            ParameterKind::MessageRef => "target",
+            ParameterKind::ChannelRef => "target",
             ParameterKind::GuildRef => "target",
             ParameterKind::MemberPrivacyTarget => "member_privacy_target",
             ParameterKind::GroupPrivacyTarget => "group_privacy_target",
@@ -157,7 +165,56 @@ impl ParameterKind {
                 Toggle::from_str(input).map(|t| ParameterValue::Toggle(t.into()))
             }
             ParameterKind::Avatar => Ok(ParameterValue::Avatar(input.into())),
-            ParameterKind::GuildRef => Ok(ParameterValue::GuildRef(input.into())),
+            ParameterKind::MessageRef => {
+                if let Ok(message_id) = input.parse::<u64>() {
+                    return Ok(ParameterValue::MessageRef(None, None, message_id));
+                }
+
+                static RE: std::sync::LazyLock<regex::Regex> = std::sync::LazyLock::new(|| {
+                    regex::Regex::new(
+                        r"https://(?:\w+\.)?discord(?:app)?\.com/channels/(\d+)/(\d+)/(\d+)",
+                    )
+                    .unwrap()
+                });
+
+                if let Some(captures) = RE.captures(input) {
+                    let guild_id = captures
+                        .get(1)
+                        .and_then(|m| m.as_str().parse::<u64>().ok())
+                        .ok_or_else(|| SmolStr::new("invalid guild ID in message link"))?;
+                    let channel_id = captures
+                        .get(2)
+                        .and_then(|m| m.as_str().parse::<u64>().ok())
+                        .ok_or_else(|| SmolStr::new("invalid channel ID in message link"))?;
+                    let message_id = captures
+                        .get(3)
+                        .and_then(|m| m.as_str().parse::<u64>().ok())
+                        .ok_or_else(|| SmolStr::new("invalid message ID in message link"))?;
+
+                    Ok(ParameterValue::MessageRef(
+                        Some(guild_id),
+                        Some(channel_id),
+                        message_id,
+                    ))
+                } else {
+                    Err(SmolStr::new("invalid message reference"))
+                }
+            }
+            ParameterKind::ChannelRef => {
+                let mut text = input;
+
+                if text.len() > 3 && text.starts_with("<#") && text.ends_with('>') {
+                    text = &text[2..text.len() - 1];
+                }
+
+                text.parse::<u64>()
+                    .map(ParameterValue::ChannelRef)
+                    .map_err(|_| SmolStr::new("invalid channel ID"))
+            }
+            ParameterKind::GuildRef => input
+                .parse::<u64>()
+                .map(ParameterValue::GuildRef)
+                .map_err(|_| SmolStr::new("invalid guild ID")),
         }
     }
 

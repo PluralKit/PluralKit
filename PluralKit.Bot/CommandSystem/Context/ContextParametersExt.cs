@@ -100,6 +100,22 @@ public static class ContextParametersExt
         );
     }
 
+    public static async Task<Myriad.Types.Message.Reference?> ParamResolveMessage(this Context ctx, string param_name)
+    {
+        return await ctx.Parameters.ResolveParameter(
+            ctx, param_name,
+            param => (param as Parameter.MessageRef)?.message
+        );
+    }
+
+    public static async Task<Myriad.Types.Channel?> ParamResolveChannel(this Context ctx, string param_name)
+    {
+        return await ctx.Parameters.ResolveParameter(
+            ctx, param_name,
+            param => (param as Parameter.ChannelRef)?.channel
+        );
+    }
+
     public static async Task<Myriad.Types.Guild?> ParamResolveGuild(this Context ctx, string param_name)
     {
         return await ctx.Parameters.ResolveParameter(

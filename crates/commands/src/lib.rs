@@ -22,19 +22,53 @@ pub enum CommandResult {
 
 #[derive(Debug, Clone)]
 pub enum Parameter {
-    MemberRef { member: String },
-    MemberRefs { members: Vec<String> },
-    GroupRef { group: String },
-    GroupRefs { groups: Vec<String> },
-    SystemRef { system: String },
-    GuildRef { guild: String },
-    MemberPrivacyTarget { target: String },
-    GroupPrivacyTarget { target: String },
-    SystemPrivacyTarget { target: String },
-    PrivacyLevel { level: String },
-    OpaqueString { raw: String },
-    Toggle { toggle: bool },
-    Avatar { avatar: String },
+    MemberRef {
+        member: String,
+    },
+    MemberRefs {
+        members: Vec<String>,
+    },
+    GroupRef {
+        group: String,
+    },
+    GroupRefs {
+        groups: Vec<String>,
+    },
+    SystemRef {
+        system: String,
+    },
+    MessageRef {
+        guild_id: Option<u64>,
+        channel_id: Option<u64>,
+        message_id: u64,
+    },
+    ChannelRef {
+        channel_id: u64,
+    },
+    GuildRef {
+        guild_id: u64,
+    },
+    MemberPrivacyTarget {
+        target: String,
+    },
+    GroupPrivacyTarget {
+        target: String,
+    },
+    SystemPrivacyTarget {
+        target: String,
+    },
+    PrivacyLevel {
+        level: String,
+    },
+    OpaqueString {
+        raw: String,
+    },
+    Toggle {
+        toggle: bool,
+    },
+    Avatar {
+        avatar: String,
+    },
 }
 
 impl From<ParameterValue> for Parameter {
@@ -52,7 +86,13 @@ impl From<ParameterValue> for Parameter {
             ParameterValue::OpaqueString(raw) => Self::OpaqueString { raw },
             ParameterValue::Toggle(toggle) => Self::Toggle { toggle },
             ParameterValue::Avatar(avatar) => Self::Avatar { avatar },
-            ParameterValue::GuildRef(guild) => Self::GuildRef { guild },
+            ParameterValue::MessageRef(guild_id, channel_id, message_id) => Self::MessageRef {
+                guild_id,
+                channel_id,
+                message_id,
+            },
+            ParameterValue::ChannelRef(channel_id) => Self::ChannelRef { channel_id },
+            ParameterValue::GuildRef(guild_id) => Self::GuildRef { guild_id },
         }
     }
 }

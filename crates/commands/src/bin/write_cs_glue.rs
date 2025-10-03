@@ -266,6 +266,8 @@ fn get_param_ty(kind: ParameterKind) -> &'static str {
         ParameterKind::PrivacyLevel => "PrivacyLevel",
         ParameterKind::Toggle => "bool",
         ParameterKind::Avatar => "ParsedImage",
+        ParameterKind::MessageRef => "Message.Reference",
+        ParameterKind::ChannelRef => "Channel",
         ParameterKind::GuildRef => "Guild",
     }
 }
@@ -284,6 +286,8 @@ fn get_param_param_ty(kind: ParameterKind) -> &'static str {
         ParameterKind::PrivacyLevel => "PrivacyLevel",
         ParameterKind::Toggle => "Toggle",
         ParameterKind::Avatar => "Avatar",
+        ParameterKind::MessageRef => "Message",
+        ParameterKind::ChannelRef => "Channel",
         ParameterKind::GuildRef => "Guild",
     }
 }

@@ -13,6 +13,8 @@ public abstract record Parameter()
     public record GroupRef(PKGroup group): Parameter;
     public record GroupRefs(List<PKGroup> groups): Parameter;
     public record SystemRef(PKSystem system): Parameter;
+    public record MessageRef(Message.Reference message): Parameter;
+    public record ChannelRef(Channel channel): Parameter;
     public record GuildRef(Guild guild): Parameter;
     public record MemberPrivacyTarget(MemberPrivacySubject target): Parameter;
     public record GroupPrivacyTarget(GroupPrivacySubject target): Parameter;
@@ -118,8 +120,12 @@ public class Parameters
                 return new Parameter.Opaque(opaque.raw);
             case uniffi.commands.Parameter.Avatar avatar:
                 return new Parameter.Avatar(await ctx.GetUserPfp(avatar.avatar) ?? ctx.ParseImage(avatar.avatar));
-            case uniffi.commands.Parameter.GuildRef guildRef:
-                return new Parameter.GuildRef(await ctx.ParseGuild(guildRef.guild) ?? throw new PKError($"Guild {guildRef.guild} not found"));
+            case uniffi.commands.Parameter.MessageRef(var guildId, var channelId, var messageId):
+                return new Parameter.MessageRef(new Message.Reference(guildId, channelId, messageId));
+            case uniffi.commands.Parameter.ChannelRef(var channelId):
+                return new Parameter.ChannelRef(await ctx.Rest.GetChannelOrNull(channelId) ?? throw new PKError($"Channel {channelId} not found"));
+            case uniffi.commands.Parameter.GuildRef(var guildId):
+                return new Parameter.GuildRef(await ctx.Rest.GetGuildOrNull(guildId) ?? throw new PKError($"Guild {guildId} not found"));
         }
         return null;
     }

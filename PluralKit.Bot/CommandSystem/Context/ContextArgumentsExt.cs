@@ -106,25 +106,24 @@ public static class ContextArgumentsExt
         else return null;
     }
 
-    public static (ulong? messageId, ulong? channelId) MatchMessage(this Context ctx, bool parseRawMessageId)
+    public static (ulong? messageId, ulong? channelId) GetRepliedTo(this Context ctx)
     {
         if (ctx.Message.Type == Message.MessageType.Reply && ctx.Message.MessageReference?.MessageId != null)
             return (ctx.Message.MessageReference.MessageId, ctx.Message.MessageReference.ChannelId);
+        return (null, null);
+    }
 
-        var word = ctx.PeekArgument();
-        if (word == null)
-            return (null, null);
-
-        if (parseRawMessageId && ulong.TryParse(word, out var mid))
+    public static (ulong? messageId, ulong? channelId) ParseMessage(this Context ctx, string maybeMessageRef, bool parseRawMessageId)
+    {
+        if (parseRawMessageId && ulong.TryParse(maybeMessageRef, out var mid))
             return (mid, null);
 
-        var match = Regex.Match(word, "https://(?:\\w+.)?discord(?:app)?.com/channels/\\d+/(\\d+)/(\\d+)");
+        var match = Regex.Match(maybeMessageRef, "https://(?:\\w+.)?discord(?:app)?.com/channels/\\d+/(\\d+)/(\\d+)");
         if (!match.Success)
             return (null, null);
 
         var channelId = ulong.Parse(match.Groups[1].Value);
         var messageId = ulong.Parse(match.Groups[2].Value);
-        ctx.PopArgument();
         return (messageId, channelId);
     }
 }

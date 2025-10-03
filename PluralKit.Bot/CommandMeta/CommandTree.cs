@@ -8,6 +8,7 @@ public partial class CommandTree
     {
         return command switch
         {
+            Commands.Explain => ctx.Execute<Help>(Explain, m => m.Explain(ctx)),
             Commands.Help(_, var flags) => ctx.Execute<Help>(Help, m => m.HelpRoot(ctx, flags.show_embed)),
             Commands.HelpCommands => ctx.Reply(
                     "For the list of commands, see the website: <https://pluralkit.me/commands>"),
@@ -236,6 +237,14 @@ public partial class CommandTree
             Commands.AutoproxyLatch => ctx.Execute<Autoproxy>(AutoproxySet, m => m.SetAutoproxyMode(ctx, new Autoproxy.Mode.Latch())),
             Commands.AutoproxyFront => ctx.Execute<Autoproxy>(AutoproxySet, m => m.SetAutoproxyMode(ctx, new Autoproxy.Mode.Front())),
             Commands.AutoproxyMember(var param, _) => ctx.Execute<Autoproxy>(AutoproxySet, m => m.SetAutoproxyMode(ctx, new Autoproxy.Mode.Member(param.target))),
+            Commands.PermcheckChannel(var param, _) => ctx.Execute<Checks>(PermCheck, m => m.PermCheckChannel(ctx, param.target)),
+            Commands.PermcheckGuild(var param, _) => ctx.Execute<Checks>(PermCheck, m => m.PermCheckGuild(ctx, param.target)),
+            Commands.MessageProxyCheck(var param, _) => ctx.Execute<Checks>(ProxyCheck, m => m.MessageProxyCheck(ctx, param.target)),
+            Commands.MessageInfo(var param, var flags) => ctx.Execute<ProxiedMessage>(Message, m => m.GetMessage(ctx, param.target.MessageId, flags.GetReplyFormat(), flags.delete, flags.author)),
+            Commands.MessageAuthor(var param, var flags) => ctx.Execute<ProxiedMessage>(Message, m => m.GetMessage(ctx, param.target.MessageId, flags.GetReplyFormat(), false, true)),
+            Commands.MessageDelete(var param, var flags) => ctx.Execute<ProxiedMessage>(Message, m => m.GetMessage(ctx, param.target.MessageId, flags.GetReplyFormat(), true, false)),
+            Commands.MessageEdit(var param, var flags) => ctx.Execute<ProxiedMessage>(MessageEdit, m => m.EditMessage(ctx, param.target.MessageId, param.new_content, flags.regex, flags.mutate_space, flags.append, flags.prepend, flags.clear_embeds, flags.clear_attachments)),
+            Commands.MessageReproxy(var param, _) => ctx.Execute<ProxiedMessage>(MessageReproxy, m => m.ReproxyMessage(ctx, param.target.MessageId)),
             _ =>
             // this should only ever occur when deving if commands are not implemented...
             ctx.Reply(
@@ -251,16 +260,6 @@ public partial class CommandTree
             return ctx.Execute<ImportExport>(Import, m => m.Import(ctx));
         if (ctx.Match("export"))
             return ctx.Execute<ImportExport>(Export, m => m.Export(ctx));
-        if (ctx.Match("explain"))
-            return ctx.Execute<Help>(Explain, m => m.Explain(ctx));
-        if (ctx.Match("message", "msg", "messageinfo"))
-            return ctx.Execute<ProxiedMessage>(Message, m => m.GetMessage(ctx));
-        if (ctx.Match("edit", "e"))
-            return ctx.Execute<ProxiedMessage>(MessageEdit, m => m.EditMessage(ctx, false));
-        if (ctx.Match("x"))
-            return ctx.Execute<ProxiedMessage>(MessageEdit, m => m.EditMessage(ctx, true));
-        if (ctx.Match("reproxy", "rp", "crimes", "crime"))
-            return ctx.Execute<ProxiedMessage>(MessageReproxy, m => m.ReproxyMessage(ctx));
         if (ctx.Match("log"))
             if (ctx.Match("channel"))
                 return ctx.Execute<ServerConfig>(LogChannel, m => m.SetLogChannel(ctx), true);
@@ -283,17 +282,8 @@ public partial class CommandTree
                 return ctx.Execute<ServerConfig>(BlacklistShow, m => m.ShowProxyBlacklisted(ctx), true);
             else
                 return ctx.Reply($"{Emojis.Warn} Blacklist commands have moved to `{ctx.DefaultPrefix}serverconfig`.");
-        if (ctx.Match("proxy"))
-            if (ctx.Match("debug"))
-                return ctx.Execute<Checks>(ProxyCheck, m => m.MessageProxyCheck(ctx));
         if (ctx.Match("invite")) return ctx.Execute<Misc>(Invite, m => m.Invite(ctx));
         if (ctx.Match("stats", "status")) return ctx.Execute<Misc>(null, m => m.Stats(ctx));
-        if (ctx.Match("permcheck"))
-            return ctx.Execute<Checks>(PermCheck, m => m.PermCheckGuild(ctx));
-        if (ctx.Match("proxycheck"))
-            return ctx.Execute<Checks>(ProxyCheck, m => m.MessageProxyCheck(ctx));
-        if (ctx.Match("debug"))
-            return HandleDebugCommand(ctx);
         if (ctx.Match("admin"))
             return HandleAdminCommand(ctx);
         if (ctx.Match("dashboard", "dash"))
@@ -370,26 +360,6 @@ public partial class CommandTree
             await HandleAdminAbuseLogCommand(ctx);
         else
             await ctx.Reply($"{Emojis.Error} Unknown command.");
-    }
-
-    private async Task HandleDebugCommand(Context ctx)
-    {
-        var availableCommandsStr = "Available debug targets: `permissions`, `proxying`";
-
-        if (ctx.Match("permissions", "perms", "permcheck"))
-            if (ctx.Match("channel", "ch"))
-                await ctx.Execute<Checks>(PermCheck, m => m.PermCheckChannel(ctx));
-            else
-                await ctx.Execute<Checks>(PermCheck, m => m.PermCheckGuild(ctx));
-        else if (ctx.Match("channel"))
-            await ctx.Execute<Checks>(PermCheck, m => m.PermCheckChannel(ctx));
-        else if (ctx.Match("proxy", "proxying", "proxycheck"))
-            await ctx.Execute<Checks>(ProxyCheck, m => m.MessageProxyCheck(ctx));
-        else if (!ctx.HasNext())
-            await ctx.Reply($"{Emojis.Error} You need to pass a command. {availableCommandsStr}");
-        else
-            await ctx.Reply(
-                $"{Emojis.Error} Unknown debug command {ctx.PeekArgument().AsCode()}. {availableCommandsStr}");
     }
 
     private async Task CommandHelpRoot(Context ctx)

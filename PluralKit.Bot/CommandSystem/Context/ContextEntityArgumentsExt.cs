@@ -213,24 +213,4 @@ public static class ContextEntityArgumentsExt
         ctx.PopArgument();
         return channel;
     }
-
-    public static async Task<Guild> ParseGuild(this Context ctx, string input)
-    {
-        if (!ulong.TryParse(input, out var id))
-            return null;
-
-        return await ctx.Rest.GetGuildOrNull(id);
-    }
-
-    public static async Task<Guild> MatchGuild(this Context ctx)
-    {
-        if (!ulong.TryParse(ctx.PeekArgument(), out var id))
-            return null;
-
-        var guild = await ctx.Rest.GetGuildOrNull(id);
-        if (guild != null)
-            ctx.PopArgument();
-
-        return guild;
-    }
 }
