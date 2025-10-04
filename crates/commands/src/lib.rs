@@ -37,6 +37,9 @@ pub enum Parameter {
     SystemRef {
         system: String,
     },
+    UserRef {
+        user_id: u64,
+    },
     MessageRef {
         guild_id: Option<u64>,
         channel_id: Option<u64>,
@@ -63,6 +66,9 @@ pub enum Parameter {
     OpaqueString {
         raw: String,
     },
+    OpaqueInt {
+        raw: i32,
+    },
     Toggle {
         toggle: bool,
     },
@@ -80,11 +86,13 @@ impl From<ParameterValue> for Parameter {
             ParameterValue::GroupRef(group) => Self::GroupRef { group },
             ParameterValue::GroupRefs(groups) => Self::GroupRefs { groups },
             ParameterValue::SystemRef(system) => Self::SystemRef { system },
+            ParameterValue::UserRef(user_id) => Self::UserRef { user_id },
             ParameterValue::MemberPrivacyTarget(target) => Self::MemberPrivacyTarget { target },
             ParameterValue::GroupPrivacyTarget(target) => Self::GroupPrivacyTarget { target },
             ParameterValue::SystemPrivacyTarget(target) => Self::SystemPrivacyTarget { target },
             ParameterValue::PrivacyLevel(level) => Self::PrivacyLevel { level },
             ParameterValue::OpaqueString(raw) => Self::OpaqueString { raw },
+            ParameterValue::OpaqueInt(raw) => Self::OpaqueInt { raw },
             ParameterValue::Toggle(toggle) => Self::Toggle { toggle },
             ParameterValue::Avatar(avatar) => Self::Avatar { avatar },
             ParameterValue::MessageRef(guild_id, channel_id, message_id) => Self::MessageRef {

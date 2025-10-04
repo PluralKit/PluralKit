@@ -25,7 +25,7 @@ pub fn cmds() -> impl Iterator<Item = Command> {
             .help("Deletes a proxied message"),
         apply_edit(command!(message, edit => "message_edit")),
         apply_edit(command!(edit => "message_edit")),
-        command!(("reproxy", ["rp", "crimes", "crime"]), MessageRef => "message_reproxy")
+        command!(("reproxy", ["rp", "crimes", "crime"]), ("msg", MessageRef), ("member", MemberRef) => "message_reproxy")
             .help("Reproxies a message with a different member"),
     ]
     .into_iter()

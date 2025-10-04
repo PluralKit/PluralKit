@@ -13,6 +13,7 @@ interface Parameter {
 	GroupRef(string group);
 	GroupRefs(sequence<string> groups);
 	SystemRef(string system);
+	UserRef(u64 user_id);
 	MessageRef(u64? guild_id, u64? channel_id, u64 message_id);
 	ChannelRef(u64 channel_id);
 	GuildRef(u64 guild_id);
@@ -21,6 +22,7 @@ interface Parameter {
 	SystemPrivacyTarget(string target);
 	PrivacyLevel(string level);
 	OpaqueString(string raw);
+	OpaqueInt(i32 raw);
 	Toggle(boolean toggle);
 	Avatar(string avatar);
 	Null();

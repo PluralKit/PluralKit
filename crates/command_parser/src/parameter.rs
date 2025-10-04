@@ -3,18 +3,21 @@ use std::{
     str::FromStr,
 };
 
-use smol_str::SmolStr;
+use regex::Regex;
+use smol_str::{SmolStr, format_smolstr};
 
 use crate::token::{Token, TokenMatchResult};
 
 #[derive(Debug, Clone)]
 pub enum ParameterValue {
     OpaqueString(String),
+    OpaqueInt(i32),
     MemberRef(String),
     MemberRefs(Vec<String>),
     GroupRef(String),
     GroupRefs(Vec<String>),
     SystemRef(String),
+    UserRef(u64),
     MessageRef(Option<u64>, Option<u64>, u64),
     ChannelRef(u64),
     GuildRef(u64),
@@ -85,6 +88,10 @@ impl Parameter {
             ParameterKind::OpaqueString | ParameterKind::OpaqueStringRemainder => {
                 Ok(ParameterValue::OpaqueString(input.into()))
             }
+            ParameterKind::OpaqueInt => input
+                .parse::<i32>()
+                .map(|num| ParameterValue::OpaqueInt(num))
+                .map_err(|err| format_smolstr!("invalid integer: {err}")),
             ParameterKind::GroupRef => Ok(ParameterValue::GroupRef(input.into())),
             ParameterKind::GroupRefs => Ok(ParameterValue::GroupRefs(
                 input.split(' ').map(|s| s.trim().to_string()).collect(),
@@ -94,6 +101,22 @@ impl Parameter {
                 input.split(' ').map(|s| s.trim().to_string()).collect(),
             )),
             ParameterKind::SystemRef => Ok(ParameterValue::SystemRef(input.into())),
+            ParameterKind::UserRef => {
+                if let Ok(user_id) = input.parse::<u64>() {
+                    return Ok(ParameterValue::UserRef(user_id));
+                }
+
+                static RE: std::sync::LazyLock<Regex> =
+                    std::sync::LazyLock::new(|| Regex::new(r"<@!?(\\d{17,19})>").unwrap());
+                if let Some(captures) = RE.captures(&input) {
+                    return captures[1]
+                        .parse::<u64>()
+                        .map(|id| ParameterValue::UserRef(id))
+                        .map_err(|_| SmolStr::new("invalid user ID"));
+                }
+
+                Err(SmolStr::new("invalid user ID"))
+            }
             ParameterKind::MemberPrivacyTarget => MemberPrivacyTargetKind::from_str(input)
                 .map(|target| ParameterValue::MemberPrivacyTarget(target.as_ref().into())),
             ParameterKind::GroupPrivacyTarget => GroupPrivacyTargetKind::from_str(input)
@@ -166,6 +189,9 @@ impl Display for Parameter {
             ParameterKind::OpaqueString => {
                 write!(f, "[{}]", self.name)
             }
+            ParameterKind::OpaqueInt => {
+                write!(f, "[{}]", self.name)
+            }
             ParameterKind::OpaqueStringRemainder => {
                 write!(f, "[{}]...", self.name)
             }
@@ -174,6 +200,7 @@ impl Display for Parameter {
             ParameterKind::GroupRef => write!(f, "<target group>"),
             ParameterKind::GroupRefs => write!(f, "<group 1> <group 2> <group 3>..."),
             ParameterKind::SystemRef => write!(f, "<target system>"),
+            ParameterKind::UserRef => write!(f, "<target user>"),
             ParameterKind::MessageRef => write!(f, "<target message>"),
             ParameterKind::ChannelRef => write!(f, "<target channel>"),
             ParameterKind::GuildRef => write!(f, "<target guild>"),
@@ -246,12 +273,14 @@ impl<P: Into<Parameter>> From<Skip<P>> for Parameter {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ParameterKind {
     OpaqueString,
+    OpaqueInt,
     OpaqueStringRemainder,
     MemberRef,
     MemberRefs,
     GroupRef,
     GroupRefs,
     SystemRef,
+    UserRef,
     MessageRef,
     ChannelRef,
     GuildRef,
@@ -267,12 +296,14 @@ impl ParameterKind {
     pub(crate) fn default_name(&self) -> &str {
         match self {
             ParameterKind::OpaqueString => "string",
+            ParameterKind::OpaqueInt => "number",
             ParameterKind::OpaqueStringRemainder => "string",
             ParameterKind::MemberRef => "target",
             ParameterKind::MemberRefs => "targets",
             ParameterKind::GroupRef => "target",
             ParameterKind::GroupRefs => "targets",
             ParameterKind::SystemRef => "target",
+            ParameterKind::UserRef => "target",
             ParameterKind::MessageRef => "target",
             ParameterKind::ChannelRef => "target",
             ParameterKind::GuildRef => "target",

@@ -8,6 +8,7 @@ public partial class CommandTree
     {
         return command switch
         {
+            Commands.Dashboard => ctx.Execute<Help>(Dashboard, m => m.Dashboard(ctx)),
             Commands.Explain => ctx.Execute<Help>(Explain, m => m.Explain(ctx)),
             Commands.Help(_, var flags) => ctx.Execute<Help>(Help, m => m.HelpRoot(ctx, flags.show_embed)),
             Commands.HelpCommands => ctx.Reply(
@@ -244,9 +245,33 @@ public partial class CommandTree
             Commands.MessageAuthor(var param, var flags) => ctx.Execute<ProxiedMessage>(Message, m => m.GetMessage(ctx, param.target.MessageId, flags.GetReplyFormat(), false, true)),
             Commands.MessageDelete(var param, var flags) => ctx.Execute<ProxiedMessage>(Message, m => m.GetMessage(ctx, param.target.MessageId, flags.GetReplyFormat(), true, false)),
             Commands.MessageEdit(var param, var flags) => ctx.Execute<ProxiedMessage>(MessageEdit, m => m.EditMessage(ctx, param.target.MessageId, param.new_content, flags.regex, flags.mutate_space, flags.append, flags.prepend, flags.clear_embeds, flags.clear_attachments)),
-            Commands.MessageReproxy(var param, _) => ctx.Execute<ProxiedMessage>(MessageReproxy, m => m.ReproxyMessage(ctx, param.target.MessageId)),
+            Commands.MessageReproxy(var param, _) => ctx.Execute<ProxiedMessage>(MessageReproxy, m => m.ReproxyMessage(ctx, param.msg.MessageId, param.member)),
             Commands.Import(var param, _) => ctx.Execute<ImportExport>(Import, m => m.Import(ctx, param.url)),
             Commands.Export(_, _) => ctx.Execute<ImportExport>(Export, m => m.Export(ctx)),
+            Commands.AdminUpdateSystemId(var param, _) => ctx.Execute<Admin>(null, m => m.UpdateSystemId(ctx, param.target, param.new_hid)),
+            Commands.AdminUpdateMemberId(var param, _) => ctx.Execute<Admin>(null, m => m.UpdateMemberId(ctx, param.target, param.new_hid)),
+            Commands.AdminUpdateGroupId(var param, _) => ctx.Execute<Admin>(null, m => m.UpdateGroupId(ctx, param.target, param.new_hid)),
+            Commands.AdminRerollSystemId(var param, _) => ctx.Execute<Admin>(null, m => m.RerollSystemId(ctx, param.target)),
+            Commands.AdminRerollMemberId(var param, _) => ctx.Execute<Admin>(null, m => m.RerollMemberId(ctx, param.target)),
+            Commands.AdminRerollGroupId(var param, _) => ctx.Execute<Admin>(null, m => m.RerollGroupId(ctx, param.target)),
+            Commands.AdminSystemMemberLimit(var param, _) => ctx.Execute<Admin>(null, m => m.SystemMemberLimit(ctx, param.target, param.limit)),
+            Commands.AdminSystemGroupLimit(var param, _) => ctx.Execute<Admin>(null, m => m.SystemGroupLimit(ctx, param.target, param.limit)),
+            Commands.AdminSystemRecover(var param, var flags) => ctx.Execute<Admin>(null, m => m.SystemRecover(ctx, param.token, param.account, flags.reroll_token)),
+            Commands.AdminSystemDelete(var param, _) => ctx.Execute<Admin>(null, m => m.SystemDelete(ctx, param.target)),
+            Commands.AdminSendMessage(var param, _) => ctx.Execute<Admin>(null, m => m.SendAdminMessage(ctx, param.account, param.content)),
+            Commands.AdminAbuselogCreate(var param, var flags) => ctx.Execute<Admin>(null, m => m.AbuseLogCreate(ctx, param.account, flags.deny_boy_usage, param.description)),
+            Commands.AdminAbuselogShowAccount(var param, _) => ctx.Execute<Admin>(null, m => m.AbuseLogShow(ctx, param.account, null)),
+            Commands.AdminAbuselogFlagDenyAccount(var param, _) => ctx.Execute<Admin>(null, m => m.AbuseLogFlagDeny(ctx, param.account, null, param.value)),
+            Commands.AdminAbuselogDescriptionAccount(var param, var flags) => ctx.Execute<Admin>(null, m => m.AbuseLogDescription(ctx, param.account, null, param.desc, flags.clear)),
+            Commands.AdminAbuselogAddUserAccount(var param, _) => ctx.Execute<Admin>(null, m => m.AbuseLogAddUser(ctx, param.account, null, ctx.Author)),
+            Commands.AdminAbuselogRemoveUserAccount(var param, _) => ctx.Execute<Admin>(null, m => m.AbuseLogRemoveUser(ctx, param.account, null, ctx.Author)),
+            Commands.AdminAbuselogDeleteAccount(var param, _) => ctx.Execute<Admin>(null, m => m.AbuseLogDelete(ctx, param.account, null)),
+            Commands.AdminAbuselogShowLogId(var param, _) => ctx.Execute<Admin>(null, m => m.AbuseLogShow(ctx, null, param.log_id)),
+            Commands.AdminAbuselogFlagDenyLogId(var param, _) => ctx.Execute<Admin>(null, m => m.AbuseLogFlagDeny(ctx, null, param.log_id, param.value)),
+            Commands.AdminAbuselogDescriptionLogId(var param, var flags) => ctx.Execute<Admin>(null, m => m.AbuseLogDescription(ctx, null, param.log_id, param.desc, flags.clear)),
+            Commands.AdminAbuselogAddUserLogId(var param, _) => ctx.Execute<Admin>(null, m => m.AbuseLogAddUser(ctx, null, param.log_id, ctx.Author)),
+            Commands.AdminAbuselogRemoveUserLogId(var param, _) => ctx.Execute<Admin>(null, m => m.AbuseLogRemoveUser(ctx, null, param.log_id, ctx.Author)),
+            Commands.AdminAbuselogDeleteLogId(var param, _) => ctx.Execute<Admin>(null, m => m.AbuseLogDelete(ctx, null, param.log_id)),
             _ =>
             // this should only ever occur when deving if commands are not implemented...
             ctx.Reply(
@@ -282,82 +307,6 @@ public partial class CommandTree
                 return ctx.Reply($"{Emojis.Warn} Blacklist commands have moved to `{ctx.DefaultPrefix}serverconfig`.");
         if (ctx.Match("invite")) return ctx.Execute<Misc>(Invite, m => m.Invite(ctx));
         if (ctx.Match("stats", "status")) return ctx.Execute<Misc>(null, m => m.Stats(ctx));
-        if (ctx.Match("admin"))
-            return HandleAdminCommand(ctx);
-        if (ctx.Match("dashboard", "dash"))
-            return ctx.Execute<Help>(Dashboard, m => m.Dashboard(ctx));
-    }
-
-    private async Task HandleAdminAbuseLogCommand(Context ctx)
-    {
-        ctx.AssertBotAdmin();
-
-        if (ctx.Match("n", "new", "create"))
-            await ctx.Execute<Admin>(Admin, a => a.AbuseLogCreate(ctx));
-        else
-        {
-            AbuseLog? abuseLog = null!;
-            var account = await ctx.MatchUser();
-            if (account != null)
-            {
-                abuseLog = await ctx.Repository.GetAbuseLogByAccount(account.Id);
-            }
-            else
-            {
-                abuseLog = await ctx.Repository.GetAbuseLogByGuid(new Guid(ctx.PopArgument()));
-            }
-
-            if (abuseLog == null)
-            {
-                await ctx.Reply($"{Emojis.Error} Could not find an existing abuse log entry for that query.");
-                return;
-            }
-
-            if (!ctx.HasNext())
-                await ctx.Execute<Admin>(Admin, a => a.AbuseLogShow(ctx, abuseLog));
-            else if (ctx.Match("au", "adduser"))
-                await ctx.Execute<Admin>(Admin, a => a.AbuseLogAddUser(ctx, abuseLog));
-            else if (ctx.Match("ru", "removeuser"))
-                await ctx.Execute<Admin>(Admin, a => a.AbuseLogRemoveUser(ctx, abuseLog));
-            else if (ctx.Match("desc", "description"))
-                await ctx.Execute<Admin>(Admin, a => a.AbuseLogDescription(ctx, abuseLog));
-            else if (ctx.Match("deny", "deny-bot-usage"))
-                await ctx.Execute<Admin>(Admin, a => a.AbuseLogFlagDeny(ctx, abuseLog));
-            else if (ctx.Match("yeet", "remove", "delete"))
-                await ctx.Execute<Admin>(Admin, a => a.AbuseLogDelete(ctx, abuseLog));
-            else
-                await ctx.Reply($"{Emojis.Error} Unknown subcommand {ctx.PeekArgument().AsCode()}.");
-        }
-    }
-
-    private async Task HandleAdminCommand(Context ctx)
-    {
-        if (ctx.Match("usid", "updatesystemid"))
-            await ctx.Execute<Admin>(Admin, a => a.UpdateSystemId(ctx));
-        else if (ctx.Match("umid", "updatememberid"))
-            await ctx.Execute<Admin>(Admin, a => a.UpdateMemberId(ctx));
-        else if (ctx.Match("ugid", "updategroupid"))
-            await ctx.Execute<Admin>(Admin, a => a.UpdateGroupId(ctx));
-        else if (ctx.Match("rsid", "rerollsystemid"))
-            await ctx.Execute<Admin>(Admin, a => a.RerollSystemId(ctx));
-        else if (ctx.Match("rmid", "rerollmemberid"))
-            await ctx.Execute<Admin>(Admin, a => a.RerollMemberId(ctx));
-        else if (ctx.Match("rgid", "rerollgroupid"))
-            await ctx.Execute<Admin>(Admin, a => a.RerollGroupId(ctx));
-        else if (ctx.Match("uml", "updatememberlimit"))
-            await ctx.Execute<Admin>(Admin, a => a.SystemMemberLimit(ctx));
-        else if (ctx.Match("ugl", "updategrouplimit"))
-            await ctx.Execute<Admin>(Admin, a => a.SystemGroupLimit(ctx));
-        else if (ctx.Match("sr", "systemrecover"))
-            await ctx.Execute<Admin>(Admin, a => a.SystemRecover(ctx));
-        else if (ctx.Match("sd", "systemdelete"))
-            await ctx.Execute<Admin>(Admin, a => a.SystemDelete(ctx));
-        else if (ctx.Match("sendmsg", "sendmessage"))
-            await ctx.Execute<Admin>(Admin, a => a.SendAdminMessage(ctx));
-        else if (ctx.Match("al", "abuselog"))
-            await HandleAdminAbuseLogCommand(ctx);
-        else
-            await ctx.Reply($"{Emojis.Error} Unknown command.");
     }
 
     private async Task CommandHelpRoot(Context ctx)

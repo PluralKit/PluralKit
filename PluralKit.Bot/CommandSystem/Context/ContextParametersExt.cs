@@ -1,4 +1,5 @@
 using PluralKit.Core;
+using Myriad.Types;
 
 namespace PluralKit.Bot;
 
@@ -9,6 +10,14 @@ public static class ContextParametersExt
         return await ctx.Parameters.ResolveParameter(
             ctx, param_name,
             param => (param as Parameter.Opaque)?.value
+        );
+    }
+
+    public static async Task<int?> ParamResolveNumber(this Context ctx, string param_name)
+    {
+        return await ctx.Parameters.ResolveParameter(
+            ctx, param_name,
+            param => (param as Parameter.Number)?.value
         );
     }
 
@@ -49,6 +58,14 @@ public static class ContextParametersExt
         return await ctx.Parameters.ResolveParameter(
             ctx, param_name,
             param => (param as Parameter.SystemRef)?.system
+        );
+    }
+
+    public static async Task<User?> ParamResolveUser(this Context ctx, string param_name)
+    {
+        return await ctx.Parameters.ResolveParameter(
+            ctx, param_name,
+            param => (param as Parameter.UserRef)?.user
         );
     }
 

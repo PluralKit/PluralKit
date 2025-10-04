@@ -1,5 +1,6 @@
 using Humanizer;
 using Myriad.Types;
+using Myriad.Extensions;
 using PluralKit.Core;
 using uniffi.commands;
 
@@ -13,6 +14,7 @@ public abstract record Parameter()
     public record GroupRef(PKGroup group): Parameter;
     public record GroupRefs(List<PKGroup> groups): Parameter;
     public record SystemRef(PKSystem system): Parameter;
+    public record UserRef(User user): Parameter;
     public record MessageRef(Message.Reference message): Parameter;
     public record ChannelRef(Channel channel): Parameter;
     public record GuildRef(Guild guild): Parameter;
@@ -22,6 +24,7 @@ public abstract record Parameter()
     public record PrivacyLevel(Core.PrivacyLevel level): Parameter;
     public record Toggle(bool value): Parameter;
     public record Opaque(string value): Parameter;
+    public record Number(int value): Parameter;
     public record Avatar(ParsedImage avatar): Parameter;
 }
 
@@ -96,6 +99,11 @@ public class Parameters
                     await ctx.ParseSystem(systemRef.system)
                     ?? throw new PKError(ctx.CreateNotFoundError("System", systemRef.system))
                 );
+            case uniffi.commands.Parameter.UserRef(var userId):
+                return new Parameter.UserRef(
+                    await ctx.Cache.GetOrFetchUser(ctx.Rest, userId)
+                    ?? throw new PKError(ctx.CreateNotFoundError("User", userId.ToString()))
+                );
             // todo(dusk): ideally generate enums for these from rust code in the cs glue
             case uniffi.commands.Parameter.MemberPrivacyTarget memberPrivacyTarget:
                 // this should never really fail...
@@ -118,6 +126,8 @@ public class Parameters
                 return new Parameter.Toggle(toggle.toggle);
             case uniffi.commands.Parameter.OpaqueString opaque:
                 return new Parameter.Opaque(opaque.raw);
+            case uniffi.commands.Parameter.OpaqueInt number:
+                return new Parameter.Number(number.raw);
             case uniffi.commands.Parameter.Avatar avatar:
                 return new Parameter.Avatar(await ctx.GetUserPfp(avatar.avatar) ?? ctx.ParseImage(avatar.avatar));
             case uniffi.commands.Parameter.MessageRef(var guildId, var channelId, var messageId):

@@ -58,16 +58,14 @@ public class ProxiedMessage
         _redisService = redisService;
     }
 
-    public async Task ReproxyMessage(Context ctx, ulong? messageId)
+    public async Task ReproxyMessage(Context ctx, ulong? messageId, PKMember target)
     {
         var (msg, systemId) = await GetMessageToEdit(ctx, messageId, ReproxyTimeout, true);
 
         if (ctx.System.Id != systemId)
             throw new PKError("Can't reproxy a message sent by a different system.");
 
-        // Get target member ID
-        var target = await ctx.MatchMember(restrictToSystem: ctx.System.Id);
-        if (target == null)
+        if (target == null || target.System != ctx.System.Id)
             throw new PKError("Could not find a member to reproxy the message with.");
 
         // Fetch members and get the ProxyMember for `target`

@@ -5,9 +5,7 @@ pub fn cmds() -> impl Iterator<Item = Command> {
     [
         command!(("dashboard", ["dash"]) => "dashboard"),
         command!("explain" => "explain"),
-        command!(help => "help")
-            .flag(("foo", OpaqueString)) // todo: just for testing
-            .help("Shows the help command"),
+        command!(help => "help").help("Shows the help command"),
         command!(help, "commands" => "help_commands").help("help commands"),
         command!(help, "proxy" => "help_proxy").help("help proxy"),
     ]

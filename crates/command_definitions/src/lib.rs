@@ -3,7 +3,6 @@ pub mod api;
 pub mod autoproxy;
 pub mod commands;
 pub mod config;
-pub mod dashboard;
 pub mod debug;
 pub mod fun;
 pub mod group;
@@ -40,10 +39,12 @@ pub fn all() -> impl Iterator<Item = Command> {
         .chain(debug::cmds())
         .chain(message::cmds())
         .chain(import_export::cmds())
+        .chain(admin::cmds())
         .map(|cmd| {
             cmd.hidden_flag(("plaintext", ["pt"]))
                 .hidden_flag(("raw", ["r"]))
                 .hidden_flag(("show-embed", ["se"]))
+                .hidden_flag(("by-id", ["id"]))
         })
 }
 

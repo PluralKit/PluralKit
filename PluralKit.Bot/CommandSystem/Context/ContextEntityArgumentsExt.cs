@@ -18,37 +18,6 @@ public static class ContextEntityArgumentsExt
         return null;
     }
 
-    public static async Task<User> MatchUser(this Context ctx)
-    {
-        var text = ctx.PeekArgument();
-        if (text.TryParseMention(out var id))
-        {
-            var user = await ctx.Cache.GetOrFetchUser(ctx.Rest, id);
-            if (user != null) ctx.PopArgument();
-            return user;
-        }
-
-        return null;
-    }
-
-    public static bool MatchUserRaw(this Context ctx, out ulong id)
-    {
-        id = 0;
-
-        var text = ctx.PeekArgument();
-        if (text.TryParseMention(out var mentionId))
-            id = mentionId;
-
-        return id != 0;
-    }
-
-    public static Task<PKSystem> PeekSystem(this Context ctx) => throw new NotImplementedException();
-
-    public static async Task<PKSystem> MatchSystem(this Context ctx)
-    {
-        throw new NotImplementedException();
-    }
-
     public static async Task<PKSystem> ParseSystem(this Context ctx, string input)
     {
         // System references can take three forms:
@@ -67,7 +36,7 @@ public static class ContextEntityArgumentsExt
         return null;
     }
 
-    public static async Task<PKMember> ParseMember(this Context ctx, string input, bool byId, SystemId? restrictToSystem = null)
+    public static async Task<PKMember?> ParseMember(this Context ctx, string input, bool byId)
     {
         // Member references can have one of three forms, depending on
         // whether you're in a system or not:
@@ -100,51 +69,20 @@ public static class ContextEntityArgumentsExt
 
         // If we are supposed to restrict it to a system anyway we can just do that
         PKMember memberByHid = null;
-        if (restrictToSystem != null)
-        {
-            memberByHid = await ctx.Repository.GetMemberByHid(hid, restrictToSystem);
-            if (memberByHid != null)
-                return memberByHid;
-        }
-        // otherwise we try the querier's system and if that doesn't work we do global
-        else
-        {
-            memberByHid = await ctx.Repository.GetMemberByHid(hid, ctx.System?.Id);
-            if (memberByHid != null)
-                return memberByHid;
+        memberByHid = await ctx.Repository.GetMemberByHid(hid, ctx.System?.Id);
+        if (memberByHid != null)
+            return memberByHid;
 
-            // ff ctx.System was null then this would be a duplicate of above and we don't want to run it again
-            if (ctx.System != null)
-            {
-                memberByHid = await ctx.Repository.GetMemberByHid(hid);
-                if (memberByHid != null)
-                    return memberByHid;
-            }
+        // ff ctx.System was null then this would be a duplicate of above and we don't want to run it again
+        if (ctx.System != null)
+        {
+            memberByHid = await ctx.Repository.GetMemberByHid(hid);
+            if (memberByHid != null)
+                return memberByHid;
         }
 
         // We didn't find anything, so we return null.
         return null;
-    }
-
-    public static async Task<PKMember> PeekMember(this Context ctx, SystemId? restrictToSystem = null)
-    {
-        throw new NotImplementedException();
-    }
-
-    /// <summary>
-    /// Attempts to pop a member descriptor from the stack, returning it if present. If a member could not be
-    /// resolved by the next word in the argument stack, does *not* touch the stack, and returns null.
-    /// </summary>
-    public static async Task<PKMember> MatchMember(this Context ctx, SystemId? restrictToSystem = null)
-    {
-        // First, peek a member
-        var member = await ctx.PeekMember(restrictToSystem);
-
-        // If the peek was successful, we've used up the next argument, so we pop that just to get rid of it.
-        if (member != null) ctx.PopArgument();
-
-        // Finally, we return the member value.
-        return member;
     }
 
     public static async Task<PKGroup> ParseGroup(this Context ctx, string input, bool byId, SystemId? restrictToSystem = null)
@@ -164,18 +102,6 @@ public static class ContextEntityArgumentsExt
             return byHid;
 
         return null;
-    }
-
-    public static async Task<PKGroup> PeekGroup(this Context ctx, SystemId? restrictToSystem = null)
-    {
-        throw new NotImplementedException();
-    }
-
-    public static async Task<PKGroup> MatchGroup(this Context ctx, SystemId? restrictToSystem = null)
-    {
-        var group = await ctx.PeekGroup(restrictToSystem);
-        if (group != null) ctx.PopArgument();
-        return group;
     }
 
     public static string CreateNotFoundError(this Context ctx, string entity, string input, bool byId = false)

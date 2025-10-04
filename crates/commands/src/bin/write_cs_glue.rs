@@ -260,11 +260,13 @@ fn command_callback_to_name(cb: &str) -> String {
 fn get_param_ty(kind: ParameterKind) -> &'static str {
     match kind {
         ParameterKind::OpaqueString | ParameterKind::OpaqueStringRemainder => "string",
+        ParameterKind::OpaqueInt => "int",
         ParameterKind::MemberRef => "PKMember",
         ParameterKind::MemberRefs => "List<PKMember>",
         ParameterKind::GroupRef => "PKGroup",
         ParameterKind::GroupRefs => "List<PKGroup>",
         ParameterKind::SystemRef => "PKSystem",
+        ParameterKind::UserRef => "User",
         ParameterKind::MemberPrivacyTarget => "MemberPrivacySubject",
         ParameterKind::GroupPrivacyTarget => "GroupPrivacySubject",
         ParameterKind::SystemPrivacyTarget => "SystemPrivacySubject",
@@ -280,11 +282,13 @@ fn get_param_ty(kind: ParameterKind) -> &'static str {
 fn get_param_param_ty(kind: ParameterKind) -> &'static str {
     match kind {
         ParameterKind::OpaqueString | ParameterKind::OpaqueStringRemainder => "Opaque",
+        ParameterKind::OpaqueInt => "Number",
         ParameterKind::MemberRef => "Member",
         ParameterKind::MemberRefs => "Members",
         ParameterKind::GroupRef => "Group",
         ParameterKind::GroupRefs => "Groups",
         ParameterKind::SystemRef => "System",
+        ParameterKind::UserRef => "User",
         ParameterKind::MemberPrivacyTarget => "MemberPrivacyTarget",
         ParameterKind::GroupPrivacyTarget => "GroupPrivacyTarget",
         ParameterKind::SystemPrivacyTarget => "SystemPrivacyTarget",
