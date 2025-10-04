@@ -252,8 +252,8 @@ pub fn edit() -> impl Iterator<Item = Command> {
     .into_iter();
 
     let system_link = [
-        command!("link" => "system_link"),
-        command!("unlink", ("target", OpaqueString) => "system_unlink"),
+        command!("link", ("account", UserRef) => "system_link"),
+        command!("unlink", ("account", OpaqueString) => "system_unlink"),
     ]
     .into_iter();
 

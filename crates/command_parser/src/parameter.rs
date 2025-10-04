@@ -27,6 +27,7 @@ pub enum ParameterValue {
     PrivacyLevel(String),
     Toggle(bool),
     Avatar(String),
+    ProxySwitchAction(ProxySwitchAction),
     Null,
 }
 
@@ -179,6 +180,9 @@ impl Parameter {
                 .parse::<u64>()
                 .map(ParameterValue::GuildRef)
                 .map_err(|_| SmolStr::new("invalid guild ID")),
+            ParameterKind::ProxySwitchAction => ProxySwitchAction::from_str(input)
+                .map(ParameterValue::ProxySwitchAction)
+                .map_err(|_| SmolStr::new("invalid proxy switch action, must be new/add/off")),
         }
     }
 }
@@ -208,8 +212,9 @@ impl Display for Parameter {
             ParameterKind::GroupPrivacyTarget => write!(f, "<privacy target>"),
             ParameterKind::SystemPrivacyTarget => write!(f, "<privacy target>"),
             ParameterKind::PrivacyLevel => write!(f, "[privacy level]"),
-            ParameterKind::Toggle => write!(f, "on/off"),
+            ParameterKind::Toggle => write!(f, "<on|off>"),
             ParameterKind::Avatar => write!(f, "<url|@mention>"),
+            ParameterKind::ProxySwitchAction => write!(f, "<new|add|off>"),
         }
     }
 }
@@ -290,6 +295,7 @@ pub enum ParameterKind {
     PrivacyLevel,
     Toggle,
     Avatar,
+    ProxySwitchAction,
 }
 
 impl ParameterKind {
@@ -313,6 +319,7 @@ impl ParameterKind {
             ParameterKind::PrivacyLevel => "privacy_level",
             ParameterKind::Toggle => "toggle",
             ParameterKind::Avatar => "avatar",
+            ParameterKind::ProxySwitchAction => "proxy_switch_action",
         }
     }
 }
@@ -519,5 +526,37 @@ impl Into<bool> for Toggle {
             Toggle::On => true,
             Toggle::Off => false,
         }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum ProxySwitchAction {
+    New,
+    Add,
+    Off,
+}
+
+impl AsRef<str> for ProxySwitchAction {
+    fn as_ref(&self) -> &str {
+        match self {
+            ProxySwitchAction::New => "new",
+            ProxySwitchAction::Add => "add",
+            ProxySwitchAction::Off => "off",
+        }
+    }
+}
+
+impl FromStr for ProxySwitchAction {
+    type Err = SmolStr;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        [
+            ProxySwitchAction::New,
+            ProxySwitchAction::Add,
+            ProxySwitchAction::Off,
+        ]
+        .into_iter()
+        .find(|action| action.as_ref() == s)
+        .ok_or_else(|| SmolStr::new("invalid proxy switch action, must be new/add/off"))
     }
 }

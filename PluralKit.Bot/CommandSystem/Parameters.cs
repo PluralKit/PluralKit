@@ -26,6 +26,7 @@ public abstract record Parameter()
     public record Opaque(string value): Parameter;
     public record Number(int value): Parameter;
     public record Avatar(ParsedImage avatar): Parameter;
+    public record ProxySwitchAction(SystemConfig.ProxySwitchAction action): Parameter;
 }
 
 public class Parameters
@@ -122,6 +123,19 @@ public class Parameters
                 return new Parameter.SystemPrivacyTarget(systemPrivacy);
             case uniffi.commands.Parameter.PrivacyLevel privacyLevel:
                 return new Parameter.PrivacyLevel(privacyLevel.level == "public" ? PrivacyLevel.Public : privacyLevel.level == "private" ? PrivacyLevel.Private : throw new PKError($"Invalid privacy level {privacyLevel.level}"));
+            case uniffi.commands.Parameter.ProxySwitchAction(var action):
+                SystemConfig.ProxySwitchAction newVal;
+
+                if (action.Equals("off", StringComparison.InvariantCultureIgnoreCase))
+                    newVal = SystemConfig.ProxySwitchAction.Off;
+                else if (action.Equals("new", StringComparison.InvariantCultureIgnoreCase) || action.Equals("n", StringComparison.InvariantCultureIgnoreCase) || action.Equals("on", StringComparison.InvariantCultureIgnoreCase))
+                    newVal = SystemConfig.ProxySwitchAction.New;
+                else if (action.Equals("add", StringComparison.InvariantCultureIgnoreCase) || action.Equals("a", StringComparison.InvariantCultureIgnoreCase))
+                    newVal = SystemConfig.ProxySwitchAction.Add;
+                else
+                    throw new PKError("You must pass either \"new\", \"add\", or \"off\" to this command.");
+
+                return new Parameter.ProxySwitchAction(newVal);
             case uniffi.commands.Parameter.Toggle toggle:
                 return new Parameter.Toggle(toggle.toggle);
             case uniffi.commands.Parameter.OpaqueString opaque:

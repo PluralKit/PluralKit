@@ -101,6 +101,14 @@ public static class ContextParametersExt
         );
     }
 
+    public static async Task<SystemConfig.ProxySwitchAction?> ParamResolveProxySwitchAction(this Context ctx, string param_name)
+    {
+        return await ctx.Parameters.ResolveParameter(
+            ctx, param_name,
+            param => (param as Parameter.ProxySwitchAction)?.action
+        );
+    }
+
     public static async Task<bool?> ParamResolveToggle(this Context ctx, string param_name)
     {
         return await ctx.Parameters.ResolveParameter(

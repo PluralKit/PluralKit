@@ -70,12 +70,45 @@ public partial class CommandTree
             Commands.MemberGroupAdd(var param, _) => ctx.Execute<GroupMember>(MemberGroupAdd, m => m.AddRemoveGroups(ctx, param.target, param.groups, Groups.AddRemoveOperation.Add)),
             Commands.MemberGroupRemove(var param, _) => ctx.Execute<GroupMember>(MemberGroupRemove, m => m.AddRemoveGroups(ctx, param.target, param.groups, Groups.AddRemoveOperation.Remove)),
             Commands.MemberId(var param, _) => ctx.Execute<Member>(MemberId, m => m.DisplayId(ctx, param.target)),
+            Commands.CfgShow => ctx.Execute<Config>(null, m => m.ShowConfig(ctx)),
             Commands.CfgApAccountShow => ctx.Execute<Config>(null, m => m.ViewAutoproxyAccount(ctx)),
             Commands.CfgApAccountUpdate(var param, _) => ctx.Execute<Config>(null, m => m.EditAutoproxyAccount(ctx, param.toggle)),
             Commands.CfgApTimeoutShow => ctx.Execute<Config>(null, m => m.ViewAutoproxyTimeout(ctx)),
             Commands.CfgApTimeoutOff => ctx.Execute<Config>(null, m => m.DisableAutoproxyTimeout(ctx)),
             Commands.CfgApTimeoutReset => ctx.Execute<Config>(null, m => m.ResetAutoproxyTimeout(ctx)),
             Commands.CfgApTimeoutUpdate(var param, _) => ctx.Execute<Config>(null, m => m.EditAutoproxyTimeout(ctx, param.timeout)),
+            Commands.CfgTimezoneShow => ctx.Execute<Config>(null, m => m.ViewSystemTimezone(ctx)),
+            Commands.CfgTimezoneReset => ctx.Execute<Config>(null, m => m.ResetSystemTimezone(ctx)),
+            Commands.CfgTimezoneUpdate(var param, _) => ctx.Execute<Config>(null, m => m.EditSystemTimezone(ctx, param.timezone)),
+            Commands.CfgPingShow => ctx.Execute<Config>(null, m => m.ViewSystemPing(ctx)),
+            Commands.CfgPingUpdate(var param, _) => ctx.Execute<Config>(null, m => m.EditSystemPing(ctx, param.toggle)),
+            Commands.CfgMemberPrivacyShow => ctx.Execute<Config>(null, m => m.ViewMemberDefaultPrivacy(ctx)),
+            Commands.CfgMemberPrivacyUpdate(var param, _) => ctx.Execute<Config>(null, m => m.EditMemberDefaultPrivacy(ctx, param.toggle)),
+            Commands.CfgGroupPrivacyShow => ctx.Execute<Config>(null, m => m.ViewGroupDefaultPrivacy(ctx)),
+            Commands.CfgGroupPrivacyUpdate(var param, _) => ctx.Execute<Config>(null, m => m.EditGroupDefaultPrivacy(ctx, param.toggle)),
+            Commands.CfgShowPrivateInfoShow => ctx.Execute<Config>(null, m => m.ViewShowPrivateInfo(ctx)),
+            Commands.CfgShowPrivateInfoUpdate(var param, _) => ctx.Execute<Config>(null, m => m.EditShowPrivateInfo(ctx, param.toggle)),
+            Commands.CfgCaseSensitiveProxyTagsShow => ctx.Execute<Config>(null, m => m.ViewCaseSensitiveProxyTags(ctx)),
+            Commands.CfgCaseSensitiveProxyTagsUpdate(var param, _) => ctx.Execute<Config>(null, m => m.EditCaseSensitiveProxyTags(ctx, param.toggle)),
+            Commands.CfgProxyErrorMessageShow => ctx.Execute<Config>(null, m => m.ViewProxyErrorMessageEnabled(ctx)),
+            Commands.CfgProxyErrorMessageUpdate(var param, _) => ctx.Execute<Config>(null, m => m.EditProxyErrorMessageEnabled(ctx, param.toggle)),
+            Commands.CfgHidSplitShow => ctx.Execute<Config>(null, m => m.ViewHidDisplaySplit(ctx)),
+            Commands.CfgHidSplitUpdate(var param, _) => ctx.Execute<Config>(null, m => m.EditHidDisplaySplit(ctx, param.toggle)),
+            Commands.CfgHidCapsShow => ctx.Execute<Config>(null, m => m.ViewHidDisplayCaps(ctx)),
+            Commands.CfgHidCapsUpdate(var param, _) => ctx.Execute<Config>(null, m => m.EditHidDisplayCaps(ctx, param.toggle)),
+            Commands.CfgHidPaddingShow => ctx.Execute<Config>(null, m => m.ViewHidListPadding(ctx)),
+            Commands.CfgHidPaddingUpdate(var param, _) => ctx.Execute<Config>(null, m => m.EditHidListPadding(ctx, param.padding)),
+            Commands.CfgCardShowColorHexShow => ctx.Execute<Config>(null, m => m.ViewCardShowColorHex(ctx)),
+            Commands.CfgCardShowColorHexUpdate(var param, _) => ctx.Execute<Config>(null, m => m.EditCardShowColorHex(ctx, param.toggle)),
+            Commands.CfgProxySwitchShow => ctx.Execute<Config>(null, m => m.ViewProxySwitch(ctx)),
+            Commands.CfgProxySwitchUpdate(var param, _) => ctx.Execute<Config>(null, m => m.EditProxySwitch(ctx, param.proxy_switch_action)),
+            Commands.CfgNameFormatShow => ctx.Execute<Config>(null, m => m.ViewNameFormat(ctx)),
+            Commands.CfgNameFormatReset => ctx.Execute<Config>(null, m => m.ResetNameFormat(ctx)),
+            Commands.CfgNameFormatUpdate(var param, _) => ctx.Execute<Config>(null, m => m.EditNameFormat(ctx, param.format)),
+            Commands.CfgServerNameFormatShow(_, var flags) => ctx.Execute<Config>(null, m => m.ViewServerNameFormat(ctx, flags.GetReplyFormat())),
+            Commands.CfgServerNameFormatReset => ctx.Execute<Config>(null, m => m.ResetServerNameFormat(ctx)),
+            Commands.CfgServerNameFormatUpdate(var param, _) => ctx.Execute<Config>(null, m => m.EditServerNameFormat(ctx, param.format)),
+            Commands.CfgLimitsUpdate => ctx.Execute<Config>(null, m => m.LimitUpdate(ctx)),
             Commands.FunThunder => ctx.Execute<Fun>(null, m => m.Thunder(ctx)),
             Commands.FunMeow => ctx.Execute<Fun>(null, m => m.Meow(ctx)),
             Commands.FunPokemon => ctx.Execute<Fun>(null, m => m.Mn(ctx)),
@@ -187,8 +220,8 @@ public partial class CommandTree
                 ? ctx.Execute<Random>(GroupRandom, m => m.Group(ctx, param.target, flags.all, flags.show_embed))
                 : ctx.Execute<Random>(MemberRandom, m => m.Member(ctx, param.target, flags.all, flags.show_embed)),
             Commands.GroupRandomMember(var param, var flags) => ctx.Execute<Random>(GroupMemberRandom, m => m.GroupMember(ctx, param.target, flags)),
-            Commands.SystemLink => ctx.Execute<SystemLink>(Link, m => m.LinkSystem(ctx)),
-            Commands.SystemUnlink(var param, _) => ctx.Execute<SystemLink>(Unlink, m => m.UnlinkAccount(ctx, param.target)),
+            Commands.SystemLink(var param, _) => ctx.Execute<SystemLink>(Link, m => m.LinkSystem(ctx, param.account)),
+            Commands.SystemUnlink(var param, _) => ctx.Execute<SystemLink>(Unlink, m => m.UnlinkAccount(ctx, param.account)),
             Commands.SystemMembersListSelf(var param, var flags) => ctx.Execute<SystemList>(SystemList, m => m.MemberList(ctx, ctx.System, null, flags)),
             Commands.SystemMembersSearchSelf(var param, var flags) => ctx.Execute<SystemList>(SystemFind, m => m.MemberList(ctx, ctx.System, param.query, flags)),
             Commands.SystemMembersList(var param, var flags) => ctx.Execute<SystemList>(SystemList, m => m.MemberList(ctx, param.target, null, flags)),
@@ -279,8 +312,6 @@ public partial class CommandTree
         };
         if (ctx.Match("commands", "cmd", "c"))
             return CommandHelpRoot(ctx);
-        if (ctx.Match("config", "cfg", "configure"))
-            return HandleConfigCommand(ctx);
         if (ctx.Match("serverconfig", "guildconfig", "scfg"))
             return HandleServerConfigCommand(ctx);
         if (ctx.Match("log"))
@@ -369,49 +400,6 @@ public partial class CommandTree
                 await ctx.Reply("For the full list of commands, see the website: <https://pluralkit.me/commands>");
                 break;
         }
-    }
-
-    private Task HandleConfigCommand(Context ctx)
-    {
-        if (ctx.System == null)
-            return ctx.Reply($"{Emojis.Error} {Errors.NoSystemError(ctx.DefaultPrefix).Message}");
-
-        if (!ctx.HasNext())
-            return ctx.Execute<Config>(null, m => m.ShowConfig(ctx));
-
-        if (ctx.Match("timezone", "zone", "tz"))
-            return ctx.Execute<Config>(null, m => m.SystemTimezone(ctx));
-        if (ctx.Match("ping"))
-            return ctx.Execute<Config>(null, m => m.SystemPing(ctx));
-        if (ctx.MatchMultiple(new[] { "private" }, new[] { "member" }) || ctx.Match("mp"))
-            return ctx.Execute<Config>(null, m => m.MemberDefaultPrivacy(ctx));
-        if (ctx.MatchMultiple(new[] { "private" }, new[] { "group" }) || ctx.Match("gp"))
-            return ctx.Execute<Config>(null, m => m.GroupDefaultPrivacy(ctx));
-        if (ctx.MatchMultiple(new[] { "show" }, new[] { "private" }) || ctx.Match("sp"))
-            return ctx.Execute<Config>(null, m => m.ShowPrivateInfo(ctx));
-        if (ctx.MatchMultiple(new[] { "proxy" }, new[] { "case" }))
-            return ctx.Execute<Config>(null, m => m.CaseSensitiveProxyTags(ctx));
-        if (ctx.MatchMultiple(new[] { "proxy" }, new[] { "error" }) || ctx.Match("pe"))
-            return ctx.Execute<Config>(null, m => m.ProxyErrorMessageEnabled(ctx));
-        if (ctx.MatchMultiple(new[] { "split" }, new[] { "id", "ids" }) || ctx.Match("sid", "sids"))
-            return ctx.Execute<Config>(null, m => m.HidDisplaySplit(ctx));
-        if (ctx.MatchMultiple(new[] { "cap", "caps", "capitalize", "capitalise" }, new[] { "id", "ids" }) || ctx.Match("capid", "capids"))
-            return ctx.Execute<Config>(null, m => m.HidDisplayCaps(ctx));
-        if (ctx.MatchMultiple(new[] { "pad" }, new[] { "id", "ids" }) || ctx.MatchMultiple(new[] { "id" }, new[] { "pad", "padding" }) || ctx.Match("idpad", "padid", "padids"))
-            return ctx.Execute<Config>(null, m => m.HidListPadding(ctx));
-        if (ctx.MatchMultiple(new[] { "show" }, new[] { "color", "colour", "colors", "colours" }) || ctx.Match("showcolor", "showcolour", "showcolors", "showcolours", "colorcode", "colorhex"))
-            return ctx.Execute<Config>(null, m => m.CardShowColorHex(ctx));
-        if (ctx.MatchMultiple(new[] { "name" }, new[] { "format" }) || ctx.Match("nameformat", "nf"))
-            return ctx.Execute<Config>(null, m => m.NameFormat(ctx));
-        if (ctx.MatchMultiple(new[] { "member", "group" }, new[] { "limit" }) || ctx.Match("limit"))
-            return ctx.Execute<Config>(null, m => m.LimitUpdate(ctx));
-        if (ctx.MatchMultiple(new[] { "proxy" }, new[] { "switch" }) || ctx.Match("proxyswitch", "ps"))
-            return ctx.Execute<Config>(null, m => m.ProxySwitch(ctx));
-        if (ctx.MatchMultiple(new[] { "server" }, new[] { "name" }, new[] { "format" }) || ctx.MatchMultiple(new[] { "server", "servername" }, new[] { "format", "nameformat", "nf" }) || ctx.Match("snf", "servernf", "servernameformat", "snameformat"))
-            return ctx.Execute<Config>(null, m => m.ServerNameFormat(ctx));
-
-        // todo: maybe add the list of configuration keys here?
-        return ctx.Reply($"{Emojis.Error} Could not find a setting with that name. Please see `{ctx.DefaultPrefix}commands config` for the list of possible config settings.");
     }
 
     private Task HandleServerConfigCommand(Context ctx)

@@ -276,6 +276,7 @@ fn get_param_ty(kind: ParameterKind) -> &'static str {
         ParameterKind::MessageRef => "Message.Reference",
         ParameterKind::ChannelRef => "Channel",
         ParameterKind::GuildRef => "Guild",
+        ParameterKind::ProxySwitchAction => "SystemConfig.ProxySwitchAction",
     }
 }
 
@@ -298,6 +299,7 @@ fn get_param_param_ty(kind: ParameterKind) -> &'static str {
         ParameterKind::MessageRef => "Message",
         ParameterKind::ChannelRef => "Channel",
         ParameterKind::GuildRef => "Guild",
+        ParameterKind::ProxySwitchAction => "ProxySwitchAction",
     }
 }
 

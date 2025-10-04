@@ -75,6 +75,9 @@ pub enum Parameter {
     Avatar {
         avatar: String,
     },
+    ProxySwitchAction {
+        action: String,
+    },
     Null,
 }
 
@@ -103,6 +106,9 @@ impl From<ParameterValue> for Parameter {
             ParameterValue::ChannelRef(channel_id) => Self::ChannelRef { channel_id },
             ParameterValue::GuildRef(guild_id) => Self::GuildRef { guild_id },
             ParameterValue::Null => Self::Null,
+            ParameterValue::ProxySwitchAction(action) => Self::ProxySwitchAction {
+                action: action.as_ref().to_string(),
+            },
         }
     }
 }

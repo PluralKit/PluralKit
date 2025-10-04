@@ -25,6 +25,7 @@ interface Parameter {
 	OpaqueInt(i32 raw);
 	Toggle(boolean toggle);
 	Avatar(string avatar);
+	ProxySwitchAction(string action);
 	Null();
 };
 dictionary ParsedCommand {

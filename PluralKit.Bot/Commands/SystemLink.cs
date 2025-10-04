@@ -1,4 +1,5 @@
 using Myriad.Extensions;
+using Myriad.Types;
 
 using PluralKit.Core;
 
@@ -6,12 +7,10 @@ namespace PluralKit.Bot;
 
 public class SystemLink
 {
-    public async Task LinkSystem(Context ctx)
+    public async Task LinkSystem(Context ctx, User account)
     {
         ctx.CheckSystem();
 
-        var account = await ctx.MatchUser() ??
-                      throw new PKSyntaxError("You must pass an account to link with (either ID or @mention).");
         var accountIds = await ctx.Repository.GetSystemAccounts(ctx.System.Id);
         if (accountIds.Contains(account.Id))
             throw Errors.AccountAlreadyLinked;
