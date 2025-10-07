@@ -31,6 +31,7 @@ pub fn all() -> impl Iterator<Item = Command> {
         .chain(group::cmds())
         .chain(member::cmds())
         .chain(config::cmds())
+        .chain(server_config::cmds())
         .chain(fun::cmds())
         .chain(switch::cmds())
         .chain(random::cmds())
@@ -40,6 +41,7 @@ pub fn all() -> impl Iterator<Item = Command> {
         .chain(message::cmds())
         .chain(import_export::cmds())
         .chain(admin::cmds())
+        .chain(misc::cmds())
         .map(|cmd| {
             cmd.hidden_flag(("plaintext", ["pt"]))
                 .hidden_flag(("raw", ["r"]))

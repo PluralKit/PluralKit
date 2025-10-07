@@ -281,6 +281,24 @@ public partial class CommandTree
             Commands.MessageReproxy(var param, _) => ctx.Execute<ProxiedMessage>(MessageReproxy, m => m.ReproxyMessage(ctx, param.msg.MessageId, param.member)),
             Commands.Import(var param, _) => ctx.Execute<ImportExport>(Import, m => m.Import(ctx, param.url)),
             Commands.Export(_, _) => ctx.Execute<ImportExport>(Export, m => m.Export(ctx)),
+            Commands.ServerConfigShow => ctx.Execute<ServerConfig>(null, m => m.ShowConfig(ctx)),
+            Commands.ServerConfigLogChannelShow => ctx.Execute<ServerConfig>(null, m => m.ShowLogChannel(ctx)),
+            Commands.ServerConfigLogChannelSet(var param, _) => ctx.Execute<ServerConfig>(null, m => m.SetLogChannel(ctx, param.channel)),
+            Commands.ServerConfigLogChannelClear => ctx.Execute<ServerConfig>(null, m => m.ClearLogChannel(ctx)),
+            Commands.ServerConfigLogCleanupShow => ctx.Execute<ServerConfig>(null, m => m.ShowLogCleanup(ctx)),
+            Commands.ServerConfigLogCleanupSet(var param, _) => ctx.Execute<ServerConfig>(null, m => m.SetLogCleanup(ctx, param.toggle)),
+            Commands.ServerConfigLogBlacklistShow => ctx.Execute<ServerConfig>(null, m => m.ShowLogBlacklist(ctx)),
+            Commands.ServerConfigLogBlacklistAdd(var param, var flags) => ctx.Execute<ServerConfig>(null, m => m.AddLogBlacklist(ctx, param.channel, flags.all)),
+            Commands.ServerConfigLogBlacklistRemove(var param, var flags) => ctx.Execute<ServerConfig>(null, m => m.RemoveLogBlacklist(ctx, param.channel, flags.all)),
+            Commands.ServerConfigProxyBlacklistShow => ctx.Execute<ServerConfig>(null, m => m.ShowProxyBlacklist(ctx)),
+            Commands.ServerConfigProxyBlacklistAdd(var param, var flags) => ctx.Execute<ServerConfig>(null, m => m.AddProxyBlacklist(ctx, param.channel, flags.all)),
+            Commands.ServerConfigProxyBlacklistRemove(var param, var flags) => ctx.Execute<ServerConfig>(null, m => m.RemoveProxyBlacklist(ctx, param.channel, flags.all)),
+            Commands.ServerConfigInvalidCommandResponseShow => ctx.Execute<ServerConfig>(null, m => m.ShowInvalidCommandResponse(ctx)),
+            Commands.ServerConfigInvalidCommandResponseSet(var param, _) => ctx.Execute<ServerConfig>(null, m => m.SetInvalidCommandResponse(ctx, param.toggle)),
+            Commands.ServerConfigRequireSystemTagShow => ctx.Execute<ServerConfig>(null, m => m.ShowRequireSystemTag(ctx)),
+            Commands.ServerConfigRequireSystemTagSet(var param, _) => ctx.Execute<ServerConfig>(null, m => m.SetRequireSystemTag(ctx, param.toggle)),
+            Commands.ServerConfigSuppressNotificationsShow => ctx.Execute<ServerConfig>(null, m => m.ShowSuppressNotifications(ctx)),
+            Commands.ServerConfigSuppressNotificationsSet(var param, _) => ctx.Execute<ServerConfig>(null, m => m.SetSuppressNotifications(ctx, param.toggle)),
             Commands.AdminUpdateSystemId(var param, _) => ctx.Execute<Admin>(null, m => m.UpdateSystemId(ctx, param.target, param.new_hid)),
             Commands.AdminUpdateMemberId(var param, _) => ctx.Execute<Admin>(null, m => m.UpdateMemberId(ctx, param.target, param.new_hid)),
             Commands.AdminUpdateGroupId(var param, _) => ctx.Execute<Admin>(null, m => m.UpdateGroupId(ctx, param.target, param.new_hid)),
@@ -310,32 +328,9 @@ public partial class CommandTree
             ctx.Reply(
                 $"{Emojis.Error} Parsed command {ctx.Parameters.Callback().AsCode()} not implemented in PluralKit.Bot!"),
         };
+        // Legacy command routing - these are kept for backwards compatibility until fully migrated to new system
         if (ctx.Match("commands", "cmd", "c"))
             return CommandHelpRoot(ctx);
-        if (ctx.Match("serverconfig", "guildconfig", "scfg"))
-            return HandleServerConfigCommand(ctx);
-        if (ctx.Match("log"))
-            if (ctx.Match("channel"))
-                return ctx.Execute<ServerConfig>(LogChannel, m => m.SetLogChannel(ctx), true);
-            else if (ctx.Match("enable", "on"))
-                return ctx.Execute<ServerConfig>(LogEnable, m => m.SetLogEnabled(ctx, true), true);
-            else if (ctx.Match("disable", "off"))
-                return ctx.Execute<ServerConfig>(LogDisable, m => m.SetLogEnabled(ctx, false), true);
-            else if (ctx.Match("list", "show"))
-                return ctx.Execute<ServerConfig>(LogShow, m => m.ShowLogDisabledChannels(ctx), true);
-            else
-                return ctx.Reply($"{Emojis.Warn} Message logging commands have moved to `{ctx.DefaultPrefix}serverconfig`.");
-        if (ctx.Match("logclean"))
-            return ctx.Execute<ServerConfig>(ServerConfigLogClean, m => m.SetLogCleanup(ctx), true);
-        if (ctx.Match("blacklist", "bl"))
-            if (ctx.Match("enable", "on", "add", "deny"))
-                return ctx.Execute<ServerConfig>(BlacklistAdd, m => m.SetProxyBlacklisted(ctx, true), true);
-            else if (ctx.Match("disable", "off", "remove", "allow"))
-                return ctx.Execute<ServerConfig>(BlacklistRemove, m => m.SetProxyBlacklisted(ctx, false), true);
-            else if (ctx.Match("list", "show"))
-                return ctx.Execute<ServerConfig>(BlacklistShow, m => m.ShowProxyBlacklisted(ctx), true);
-            else
-                return ctx.Reply($"{Emojis.Warn} Blacklist commands have moved to `{ctx.DefaultPrefix}serverconfig`.");
         if (ctx.Match("invite")) return ctx.Execute<Misc>(Invite, m => m.Invite(ctx));
         if (ctx.Match("stats", "status")) return ctx.Execute<Misc>(null, m => m.Stats(ctx));
     }
@@ -400,43 +395,5 @@ public partial class CommandTree
                 await ctx.Reply("For the full list of commands, see the website: <https://pluralkit.me/commands>");
                 break;
         }
-    }
-
-    private Task HandleServerConfigCommand(Context ctx)
-    {
-        if (!ctx.HasNext())
-            return ctx.Execute<ServerConfig>(null, m => m.ShowConfig(ctx));
-
-        if (ctx.MatchMultiple(new[] { "log" }, new[] { "cleanup", "clean" }) || ctx.Match("logclean"))
-            return ctx.Execute<ServerConfig>(null, m => m.SetLogCleanup(ctx));
-        if (ctx.MatchMultiple(new[] { "invalid", "unknown" }, new[] { "command" }, new[] { "error", "response" }) || ctx.Match("invalidcommanderror", "unknowncommanderror"))
-            return ctx.Execute<ServerConfig>(null, m => m.InvalidCommandResponse(ctx));
-        if (ctx.MatchMultiple(new[] { "require", "enforce" }, new[] { "tag", "systemtag" }) || ctx.Match("requiretag", "enforcetag"))
-            return ctx.Execute<ServerConfig>(null, m => m.RequireSystemTag(ctx));
-        if (ctx.MatchMultiple(new[] { "suppress" }, new[] { "notifications" }) || ctx.Match("proxysilent"))
-            return ctx.Execute<ServerConfig>(null, m => m.SuppressNotifications(ctx));
-        if (ctx.MatchMultiple(new[] { "log" }, new[] { "channel" }))
-            return ctx.Execute<ServerConfig>(null, m => m.SetLogChannel(ctx));
-        if (ctx.MatchMultiple(new[] { "log" }, new[] { "blacklist" }))
-        {
-            if (ctx.Match("enable", "on", "add", "deny"))
-                return ctx.Execute<ServerConfig>(null, m => m.SetLogBlacklisted(ctx, true));
-            else if (ctx.Match("disable", "off", "remove", "allow"))
-                return ctx.Execute<ServerConfig>(null, m => m.SetLogBlacklisted(ctx, false));
-            else
-                return ctx.Execute<ServerConfig>(null, m => m.ShowLogDisabledChannels(ctx));
-        }
-        if (ctx.MatchMultiple(new[] { "proxy", "proxying" }, new[] { "blacklist" }))
-        {
-            if (ctx.Match("enable", "on", "add", "deny"))
-                return ctx.Execute<ServerConfig>(null, m => m.SetProxyBlacklisted(ctx, true));
-            else if (ctx.Match("disable", "off", "remove", "allow"))
-                return ctx.Execute<ServerConfig>(null, m => m.SetProxyBlacklisted(ctx, false));
-            else
-                return ctx.Execute<ServerConfig>(null, m => m.ShowProxyBlacklisted(ctx));
-        }
-
-        // todo: maybe add the list of configuration keys here?
-        return ctx.Reply($"{Emojis.Error} Could not find a setting with that name. Please see `{ctx.DefaultPrefix}commands serverconfig` for the list of possible config settings.");
     }
 }

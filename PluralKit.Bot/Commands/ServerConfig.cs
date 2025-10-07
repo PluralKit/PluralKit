@@ -110,34 +110,27 @@ public class ServerConfig
         );
     }
 
-    public async Task SetLogChannel(Context ctx)
+    public async Task ShowLogChannel(Context ctx)
     {
         await ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
         var settings = await ctx.Repository.GetGuild(ctx.Guild.Id);
 
-        if (ctx.MatchClear() && await ctx.ConfirmClear("the server log channel"))
+        if (settings.LogChannel == null)
         {
-            await ctx.Repository.UpdateGuild(ctx.Guild.Id, new GuildPatch { LogChannel = null });
-            await ctx.Reply($"{Emojis.Success} Proxy logging channel cleared.");
+            await ctx.Reply("This server does not have a log channel set.");
             return;
         }
 
-        if (!ctx.HasNext())
-        {
-            if (settings.LogChannel == null)
-            {
-                await ctx.Reply("This server does not have a log channel set.");
-                return;
-            }
+        await ctx.Reply($"This server's log channel is currently set to <#{settings.LogChannel}>.");
+    }
 
-            await ctx.Reply($"This server's log channel is currently set to <#{settings.LogChannel}>.");
-            return;
-        }
+    public async Task SetLogChannel(Context ctx, Channel channel)
+    {
+        await ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
 
-        Channel channel = null;
-        var channelString = ctx.PeekArgument();
-        channel = await ctx.MatchChannel();
-        if (channel == null || channel.GuildId != ctx.Guild.Id) throw Errors.ChannelNotFound(channelString);
+        if (channel.GuildId != ctx.Guild.Id)
+            throw Errors.ChannelNotFound(channel.Id.ToString());
+
         if (channel.Type != Channel.ChannelType.GuildText && channel.Type != Channel.ChannelType.GuildPublicThread && channel.Type != Channel.ChannelType.GuildPrivateThread)
             throw new PKError("PluralKit cannot log messages to this type of channel.");
 
@@ -151,46 +144,18 @@ public class ServerConfig
         await ctx.Reply($"{Emojis.Success} Proxy logging channel set to <#{channel.Id}>.");
     }
 
-    // legacy behaviour: enable/disable logging for commands
-    // new behaviour is add/remove from log blacklist (see #LogBlacklistNew)
-    public async Task SetLogEnabled(Context ctx, bool enable)
+    public async Task ClearLogChannel(Context ctx)
     {
         await ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
 
-        var affectedChannels = new List<Channel>();
-        if (ctx.Match("all"))
-            affectedChannels = (await _cache.GetGuildChannels(ctx.Guild.Id))
-                .Where(x => x.Type == Channel.ChannelType.GuildText).ToList();
-        else if (!ctx.HasNext()) throw new PKSyntaxError("You must pass one or more #channels.");
-        else
-            while (ctx.HasNext())
-            {
-                var channelString = ctx.PeekArgument();
-                var channel = await ctx.MatchChannel();
-                if (channel == null || channel.GuildId != ctx.Guild.Id) throw Errors.ChannelNotFound(channelString);
-                affectedChannels.Add(channel);
-            }
+        if (!await ctx.ConfirmClear("the server log channel"))
+            return;
 
-        ulong? logChannel = null;
-        var config = await ctx.Repository.GetGuild(ctx.Guild.Id);
-        logChannel = config.LogChannel;
-
-        var blacklist = config.LogBlacklist.ToHashSet();
-        if (enable)
-            blacklist.ExceptWith(affectedChannels.Select(c => c.Id));
-        else
-            blacklist.UnionWith(affectedChannels.Select(c => c.Id));
-
-        await ctx.Repository.UpdateGuild(ctx.Guild.Id, new GuildPatch { LogBlacklist = blacklist.ToArray() });
-
-        await ctx.Reply(
-            $"{Emojis.Success} Message logging for the given channels {(enable ? "enabled" : "disabled")}." +
-            (logChannel == null
-                ? $"\n{Emojis.Warn} Please note that no logging channel is set, so there is nowhere to log messages to. You can set a logging channel using `{ctx.DefaultPrefix}serverconfig log channel #your-log-channel`."
-                : ""));
+        await ctx.Repository.UpdateGuild(ctx.Guild.Id, new GuildPatch { LogChannel = null });
+        await ctx.Reply($"{Emojis.Success} Proxy logging channel cleared.");
     }
 
-    public async Task ShowProxyBlacklisted(Context ctx)
+    public async Task ShowProxyBlacklist(Context ctx)
     {
         await ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
 
@@ -240,14 +205,73 @@ public class ServerConfig
             });
     }
 
-    public async Task ShowLogDisabledChannels(Context ctx)
+    public async Task AddProxyBlacklist(Context ctx, Channel? channel, bool all)
+    {
+        await ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
+
+        var affectedChannels = new List<Channel>();
+        if (all)
+        {
+            affectedChannels = (await _cache.GetGuildChannels(ctx.Guild.Id))
+                .Where(x => DiscordUtils.IsValidGuildChannel(x)).ToList();
+        }
+        else if (channel != null)
+        {
+            if (channel.GuildId != ctx.Guild.Id)
+                throw Errors.ChannelNotFound(channel.Id.ToString());
+            affectedChannels.Add(channel);
+        }
+        else
+        {
+            throw new PKSyntaxError("You must specify a channel or use the --all flag.");
+        }
+
+        var guild = await ctx.Repository.GetGuild(ctx.Guild.Id);
+        var blacklist = guild.Blacklist.ToHashSet();
+        blacklist.UnionWith(affectedChannels.Select(c => c.Id));
+
+        await ctx.Repository.UpdateGuild(ctx.Guild.Id, new GuildPatch { Blacklist = blacklist.ToArray() });
+
+        await ctx.Reply($"{Emojis.Success} {(all ? "All channels" : "Channel")} added to the proxy blacklist.");
+    }
+
+    public async Task RemoveProxyBlacklist(Context ctx, Channel? channel, bool all)
+    {
+        await ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
+
+        var affectedChannels = new List<Channel>();
+        if (all)
+        {
+            affectedChannels = (await _cache.GetGuildChannels(ctx.Guild.Id))
+                .Where(x => DiscordUtils.IsValidGuildChannel(x)).ToList();
+        }
+        else if (channel != null)
+        {
+            if (channel.GuildId != ctx.Guild.Id)
+                throw Errors.ChannelNotFound(channel.Id.ToString());
+            affectedChannels.Add(channel);
+        }
+        else
+        {
+            throw new PKSyntaxError("You must specify a channel or use the --all flag.");
+        }
+
+        var guild = await ctx.Repository.GetGuild(ctx.Guild.Id);
+        var blacklist = guild.Blacklist.ToHashSet();
+        blacklist.ExceptWith(affectedChannels.Select(c => c.Id));
+
+        await ctx.Repository.UpdateGuild(ctx.Guild.Id, new GuildPatch { Blacklist = blacklist.ToArray() });
+
+        await ctx.Reply($"{Emojis.Success} {(all ? "All channels" : "Channel")} removed from the proxy blacklist.");
+    }
+
+    public async Task ShowLogBlacklist(Context ctx)
     {
         await ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
 
         var config = await ctx.Repository.GetGuild(ctx.Guild.Id);
 
         // Resolve all channels from the cache and order by position
-        // todo: GetAllChannels?
         var channels = (await Task.WhenAll(config.LogBlacklist
                 .Select(id => _cache.TryGetChannel(ctx.Guild.Id, id))))
             .Where(c => c != null)
@@ -291,78 +315,75 @@ public class ServerConfig
             });
     }
 
-
-
-    public async Task SetProxyBlacklisted(Context ctx, bool shouldAdd)
+    public async Task AddLogBlacklist(Context ctx, Channel? channel, bool all)
     {
         await ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
 
         var affectedChannels = new List<Channel>();
-        if (ctx.Match("all"))
+        if (all)
+        {
             affectedChannels = (await _cache.GetGuildChannels(ctx.Guild.Id))
-                // All the channel types you can proxy in
                 .Where(x => DiscordUtils.IsValidGuildChannel(x)).ToList();
-        else if (!ctx.HasNext()) throw new PKSyntaxError("You must pass one or more #channels.");
+        }
+        else if (channel != null)
+        {
+            if (channel.GuildId != ctx.Guild.Id)
+                throw Errors.ChannelNotFound(channel.Id.ToString());
+            affectedChannels.Add(channel);
+        }
         else
-            while (ctx.HasNext())
-            {
-                var channelString = ctx.PeekArgument();
-                var channel = await ctx.MatchChannel();
-                if (channel == null || channel.GuildId != ctx.Guild.Id) throw Errors.ChannelNotFound(channelString);
-                affectedChannels.Add(channel);
-            }
+        {
+            throw new PKSyntaxError("You must specify a channel or use the --all flag.");
+        }
 
         var guild = await ctx.Repository.GetGuild(ctx.Guild.Id);
-
-        var blacklist = guild.Blacklist.ToHashSet();
-        if (shouldAdd)
-            blacklist.UnionWith(affectedChannels.Select(c => c.Id));
-        else
-            blacklist.ExceptWith(affectedChannels.Select(c => c.Id));
-
-        await ctx.Repository.UpdateGuild(ctx.Guild.Id, new GuildPatch { Blacklist = blacklist.ToArray() });
-
-        await ctx.Reply(
-            $"{Emojis.Success} Channels {(shouldAdd ? "added to" : "removed from")} the proxy blacklist.");
-    }
-
-    public async Task SetLogBlacklisted(Context ctx, bool shouldAdd)
-    {
-        await ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
-
-        var affectedChannels = new List<Channel>();
-        if (ctx.Match("all"))
-            affectedChannels = (await _cache.GetGuildChannels(ctx.Guild.Id))
-                // All the channel types you can proxy in
-                .Where(x => DiscordUtils.IsValidGuildChannel(x)).ToList();
-        else if (!ctx.HasNext()) throw new PKSyntaxError("You must pass one or more #channels.");
-        else
-            while (ctx.HasNext())
-            {
-                var channelString = ctx.PeekArgument();
-                var channel = await ctx.MatchChannel();
-                if (channel == null || channel.GuildId != ctx.Guild.Id) throw Errors.ChannelNotFound(channelString);
-                affectedChannels.Add(channel);
-            }
-
-        var guild = await ctx.Repository.GetGuild(ctx.Guild.Id);
-
         var blacklist = guild.LogBlacklist.ToHashSet();
-        if (shouldAdd)
-            blacklist.UnionWith(affectedChannels.Select(c => c.Id));
-        else
-            blacklist.ExceptWith(affectedChannels.Select(c => c.Id));
+        blacklist.UnionWith(affectedChannels.Select(c => c.Id));
 
         await ctx.Repository.UpdateGuild(ctx.Guild.Id, new GuildPatch { LogBlacklist = blacklist.ToArray() });
 
         await ctx.Reply(
-            $"{Emojis.Success} Channels {(shouldAdd ? "added to" : "removed from")} the logging blacklist." +
+            $"{Emojis.Success} {(all ? "All channels" : "Channel")} added to the logging blacklist." +
             (guild.LogChannel == null
                 ? $"\n{Emojis.Warn} Please note that no logging channel is set, so there is nowhere to log messages to. You can set a logging channel using `{ctx.DefaultPrefix}serverconfig log channel #your-log-channel`."
                 : ""));
     }
 
-    public async Task SetLogCleanup(Context ctx)
+    public async Task RemoveLogBlacklist(Context ctx, Channel? channel, bool all)
+    {
+        await ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
+
+        var affectedChannels = new List<Channel>();
+        if (all)
+        {
+            affectedChannels = (await _cache.GetGuildChannels(ctx.Guild.Id))
+                .Where(x => DiscordUtils.IsValidGuildChannel(x)).ToList();
+        }
+        else if (channel != null)
+        {
+            if (channel.GuildId != ctx.Guild.Id)
+                throw Errors.ChannelNotFound(channel.Id.ToString());
+            affectedChannels.Add(channel);
+        }
+        else
+        {
+            throw new PKSyntaxError("You must specify a channel or use the --all flag.");
+        }
+
+        var guild = await ctx.Repository.GetGuild(ctx.Guild.Id);
+        var blacklist = guild.LogBlacklist.ToHashSet();
+        blacklist.ExceptWith(affectedChannels.Select(c => c.Id));
+
+        await ctx.Repository.UpdateGuild(ctx.Guild.Id, new GuildPatch { LogBlacklist = blacklist.ToArray() });
+
+        await ctx.Reply(
+            $"{Emojis.Success} {(all ? "All channels" : "Channel")} removed from the logging blacklist." +
+            (guild.LogChannel == null
+                ? $"\n{Emojis.Warn} Please note that no logging channel is set, so there is nowhere to log messages to. You can set a logging channel using `{ctx.DefaultPrefix}serverconfig log channel #your-log-channel`."
+                : ""));
+    }
+
+    public async Task ShowLogCleanup(Context ctx)
     {
         var botList = string.Join(", ", LoggerCleanService.Bots.Select(b => b.Name).OrderBy(x => x.ToLowerInvariant()));
         var eb = new EmbedBuilder()
@@ -377,74 +398,77 @@ public class ServerConfig
         }
 
         await ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
-        bool? newValue = ctx.MatchToggleOrNull();
 
-        if (newValue == null)
-        {
-            if (ctx.GuildConfig!.LogCleanupEnabled)
-                eb.Description(
-                    $"Log cleanup is currently **on** for this server. To disable it, type `{ctx.DefaultPrefix}serverconfig logclean off`.");
-            else
-                eb.Description(
-                    $"Log cleanup is currently **off** for this server. To enable it, type `{ctx.DefaultPrefix}serverconfig logclean on`.");
-            await ctx.Reply(embed: eb.Build());
-            return;
-        }
+        if (ctx.GuildConfig!.LogCleanupEnabled)
+            eb.Description(
+                $"Log cleanup is currently **on** for this server. To disable it, type `{ctx.DefaultPrefix}serverconfig logclean off`.");
+        else
+            eb.Description(
+                $"Log cleanup is currently **off** for this server. To enable it, type `{ctx.DefaultPrefix}serverconfig logclean on`.");
 
-        await ctx.Repository.UpdateGuild(ctx.Guild.Id, new GuildPatch { LogCleanupEnabled = newValue.Value });
+        await ctx.Reply(embed: eb.Build());
+    }
 
-        if (newValue.Value)
+    public async Task SetLogCleanup(Context ctx, bool value)
+    {
+        await ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
+
+        var botList = string.Join(", ", LoggerCleanService.Bots.Select(b => b.Name).OrderBy(x => x.ToLowerInvariant()));
+
+        await ctx.Repository.UpdateGuild(ctx.Guild.Id, new GuildPatch { LogCleanupEnabled = value });
+
+        if (value)
             await ctx.Reply(
                 $"{Emojis.Success} Log cleanup has been **enabled** for this server. Messages deleted by PluralKit will now be cleaned up from logging channels managed by the following bots:\n- **{botList}**\n\n{Emojis.Note} Make sure PluralKit has the **Manage Messages** permission in the channels in question.\n{Emojis.Note} Also, make sure to blacklist the logging channel itself from the bots in question to prevent conflicts.");
         else
             await ctx.Reply($"{Emojis.Success} Log cleanup has been **disabled** for this server.");
     }
 
-    public async Task InvalidCommandResponse(Context ctx)
+    public async Task ShowInvalidCommandResponse(Context ctx)
     {
         await ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
 
-        if (!ctx.HasNext())
-        {
-            var msg = $"Error responses for unknown/invalid commands are currently **{EnabledDisabled(ctx.GuildConfig!.InvalidCommandResponseEnabled)}**.";
-            await ctx.Reply(msg);
-            return;
-        }
-
-        var newVal = ctx.MatchToggle(false);
-        await ctx.Repository.UpdateGuild(ctx.Guild.Id, new() { InvalidCommandResponseEnabled = newVal });
-        await ctx.Reply($"Error responses for unknown/invalid commands are now {EnabledDisabled(newVal)}.");
+        var msg = $"Error responses for unknown/invalid commands are currently **{EnabledDisabled(ctx.GuildConfig!.InvalidCommandResponseEnabled)}**.";
+        await ctx.Reply(msg);
     }
 
-    public async Task RequireSystemTag(Context ctx)
+    public async Task SetInvalidCommandResponse(Context ctx, bool value)
     {
         await ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
 
-        if (!ctx.HasNext())
-        {
-            var msg = $"System tags are currently **{(ctx.GuildConfig!.RequireSystemTag ? "required" : "not required")}** for PluralKit users in this server.";
-            await ctx.Reply(msg);
-            return;
-        }
-
-        var newVal = ctx.MatchToggle(false);
-        await ctx.Repository.UpdateGuild(ctx.Guild.Id, new() { RequireSystemTag = newVal });
-        await ctx.Reply($"System tags are now **{(newVal ? "required" : "not required")}** for PluralKit users in this server.");
+        await ctx.Repository.UpdateGuild(ctx.Guild.Id, new() { InvalidCommandResponseEnabled = value });
+        await ctx.Reply($"Error responses for unknown/invalid commands are now {EnabledDisabled(value)}.");
     }
 
-    public async Task SuppressNotifications(Context ctx)
+    public async Task ShowRequireSystemTag(Context ctx)
     {
         await ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
 
-        if (!ctx.HasNext())
-        {
-            var msg = $"Suppressing notifications for proxied messages is currently **{EnabledDisabled(ctx.GuildConfig!.SuppressNotifications)}**.";
-            await ctx.Reply(msg);
-            return;
-        }
+        var msg = $"System tags are currently **{(ctx.GuildConfig!.RequireSystemTag ? "required" : "not required")}** for PluralKit users in this server.";
+        await ctx.Reply(msg);
+    }
 
-        var newVal = ctx.MatchToggle(false);
-        await ctx.Repository.UpdateGuild(ctx.Guild.Id, new() { SuppressNotifications = newVal });
-        await ctx.Reply($"Suppressing notifications for proxied messages is now {EnabledDisabled(newVal)}.");
+    public async Task SetRequireSystemTag(Context ctx, bool value)
+    {
+        await ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
+
+        await ctx.Repository.UpdateGuild(ctx.Guild.Id, new() { RequireSystemTag = value });
+        await ctx.Reply($"System tags are now **{(value ? "required" : "not required")}** for PluralKit users in this server.");
+    }
+
+    public async Task ShowSuppressNotifications(Context ctx)
+    {
+        await ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
+
+        var msg = $"Suppressing notifications for proxied messages is currently **{EnabledDisabled(ctx.GuildConfig!.SuppressNotifications)}**.";
+        await ctx.Reply(msg);
+    }
+
+    public async Task SetSuppressNotifications(Context ctx, bool value)
+    {
+        await ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
+
+        await ctx.Repository.UpdateGuild(ctx.Guild.Id, new() { SuppressNotifications = value });
+        await ctx.Reply($"Suppressing notifications for proxied messages is now {EnabledDisabled(value)}.");
     }
 }
