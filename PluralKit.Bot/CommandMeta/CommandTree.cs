@@ -15,6 +15,8 @@ public partial class CommandTree
                     "For the list of commands, see the website: <https://pluralkit.me/commands>"),
             Commands.HelpProxy => ctx.Reply(
                     "The proxy help page has been moved! See the website: https://pluralkit.me/guide#proxying"),
+            Commands.Invite => ctx.Execute<Misc>(Invite, m => m.Invite(ctx)),
+            Commands.Stats => ctx.Execute<Misc>(null, m => m.Stats(ctx)),
             Commands.MemberShow(var param, var flags) => ctx.Execute<Member>(MemberInfo, m => m.ViewMember(ctx, param.target, flags.show_embed)),
             Commands.MemberNew(var param, _) => ctx.Execute<Member>(MemberNew, m => m.NewMember(ctx, param.name)),
             Commands.MemberSoulscream(var param, _) => ctx.Execute<Member>(MemberInfo, m => m.Soulscream(ctx, param.target)),
@@ -331,8 +333,6 @@ public partial class CommandTree
         // Legacy command routing - these are kept for backwards compatibility until fully migrated to new system
         if (ctx.Match("commands", "cmd", "c"))
             return CommandHelpRoot(ctx);
-        if (ctx.Match("invite")) return ctx.Execute<Misc>(Invite, m => m.Invite(ctx));
-        if (ctx.Match("stats", "status")) return ctx.Execute<Misc>(null, m => m.Stats(ctx));
     }
 
     private async Task CommandHelpRoot(Context ctx)
