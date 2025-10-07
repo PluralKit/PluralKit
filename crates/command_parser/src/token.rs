@@ -2,7 +2,7 @@ use std::fmt::{Debug, Display};
 
 use smol_str::SmolStr;
 
-use crate::parameter::{Optional, Parameter, ParameterKind, ParameterValue};
+use crate::parameter::{Parameter, ParameterValue};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Token {

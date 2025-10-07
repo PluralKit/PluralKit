@@ -8,3 +8,4 @@ lazy_static = { workspace = true }
 smol_str = "0.3.2"
 ordermap = "0.5"
 regex = "1"
+strsim = "0.11"

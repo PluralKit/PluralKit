@@ -72,6 +72,20 @@ impl Command {
     }
 }
 
+impl PartialEq for Command {
+    fn eq(&self, other: &Self) -> bool {
+        self.cb == other.cb
+    }
+}
+
+impl Eq for Command {}
+
+impl std::hash::Hash for Command {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.cb.hash(state);
+    }
+}
+
 impl Display for Command {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let visible_flags = self

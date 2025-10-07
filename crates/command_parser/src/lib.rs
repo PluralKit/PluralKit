@@ -8,9 +8,9 @@ pub mod token;
 pub mod tree;
 
 use core::panic;
-use std::collections::HashMap;
 use std::fmt::Write;
 use std::ops::Not;
+use std::{collections::HashMap, usize};
 
 use command::Command;
 use flag::{Flag, FlagMatchError, FlagValueMatchError};
@@ -20,7 +20,7 @@ use string::MatchedFlag;
 use token::{Token, TokenMatchResult};
 
 // todo: this should come from the bot probably
-const MAX_SUGGESTIONS: usize = 7;
+const MAX_SUGGESTIONS: usize = 5;
 
 pub type Tree = tree::TreeBranch;
 
@@ -90,8 +90,13 @@ pub fn parse_command(
             None => {
                 let mut error = format!("Unknown command `{prefix}{input}`.");
 
-                if fmt_possible_commands(&mut error, &prefix, local_tree.possible_commands(1)).not()
-                {
+                let wrote_possible_commands = fmt_possible_commands(
+                    &mut error,
+                    &prefix,
+                    &input,
+                    local_tree.possible_commands(usize::MAX),
+                );
+                if wrote_possible_commands.not() {
                     // add a space between the unknown command and "for a list of all possible commands"
                     // message if we didn't add any possible suggestions
                     error.push_str(" ");
@@ -276,17 +281,114 @@ fn next_token<'a>(
 fn fmt_possible_commands(
     f: &mut String,
     prefix: &str,
+    input: &str,
     mut possible_commands: impl Iterator<Item = &Command>,
 ) -> bool {
     if let Some(first) = possible_commands.next() {
-        f.push_str(" Perhaps you meant one of the following commands:\n");
-        for command in std::iter::once(first).chain(possible_commands.take(MAX_SUGGESTIONS - 1)) {
-            if !command.show_in_suggestions {
-                continue;
+        let mut commands_with_scores: Vec<(&Command, String, f64, bool)> = std::iter::once(first)
+            .chain(possible_commands)
+            .filter(|cmd| cmd.show_in_suggestions)
+            .flat_map(|cmd| {
+                let versions = generate_command_versions(cmd);
+                versions.into_iter().map(move |(version, is_alias)| {
+                    let similarity = strsim::jaro_winkler(&input, &version);
+                    (cmd, version, similarity, is_alias)
+                })
+            })
+            .collect();
+
+        commands_with_scores
+            .sort_by(|a, b| b.2.partial_cmp(&a.2).unwrap_or(std::cmp::Ordering::Equal));
+
+        // remove duplicate commands
+        let mut seen_commands = std::collections::HashSet::new();
+        let mut best_commands = Vec::new();
+        for (cmd, version, score, is_alias) in commands_with_scores {
+            if seen_commands.insert(cmd) {
+                best_commands.push((cmd, version, score, is_alias));
             }
-            writeln!(f, "- **{prefix}{command}** - *{}*", command.help).expect("oom");
+        }
+
+        const MIN_SCORE_THRESHOLD: f64 = 0.8;
+        if best_commands.is_empty() || best_commands[0].2 < MIN_SCORE_THRESHOLD {
+            return false;
+        }
+
+        // if score falls off too much, don't show
+        let mut falloff_threshold: f64 = 0.2;
+        let best_score = best_commands[0].2;
+
+        let mut commands_to_show = Vec::new();
+        for (command, version, score, is_alias) in best_commands.iter().take(MAX_SUGGESTIONS) {
+            let delta = best_score - score;
+            falloff_threshold -= delta;
+            if delta > falloff_threshold {
+                break;
+            }
+            commands_to_show.push((command, version, score, is_alias));
+        }
+
+        if commands_to_show.is_empty() {
+            return false;
+        }
+
+        f.push_str(" Perhaps you meant one of the following commands:\n");
+        for (command, version, _score, is_alias) in commands_to_show {
+            writeln!(
+                f,
+                "- **{prefix}{version}**{alias} - *{help}*",
+                help = command.help,
+                alias = is_alias
+                    .then(|| format!(
+                        " (alias of **{prefix}{base_version}**)",
+                        base_version = build_command_string(command, None)
+                    ))
+                    .unwrap_or_else(String::new),
+            )
+            .expect("oom");
         }
         return true;
     }
     return false;
+}
+
+fn generate_command_versions(cmd: &Command) -> Vec<(String, bool)> {
+    let mut versions = Vec::new();
+
+    // Start with base version using primary names
+    let base_version = build_command_string(cmd, None);
+    versions.push((base_version, false));
+
+    // Generate versions for each alias combination
+    for (idx, token) in cmd.tokens.iter().enumerate() {
+        if let Token::Value { aliases, .. } = token {
+            for alias in aliases {
+                versions.push((build_command_string(cmd, Some((idx, alias.as_str()))), true));
+            }
+        }
+    }
+
+    versions
+}
+
+fn build_command_string(cmd: &Command, alias_replacement: Option<(usize, &str)>) -> String {
+    let mut result = String::new();
+    for (idx, token) in cmd.tokens.iter().enumerate() {
+        if idx > 0 {
+            result.push(' ');
+        }
+
+        // Check if we should use an alias for this token
+        let replacement = alias_replacement
+            .filter(|(i, _)| *i == idx)
+            .map(|(_, alias)| alias);
+
+        match token {
+            Token::Value { name, .. } => {
+                result.push_str(replacement.unwrap_or(name));
+            }
+            Token::Parameter(param) => write!(&mut result, "{param}").unwrap(),
+        }
+    }
+    result
 }
