@@ -1,7 +1,6 @@
 pub mod admin;
 pub mod api;
 pub mod autoproxy;
-pub mod commands;
 pub mod config;
 pub mod debug;
 pub mod fun;

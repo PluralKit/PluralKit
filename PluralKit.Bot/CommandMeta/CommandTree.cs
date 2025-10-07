@@ -8,6 +8,7 @@ public partial class CommandTree
     {
         return command switch
         {
+            Commands.CommandsList(var param, _) => PrintCommandList(ctx, param.subject, Parameters.GetRelatedCommands(ctx.DefaultPrefix, param.subject)),
             Commands.Dashboard => ctx.Execute<Help>(Dashboard, m => m.Dashboard(ctx)),
             Commands.Explain => ctx.Execute<Help>(Explain, m => m.Explain(ctx)),
             Commands.Help(_, var flags) => ctx.Execute<Help>(Help, m => m.HelpRoot(ctx, flags.show_embed)),
@@ -330,70 +331,5 @@ public partial class CommandTree
             ctx.Reply(
                 $"{Emojis.Error} Parsed command {ctx.Parameters.Callback().AsCode()} not implemented in PluralKit.Bot!"),
         };
-        // Legacy command routing - these are kept for backwards compatibility until fully migrated to new system
-        if (ctx.Match("commands", "cmd", "c"))
-            return CommandHelpRoot(ctx);
-    }
-
-    private async Task CommandHelpRoot(Context ctx)
-    {
-        if (!ctx.HasNext())
-        {
-            await ctx.Reply(
-                "Available command help targets: `system`, `member`, `group`, `switch`, `config`, `autoproxy`, `log`, `blacklist`."
-                + $"\n- **{ctx.DefaultPrefix}commands <target>** - *View commands related to a help target.*"
-                + "\n\nFor the full list of commands, see the website: <https://pluralkit.me/commands>");
-            return;
-        }
-
-        switch (ctx.PeekArgument())
-        {
-            case "system":
-            case "systems":
-            case "s":
-            case "account":
-            case "acc":
-                await PrintCommandList(ctx, "systems", SystemCommands);
-                break;
-            case "member":
-            case "members":
-            case "m":
-                await PrintCommandList(ctx, "members", MemberCommands);
-                break;
-            case "group":
-            case "groups":
-            case "g":
-                await PrintCommandList(ctx, "groups", GroupCommands);
-                break;
-            case "switch":
-            case "switches":
-            case "switching":
-            case "sw":
-                await PrintCommandList(ctx, "switching", SwitchCommands);
-                break;
-            case "log":
-                await PrintCommandList(ctx, "message logging", LogCommands);
-                break;
-            case "blacklist":
-            case "bl":
-                await PrintCommandList(ctx, "channel blacklisting", BlacklistCommands);
-                break;
-            case "config":
-            case "cfg":
-                await PrintCommandList(ctx, "settings", ConfigCommands);
-                break;
-            case "serverconfig":
-            case "guildconfig":
-            case "scfg":
-                await PrintCommandList(ctx, "server settings", ServerConfigCommands);
-                break;
-            case "autoproxy":
-            case "ap":
-                await PrintCommandList(ctx, "autoproxy", AutoproxyCommands);
-                break;
-            default:
-                await ctx.Reply("For the full list of commands, see the website: <https://pluralkit.me/commands>");
-                break;
-        }
     }
 }

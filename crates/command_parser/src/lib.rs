@@ -90,13 +90,12 @@ pub fn parse_command(
             None => {
                 let mut error = format!("Unknown command `{prefix}{input}`.");
 
-                let wrote_possible_commands = fmt_possible_commands(
-                    &mut error,
-                    &prefix,
-                    &input,
-                    local_tree.possible_commands(usize::MAX),
-                );
-                if wrote_possible_commands.not() {
+                let possible_commands =
+                    rank_possible_commands(&input, local_tree.possible_commands(usize::MAX));
+                if possible_commands.is_empty().not() {
+                    error.push_str(" Perhaps you meant one of the following commands:\n");
+                    fmt_commands_list(&mut error, &prefix, possible_commands);
+                } else {
                     // add a space between the unknown command and "for a list of all possible commands"
                     // message if we didn't add any possible suggestions
                     error.push_str(" ");
@@ -278,78 +277,70 @@ fn next_token<'a>(
 
 // todo: should probably move this somewhere else
 /// returns true if wrote possible commands, false if not
-fn fmt_possible_commands(
-    f: &mut String,
-    prefix: &str,
+fn rank_possible_commands(
     input: &str,
-    mut possible_commands: impl Iterator<Item = &Command>,
-) -> bool {
-    if let Some(first) = possible_commands.next() {
-        let mut commands_with_scores: Vec<(&Command, String, f64, bool)> = std::iter::once(first)
-            .chain(possible_commands)
-            .filter(|cmd| cmd.show_in_suggestions)
-            .flat_map(|cmd| {
-                let versions = generate_command_versions(cmd);
-                versions.into_iter().map(move |(version, is_alias)| {
-                    let similarity = strsim::jaro_winkler(&input, &version);
-                    (cmd, version, similarity, is_alias)
-                })
+    possible_commands: impl IntoIterator<Item = &Command>,
+) -> Vec<(Command, String, bool)> {
+    let mut commands_with_scores: Vec<(&Command, String, f64, bool)> = possible_commands
+        .into_iter()
+        .filter(|cmd| cmd.show_in_suggestions)
+        .flat_map(|cmd| {
+            let versions = generate_command_versions(cmd);
+            versions.into_iter().map(move |(version, is_alias)| {
+                let similarity = strsim::jaro_winkler(&input, &version);
+                (cmd, version, similarity, is_alias)
             })
-            .collect();
+        })
+        .collect();
 
-        commands_with_scores
-            .sort_by(|a, b| b.2.partial_cmp(&a.2).unwrap_or(std::cmp::Ordering::Equal));
+    commands_with_scores.sort_by(|a, b| b.2.partial_cmp(&a.2).unwrap_or(std::cmp::Ordering::Equal));
 
-        // remove duplicate commands
-        let mut seen_commands = std::collections::HashSet::new();
-        let mut best_commands = Vec::new();
-        for (cmd, version, score, is_alias) in commands_with_scores {
-            if seen_commands.insert(cmd) {
-                best_commands.push((cmd, version, score, is_alias));
-            }
+    // remove duplicate commands
+    let mut seen_commands = std::collections::HashSet::new();
+    let mut best_commands = Vec::new();
+    for (cmd, version, score, is_alias) in commands_with_scores {
+        if seen_commands.insert(cmd) {
+            best_commands.push((cmd, version, score, is_alias));
         }
-
-        const MIN_SCORE_THRESHOLD: f64 = 0.8;
-        if best_commands.is_empty() || best_commands[0].2 < MIN_SCORE_THRESHOLD {
-            return false;
-        }
-
-        // if score falls off too much, don't show
-        let mut falloff_threshold: f64 = 0.2;
-        let best_score = best_commands[0].2;
-
-        let mut commands_to_show = Vec::new();
-        for (command, version, score, is_alias) in best_commands.iter().take(MAX_SUGGESTIONS) {
-            let delta = best_score - score;
-            falloff_threshold -= delta;
-            if delta > falloff_threshold {
-                break;
-            }
-            commands_to_show.push((command, version, score, is_alias));
-        }
-
-        if commands_to_show.is_empty() {
-            return false;
-        }
-
-        f.push_str(" Perhaps you meant one of the following commands:\n");
-        for (command, version, _score, is_alias) in commands_to_show {
-            writeln!(
-                f,
-                "- **{prefix}{version}**{alias} - *{help}*",
-                help = command.help,
-                alias = is_alias
-                    .then(|| format!(
-                        " (alias of **{prefix}{base_version}**)",
-                        base_version = build_command_string(command, None)
-                    ))
-                    .unwrap_or_else(String::new),
-            )
-            .expect("oom");
-        }
-        return true;
     }
-    return false;
+
+    const MIN_SCORE_THRESHOLD: f64 = 0.8;
+    if best_commands.is_empty() || best_commands[0].2 < MIN_SCORE_THRESHOLD {
+        return Vec::new();
+    }
+
+    // if score falls off too much, don't show
+    let mut falloff_threshold: f64 = 0.2;
+    let best_score = best_commands[0].2;
+
+    let mut commands_to_show = Vec::new();
+    for (command, version, score, is_alias) in best_commands.into_iter().take(MAX_SUGGESTIONS) {
+        let delta = best_score - score;
+        falloff_threshold -= delta;
+        if delta > falloff_threshold {
+            break;
+        }
+        commands_to_show.push((command.clone(), version, is_alias));
+    }
+
+    commands_to_show
+}
+
+fn fmt_commands_list(f: &mut String, prefix: &str, commands_to_show: Vec<(Command, String, bool)>) {
+    for (command, version, is_alias) in commands_to_show {
+        writeln!(
+            f,
+            "- **{prefix}{version}**{alias} - *{help}*",
+            help = command.help,
+            alias = is_alias
+                .then(|| format!(
+                    " (alias of **{prefix}{base_version}**)",
+                    base_version = build_command_string(&command, None)
+                ))
+                .unwrap_or_else(String::new),
+        )
+        .expect("oom");
+    }
 }
 
 fn generate_command_versions(cmd: &Command) -> Vec<(String, bool)> {

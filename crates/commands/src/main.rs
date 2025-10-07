@@ -4,6 +4,16 @@ use command_parser::Tree;
 use commands::COMMAND_TREE;
 
 fn main() {
+    parse();
+}
+
+fn related() {
+    let cmd = std::env::args().nth(1).unwrap();
+    let related = commands::get_related_commands("pk;".to_string(), cmd);
+    println!("Related commands:\n{related}");
+}
+
+fn parse() {
     let cmd = std::env::args()
         .skip(1)
         .intersperse(" ".to_string())

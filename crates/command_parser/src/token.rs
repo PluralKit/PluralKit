@@ -36,10 +36,10 @@ pub enum TokenMatchResult {
 // a: because we want to differentiate between no match and match failure (it matched with an error)
 //    "no match" has a different charecteristic because we want to continue matching other tokens...
 //    ...while "match failure" means we should stop matching and return the error
-type TryMatchResult = Option<TokenMatchResult>;
+pub type TryMatchResult = Option<TokenMatchResult>;
 
 impl Token {
-    pub(super) fn try_match(&self, input: Option<&str>) -> TryMatchResult {
+    pub fn try_match(&self, input: Option<&str>) -> TryMatchResult {
         let input = match input {
             Some(input) => input,
             None => {

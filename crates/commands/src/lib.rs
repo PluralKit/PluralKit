@@ -1,6 +1,6 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt::Write, usize};
 
-use command_parser::{parameter::ParameterValue, Tree};
+use command_parser::{parameter::ParameterValue, token::TokenMatchResult, Tree};
 
 uniffi::include_scaffolding!("commands");
 
@@ -142,4 +142,23 @@ pub fn parse_command(prefix: String, input: String) -> CommandResult {
             },
         },
     )
+}
+
+pub fn get_related_commands(prefix: String, input: String) -> String {
+    let mut s = String::new();
+    for command in command_definitions::all() {
+        if command.tokens.first().map_or(false, |token| {
+            token
+                .try_match(Some(&input))
+                .map_or(false, |r| matches!(r, TokenMatchResult::MatchedValue))
+        }) {
+            writeln!(
+                &mut s,
+                "- **{prefix}{command}** - *{help}*",
+                help = command.help
+            )
+            .unwrap();
+        }
+    }
+    s
 }

@@ -55,6 +55,11 @@ public class Parameters
         }
     }
 
+    public static string GetRelatedCommands(string prefix, string subject)
+    {
+        return CommandsMethods.GetRelatedCommands(prefix, subject);
+    }
+
     public string Callback()
     {
         return _cb;
