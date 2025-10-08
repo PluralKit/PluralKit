@@ -37,20 +37,16 @@ public class Fun
     public Task Meow(Context ctx) =>
         ctx.Reply("*mrrp :3*");
 
-    public Task Error(Context ctx)
-    {
-        if (ctx.Match("message"))
-            return ctx.Reply("> **Error code:** `50f3c7b439d111ecab2023a5431fffbd`", new EmbedBuilder()
-                .Color(0xE74C3C)
-                .Title("Internal error occurred")
-                .Description(
-                    "For support, please send the error code above in **#bug-reports-and-errors** on **[the support server *(click to join)*](https://discord.gg/PczBt78)** with a description of what you were doing at the time.")
-                .Footer(new Embed.EmbedFooter("50f3c7b439d111ecab2023a5431fffbd"))
-                .Timestamp(SystemClock.Instance.GetCurrentInstant().ToDateTimeOffset().ToString("O"))
-                .Build()
-            );
+    public Task ErrorMessage(Context ctx) => ctx.Reply("> **Error code:** `50f3c7b439d111ecab2023a5431fffbd`", new EmbedBuilder()
+        .Color(0xE74C3C)
+        .Title("Internal error occurred")
+        .Description(
+            "For support, please send the error code above in **#bug-reports-and-errors** on **[the support server *(click to join)*](https://discord.gg/PczBt78)** with a description of what you were doing at the time.")
+        .Footer(new Embed.EmbedFooter("50f3c7b439d111ecab2023a5431fffbd"))
+        .Timestamp(SystemClock.Instance.GetCurrentInstant().ToDateTimeOffset().ToString("O"))
+        .Build()
+    );
 
-        return ctx.Reply(
-            $"{Emojis.Error} Unknown command {"error".AsCode()}. For a list of possible commands, see <https://pluralkit.me/commands>.");
-    }
+    public Task Error(Context ctx) => ctx.Reply(
+        $"{Emojis.Error} Unknown command {"error".AsCode()}. For a list of possible commands, see <https://pluralkit.me/commands>.");
 }

@@ -51,7 +51,7 @@ public class GroupMember
             groups.Count - toAction.Count));
     }
 
-    public async Task ListMemberGroups(Context ctx, PKMember target, string? query, IHasListOptions flags)
+    public async Task ListMemberGroups(Context ctx, PKMember target, string? query, IHasListOptions flags, bool all)
     {
         var targetSystem = await ctx.Repository.GetSystem(target.System);
         var opts = flags.GetListOptions(ctx, target.System);
@@ -80,10 +80,10 @@ public class GroupMember
             title.Append($" matching **{opts.Search.Truncate(100)}**");
 
         await ctx.RenderGroupList(ctx.LookupContextFor(target.System), target.System, title.ToString(),
-            target.Color, opts);
+            target.Color, opts, all);
     }
 
-    public async Task AddRemoveMembers(Context ctx, PKGroup target, List<PKMember> _members, Groups.AddRemoveOperation op, bool all)
+    public async Task AddRemoveMembers(Context ctx, PKGroup target, List<PKMember> _members, Groups.AddRemoveOperation op, bool all, bool confirmYes)
     {
         ctx.CheckOwnGroup(target);
 
@@ -126,7 +126,7 @@ public class GroupMember
                 .Where(m => existingMembersInGroup.Contains(m.Value))
                 .ToList();
 
-            if (all && !await ctx.PromptYesNo($"Are you sure you want to remove all members from group {target.Reference(ctx)}?", "Empty Group")) throw Errors.GenericCancelled();
+            if (all && !await ctx.PromptYesNo($"Are you sure you want to remove all members from group {target.Reference(ctx)}?", "Empty Group", flagValue: confirmYes)) throw Errors.GenericCancelled();
 
             await ctx.Repository.RemoveMembersFromGroup(target.Id, toAction);
         }

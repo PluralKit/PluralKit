@@ -49,6 +49,7 @@ pub fn cmds() -> impl Iterator<Item = Command> {
         [
             command!(member_name => "member_name_show").help("Shows a member's name"),
             command!(member_name, ("name", OpaqueStringRemainder) => "member_name_update")
+                .flag(("yes", ["y"]))
                 .help("Changes a member's name"),
         ]
         .into_iter()

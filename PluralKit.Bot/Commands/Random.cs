@@ -74,12 +74,12 @@ public class Random
         {
             await ctx.Reply(
                 text: EmbedService.LEGACY_EMBED_WARNING,
-                embed: await _embeds.CreateGroupEmbed(ctx, target, groups.ToArray()[randInt]));
+                embed: await _embeds.CreateGroupEmbed(ctx, target, groups.ToArray()[randInt], all));
             return;
         }
 
         await ctx.Reply(
-            components: await _embeds.CreateGroupMessageComponents(ctx, target, groups.ToArray()[randInt]));
+            components: await _embeds.CreateGroupMessageComponents(ctx, target, groups.ToArray()[randInt], all));
     }
 
     public async Task GroupMember(Context ctx, PKGroup group, GroupRandomMemberFlags flags)

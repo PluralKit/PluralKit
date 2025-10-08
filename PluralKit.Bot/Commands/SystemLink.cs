@@ -25,7 +25,7 @@ public class SystemLink
         await ctx.Reply($"{Emojis.Success} Account linked to system.");
     }
 
-    public async Task UnlinkAccount(Context ctx, string idRaw)
+    public async Task UnlinkAccount(Context ctx, string idRaw, bool confirmYes)
     {
         ctx.CheckSystem();
 
@@ -38,7 +38,7 @@ public class SystemLink
         if (accountIds.Count == 1) throw Errors.UnlinkingLastAccount(ctx.DefaultPrefix);
 
         var msg = $"Are you sure you want to unlink <@{id}> from your system?";
-        if (!await ctx.PromptYesNo(msg, "Unlink")) throw Errors.MemberUnlinkCancelled;
+        if (!await ctx.PromptYesNo(msg, "Unlink", flagValue: confirmYes)) throw Errors.MemberUnlinkCancelled;
 
         await ctx.Repository.RemoveAccount(ctx.System.Id, id);
         await ctx.Reply($"{Emojis.Success} Account unlinked.");

@@ -26,7 +26,7 @@ public class SystemFront
         await ctx.Reply(embed: await _embeds.CreateFronterEmbed(sw, ctx.Zone, ctx.LookupContextFor(system.Id)));
     }
 
-    public async Task FrontHistory(Context ctx, PKSystem system, bool clear = false)
+    public async Task FrontHistory(Context ctx, PKSystem system, bool showMemberId, bool clear = false)
     {
         if (clear)
         {
@@ -54,8 +54,6 @@ public class SystemFront
             if (guildSettings.DisplayName != null)
                 embedTitle = $"Front history of {guildSettings.DisplayName} (`{system.Hid}`)";
         }
-
-        var showMemberId = ctx.MatchFlag("with-id", "wid");
 
         await ctx.Paginate(
             sws,

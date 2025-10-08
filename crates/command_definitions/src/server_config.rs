@@ -51,6 +51,7 @@ pub fn cmds() -> impl Iterator<Item = Command> {
         command!(log_channel, ("channel", ChannelRef) => "server_config_log_channel_set")
             .help("Sets the log channel"),
         command!(log_channel, ("clear", ["c"]) => "server_config_log_channel_clear")
+            .flag(("yes", ["y"]))
             .help("Clears the log channel"),
     ]
     .into_iter();

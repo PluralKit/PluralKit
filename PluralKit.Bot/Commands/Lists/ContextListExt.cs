@@ -130,7 +130,7 @@ public static class ContextListExt
     }
 
     public static async Task RenderGroupList(this Context ctx, LookupContext lookupCtx,
-                                SystemId system, string embedTitle, string color, ListOptions opts)
+                                SystemId system, string embedTitle, string color, ListOptions opts, bool all)
     {
         // We take an IDatabase instead of a IPKConnection so we don't keep the handle open for the entire runtime
         // We wanna release it as soon as the member list is actually *fetched*, instead of potentially minutes later (paginate timeout)
@@ -204,7 +204,7 @@ public static class ContextListExt
                                 {
                                     if (g.ListPrivacy == PrivacyLevel.Public || lookupCtx == LookupContext.ByOwner)
                                     {
-                                        if (ctx.MatchFlag("all", "a"))
+                                        if (all)
                                         {
                                             ret += $"({"member".ToQuantity(g.TotalMemberCount)})";
                                         }
@@ -242,7 +242,7 @@ public static class ContextListExt
 
                 if (g.ListPrivacy == PrivacyLevel.Public || lookupCtx == LookupContext.ByOwner)
                 {
-                    if (ctx.MatchFlag("all", "a") && ctx.DirectLookupContextFor(system) == LookupContext.ByOwner)
+                    if (all && ctx.DirectLookupContextFor(system) == LookupContext.ByOwner)
                         profile.Append($"\n**Member Count:** {g.TotalMemberCount}");
                     else
                         profile.Append($"\n**Member Count:** {g.PublicMemberCount}");

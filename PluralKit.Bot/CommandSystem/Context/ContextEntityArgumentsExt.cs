@@ -1,9 +1,6 @@
-using System.Text.RegularExpressions;
-
 using Myriad.Extensions;
 using Myriad.Types;
 
-using PluralKit.Bot.Utils;
 using PluralKit.Core;
 
 namespace PluralKit.Bot;
@@ -119,24 +116,5 @@ public static class ContextEntityArgumentsExt
         if (inputIsHid)
             return $"{entity} with ID or name \"{input}\" not found.";
         return $"{entity} with name \"{input}\" not found. Note that a {entity.ToLower()} ID is 5 or 6 characters long.";
-    }
-
-    public static async Task<Channel> MatchChannel(this Context ctx)
-    {
-        if (!MentionUtils.TryParseChannel(ctx.PeekArgument(), out var id))
-            return null;
-
-        // todo: match channels in other guilds
-        var channel = await ctx.Cache.TryGetChannel(ctx.Guild!.Id, id);
-        if (channel == null)
-            channel = await ctx.Rest.GetChannelOrNull(id);
-        if (channel == null)
-            return null;
-
-        if (!DiscordUtils.IsValidGuildChannel(channel))
-            return null;
-
-        ctx.PopArgument();
-        return channel;
     }
 }

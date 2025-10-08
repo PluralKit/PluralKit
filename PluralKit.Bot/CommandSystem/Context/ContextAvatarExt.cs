@@ -48,10 +48,6 @@ public static class ContextAvatarExt
         // ToString URL-decodes, which breaks URLs to spaces; AbsoluteUri doesn't
         return new ParsedImage { Url = uri.AbsoluteUri, Source = AvatarSource.Url };
     }
-    public static async Task<ParsedImage?> MatchImage(this Context ctx)
-    {
-        throw new NotImplementedException();
-    }
 }
 
 public struct ParsedImage

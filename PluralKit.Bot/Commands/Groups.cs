@@ -32,7 +32,7 @@ public class Groups
         _avatarHosting = avatarHosting;
     }
 
-    public async Task CreateGroup(Context ctx, string groupName)
+    public async Task CreateGroup(Context ctx, string groupName, bool confirmYes = false)
     {
         ctx.CheckSystem();
 
@@ -53,7 +53,7 @@ public class Groups
         {
             var msg =
                 $"{Emojis.Warn} You already have a group in your system with the name \"{existingGroup.Name}\" (with ID `{existingGroup.DisplayHid(ctx.Config)}`). Do you want to create another group with the same name?";
-            if (!await ctx.PromptYesNo(msg, "Create"))
+            if (!await ctx.PromptYesNo(msg, "Create", flagValue: confirmYes))
                 throw new PKError("Group creation cancelled.");
         }
 
@@ -98,7 +98,7 @@ public class Groups
         await ctx.Reply(replyStr, eb.Build());
     }
 
-    public async Task RenameGroup(Context ctx, PKGroup target, string newName)
+    public async Task RenameGroup(Context ctx, PKGroup target, string? newName, bool confirmYes = false)
     {
         ctx.CheckOwnGroup(target);
 
@@ -113,7 +113,7 @@ public class Groups
         {
             var msg =
                 $"{Emojis.Warn} You already have a group in your system with the name \"{existingGroup.Name}\" (with ID `{existingGroup.DisplayHid(ctx.Config)}`). Do you want to rename this group to that name too?";
-            if (!await ctx.PromptYesNo(msg, "Rename"))
+            if (!await ctx.PromptYesNo(msg, "Rename", flagValue: confirmYes))
                 throw new PKError("Group rename cancelled.");
         }
 
@@ -320,10 +320,10 @@ public class Groups
         await ctx.Reply(embed: ebS.Build());
     }
 
-    public async Task ClearGroupIcon(Context ctx, PKGroup target)
+    public async Task ClearGroupIcon(Context ctx, PKGroup target, bool confirmYes)
     {
         ctx.CheckOwnGroup(target);
-        await ctx.ConfirmClear("this group's icon");
+        await ctx.ConfirmClear("this group's icon", confirmYes);
 
         await ctx.Repository.UpdateGroup(target.Id, new GroupPatch { Icon = null });
         await ctx.Reply($"{Emojis.Success} Group icon cleared.");
@@ -400,10 +400,10 @@ public class Groups
         await ctx.Reply(embed: ebS.Build());
     }
 
-    public async Task ClearGroupBanner(Context ctx, PKGroup target)
+    public async Task ClearGroupBanner(Context ctx, PKGroup target, bool confirmYes)
     {
         ctx.CheckOwnGroup(target);
-        await ctx.ConfirmClear("this group's banner image");
+        await ctx.ConfirmClear("this group's banner image", confirmYes);
 
         await ctx.Repository.UpdateGroup(target.Id, new GroupPatch { BannerImage = null });
         await ctx.Reply($"{Emojis.Success} Group banner image cleared.");
@@ -506,7 +506,7 @@ public class Groups
             files: [MiscUtils.GenerateColorPreview(color)]);
     }
 
-    public async Task ListSystemGroups(Context ctx, PKSystem system, string? query, IHasListOptions flags)
+    public async Task ListSystemGroups(Context ctx, PKSystem system, string? query, IHasListOptions flags, bool all)
     {
         if (system == null)
         {
@@ -528,7 +528,8 @@ public class Groups
             system.Id,
             GetEmbedTitle(ctx, system, opts),
             system.Color,
-            opts
+            opts,
+            all
         );
     }
 
@@ -547,16 +548,16 @@ public class Groups
         return title.ToString();
     }
 
-    public async Task ShowGroupCard(Context ctx, PKGroup target, bool showEmbed = false)
+    public async Task ShowGroupCard(Context ctx, PKGroup target, bool showEmbed, bool all)
     {
         var system = await GetGroupSystem(ctx, target);
         if (showEmbed)
         {
-            await ctx.Reply(text: EmbedService.LEGACY_EMBED_WARNING, embed: await _embeds.CreateGroupEmbed(ctx, system, target));
+            await ctx.Reply(text: EmbedService.LEGACY_EMBED_WARNING, embed: await _embeds.CreateGroupEmbed(ctx, system, target, all));
             return;
         }
 
-        await ctx.Reply(components: await _embeds.CreateGroupMessageComponents(ctx, system, target));
+        await ctx.Reply(components: await _embeds.CreateGroupMessageComponents(ctx, system, target, all));
     }
 
     public async Task ShowGroupPrivacy(Context ctx, PKGroup target)

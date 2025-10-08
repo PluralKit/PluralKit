@@ -28,7 +28,7 @@ public class Member
         _avatarHosting = avatarHosting;
     }
 
-    public async Task NewMember(Context ctx, string? memberName)
+    public async Task NewMember(Context ctx, string? memberName, bool confirmYes = false)
     {
         if (ctx.System == null) throw Errors.NoSystemError(ctx.DefaultPrefix);
         memberName = memberName ?? throw new PKSyntaxError("You must pass a member name.");
@@ -42,7 +42,7 @@ public class Member
         if (existingMember != null)
         {
             var msg = $"{Emojis.Warn} You already have a member in your system with the name \"{existingMember.NameFor(ctx)}\" (with ID `{existingMember.DisplayHid(ctx.Config)}`). Do you want to create another member with the same name?";
-            if (!await ctx.PromptYesNo(msg, "Create")) throw new PKError("Member creation cancelled.");
+            if (!await ctx.PromptYesNo(msg, "Create", flagValue: confirmYes)) throw new PKError("Member creation cancelled.");
         }
 
         await using var conn = await ctx.Database.Obtain();

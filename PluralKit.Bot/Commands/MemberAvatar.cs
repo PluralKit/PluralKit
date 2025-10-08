@@ -17,10 +17,10 @@ public class MemberAvatar
         _avatarHosting = avatarHosting;
     }
 
-    private async Task AvatarClear(MemberAvatarLocation location, Context ctx, PKMember target, MemberGuildSettings? mgs)
+    private async Task AvatarClear(MemberAvatarLocation location, Context ctx, PKMember target, MemberGuildSettings? mgs, bool confirmYes)
     {
         ctx.CheckSystem().CheckOwnMember(target);
-        await ctx.ConfirmClear("this member's " + location.Name());
+        await ctx.ConfirmClear("this member's " + location.Name(), confirmYes);
 
         await UpdateAvatar(location, ctx, target, null);
         if (location == MemberAvatarLocation.Server)
@@ -149,10 +149,10 @@ public class MemberAvatar
         await AvatarShow(MemberAvatarLocation.Server, ctx, target, guildData, format);
     }
 
-    public async Task ClearServerAvatar(Context ctx, PKMember target)
+    public async Task ClearServerAvatar(Context ctx, PKMember target, bool confirmYes)
     {
         var guildData = await GetServerAvatarGuildData(ctx, target);
-        await AvatarClear(MemberAvatarLocation.Server, ctx, target, guildData);
+        await AvatarClear(MemberAvatarLocation.Server, ctx, target, guildData, confirmYes);
     }
 
     public async Task ChangeServerAvatar(Context ctx, PKMember target, ParsedImage avatar)
@@ -167,10 +167,10 @@ public class MemberAvatar
         await AvatarShow(MemberAvatarLocation.Member, ctx, target, guildData, format);
     }
 
-    public async Task ClearAvatar(Context ctx, PKMember target)
+    public async Task ClearAvatar(Context ctx, PKMember target, bool confirmYes)
     {
         var guildData = await GetAvatarGuildData(ctx, target);
-        await AvatarClear(MemberAvatarLocation.Member, ctx, target, guildData);
+        await AvatarClear(MemberAvatarLocation.Member, ctx, target, guildData, confirmYes);
     }
 
     public async Task ChangeAvatar(Context ctx, PKMember target, ParsedImage avatar)
@@ -185,10 +185,10 @@ public class MemberAvatar
         await AvatarShow(MemberAvatarLocation.MemberWebhook, ctx, target, guildData, format);
     }
 
-    public async Task ClearWebhookAvatar(Context ctx, PKMember target)
+    public async Task ClearWebhookAvatar(Context ctx, PKMember target, bool confirmYes)
     {
         var guildData = await GetWebhookAvatarGuildData(ctx, target);
-        await AvatarClear(MemberAvatarLocation.MemberWebhook, ctx, target, guildData);
+        await AvatarClear(MemberAvatarLocation.MemberWebhook, ctx, target, guildData, confirmYes);
     }
 
     public async Task ChangeWebhookAvatar(Context ctx, PKMember target, ParsedImage avatar)

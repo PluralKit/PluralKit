@@ -560,7 +560,7 @@ public class EmbedService
         return eb.Build();
     }
 
-    public async Task<MessageComponent[]> CreateGroupMessageComponents(Context ctx, PKSystem system, PKGroup target)
+    public async Task<MessageComponent[]> CreateGroupMessageComponents(Context ctx, PKSystem system, PKGroup target, bool all)
     {
         var pctx = ctx.LookupContextFor(system.Id);
         var name = target.NameFor(ctx);
@@ -568,7 +568,7 @@ public class EmbedService
         var systemName = (ctx.Guild != null && systemGuildSettings?.DisplayName != null) ? systemGuildSettings?.DisplayName! : system.NameFor(ctx);
 
         var countctx = LookupContext.ByNonOwner;
-        if (ctx.MatchFlag("a", "all"))
+        if (all)
         {
             if (system.Id == ctx.System?.Id)
                 countctx = LookupContext.ByOwner;
@@ -673,12 +673,12 @@ public class EmbedService
         ];
     }
 
-    public async Task<Embed> CreateGroupEmbed(Context ctx, PKSystem system, PKGroup target)
+    public async Task<Embed> CreateGroupEmbed(Context ctx, PKSystem system, PKGroup target, bool all)
     {
         var pctx = ctx.LookupContextFor(system.Id);
 
         var countctx = LookupContext.ByNonOwner;
-        if (ctx.MatchFlag("a", "all"))
+        if (all)
         {
             if (system.Id == ctx.System?.Id)
                 countctx = LookupContext.ByOwner;

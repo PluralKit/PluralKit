@@ -21,9 +21,10 @@ pub fn cmds() -> impl Iterator<Item = Command> {
         [command!(group_new, ("name", OpaqueString) => "group_new").help("Creates a new group")]
             .into_iter();
 
-    let group_info_cmd =
-        [command!(group_target => "group_info").help("Shows information about a group")]
-            .into_iter();
+    let group_info_cmd = [command!(group_target => "group_info")
+        .flag(("all", ["a"]))
+        .help("Shows information about a group")]
+    .into_iter();
 
     let group_name = tokens!(
         group_target,
@@ -159,9 +160,9 @@ pub fn cmds() -> impl Iterator<Item = Command> {
 
     let group_modify_members_cmd = [
         command!(group_target, "add", Optional(MemberRefs) => "group_add_member")
-            .flag(("all", ["a"])),
+            .flag(("all", ["a"])).flag(("yes", ["y"])),
         command!(group_target, ("remove", ["delete", "del", "rem"]), Optional(MemberRefs) => "group_remove_member")
-            .flag(("all", ["a"])),
+            .flag(("all", ["a"])).flag(("yes", ["y"])),
     ]
     .into_iter();
 

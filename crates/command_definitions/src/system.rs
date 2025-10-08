@@ -28,25 +28,33 @@ pub fn edit() -> impl Iterator<Item = Command> {
     ]
     .into_iter();
 
-    let system_webhook_cmd = [command!(system, ("webhook", ["hook"]) => "system_webhook")
-        .help("Creates a webhook for your system")]
+    let system_webhook = tokens!(system, ("webhook", ["hook"]));
+    let system_webhook_cmd = [
+        command!(system_webhook => "system_webhook_show").help("Shows your system's webhook URL"),
+        command!(system_webhook, ("clear", ["c"]) => "system_webhook_clear")
+            .flag(("yes", ["y"]))
+            .help("Clears your system's webhook URL"),
+        command!(system_webhook, ("url", OpaqueString) => "system_webhook_set")
+            .help("Sets your system's webhook URL"),
+    ]
     .into_iter();
 
-    let system_info_cmd = [
-        command!(system => "system_info_self").help("Shows information about your system"),
-        command!(system_target, ("info", ["show", "view"]) => "system_info")
-            .help("Shows information about your system"),
-    ]
-    .into_iter()
-    .map(|cmd| {
+    let add_info_flags = |cmd: Command| {
         cmd.flag(("public", ["pub"]))
             .flag(("private", ["priv"]))
             .flag(("all", ["a"]))
-    });
+    };
+    let system_info_cmd_self = std::iter::once(add_info_flags(
+        command!(system => "system_info_self").help("Shows information about your system"),
+    ));
+    let system_info_cmd = std::iter::once(add_info_flags(
+        command!(system_target, ("info", ["show", "view"]) => "system_info")
+            .help("Shows information about your system"),
+    ));
 
     let system_name = tokens!(system_target, "name");
     let system_name_cmd =
-        [command!(system_name => "system_show_name").help("Shows the systems name")].into_iter();
+        std::iter::once(command!(system_name => "system_show_name").help("Shows the systems name"));
 
     let system_name_self = tokens!(system, "name");
     let system_name_self_cmd = [
@@ -60,9 +68,10 @@ pub fn edit() -> impl Iterator<Item = Command> {
     .into_iter();
 
     let system_server_name = tokens!(system_target, ("servername", ["sn", "guildname"]));
-    let system_server_name_cmd = [command!(system_server_name => "system_show_server_name")
-        .help("Shows the system's server name")]
-    .into_iter();
+    let system_server_name_cmd = std::iter::once(
+        command!(system_server_name => "system_show_server_name")
+            .help("Shows the system's server name"),
+    );
 
     let system_server_name_self = tokens!(system, ("servername", ["sn", "guildname"]));
     let system_server_name_self_cmd = [
@@ -77,9 +86,10 @@ pub fn edit() -> impl Iterator<Item = Command> {
     .into_iter();
 
     let system_description = tokens!(system_target, ("description", ["desc", "d"]));
-    let system_description_cmd = [command!(system_description => "system_show_description")
-        .help("Shows the system's description")]
-    .into_iter();
+    let system_description_cmd = std::iter::once(
+        command!(system_description => "system_show_description")
+            .help("Shows the system's description"),
+    );
 
     let system_description_self = tokens!(system, ("description", ["desc", "d"]));
     let system_description_self_cmd = [
@@ -93,9 +103,9 @@ pub fn edit() -> impl Iterator<Item = Command> {
     .into_iter();
 
     let system_color = tokens!(system_target, ("color", ["colour"]));
-    let system_color_cmd =
-        [command!(system_color => "system_show_color").help("Shows the system's color")]
-            .into_iter();
+    let system_color_cmd = std::iter::once(
+        command!(system_color => "system_show_color").help("Shows the system's color"),
+    );
 
     let system_color_self = tokens!(system, ("color", ["colour"]));
     let system_color_self_cmd = [
@@ -110,7 +120,7 @@ pub fn edit() -> impl Iterator<Item = Command> {
 
     let system_tag = tokens!(system_target, ("tag", ["suffix"]));
     let system_tag_cmd =
-        [command!(system_tag => "system_show_tag").help("Shows the system's tag")].into_iter();
+        std::iter::once(command!(system_tag => "system_show_tag").help("Shows the system's tag"));
 
     let system_tag_self = tokens!(system, ("tag", ["suffix"]));
     let system_tag_self_cmd = [
@@ -124,9 +134,10 @@ pub fn edit() -> impl Iterator<Item = Command> {
     .into_iter();
 
     let system_server_tag = tokens!(system_target, ("servertag", ["st", "guildtag"]));
-    let system_server_tag_cmd = [command!(system_server_tag => "system_show_server_tag")
-        .help("Shows the system's server tag")]
-    .into_iter();
+    let system_server_tag_cmd = std::iter::once(
+        command!(system_server_tag => "system_show_server_tag")
+            .help("Shows the system's server tag"),
+    );
 
     let system_server_tag_self = tokens!(system, ("servertag", ["st", "guildtag"]));
     let system_server_tag_self_cmd = [
@@ -141,9 +152,9 @@ pub fn edit() -> impl Iterator<Item = Command> {
     .into_iter();
 
     let system_pronouns = tokens!(system_target, ("pronouns", ["prns"]));
-    let system_pronouns_cmd =
-        [command!(system_pronouns => "system_show_pronouns").help("Shows the system's pronouns")]
-            .into_iter();
+    let system_pronouns_cmd = std::iter::once(
+        command!(system_pronouns => "system_show_pronouns").help("Shows the system's pronouns"),
+    );
 
     let system_pronouns_self = tokens!(system, ("pronouns", ["prns"]));
     let system_pronouns_self_cmd = [
@@ -158,9 +169,9 @@ pub fn edit() -> impl Iterator<Item = Command> {
     .into_iter();
 
     let system_avatar = tokens!(system_target, ("avatar", ["pfp"]));
-    let system_avatar_cmd =
-        [command!(system_avatar => "system_show_avatar").help("Shows the system's avatar")]
-            .into_iter();
+    let system_avatar_cmd = std::iter::once(
+        command!(system_avatar => "system_show_avatar").help("Shows the system's avatar"),
+    );
 
     let system_avatar_self = tokens!(system, ("avatar", ["pfp"]));
     let system_avatar_self_cmd = [
@@ -175,11 +186,10 @@ pub fn edit() -> impl Iterator<Item = Command> {
     .into_iter();
 
     let system_server_avatar = tokens!(system_target, ("serveravatar", ["spfp"]));
-    let system_server_avatar_cmd = [
+    let system_server_avatar_cmd = std::iter::once(
         command!(system_server_avatar => "system_show_server_avatar")
             .help("Shows the system's server avatar"),
-    ]
-    .into_iter();
+    );
 
     let system_server_avatar_self = tokens!(system, ("serveravatar", ["spfp"]));
     let system_server_avatar_self_cmd = [
@@ -194,9 +204,9 @@ pub fn edit() -> impl Iterator<Item = Command> {
     .into_iter();
 
     let system_banner = tokens!(system_target, ("banner", ["cover"]));
-    let system_banner_cmd =
-        [command!(system_banner => "system_show_banner").help("Shows the system's banner")]
-            .into_iter();
+    let system_banner_cmd = std::iter::once(
+        command!(system_banner => "system_show_banner").help("Shows the system's banner"),
+    );
 
     let system_banner_self = tokens!(system, ("banner", ["cover"]));
     let system_banner_self_cmd = [
@@ -253,7 +263,7 @@ pub fn edit() -> impl Iterator<Item = Command> {
 
     let system_link = [
         command!("link", ("account", UserRef) => "system_link"),
-        command!("unlink", ("account", OpaqueString) => "system_unlink"),
+        command!("unlink", ("account", OpaqueString) => "system_unlink").flag(("yes", ["y"])),
     ]
     .into_iter();
 
@@ -286,10 +296,12 @@ pub fn edit() -> impl Iterator<Item = Command> {
     .map(add_list_flags);
 
     let system_display_id_self_cmd =
-        [command!(system, "id" => "system_display_id_self")].into_iter();
-    let system_display_id_cmd = [command!(system_target, "id" => "system_display_id")].into_iter();
+        std::iter::once(command!(system, "id" => "system_display_id_self"));
+    let system_display_id_cmd =
+        std::iter::once(command!(system_target, "id" => "system_display_id"));
 
-    system_new_cmd
+    system_info_cmd_self
+        .chain(system_new_cmd)
         .chain(system_webhook_cmd)
         .chain(system_name_self_cmd)
         .chain(system_server_name_self_cmd)

@@ -290,7 +290,7 @@ public class Config
         await ctx.Reply($"{Emojis.Success} System time zone cleared (set to UTC).");
     }
 
-    public async Task EditSystemTimezone(Context ctx, string zoneStr)
+    public async Task EditSystemTimezone(Context ctx, string zoneStr, bool confirmYes = false)
     {
         if (ctx.System == null) throw Errors.NoSystemError(ctx.DefaultPrefix);
 
@@ -299,7 +299,7 @@ public class Config
 
         var currentTime = SystemClock.Instance.GetCurrentInstant().InZone(zone);
         var msg = $"This will change the system time zone to **{zone.Id}**. The current time is **{currentTime.FormatZoned()}**. Is this correct?";
-        if (!await ctx.PromptYesNo(msg, "Change Timezone")) throw Errors.TimezoneChangeCancelled;
+        if (!await ctx.PromptYesNo(msg, "Change Timezone", flagValue: confirmYes)) throw Errors.TimezoneChangeCancelled;
 
         await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { UiTz = zone.Id });
 

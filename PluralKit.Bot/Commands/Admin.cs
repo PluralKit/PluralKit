@@ -111,7 +111,7 @@ public class Admin
         return eb.Build();
     }
 
-    public async Task UpdateSystemId(Context ctx, PKSystem target, string newHid)
+    public async Task UpdateSystemId(Context ctx, PKSystem target, string newHid, bool confirmYes)
     {
         ctx.AssertBotAdmin();
 
@@ -121,14 +121,14 @@ public class Admin
 
         await ctx.Reply(null, await CreateEmbed(ctx, target));
 
-        if (!await ctx.PromptYesNo($"Change system ID of `{target.Hid}` to `{newHid}`?", "Change"))
+        if (!await ctx.PromptYesNo($"Change system ID of `{target.Hid}` to `{newHid}`?", "Change", flagValue: confirmYes))
             throw new PKError("ID change cancelled.");
 
         await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { Hid = newHid });
         await ctx.Reply($"{Emojis.Success} System ID updated (`{target.Hid}` -> `{newHid}`).");
     }
 
-    public async Task UpdateMemberId(Context ctx, PKMember target, string newHid)
+    public async Task UpdateMemberId(Context ctx, PKMember target, string newHid, bool confirmYes)
     {
         ctx.AssertBotAdmin();
 
@@ -141,7 +141,7 @@ public class Admin
 
         if (!await ctx.PromptYesNo(
             $"Change member ID of **{target.NameFor(LookupContext.ByNonOwner)}** (`{target.Hid}`) to `{newHid}`?",
-            "Change"
+            "Change", flagValue: confirmYes
         ))
             throw new PKError("ID change cancelled.");
 
@@ -149,7 +149,7 @@ public class Admin
         await ctx.Reply($"{Emojis.Success} Member ID updated (`{target.Hid}` -> `{newHid}`).");
     }
 
-    public async Task UpdateGroupId(Context ctx, PKGroup target, string newHid)
+    public async Task UpdateGroupId(Context ctx, PKGroup target, string newHid, bool confirmYes)
     {
         ctx.AssertBotAdmin();
 
@@ -161,7 +161,7 @@ public class Admin
         await ctx.Reply(null, await CreateEmbed(ctx, system));
 
         if (!await ctx.PromptYesNo($"Change group ID of **{target.Name}** (`{target.Hid}`) to `{newHid}`?",
-            "Change"
+            "Change", flagValue: confirmYes
         ))
             throw new PKError("ID change cancelled.");
 
@@ -169,13 +169,13 @@ public class Admin
         await ctx.Reply($"{Emojis.Success} Group ID updated (`{target.Hid}` -> `{newHid}`).");
     }
 
-    public async Task RerollSystemId(Context ctx, PKSystem target)
+    public async Task RerollSystemId(Context ctx, PKSystem target, bool confirmYes)
     {
         ctx.AssertBotAdmin();
 
         await ctx.Reply(null, await CreateEmbed(ctx, target));
 
-        if (!await ctx.PromptYesNo($"Reroll system ID `{target.Hid}`?", "Reroll"))
+        if (!await ctx.PromptYesNo($"Reroll system ID `{target.Hid}`?", "Reroll", flagValue: confirmYes))
             throw new PKError("ID change cancelled.");
 
         var query = new Query("systems").AsUpdate(new
@@ -188,7 +188,7 @@ public class Admin
         await ctx.Reply($"{Emojis.Success} System ID updated (`{target.Hid}` -> `{newHid}`).");
     }
 
-    public async Task RerollMemberId(Context ctx, PKMember target)
+    public async Task RerollMemberId(Context ctx, PKMember target, bool confirmYes)
     {
         ctx.AssertBotAdmin();
 
@@ -197,7 +197,7 @@ public class Admin
 
         if (!await ctx.PromptYesNo(
             $"Reroll member ID for **{target.NameFor(LookupContext.ByNonOwner)}** (`{target.Hid}`)?",
-            "Reroll"
+            "Reroll", flagValue: confirmYes
         ))
             throw new PKError("ID change cancelled.");
 
@@ -211,7 +211,7 @@ public class Admin
         await ctx.Reply($"{Emojis.Success} Member ID updated (`{target.Hid}` -> `{newHid}`).");
     }
 
-    public async Task RerollGroupId(Context ctx, PKGroup target)
+    public async Task RerollGroupId(Context ctx, PKGroup target, bool confirmYes)
     {
         ctx.AssertBotAdmin();
 
@@ -219,7 +219,7 @@ public class Admin
         await ctx.Reply(null, await CreateEmbed(ctx, system));
 
         if (!await ctx.PromptYesNo($"Reroll group ID for **{target.Name}** (`{target.Hid}`)?",
-            "Change"
+            "Change", flagValue: confirmYes
         ))
             throw new PKError("ID change cancelled.");
 
@@ -233,7 +233,7 @@ public class Admin
         await ctx.Reply($"{Emojis.Success} Group ID updated (`{target.Hid}` -> `{newHid}`).");
     }
 
-    public async Task SystemMemberLimit(Context ctx, PKSystem target, int? newLimit)
+    public async Task SystemMemberLimit(Context ctx, PKSystem target, int? newLimit, bool confirmYes)
     {
         ctx.AssertBotAdmin();
 
@@ -247,14 +247,14 @@ public class Admin
         }
 
         await ctx.Reply(null, await CreateEmbed(ctx, target));
-        if (!await ctx.PromptYesNo($"Update member limit from **{currentLimit}** to **{newLimit}**?", "Update"))
+        if (!await ctx.PromptYesNo($"Update member limit from **{currentLimit}** to **{newLimit}**?", "Update", flagValue: confirmYes))
             throw new PKError("Member limit change cancelled.");
 
         await ctx.Repository.UpdateSystemConfig(target.Id, new SystemConfigPatch { MemberLimitOverride = newLimit });
         await ctx.Reply($"{Emojis.Success} Member limit updated.");
     }
 
-    public async Task SystemGroupLimit(Context ctx, PKSystem target, int? newLimit)
+    public async Task SystemGroupLimit(Context ctx, PKSystem target, int? newLimit, bool confirmYes)
     {
         ctx.AssertBotAdmin();
 
@@ -268,14 +268,14 @@ public class Admin
         }
 
         await ctx.Reply(null, await CreateEmbed(ctx, target));
-        if (!await ctx.PromptYesNo($"Update group limit from **{currentLimit}** to **{newLimit}**?", "Update"))
+        if (!await ctx.PromptYesNo($"Update group limit from **{currentLimit}** to **{newLimit}**?", "Update", flagValue: confirmYes))
             throw new PKError("Group limit change cancelled.");
 
         await ctx.Repository.UpdateSystemConfig(target.Id, new SystemConfigPatch { GroupLimitOverride = newLimit });
         await ctx.Reply($"{Emojis.Success} Group limit updated.");
     }
 
-    public async Task SystemRecover(Context ctx, string systemToken, User account, bool rerollToken)
+    public async Task SystemRecover(Context ctx, string systemToken, User account, bool rerollToken, bool confirmYes)
     {
         ctx.AssertBotAdmin();
 
@@ -294,7 +294,7 @@ public class Admin
         var system = await ctx.Repository.GetSystem(systemId.Value!);
         await ctx.Reply(null, await CreateEmbed(ctx, system));
 
-        if (!await ctx.PromptYesNo($"Associate account {account.NameAndMention()} with system `{system.Hid}`?", "Recover account"))
+        if (!await ctx.PromptYesNo($"Associate account {account.NameAndMention()} with system `{system.Hid}`?", "Recover account", flagValue: confirmYes))
             throw new PKError("System recovery cancelled.");
 
         await ctx.Repository.AddAccount(system.Id, account.Id);
@@ -402,7 +402,7 @@ public class Admin
         }
     }
 
-    public async Task AbuseLogDescription(Context ctx, User? account, string? id, string? description, bool clear)
+    public async Task AbuseLogDescription(Context ctx, User? account, string? id, string? description, bool clear, bool confirmClear)
     {
         ctx.AssertBotAdmin();
 
@@ -410,7 +410,7 @@ public class Admin
         if (abuseLog == null)
             return;
 
-        if (clear && await ctx.ConfirmClear("this abuse log description"))
+        if (clear && await ctx.ConfirmClear("this abuse log description", confirmClear))
         {
             await ctx.Repository.UpdateAbuseLog(abuseLog.Id, new AbuseLogPatch { Description = null });
             await ctx.Reply($"{Emojis.Success} Abuse log description cleared.");

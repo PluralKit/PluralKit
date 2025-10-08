@@ -322,9 +322,7 @@ public class ProxiedMessage
     {
         if (messageId == null)
         {
-            if (!ctx.HasNext())
-                throw new PKSyntaxError("You must pass a message ID or link.");
-            throw new PKSyntaxError($"Could not parse {ctx.PeekArgument().AsCode()} as a message ID or link.");
+            throw new PKSyntaxError("You must pass a message ID or link.");
         }
 
         var message = await ctx.Repository.GetFullMessage(messageId.Value);

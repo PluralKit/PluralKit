@@ -14,7 +14,7 @@ public class MemberProxy
             await ctx.Reply($"This member's proxy tags are:\n{target.ProxyTagsString("\n")}");
     }
 
-    public async Task ClearProxy(Context ctx, PKMember target)
+    public async Task ClearProxy(Context ctx, PKMember target, bool confirmYes = false)
     {
         ctx.CheckSystem().CheckOwnMember(target);
 
@@ -22,7 +22,7 @@ public class MemberProxy
         if (target.ProxyTags.Count > 1)
         {
             var msg = $"{Emojis.Warn} You already have multiple proxy tags set: {target.ProxyTagsString()}\nDo you want to clear them all?";
-            if (!await ctx.PromptYesNo(msg, "Clear"))
+            if (!await ctx.PromptYesNo(msg, "Clear", flagValue: confirmYes))
                 throw Errors.GenericCancelled();
         }
 
@@ -32,7 +32,7 @@ public class MemberProxy
         await ctx.Reply($"{Emojis.Success} Proxy tags cleared.");
     }
 
-    public async Task AddProxy(Context ctx, PKMember target, string proxyString)
+    public async Task AddProxy(Context ctx, PKMember target, string proxyString, bool confirmYes = false)
     {
         ctx.CheckSystem().CheckOwnMember(target);
 
@@ -44,7 +44,7 @@ public class MemberProxy
             throw new PKError(
                 $"Proxy tag too long ({tagToAdd.ProxyString.Length} > {Limits.MaxProxyTagLength} characters).");
 
-        if (!await WarnOnConflict(ctx, target, tagToAdd))
+        if (!await WarnOnConflict(ctx, target, tagToAdd, confirmYes))
             throw Errors.GenericCancelled();
 
         var newTags = target.ProxyTags.ToList();
@@ -72,7 +72,7 @@ public class MemberProxy
         await ctx.Reply($"{Emojis.Success} Removed proxy tags {tagToRemove.ProxyString.AsCode()}.");
     }
 
-    public async Task SetProxy(Context ctx, PKMember target, string proxyString)
+    public async Task SetProxy(Context ctx, PKMember target, string proxyString, bool confirmYes = false)
     {
         ctx.CheckSystem().CheckOwnMember(target);
 
@@ -82,7 +82,7 @@ public class MemberProxy
         if (target.ProxyTags.Count > 1)
         {
             var msg = $"This member already has more than one proxy tag set: {target.ProxyTagsString()}\nDo you want to replace them?";
-            if (!await ctx.PromptYesNo(msg, "Replace"))
+            if (!await ctx.PromptYesNo(msg, "Replace", flagValue: confirmYes))
                 throw Errors.GenericCancelled();
         }
 
@@ -90,7 +90,7 @@ public class MemberProxy
             throw new PKError(
                 $"Proxy tag too long ({requestedTag.ProxyString.Length} > {Limits.MaxProxyTagLength} characters).");
 
-        if (!await WarnOnConflict(ctx, target, requestedTag))
+        if (!await WarnOnConflict(ctx, target, requestedTag, confirmYes))
             throw Errors.GenericCancelled();
 
         var newTags = new[] { requestedTag };
@@ -110,7 +110,7 @@ public class MemberProxy
         return new ProxyTag(prefixAndSuffix[0], prefixAndSuffix[1]);
     }
 
-    private async Task<bool> WarnOnConflict(Context ctx, PKMember target, ProxyTag newTag)
+    private async Task<bool> WarnOnConflict(Context ctx, PKMember target, ProxyTag newTag, bool confirmYes = false)
     {
         var query = "select * from (select *, (unnest(proxy_tags)).prefix as prefix, (unnest(proxy_tags)).suffix as suffix from members where system = @System) as _ where prefix is not distinct from @Prefix and suffix is not distinct from @Suffix and id != @Existing";
         var conflicts = (await ctx.Database.Execute(conn => conn.QueryAsync<PKMember>(query,
@@ -120,6 +120,6 @@ public class MemberProxy
 
         var conflictList = conflicts.Select(m => $"- **{m.NameFor(ctx)}**");
         var msg = $"{Emojis.Warn} The following members have conflicting proxy tags:\n{string.Join('\n', conflictList)}\nDo you want to proceed anyway?";
-        return await ctx.PromptYesNo(msg, "Proceed");
+        return await ctx.PromptYesNo(msg, "Proceed", flagValue: confirmYes);
     }
 }

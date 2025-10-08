@@ -144,11 +144,11 @@ public class ServerConfig
         await ctx.Reply($"{Emojis.Success} Proxy logging channel set to <#{channel.Id}>.");
     }
 
-    public async Task ClearLogChannel(Context ctx)
+    public async Task ClearLogChannel(Context ctx, bool confirmYes)
     {
         await ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
 
-        if (!await ctx.ConfirmClear("the server log channel"))
+        if (!await ctx.ConfirmClear("the server log channel", confirmYes))
             return;
 
         await ctx.Repository.UpdateGuild(ctx.Guild.Id, new GuildPatch { LogChannel = null });

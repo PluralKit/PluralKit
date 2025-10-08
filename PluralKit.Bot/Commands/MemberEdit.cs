@@ -44,7 +44,7 @@ public class MemberEdit
         }
     }
 
-    public async Task ChangeName(Context ctx, PKMember target, string newName)
+    public async Task ChangeName(Context ctx, PKMember target, string newName, bool confirmYes)
     {
         ctx.CheckSystem().CheckOwnMember(target);
 
@@ -58,7 +58,7 @@ public class MemberEdit
         {
             var msg =
                 $"{Emojis.Warn} You already have a member in your system with the name \"{existingMember.NameFor(ctx)}\" (`{existingMember.DisplayHid(ctx.Config)}`). Do you want to rename this member to that name too?";
-            if (!await ctx.PromptYesNo(msg, "Rename")) throw new PKError("Member renaming cancelled.");
+            if (!await ctx.PromptYesNo(msg, "Rename", flagValue: confirmYes)) throw new PKError("Member renaming cancelled.");
         }
 
         // Rename the member

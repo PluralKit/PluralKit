@@ -72,7 +72,7 @@ public class Parameters
 
     private async Task<Parameter?> ResolveFfiParam(Context ctx, uniffi.commands.Parameter ffi_param)
     {
-        var byId = HasFlag("id", "by-id");
+        var byId = HasFlag("id", "by-id"); // this is added as a hidden flag to all command definitions
         switch (ffi_param)
         {
             case uniffi.commands.Parameter.MemberRef memberRef:
