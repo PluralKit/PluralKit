@@ -16,7 +16,7 @@
     nci.inputs.nixpkgs.follows = "nixpkgs";
     nci.inputs.dream2nix.follows = "d2n";
     nci.inputs.treefmt.follows = "treefmt";
-    uniffi-bindgen-cs.url = "git+https://github.com/NordSecurity/uniffi-bindgen-cs?ref=refs/tags/v0.8.3+v0.25.0&submodules=1";
+    uniffi-bindgen-cs.url = "git+https://github.com/90-008/uniffi-bindgen-cs?ref=refs/heads/main&submodules=1";
     uniffi-bindgen-cs.flake = false;
     # misc
     treefmt.url = "github:numtide/treefmt-nix";
@@ -45,8 +45,6 @@
           uniffi-bindgen-cs = config.nci.lib.buildCrate {
             src = inp.uniffi-bindgen-cs;
             cratePath = "bindgen";
-            # TODO: uniffi fails to build with our toolchain because the ahash dep that uniffi-bindgen-cs uses is too old and uses removed stdsimd feature
-            mkRustToolchain = pkgs: pkgs.cargo;
           };
 
           rustOutputs = config.nci.outputs;

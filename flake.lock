@@ -334,20 +334,20 @@
     "uniffi-bindgen-cs": {
       "flake": false,
       "locked": {
-        "lastModified": 1725356776,
-        "narHash": "sha256-w4K8BWMfUxohWE0nWpy3Qbc2CtRQTQ4dbER+sls61WI=",
-        "ref": "refs/tags/v0.8.3+v0.25.0",
-        "rev": "f68639fbc720b50ebe561ba75c66c84dc456bdce",
-        "revCount": 110,
+        "lastModified": 1759932560,
+        "narHash": "sha256-CnfB7/n1W5hbeC+cniJZthkpWO9kLyog/q5ldL6yS9g=",
+        "ref": "refs/heads/main",
+        "rev": "66c316454a04c025a88f8cc8af495bfc2b422d2f",
+        "revCount": 181,
         "submodules": true,
         "type": "git",
-        "url": "https://github.com/NordSecurity/uniffi-bindgen-cs"
+        "url": "https://github.com/90-008/uniffi-bindgen-cs"
       },
       "original": {
-        "ref": "refs/tags/v0.8.3+v0.25.0",
+        "ref": "refs/heads/main",
         "submodules": true,
         "type": "git",
-        "url": "https://github.com/NordSecurity/uniffi-bindgen-cs"
+        "url": "https://github.com/90-008/uniffi-bindgen-cs"
       }
     }
   },

@@ -33,7 +33,7 @@ jobs:
       - uses: actions-rust-lang/setup-rust-toolchain@v1
 
       - name: install uniffi
-        run: cargo install uniffi-bindgen-cs --git https://github.com/NordSecurity/uniffi-bindgen-cs --tag v0.8.3+v0.25.0
+        run: cargo install uniffi-bindgen-cs --git https://github.com/90-008/uniffi-bindgen-cs
 
       - name: generate command parser bindings
         run: |
