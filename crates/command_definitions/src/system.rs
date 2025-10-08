@@ -252,8 +252,7 @@ pub fn edit() -> impl Iterator<Item = Command> {
     let system_front = tokens!(system_target, ("front", ["fronter", "fronters", "f"]));
     let system_front_cmd = [
         command!(system_front => "system_fronter"),
-        command!(system_front, ("history", ["h"]) => "system_fronter_history")
-            .flag(CLEAR),
+        command!(system_front, ("history", ["h"]) => "system_fronter_history").flag(CLEAR),
         command!(system_front, ("percent", ["p", "%"]) => "system_fronter_percent")
             .flag(("duration", OpaqueString))
             .flag(("fronters-only", ["fo"]))
