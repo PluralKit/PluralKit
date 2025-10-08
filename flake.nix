@@ -101,7 +101,6 @@
                 fi
                 uniffi-bindgen-cs "$commandslib" --library --out-dir="''${2:-./PluralKit.Bot}"
                 cargo run --package commands --bin write_cs_glue -- "''${2:-./PluralKit.Bot}"/commandtypes.cs
-                dotnet format ./PluralKit.Bot/PluralKit.Bot.csproj
               '';
             };
           };

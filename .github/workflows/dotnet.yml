@@ -3,22 +3,22 @@ name: .net checks
 on:
   push:
     paths:
-    - .github/workflows/dotnet.yml
-    - 'Myriad/**'
-    - 'PluralKit.API/**'
-    - 'PluralKit.Bot/**'
-    - 'PluralKit.Core/**'
+      - .github/workflows/dotnet.yml
+      - "Myriad/**"
+      - "PluralKit.API/**"
+      - "PluralKit.Bot/**"
+      - "PluralKit.Core/**"
   pull_request:
     paths:
-    - .github/workflows/dotnet.yml
-    - 'Myriad/**'
-    - 'PluralKit.API/**'
-    - 'PluralKit.Bot/**'
-    - 'PluralKit.Core/**'
+      - .github/workflows/dotnet.yml
+      - "Myriad/**"
+      - "PluralKit.API/**"
+      - "PluralKit.Bot/**"
+      - "PluralKit.Core/**"
 
 jobs:
   test:
-    name: 'run .net tests'
+    name: "run .net tests"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -29,6 +29,17 @@ jobs:
         uses: actions/setup-dotnet@v1
         with:
           dotnet-version: 8.0.x
+
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+
+      - name: install uniffi
+        run: cargo install uniffi-bindgen-cs --git https://github.com/NordSecurity/uniffi-bindgen-cs --tag v0.8.3+v0.25.0
+
+      - name: generate command parser bindings
+        run: |
+          cargo -Z unstable-options build --package commands --lib --release --artifact-dir obj/
+          uniffi-bindgen-cs "obj/libcommands.so" --library --out-dir="./PluralKit.Bot"
+          cargo run --package commands --bin write_cs_glue -- "./PluralKit.Bot"/commandtypes.cs
 
       - name: Run automated tests
         run: dotnet test --configuration Release
