@@ -46,6 +46,8 @@ pub fn all() -> impl Iterator<Item = Command> {
                 .hidden_flag(("raw", ["r"]))
                 .hidden_flag(("show-embed", ["se"]))
                 .hidden_flag(("by-id", ["id"]))
+                .hidden_flag(("private", ["priv"]))
+                .hidden_flag(("public", ["pub"]))
         })
 }
 

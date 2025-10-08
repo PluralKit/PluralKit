@@ -194,7 +194,7 @@ public class Context
 
     public LookupContext LookupContextFor(SystemId systemId, bool? _hasPrivateOverride = null, bool? _hasPublicOverride = null)
     {
-        // TODO(yusdacra): these should be passed as a parameter to this method all the way from command tree
+        // todo(dusk): these should be passed as a parameter ideally
         bool hasPrivateOverride = _hasPrivateOverride ?? Parameters.HasFlag("private", "priv");
         bool hasPublicOverride = _hasPublicOverride ?? Parameters.HasFlag("public", "pub");
 

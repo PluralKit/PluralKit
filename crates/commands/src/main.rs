@@ -4,7 +4,7 @@ use command_parser::Tree;
 use commands::COMMAND_TREE;
 
 fn main() {
-    related();
+    parse();
 }
 
 fn related() {
