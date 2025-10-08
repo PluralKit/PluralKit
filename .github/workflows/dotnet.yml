@@ -31,6 +31,8 @@ jobs:
           dotnet-version: 8.0.x
 
       - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          rustflags: ""
 
       - name: install uniffi
         run: cargo install uniffi-bindgen-cs --git https://github.com/90-008/uniffi-bindgen-cs
