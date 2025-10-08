@@ -12,5 +12,5 @@ pub fn cmds() -> impl Iterator<Item = Command> {
         command!(group::targeted(), random => "group_random_member").flags(get_list_flags()),
     ]
     .into_iter()
-    .map(|cmd| cmd.flag(("all", ["a"])))
+    .map(|cmd| cmd.flag(ALL))
 }

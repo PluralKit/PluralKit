@@ -31,8 +31,8 @@ pub fn edit() -> impl Iterator<Item = Command> {
     let system_webhook = tokens!(system, ("webhook", ["hook"]));
     let system_webhook_cmd = [
         command!(system_webhook => "system_webhook_show").help("Shows your system's webhook URL"),
-        command!(system_webhook, ("clear", ["c"]) => "system_webhook_clear")
-            .flag(("yes", ["y"]))
+        command!(system_webhook, CLEAR => "system_webhook_clear")
+            .flag(YES)
             .help("Clears your system's webhook URL"),
         command!(system_webhook, ("url", OpaqueString) => "system_webhook_set")
             .help("Sets your system's webhook URL"),
@@ -42,7 +42,7 @@ pub fn edit() -> impl Iterator<Item = Command> {
     let add_info_flags = |cmd: Command| {
         cmd.flag(("public", ["pub"]))
             .flag(("private", ["priv"]))
-            .flag(("all", ["a"]))
+            .flag(ALL)
     };
     let system_info_cmd_self = std::iter::once(add_info_flags(
         command!(system => "system_info_self").help("Shows information about your system"),
@@ -59,8 +59,8 @@ pub fn edit() -> impl Iterator<Item = Command> {
     let system_name_self = tokens!(system, "name");
     let system_name_self_cmd = [
         command!(system_name_self => "system_show_name_self").help("Shows your system's name"),
-        command!(system_name_self, ("clear", ["c"]) => "system_clear_name")
-            .flag(("yes", ["y"]))
+        command!(system_name_self, CLEAR => "system_clear_name")
+            .flag(YES)
             .help("Clears your system's name"),
         command!(system_name_self, ("name", OpaqueString) => "system_rename")
             .help("Renames your system"),
@@ -77,8 +77,8 @@ pub fn edit() -> impl Iterator<Item = Command> {
     let system_server_name_self_cmd = [
         command!(system_server_name_self => "system_show_server_name_self")
             .help("Shows your system's server name"),
-        command!(system_server_name_self, ("clear", ["c"]) => "system_clear_server_name")
-            .flag(("yes", ["y"]))
+        command!(system_server_name_self, CLEAR => "system_clear_server_name")
+            .flag(YES)
             .help("Clears your system's server name"),
         command!(system_server_name_self, ("name", OpaqueString) => "system_rename_server_name")
             .help("Renames your system's server name"),
@@ -94,8 +94,8 @@ pub fn edit() -> impl Iterator<Item = Command> {
     let system_description_self = tokens!(system, ("description", ["desc", "d"]));
     let system_description_self_cmd = [
         command!(system_description_self => "system_show_description_self").help("Shows your system's description"),
-        command!(system_description_self, ("clear", ["c"]) => "system_clear_description")
-        .flag(("yes", ["y"]))
+        command!(system_description_self, CLEAR => "system_clear_description")
+        .flag(YES)
             .help("Clears your system's description"),
         command!(system_description_self, ("description", OpaqueString) => "system_change_description")
             .help("Changes your system's description"),
@@ -110,8 +110,8 @@ pub fn edit() -> impl Iterator<Item = Command> {
     let system_color_self = tokens!(system, ("color", ["colour"]));
     let system_color_self_cmd = [
         command!(system_color_self => "system_show_color_self").help("Shows your system's color"),
-        command!(system_color_self, ("clear", ["c"]) => "system_clear_color")
-            .flag(("yes", ["y"]))
+        command!(system_color_self, CLEAR => "system_clear_color")
+            .flag(YES)
             .help("Clears your system's color"),
         command!(system_color_self, ("color", OpaqueString) => "system_change_color")
             .help("Changes your system's color"),
@@ -125,8 +125,8 @@ pub fn edit() -> impl Iterator<Item = Command> {
     let system_tag_self = tokens!(system, ("tag", ["suffix"]));
     let system_tag_self_cmd = [
         command!(system_tag_self => "system_show_tag_self").help("Shows your system's tag"),
-        command!(system_tag_self, ("clear", ["c"]) => "system_clear_tag")
-            .flag(("yes", ["y"]))
+        command!(system_tag_self, CLEAR => "system_clear_tag")
+            .flag(YES)
             .help("Clears your system's tag"),
         command!(system_tag_self, ("tag", OpaqueString) => "system_change_tag")
             .help("Changes your system's tag"),
@@ -143,8 +143,8 @@ pub fn edit() -> impl Iterator<Item = Command> {
     let system_server_tag_self_cmd = [
         command!(system_server_tag_self => "system_show_server_tag_self")
             .help("Shows your system's server tag"),
-        command!(system_server_tag_self, ("clear", ["c"]) => "system_clear_server_tag")
-            .flag(("yes", ["y"]))
+        command!(system_server_tag_self, CLEAR => "system_clear_server_tag")
+            .flag(YES)
             .help("Clears your system's server tag"),
         command!(system_server_tag_self, ("tag", OpaqueString) => "system_change_server_tag")
             .help("Changes your system's server tag"),
@@ -160,8 +160,8 @@ pub fn edit() -> impl Iterator<Item = Command> {
     let system_pronouns_self_cmd = [
         command!(system_pronouns_self => "system_show_pronouns_self")
             .help("Shows your system's pronouns"),
-        command!(system_pronouns_self, ("clear", ["c"]) => "system_clear_pronouns")
-            .flag(("yes", ["y"]))
+        command!(system_pronouns_self, CLEAR => "system_clear_pronouns")
+            .flag(YES)
             .help("Clears your system's pronouns"),
         command!(system_pronouns_self, ("pronouns", OpaqueString) => "system_change_pronouns")
             .help("Changes your system's pronouns"),
@@ -177,8 +177,8 @@ pub fn edit() -> impl Iterator<Item = Command> {
     let system_avatar_self_cmd = [
         command!(system_avatar_self => "system_show_avatar_self")
             .help("Shows your system's avatar"),
-        command!(system_avatar_self, ("clear", ["c"]) => "system_clear_avatar")
-            .flag(("yes", ["y"]))
+        command!(system_avatar_self, CLEAR => "system_clear_avatar")
+            .flag(YES)
             .help("Clears your system's avatar"),
         command!(system_avatar_self, ("avatar", Avatar) => "system_change_avatar")
             .help("Changes your system's avatar"),
@@ -195,8 +195,8 @@ pub fn edit() -> impl Iterator<Item = Command> {
     let system_server_avatar_self_cmd = [
         command!(system_server_avatar_self => "system_show_server_avatar_self")
             .help("Shows your system's server avatar"),
-        command!(system_server_avatar_self, ("clear", ["c"]) => "system_clear_server_avatar")
-            .flag(("yes", ["y"]))
+        command!(system_server_avatar_self, CLEAR => "system_clear_server_avatar")
+            .flag(YES)
             .help("Clears your system's server avatar"),
         command!(system_server_avatar_self, ("avatar", Avatar) => "system_change_server_avatar")
             .help("Changes your system's server avatar"),
@@ -212,8 +212,8 @@ pub fn edit() -> impl Iterator<Item = Command> {
     let system_banner_self_cmd = [
         command!(system_banner_self => "system_show_banner_self")
             .help("Shows your system's banner"),
-        command!(system_banner_self, ("clear", ["c"]) => "system_clear_banner")
-            .flag(("yes", ["y"]))
+        command!(system_banner_self, CLEAR => "system_clear_banner")
+            .flag(YES)
             .help("Clears your system's banner"),
         command!(system_banner_self, ("banner", Avatar) => "system_change_banner")
             .help("Changes your system's banner"),
@@ -243,7 +243,7 @@ pub fn edit() -> impl Iterator<Item = Command> {
     let system_privacy_cmd = [
         command!(system_privacy => "system_show_privacy")
             .help("Shows your system's privacy settings"),
-            command!(system_privacy, ("all", ["a"]), ("level", PrivacyLevel) => "system_change_privacy_all")
+            command!(system_privacy, ALL, ("level", PrivacyLevel) => "system_change_privacy_all")
             .help("Changes all privacy settings for your system"),
         command!(system_privacy, ("privacy", SystemPrivacyTarget), ("level", PrivacyLevel) => "system_change_privacy")
             .help("Changes a specific privacy setting for your system"),
@@ -253,7 +253,7 @@ pub fn edit() -> impl Iterator<Item = Command> {
     let system_front_cmd = [
         command!(system_front => "system_fronter"),
         command!(system_front, ("history", ["h"]) => "system_fronter_history")
-            .flag(("clear", ["c"])),
+            .flag(CLEAR),
         command!(system_front, ("percent", ["p", "%"]) => "system_fronter_percent")
             .flag(("duration", OpaqueString))
             .flag(("fronters-only", ["fo"]))
@@ -263,7 +263,7 @@ pub fn edit() -> impl Iterator<Item = Command> {
 
     let system_link = [
         command!("link", ("account", UserRef) => "system_link"),
-        command!("unlink", ("account", OpaqueString) => "system_unlink").flag(("yes", ["y"])),
+        command!("unlink", ("account", OpaqueString) => "system_unlink").flag(YES),
     ]
     .into_iter();
 

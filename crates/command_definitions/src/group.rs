@@ -22,7 +22,7 @@ pub fn cmds() -> impl Iterator<Item = Command> {
             .into_iter();
 
     let group_info_cmd = [command!(group_target => "group_info")
-        .flag(("all", ["a"]))
+        .flag(ALL)
         .help("Shows information about a group")]
     .into_iter();
 
@@ -32,8 +32,8 @@ pub fn cmds() -> impl Iterator<Item = Command> {
     );
     let group_name_cmd = [
         command!(group_name => "group_show_name").help("Shows the group's name"),
-        command!(group_name, ("clear", ["c"]) => "group_clear_name")
-            .flag(("yes", ["y"]))
+        command!(group_name, CLEAR => "group_clear_name")
+            .flag(YES)
             .help("Clears the group's name"),
         command!(group_name, ("name", OpaqueString) => "group_rename").help("Renames the group"),
     ]
@@ -43,8 +43,8 @@ pub fn cmds() -> impl Iterator<Item = Command> {
     let group_display_name_cmd = [
         command!(group_display_name => "group_show_display_name")
             .help("Shows the group's display name"),
-        command!(group_display_name, ("clear", ["c"]) => "group_clear_display_name")
-            .flag(("yes", ["y"]))
+        command!(group_display_name, CLEAR => "group_clear_display_name")
+            .flag(YES)
             .help("Clears the group's display name"),
         command!(group_display_name, ("name", OpaqueString) => "group_change_display_name")
             .help("Changes the group's display name"),
@@ -61,8 +61,8 @@ pub fn cmds() -> impl Iterator<Item = Command> {
     let group_description_cmd = [
         command!(group_description => "group_show_description")
             .help("Shows the group's description"),
-        command!(group_description, ("clear", ["c"]) => "group_clear_description")
-            .flag(("yes", ["y"]))
+        command!(group_description, CLEAR => "group_clear_description")
+            .flag(YES)
             .help("Clears the group's description"),
         command!(group_description, ("description", OpaqueString) => "group_change_description")
             .help("Changes the group's description"),
@@ -75,8 +75,8 @@ pub fn cmds() -> impl Iterator<Item = Command> {
     );
     let group_icon_cmd = [
         command!(group_icon => "group_show_icon").help("Shows the group's icon"),
-        command!(group_icon, ("clear", ["c"]) => "group_clear_icon")
-            .flag(("yes", ["y"]))
+        command!(group_icon, CLEAR => "group_clear_icon")
+            .flag(YES)
             .help("Clears the group's icon"),
         command!(group_icon, ("icon", Avatar) => "group_change_icon")
             .help("Changes the group's icon"),
@@ -86,8 +86,8 @@ pub fn cmds() -> impl Iterator<Item = Command> {
     let group_banner = tokens!(group_target, ("banner", ["splash", "cover"]));
     let group_banner_cmd = [
         command!(group_banner => "group_show_banner").help("Shows the group's banner"),
-        command!(group_banner, ("clear", ["c"]) => "group_clear_banner")
-            .flag(("yes", ["y"]))
+        command!(group_banner, CLEAR => "group_clear_banner")
+            .flag(YES)
             .help("Clears the group's banner"),
         command!(group_banner, ("banner", Avatar) => "group_change_banner")
             .help("Changes the group's banner"),
@@ -97,8 +97,8 @@ pub fn cmds() -> impl Iterator<Item = Command> {
     let group_color = tokens!(group_target, ("color", ["colour"]));
     let group_color_cmd = [
         command!(group_color => "group_show_color").help("Shows the group's color"),
-        command!(group_color, ("clear", ["c"]) => "group_clear_color")
-            .flag(("yes", ["y"]))
+        command!(group_color, CLEAR => "group_clear_color")
+            .flag(YES)
             .help("Clears the group's color"),
         command!(group_color, ("color", OpaqueString) => "group_change_color")
             .help("Changes the group's color"),
@@ -109,7 +109,7 @@ pub fn cmds() -> impl Iterator<Item = Command> {
     let group_privacy_cmd = [
             command!(group_privacy => "group_show_privacy")
                 .help("Shows the group's privacy settings"),
-            command!(group_privacy, ("all", ["a"]), ("level", PrivacyLevel) => "group_change_privacy_all")
+            command!(group_privacy, ALL, ("level", PrivacyLevel) => "group_change_privacy_all")
                 .help("Changes all privacy settings for the group"),
             command!(group_privacy, ("privacy", GroupPrivacyTarget), ("level", PrivacyLevel) => "group_change_privacy")
                 .help("Changes a specific privacy setting for the group"),
@@ -130,7 +130,7 @@ pub fn cmds() -> impl Iterator<Item = Command> {
 
     let group_delete_cmd = [
         command!(group_target, ("delete", ["destroy", "erase", "yeet"]) => "group_delete")
-            .flag(("yes", ["y"]))
+            .flag(YES)
             .help("Deletes the group"),
     ]
     .into_iter();
@@ -160,9 +160,9 @@ pub fn cmds() -> impl Iterator<Item = Command> {
 
     let group_modify_members_cmd = [
         command!(group_target, "add", Optional(MemberRefs) => "group_add_member")
-            .flag(("all", ["a"])).flag(("yes", ["y"])),
+            .flag(ALL).flag(YES),
         command!(group_target, ("remove", ["delete", "del", "rem"]), Optional(MemberRefs) => "group_remove_member")
-            .flag(("all", ["a"])).flag(("yes", ["y"])),
+            .flag(ALL).flag(YES),
     ]
     .into_iter();
 

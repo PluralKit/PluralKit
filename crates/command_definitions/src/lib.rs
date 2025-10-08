@@ -50,3 +50,7 @@ pub fn all() -> impl Iterator<Item = Command> {
 }
 
 pub const RESET: (&str, [&str; 2]) = ("reset", ["clear", "default"]);
+
+pub const CLEAR: (&str, [&str; 1]) = ("clear", ["c"]);
+pub const YES: (&str, [&str; 1]) = ("yes", ["y"]);
+pub const ALL: (&str, [&str; 1]) = ("all", ["a"]);

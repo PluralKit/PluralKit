@@ -1,5 +1,7 @@
 use command_parser::flag::Flag;
 
+use crate::ALL;
+
 pub fn get_list_flags() -> [Flag; 22] {
     [
         // Short or long list
@@ -31,7 +33,7 @@ pub fn get_list_flags() -> [Flag; 22] {
         // Sort reverse
         Flag::from(("reverse", ["r", "rev"])),
         // Privacy filter
-        Flag::from(("all", ["a"])),
+        Flag::from(ALL),
         Flag::from(("private-only", ["po"])),
         // Additional fields to include
         Flag::from((

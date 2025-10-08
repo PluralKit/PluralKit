@@ -50,8 +50,8 @@ pub fn cmds() -> impl Iterator<Item = Command> {
             .help("Shows the current log channel"),
         command!(log_channel, ("channel", ChannelRef) => "server_config_log_channel_set")
             .help("Sets the log channel"),
-        command!(log_channel, ("clear", ["c"]) => "server_config_log_channel_clear")
-            .flag(("yes", ["y"]))
+        command!(log_channel, CLEAR => "server_config_log_channel_clear")
+            .flag(YES)
             .help("Clears the log channel"),
     ]
     .into_iter();
@@ -74,10 +74,10 @@ pub fn cmds() -> impl Iterator<Item = Command> {
         command!(log_blacklist => "server_config_log_blacklist_show")
             .help("Shows channels where logging is disabled"),
         command!(log_blacklist, add, Optional(("channel", ChannelRef)) => "server_config_log_blacklist_add")
-            .flag(("all", ["a"]))
+            .flag(ALL)
             .help("Adds a channel (or all channels with --all) to the log blacklist"),
         command!(log_blacklist, remove, Optional(("channel", ChannelRef)) => "server_config_log_blacklist_remove")
-            .flag(("all", ["a"]))
+            .flag(ALL)
             .help("Removes a channel (or all channels with --all) from the log blacklist"),
     ]
     .into_iter();
@@ -87,10 +87,10 @@ pub fn cmds() -> impl Iterator<Item = Command> {
         command!(proxy_blacklist => "server_config_proxy_blacklist_show")
             .help("Shows channels where proxying is disabled"),
         command!(proxy_blacklist, add, Optional(("channel", ChannelRef)) => "server_config_proxy_blacklist_add")
-            .flag(("all", ["a"]))
+            .flag(ALL)
             .help("Adds a channel (or all channels with --all) to the proxy blacklist"),
         command!(proxy_blacklist, remove, Optional(("channel", ChannelRef)) => "server_config_proxy_blacklist_remove")
-            .flag(("all", ["a"]))
+            .flag(ALL)
             .help("Removes a channel (or all channels with --all) from the proxy blacklist"),
     ]
     .into_iter();
