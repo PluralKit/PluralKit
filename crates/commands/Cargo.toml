@@ -6,7 +6,7 @@ default-run = "commands"
 
 [[bin]]
 name = "write_cs_glue"
-path = "src/bin/write_cs_glue.rs"
+path = "src/write_cs_glue.rs"
 
 [lib]
 crate-type = ["cdylib", "lib"]
