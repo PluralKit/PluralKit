@@ -48,7 +48,7 @@ lazy_static::lazy_static! {
 // quotes need to be at start/end of words, and are ignored if a closing quote is not present
 // WTB POSIX quoting: https://pubs.opengroup.org/onlinepubs/9799919799/utilities/V3_chap02.html
 fn find_quotes(match_str: &str) -> Option<usize> {
-    if let Some(right) = QUOTE_PAIRS.get(&match_str[0..1]) {
+    if let Some(right) = QUOTE_PAIRS.get(&match_str[0..match_str.ceil_char_boundary(1)]) {
         // try matching end quote
         for possible_quote in right.chars() {
             for (pos, _) in match_str.match_indices(possible_quote) {
