@@ -266,7 +266,7 @@ pub fn edit() -> impl Iterator<Item = Command> {
     ]
     .into_iter();
 
-    let system_list = ("members", ["list"]);
+    let system_list = ("members", ["list", "l", "find", "f"]);
     let system_search = tokens!(
         ("search", ["query", "find"]),
         ("query", OpaqueStringRemainder),
@@ -279,6 +279,7 @@ pub fn edit() -> impl Iterator<Item = Command> {
     .into_iter()
     .map(add_list_flags);
     let system_list_self_cmd = [
+        command!(system_list => "system_members_list_self"),
         command!(system, system_list => "system_members_list_self"),
         command!(system, system_search => "system_members_search_self"),
     ]
