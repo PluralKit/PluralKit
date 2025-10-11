@@ -71,4 +71,5 @@ pub fn cmds() -> impl Iterator<Item = Command> {
     ]
     .into_iter()
     .chain(abuselog_cmds)
+    .map(|cmd| cmd.show_in_suggestions(false))
 }

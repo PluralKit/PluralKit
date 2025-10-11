@@ -147,6 +147,9 @@ pub fn parse_command(prefix: String, input: String) -> CommandResult {
 pub fn get_related_commands(prefix: String, input: String) -> String {
     let mut s = String::new();
     for command in command_definitions::all() {
+        if !command.show_in_suggestions {
+            continue;
+        }
         if command.tokens.first().map_or(false, |token| {
             token
                 .try_match(Some(&input))
