@@ -45,8 +45,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         for param in &command_params {
             writeln!(
                 &mut command_params_init,
-                r#"@{name} = await ctx.ParamResolve{extract_fn_name}("{name}"){throw_null},"#,
-                name = param.name().replace("-", "_"),
+                r#"@{fieldName} = await ctx.ParamResolve{extract_fn_name}("{name}"){throw_null},"#,
+                fieldName = param.name().replace("-", "_"),
+                name = param.name(),
                 extract_fn_name = get_param_param_ty(param.kind()),
                 throw_null = param
                     .is_optional()
@@ -59,15 +60,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             if let Some(param) = flag.get_value() {
                 writeln!(
                     &mut command_flags_init,
-                    r#"@{name} = await ctx.FlagResolve{extract_fn_name}("{name}"),"#,
-                    name = flag.get_name().replace("-", "_"),
+                    r#"@{fieldName} = await ctx.FlagResolve{extract_fn_name}("{name}"),"#,
+                    fieldName = flag.get_name().replace("-", "_"),
+                    name = flag.get_name(),
                     extract_fn_name = get_param_param_ty(param.kind()),
                 )?;
             } else {
                 writeln!(
                     &mut command_flags_init,
-                    r#"@{name} = ctx.Parameters.HasFlag("{name}"),"#,
-                    name = flag.get_name().replace("-", "_"),
+                    r#"@{fieldName} = ctx.Parameters.HasFlag("{name}"),"#,
+                    fieldName = flag.get_name().replace("-", "_"),
+                    name = flag.get_name(),
                 )?;
             }
         }

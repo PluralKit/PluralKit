@@ -8,7 +8,7 @@ public partial class CommandTree
     {
         if (commands.Length == 0)
         {
-            await ctx.Reply($"No commands related to {subject} was found. For the full list of commands, see the website: <https://pluralkit.me/commands>");
+            await ctx.Reply($"No commands related to `{subject}` was found. For the full list of commands, see the website: <https://pluralkit.me/commands>");
             return;
         }
 
@@ -17,7 +17,7 @@ public partial class CommandTree
                 new MessageComponent()
                 {
                     Type = ComponentType.Text,
-                    Content = $"Here is a list of commands related to {subject}:\n{commands}\nFor a full list of possible commands, see <https://pluralkit.me/commands>.",
+                    Content = $"Here is a list of commands related to `{subject}`:\n{commands}\nFor a full list of possible commands, see <https://pluralkit.me/commands>.",
                 }
             ]
         );
