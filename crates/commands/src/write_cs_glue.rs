@@ -51,8 +51,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 extract_fn_name = get_param_param_ty(param.kind()),
                 throw_null = param
                     .is_optional()
-                    .then_some("")
-                    .unwrap_or(" ?? throw new PKError(\"this is a bug\")"),
+                    .then(String::new)
+                    .unwrap_or(format!(" ?? throw new PKError(\"parameter {} not found but was required, this is a bug in the command parser, for command: {}!\")", param.name(), command.cb)),
             )?;
         }
         let mut command_flags_init = String::new();

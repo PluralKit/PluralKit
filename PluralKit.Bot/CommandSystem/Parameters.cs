@@ -9,24 +9,24 @@ namespace PluralKit.Bot;
 // corresponds to the ffi Paramater type, but with stricter types (also avoiding exposing ffi types!)
 public abstract record Parameter()
 {
-    public record MemberRef(PKMember member): Parameter;
-    public record MemberRefs(List<PKMember> members): Parameter;
-    public record GroupRef(PKGroup group): Parameter;
-    public record GroupRefs(List<PKGroup> groups): Parameter;
-    public record SystemRef(PKSystem system): Parameter;
-    public record UserRef(User user): Parameter;
-    public record MessageRef(Message.Reference message): Parameter;
-    public record ChannelRef(Channel channel): Parameter;
-    public record GuildRef(Guild guild): Parameter;
-    public record MemberPrivacyTarget(MemberPrivacySubject target): Parameter;
-    public record GroupPrivacyTarget(GroupPrivacySubject target): Parameter;
-    public record SystemPrivacyTarget(SystemPrivacySubject target): Parameter;
-    public record PrivacyLevel(Core.PrivacyLevel level): Parameter;
-    public record Toggle(bool value): Parameter;
-    public record Opaque(string value): Parameter;
-    public record Number(int value): Parameter;
-    public record Avatar(ParsedImage avatar): Parameter;
-    public record ProxySwitchAction(SystemConfig.ProxySwitchAction action): Parameter;
+    public record MemberRef(PKMember member) : Parameter;
+    public record MemberRefs(List<PKMember> members) : Parameter;
+    public record GroupRef(PKGroup group) : Parameter;
+    public record GroupRefs(List<PKGroup> groups) : Parameter;
+    public record SystemRef(PKSystem system) : Parameter;
+    public record UserRef(User user) : Parameter;
+    public record MessageRef(Message.Reference message) : Parameter;
+    public record ChannelRef(Channel channel) : Parameter;
+    public record GuildRef(Guild guild) : Parameter;
+    public record MemberPrivacyTarget(MemberPrivacySubject target) : Parameter;
+    public record GroupPrivacyTarget(GroupPrivacySubject target) : Parameter;
+    public record SystemPrivacyTarget(SystemPrivacySubject target) : Parameter;
+    public record PrivacyLevel(Core.PrivacyLevel level) : Parameter;
+    public record Toggle(bool value) : Parameter;
+    public record Opaque(string value) : Parameter;
+    public record Number(int value) : Parameter;
+    public record Avatar(ParsedImage avatar) : Parameter;
+    public record ProxySwitchAction(SystemConfig.ProxySwitchAction action) : Parameter;
 }
 
 public class Parameters
@@ -48,6 +48,10 @@ public class Parameters
             _cb = command.@commandRef;
             _flags = command.@flags;
             _params = command.@params;
+            foreach (var param in _params)
+            {
+                Console.WriteLine($"{param.Key}: {param.Value}");
+            }
         }
         else
         {

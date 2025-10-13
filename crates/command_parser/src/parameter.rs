@@ -135,29 +135,38 @@ impl Parameter {
                     return Ok(ParameterValue::MessageRef(None, None, message_id));
                 }
 
-                static RE: std::sync::LazyLock<regex::Regex> = std::sync::LazyLock::new(|| {
+                static SERVER_RE: std::sync::LazyLock<regex::Regex> = std::sync::LazyLock::new(
+                    || {
+                        regex::Regex::new(
+                        r"https://(?:\w+\.)?discord(?:app)?\.com/channels/(?P<guild>\d+)/(?P<channel>\d+)/(?P<message>\d+)",
+                    )
+                    .unwrap()
+                    },
+                );
+
+                static DM_RE: std::sync::LazyLock<regex::Regex> = std::sync::LazyLock::new(|| {
                     regex::Regex::new(
-                        r"https://(?:\w+\.)?discord(?:app)?\.com/channels/(\d+)/(\d+)/(\d+)",
+                        r"https://(?:\w+\.)?discord(?:app)?\.com/channels/@me/(?P<channel>\d+)/(?P<message>\d+)",
                     )
                     .unwrap()
                 });
 
-                if let Some(captures) = RE.captures(input) {
-                    let guild_id = captures
-                        .get(1)
-                        .and_then(|m| m.as_str().parse::<u64>().ok())
-                        .ok_or_else(|| SmolStr::new("invalid guild ID in message link"))?;
-                    let channel_id = captures
-                        .get(2)
-                        .and_then(|m| m.as_str().parse::<u64>().ok())
-                        .ok_or_else(|| SmolStr::new("invalid channel ID in message link"))?;
-                    let message_id = captures
-                        .get(3)
-                        .and_then(|m| m.as_str().parse::<u64>().ok())
-                        .ok_or_else(|| SmolStr::new("invalid message ID in message link"))?;
+                if let Some(captures) = SERVER_RE.captures(input) {
+                    let guild_id = captures.parse_id("guild")?;
+                    let channel_id = captures.parse_id("channel")?;
+                    let message_id = captures.parse_id("message")?;
 
                     Ok(ParameterValue::MessageRef(
                         Some(guild_id),
+                        Some(channel_id),
+                        message_id,
+                    ))
+                } else if let Some(captures) = DM_RE.captures(input) {
+                    let channel_id = captures.parse_id("channel")?;
+                    let message_id = captures.parse_id("message")?;
+
+                    Ok(ParameterValue::MessageRef(
+                        None,
                         Some(channel_id),
                         message_id,
                     ))
@@ -558,5 +567,17 @@ impl FromStr for ProxySwitchAction {
         .into_iter()
         .find(|action| action.as_ref() == s)
         .ok_or_else(|| SmolStr::new("invalid proxy switch action, must be new/add/off"))
+    }
+}
+
+trait ParseMessageLink {
+    fn parse_id(&self, name: &str) -> Result<u64, SmolStr>;
+}
+
+impl ParseMessageLink for regex::Captures<'_> {
+    fn parse_id(&self, name: &str) -> Result<u64, SmolStr> {
+        self.name(name)
+            .and_then(|m| m.as_str().parse::<u64>().ok())
+            .ok_or_else(|| SmolStr::new(format!("invalid {} in message link", name)))
     }
 }

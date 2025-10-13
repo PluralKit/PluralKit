@@ -50,13 +50,13 @@ pub fn parse_command(
     let mut matched_tokens: Vec<(Tree, (Token, TokenMatchResult, usize))> = Vec::new();
     let mut filtered_tokens: Vec<Token> = Vec::new();
     loop {
-        println!(
-            "possible: {:?}",
-            local_tree
-                .possible_tokens()
-                .filter(|t| filtered_tokens.contains(t))
-                .collect::<Vec<_>>()
-        );
+        // println!(
+        //     "possible: {:?}",
+        //     local_tree
+        //         .possible_tokens()
+        //         .filter(|t| filtered_tokens.contains(t))
+        //         .collect::<Vec<_>>()
+        // );
         let next = next_token(
             local_tree
                 .possible_tokens()
@@ -64,7 +64,7 @@ pub fn parse_command(
             &input,
             current_pos,
         );
-        println!("next: {:?}", next);
+        // println!("next: {:?}", next);
         match &next {
             Some((found_token, result, new_pos)) => {
                 match &result {
