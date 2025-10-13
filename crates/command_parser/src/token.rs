@@ -16,7 +16,7 @@ pub enum Token {
     Parameter(Parameter),
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum TokenMatchResult {
     MatchedValue,
     MatchedParameter {
@@ -36,6 +36,7 @@ pub enum TokenMatchResult {
 // a: because we want to differentiate between no match and match failure (it matched with an error)
 //    "no match" has a different charecteristic because we want to continue matching other tokens...
 //    ...while "match failure" means we should stop matching and return the error
+//    Option fits this better (and it makes some code look a bit nicer)
 pub type TryMatchResult = Option<TokenMatchResult>;
 
 impl Token {

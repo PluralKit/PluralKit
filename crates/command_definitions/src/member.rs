@@ -183,15 +183,15 @@ pub fn cmds() -> impl Iterator<Item = Command> {
         [
             command!(member_keep_proxy => "member_keepproxy_show")
                 .help("Shows a member's keep-proxy setting"),
-            command!(member_keep_proxy, Skip(("value", Toggle)) => "member_keepproxy_update")
+            command!(member_keep_proxy, ("value", Toggle) => "member_keepproxy_update")
                 .help("Changes a member's keep-proxy setting"),
             command!(member_server_keep_proxy => "member_server_keepproxy_show")
                 .help("Shows a member's server-specific keep-proxy setting"),
-            command!(member_server_keep_proxy, Skip(("value", Toggle)) => "member_server_keepproxy_update")
-                .help("Changes a member's server-specific keep-proxy setting"),
             command!(member_server_keep_proxy, CLEAR => "member_server_keepproxy_clear")
                 .flag(YES)
                 .help("Clears a member's server-specific keep-proxy setting"),
+            command!(member_server_keep_proxy, ("value", Toggle) => "member_server_keepproxy_update")
+                .help("Changes a member's server-specific keep-proxy setting"),
         ].into_iter()
     };
 

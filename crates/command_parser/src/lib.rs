@@ -47,14 +47,25 @@ pub fn parse_command(
     let mut params: HashMap<String, ParameterValue> = HashMap::new();
     let mut raw_flags: Vec<(usize, MatchedFlag)> = Vec::new();
 
+    let mut matched_tokens: Vec<(Tree, (Token, TokenMatchResult, usize))> = Vec::new();
+    let mut filtered_tokens: Vec<Token> = Vec::new();
     loop {
         println!(
             "possible: {:?}",
-            local_tree.possible_tokens().collect::<Vec<_>>()
+            local_tree
+                .possible_tokens()
+                .filter(|t| filtered_tokens.contains(t))
+                .collect::<Vec<_>>()
         );
-        let next = next_token(local_tree.possible_tokens(), &input, current_pos);
+        let next = next_token(
+            local_tree
+                .possible_tokens()
+                .filter(|t| !filtered_tokens.contains(t)),
+            &input,
+            current_pos,
+        );
         println!("next: {:?}", next);
-        match next {
+        match &next {
             Some((found_token, result, new_pos)) => {
                 match &result {
                     // todo: better error messages for these?
@@ -74,21 +85,37 @@ pub fn parse_command(
 
                 // add parameter if any
                 if let TokenMatchResult::MatchedParameter { name, value } = result {
-                    params.insert(name.to_string(), value);
+                    params.insert(name.to_string(), value.clone());
                 }
 
                 // move to the next branch
                 if let Some(next_tree) = local_tree.get_branch(&found_token) {
+                    matched_tokens.push((
+                        local_tree.clone(),
+                        (found_token.clone(), result.clone(), *new_pos),
+                    ));
+                    filtered_tokens.clear(); // new branch, new tokens
                     local_tree = next_tree.clone();
                 } else {
                     panic!("found token {found_token:?} could not match tree, at {input}");
                 }
 
                 // advance our position on the input
-                current_pos = new_pos;
+                current_pos = *new_pos;
                 current_token_idx += 1;
             }
             None => {
+                // redo the previous branches if we didnt match on a parameter
+                // this is a bit of a hack, but its necessary for making parameters on the same depth work
+                if let Some((match_tree, match_next)) = matched_tokens
+                    .pop()
+                    .and_then(|m| matches!(m.1, (Token::Parameter(_), _, _)).then_some(m))
+                {
+                    local_tree = match_tree;
+                    filtered_tokens.push(match_next.0);
+                    continue;
+                }
+
                 let mut error = format!("Unknown command `{prefix}{input}`.");
 
                 let possible_commands =
@@ -239,7 +266,7 @@ fn next_token<'a>(
     possible_tokens: impl Iterator<Item = &'a Token>,
     input: &str,
     current_pos: usize,
-) -> Option<(&'a Token, TokenMatchResult, usize)> {
+) -> Option<(Token, TokenMatchResult, usize)> {
     // get next parameter, matching quotes
     let matched = string::next_param(&input, current_pos);
     println!("matched: {matched:?}\n---");
@@ -267,7 +294,7 @@ fn next_token<'a>(
         match token.try_match(input_to_match) {
             Some(result) => {
                 //println!("matched token: {}", token);
-                return Some((token, result, next_pos));
+                return Some((token.clone(), result, next_pos));
             }
             None => {} // continue matching until we exhaust all tokens
         }
