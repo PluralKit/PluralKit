@@ -1,5 +1,6 @@
 #![feature(anonymous_lifetime_in_impl_trait)]
 #![feature(round_char_boundary)]
+#![feature(iter_intersperse)]
 
 pub mod command;
 pub mod flag;

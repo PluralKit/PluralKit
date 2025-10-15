@@ -8,6 +8,55 @@ use smol_str::{SmolStr, format_smolstr};
 
 use crate::token::{Token, TokenMatchResult};
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum ParameterKind {
+    OpaqueString,
+    OpaqueInt,
+    OpaqueStringRemainder,
+    MemberRef,
+    MemberRefs,
+    GroupRef,
+    GroupRefs,
+    SystemRef,
+    UserRef,
+    MessageRef,
+    ChannelRef,
+    GuildRef,
+    MemberPrivacyTarget,
+    GroupPrivacyTarget,
+    SystemPrivacyTarget,
+    PrivacyLevel,
+    Toggle,
+    Avatar,
+    ProxySwitchAction,
+}
+
+impl ParameterKind {
+    pub(crate) fn default_name(&self) -> &str {
+        match self {
+            ParameterKind::OpaqueString => "string",
+            ParameterKind::OpaqueInt => "number",
+            ParameterKind::OpaqueStringRemainder => "string",
+            ParameterKind::MemberRef => "target",
+            ParameterKind::MemberRefs => "targets",
+            ParameterKind::GroupRef => "target",
+            ParameterKind::GroupRefs => "targets",
+            ParameterKind::SystemRef => "target",
+            ParameterKind::UserRef => "target",
+            ParameterKind::MessageRef => "target",
+            ParameterKind::ChannelRef => "target",
+            ParameterKind::GuildRef => "target",
+            ParameterKind::MemberPrivacyTarget => "member_privacy_target",
+            ParameterKind::GroupPrivacyTarget => "group_privacy_target",
+            ParameterKind::SystemPrivacyTarget => "system_privacy_target",
+            ParameterKind::PrivacyLevel => "privacy_level",
+            ParameterKind::Toggle => "toggle",
+            ParameterKind::Avatar => "avatar",
+            ParameterKind::ProxySwitchAction => "proxy_switch_action",
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub enum ParameterValue {
     OpaqueString(String),
@@ -284,65 +333,44 @@ impl<P: Into<Parameter>> From<Skip<P>> for Parameter {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum ParameterKind {
-    OpaqueString,
-    OpaqueInt,
-    OpaqueStringRemainder,
-    MemberRef,
-    MemberRefs,
-    GroupRef,
-    GroupRefs,
-    SystemRef,
-    UserRef,
-    MessageRef,
-    ChannelRef,
-    GuildRef,
-    MemberPrivacyTarget,
-    GroupPrivacyTarget,
-    SystemPrivacyTarget,
-    PrivacyLevel,
-    Toggle,
-    Avatar,
-    ProxySwitchAction,
-}
-
-impl ParameterKind {
-    pub(crate) fn default_name(&self) -> &str {
-        match self {
-            ParameterKind::OpaqueString => "string",
-            ParameterKind::OpaqueInt => "number",
-            ParameterKind::OpaqueStringRemainder => "string",
-            ParameterKind::MemberRef => "target",
-            ParameterKind::MemberRefs => "targets",
-            ParameterKind::GroupRef => "target",
-            ParameterKind::GroupRefs => "targets",
-            ParameterKind::SystemRef => "target",
-            ParameterKind::UserRef => "target",
-            ParameterKind::MessageRef => "target",
-            ParameterKind::ChannelRef => "target",
-            ParameterKind::GuildRef => "target",
-            ParameterKind::MemberPrivacyTarget => "member_privacy_target",
-            ParameterKind::GroupPrivacyTarget => "group_privacy_target",
-            ParameterKind::SystemPrivacyTarget => "system_privacy_target",
-            ParameterKind::PrivacyLevel => "privacy_level",
-            ParameterKind::Toggle => "toggle",
-            ParameterKind::Avatar => "avatar",
-            ParameterKind::ProxySwitchAction => "proxy_switch_action",
+macro_rules! impl_enum {
+    ($name:ident ($pretty_name:expr): $($variant:ident),*) => {
+        #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+        pub enum $name {
+            $($variant),*
         }
-    }
+
+        impl $name {
+            pub const PRETTY_NAME: &'static str = $pretty_name;
+
+            pub fn variants() -> impl Iterator<Item = Self> {
+                [$(Self::$variant),*].into_iter()
+            }
+
+            pub fn variants_str() -> impl Iterator<Item = &'static str> {
+                [$(Self::$variant.as_ref()),*].into_iter()
+            }
+
+            pub fn get_error() -> SmolStr {
+                let pretty_name = Self::PRETTY_NAME;
+                let vars = Self::variants_str().intersperse("/").collect::<SmolStr>();
+                format_smolstr!("invalid {pretty_name}, must be one of {vars}")
+            }
+        }
+    };
 }
 
-pub enum MemberPrivacyTargetKind {
-    Visibility,
-    Name,
-    Description,
-    Banner,
-    Avatar,
-    Birthday,
-    Pronouns,
-    Proxy,
-    Metadata,
+impl_enum! {
+    MemberPrivacyTargetKind("member privacy target"):
+        Visibility,
+        Name,
+        Description,
+        Banner,
+        Avatar,
+        Birthday,
+        Pronouns,
+        Proxy,
+        Metadata
 }
 
 impl AsRef<str> for MemberPrivacyTargetKind {
@@ -362,7 +390,6 @@ impl AsRef<str> for MemberPrivacyTargetKind {
 }
 
 impl FromStr for MemberPrivacyTargetKind {
-    // todo: figure out how to represent these errors best
     type Err = SmolStr;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -377,19 +404,20 @@ impl FromStr for MemberPrivacyTargetKind {
             "pronouns" => Ok(Self::Pronouns),
             "proxy" => Ok(Self::Proxy),
             "metadata" => Ok(Self::Metadata),
-            _ => Err("invalid member privacy target".into()),
+            _ => Err(Self::get_error()),
         }
     }
 }
 
-pub enum GroupPrivacyTargetKind {
-    Name,
-    Icon,
-    Description,
-    Banner,
-    List,
-    Metadata,
-    Visibility,
+impl_enum! {
+    GroupPrivacyTargetKind("group privacy target"):
+        Name,
+        Icon,
+        Description,
+        Banner,
+        List,
+        Metadata,
+        Visibility
 }
 
 impl AsRef<str> for GroupPrivacyTargetKind {
@@ -419,21 +447,22 @@ impl FromStr for GroupPrivacyTargetKind {
             "list" => Ok(Self::List),
             "metadata" => Ok(Self::Metadata),
             "visibility" => Ok(Self::Visibility),
-            _ => Err("invalid group privacy target".into()),
+            _ => Err(Self::get_error()),
         }
     }
 }
 
-pub enum SystemPrivacyTargetKind {
-    Name,
-    Avatar,
-    Description,
-    Banner,
-    Pronouns,
-    MemberList,
-    GroupList,
-    Front,
-    FrontHistory,
+impl_enum! {
+    SystemPrivacyTargetKind("system privacy target"):
+        Name,
+        Avatar,
+        Description,
+        Banner,
+        Pronouns,
+        MemberList,
+        GroupList,
+        Front,
+        FrontHistory
 }
 
 impl AsRef<str> for SystemPrivacyTargetKind {
@@ -466,15 +495,12 @@ impl FromStr for SystemPrivacyTargetKind {
             "groups" | "gs" => Ok(Self::GroupList),
             "front" | "fronter" | "fronters" => Ok(Self::Front),
             "fronthistory" | "fh" | "switches" => Ok(Self::FrontHistory),
-            _ => Err("invalid system privacy target".into()),
+            _ => Err(Self::get_error()),
         }
     }
 }
 
-pub enum PrivacyLevelKind {
-    Public,
-    Private,
-}
+impl_enum!(PrivacyLevelKind("privacy level"): Public, Private);
 
 impl AsRef<str> for PrivacyLevelKind {
     fn as_ref(&self) -> &str {
@@ -492,15 +518,20 @@ impl FromStr for PrivacyLevelKind {
         match s {
             "public" => Ok(PrivacyLevelKind::Public),
             "private" => Ok(PrivacyLevelKind::Private),
-            _ => Err("invalid privacy level".into()),
+            _ => Err(Self::get_error()),
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, Eq, Hash, PartialEq)]
-pub enum Toggle {
-    On,
-    Off,
+impl_enum!(Toggle("toggle"): On, Off);
+
+impl AsRef<str> for Toggle {
+    fn as_ref(&self) -> &str {
+        match self {
+            Self::On => "on",
+            Self::Off => "off",
+        }
+    }
 }
 
 impl FromStr for Toggle {
@@ -513,10 +544,9 @@ impl FromStr for Toggle {
                 Some(TokenMatchResult::MatchedValue)
             )
         };
-        [Self::On, Self::Off]
-            .into_iter()
+        Self::variants()
             .find(matches_self)
-            .ok_or_else(|| SmolStr::new("invalid toggle, must be on/off"))
+            .ok_or_else(Self::get_error)
     }
 }
 
@@ -538,12 +568,7 @@ impl Into<bool> for Toggle {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum ProxySwitchAction {
-    New,
-    Add,
-    Off,
-}
+impl_enum!(ProxySwitchAction("proxy switch action"): New, Add, Off);
 
 impl AsRef<str> for ProxySwitchAction {
     fn as_ref(&self) -> &str {
@@ -559,14 +584,9 @@ impl FromStr for ProxySwitchAction {
     type Err = SmolStr;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        [
-            ProxySwitchAction::New,
-            ProxySwitchAction::Add,
-            ProxySwitchAction::Off,
-        ]
-        .into_iter()
-        .find(|action| action.as_ref() == s)
-        .ok_or_else(|| SmolStr::new("invalid proxy switch action, must be new/add/off"))
+        Self::variants()
+            .find(|action| action.as_ref() == s)
+            .ok_or_else(Self::get_error)
     }
 }
 
