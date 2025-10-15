@@ -17,9 +17,11 @@ pub fn cmds() -> impl Iterator<Item = Command> {
     let group_target = targeted();
 
     let group_new = tokens!(group, ("new", ["n"]));
-    let group_new_cmd =
-        [command!(group_new, ("name", OpaqueString) => "group_new").help("Creates a new group")]
-            .into_iter();
+    let group_new_cmd = [
+        command!(group_new, ("name", OpaqueStringRemainder) => "group_new")
+            .help("Creates a new group"),
+    ]
+    .into_iter();
 
     let group_info_cmd = [command!(group_target => "group_info")
         .flag(ALL)
@@ -35,7 +37,8 @@ pub fn cmds() -> impl Iterator<Item = Command> {
         command!(group_name, CLEAR => "group_clear_name")
             .flag(YES)
             .help("Clears the group's name"),
-        command!(group_name, ("name", OpaqueString) => "group_rename").help("Renames the group"),
+        command!(group_name, ("name", OpaqueStringRemainder) => "group_rename")
+            .help("Renames the group"),
     ]
     .into_iter();
 
@@ -46,7 +49,7 @@ pub fn cmds() -> impl Iterator<Item = Command> {
         command!(group_display_name, CLEAR => "group_clear_display_name")
             .flag(YES)
             .help("Clears the group's display name"),
-        command!(group_display_name, ("name", OpaqueString) => "group_change_display_name")
+        command!(group_display_name, ("name", OpaqueStringRemainder) => "group_change_display_name")
             .help("Changes the group's display name"),
     ]
     .into_iter();
@@ -64,7 +67,7 @@ pub fn cmds() -> impl Iterator<Item = Command> {
         command!(group_description, CLEAR => "group_clear_description")
             .flag(YES)
             .help("Clears the group's description"),
-        command!(group_description, ("description", OpaqueString) => "group_change_description")
+        command!(group_description, ("description", OpaqueStringRemainder) => "group_change_description")
             .help("Changes the group's description"),
     ]
     .into_iter();
@@ -149,11 +152,15 @@ pub fn cmds() -> impl Iterator<Item = Command> {
 
     let apply_list_opts = |cmd: Command| cmd.flags(get_list_flags());
 
+    let search = tokens!(
+        ("search", ["find", "query"]),
+        ("query", OpaqueStringRemainder)
+    );
     let group_list_members = tokens!(group_target, ("members", ["list", "ls"]));
     let group_list_members_cmd = [
         command!(group_list_members => "group_list_members"),
         command!(group_list_members, "list" => "group_list_members"),
-        command!(group_list_members, ("search", ["find", "query"]), ("query", OpaqueStringRemainder) => "group_search_members"),
+        command!(group_list_members, search => "group_search_members"),
     ]
     .into_iter()
     .map(apply_list_opts);
@@ -168,7 +175,7 @@ pub fn cmds() -> impl Iterator<Item = Command> {
 
     let system_groups_cmd = [
         command!(group, ("list", ["ls"]) => "group_list_groups"),
-        command!(group, ("search", ["find", "query"]), ("query", OpaqueStringRemainder) => "group_search_groups"),
+        command!(group, search => "group_search_groups"),
     ]
     .into_iter()
     .map(apply_list_opts);

@@ -578,6 +578,6 @@ impl ParseMessageLink for regex::Captures<'_> {
     fn parse_id(&self, name: &str) -> Result<u64, SmolStr> {
         self.name(name)
             .and_then(|m| m.as_str().parse::<u64>().ok())
-            .ok_or_else(|| SmolStr::new(format!("invalid {} in message link", name)))
+            .ok_or_else(|| SmolStr::new(format!("invalid {} ID in message link", name)))
     }
 }

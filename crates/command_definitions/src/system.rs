@@ -23,7 +23,7 @@ pub fn edit() -> impl Iterator<Item = Command> {
     let system_new = tokens!(system, ("new", ["n"]));
     let system_new_cmd = [
         command!(system_new => "system_new").help("Creates a new system"),
-        command!(system_new, ("name", OpaqueString) => "system_new_name")
+        command!(system_new, ("name", OpaqueStringRemainder) => "system_new_name")
             .help("Creates a new system (using the provided name)"),
     ]
     .into_iter();
@@ -62,7 +62,7 @@ pub fn edit() -> impl Iterator<Item = Command> {
         command!(system_name_self, CLEAR => "system_clear_name")
             .flag(YES)
             .help("Clears your system's name"),
-        command!(system_name_self, ("name", OpaqueString) => "system_rename")
+        command!(system_name_self, ("name", OpaqueStringRemainder) => "system_rename")
             .help("Renames your system"),
     ]
     .into_iter();
@@ -80,7 +80,7 @@ pub fn edit() -> impl Iterator<Item = Command> {
         command!(system_server_name_self, CLEAR => "system_clear_server_name")
             .flag(YES)
             .help("Clears your system's server name"),
-        command!(system_server_name_self, ("name", OpaqueString) => "system_rename_server_name")
+        command!(system_server_name_self, ("name", OpaqueStringRemainder) => "system_rename_server_name")
             .help("Renames your system's server name"),
     ]
     .into_iter();
@@ -97,7 +97,7 @@ pub fn edit() -> impl Iterator<Item = Command> {
         command!(system_description_self, CLEAR => "system_clear_description")
         .flag(YES)
             .help("Clears your system's description"),
-        command!(system_description_self, ("description", OpaqueString) => "system_change_description")
+        command!(system_description_self, ("description", OpaqueStringRemainder) => "system_change_description")
             .help("Changes your system's description"),
     ]
     .into_iter();
@@ -128,7 +128,7 @@ pub fn edit() -> impl Iterator<Item = Command> {
         command!(system_tag_self, CLEAR => "system_clear_tag")
             .flag(YES)
             .help("Clears your system's tag"),
-        command!(system_tag_self, ("tag", OpaqueString) => "system_change_tag")
+        command!(system_tag_self, ("tag", OpaqueStringRemainder) => "system_change_tag")
             .help("Changes your system's tag"),
     ]
     .into_iter();
@@ -146,7 +146,7 @@ pub fn edit() -> impl Iterator<Item = Command> {
         command!(system_server_tag_self, CLEAR => "system_clear_server_tag")
             .flag(YES)
             .help("Clears your system's server tag"),
-        command!(system_server_tag_self, ("tag", OpaqueString) => "system_change_server_tag")
+        command!(system_server_tag_self, ("tag", OpaqueStringRemainder) => "system_change_server_tag")
             .help("Changes your system's server tag"),
     ]
     .into_iter();
@@ -163,7 +163,7 @@ pub fn edit() -> impl Iterator<Item = Command> {
         command!(system_pronouns_self, CLEAR => "system_clear_pronouns")
             .flag(YES)
             .help("Clears your system's pronouns"),
-        command!(system_pronouns_self, ("pronouns", OpaqueString) => "system_change_pronouns")
+        command!(system_pronouns_self, ("pronouns", OpaqueStringRemainder) => "system_change_pronouns")
             .help("Changes your system's pronouns"),
     ]
     .into_iter();
@@ -267,21 +267,21 @@ pub fn edit() -> impl Iterator<Item = Command> {
     .into_iter();
 
     let system_list = ("members", ["list", "l", "find", "f"]);
-    let system_search = tokens!(
+    let search = tokens!(
         ("search", ["query", "find"]),
         ("query", OpaqueStringRemainder),
     );
     let add_list_flags = |cmd: Command| cmd.flags(get_list_flags());
     let system_list_cmd = [
         command!(system_target, system_list => "system_members_list"),
-        command!(system_target, system_search => "system_members_search"),
+        command!(system_target, search => "system_members_search"),
     ]
     .into_iter()
     .map(add_list_flags);
     let system_list_self_cmd = [
         command!(system_list => "system_members_list_self"),
         command!(system, system_list => "system_members_list_self"),
-        command!(system, system_search => "system_members_search_self"),
+        command!(system, search => "system_members_search_self"),
     ]
     .into_iter()
     .map(add_list_flags);
@@ -290,7 +290,7 @@ pub fn edit() -> impl Iterator<Item = Command> {
     let system_groups_cmd = [
         command!(system_groups => "system_list_groups"),
         command!(system_groups, ("list", ["ls"]) => "system_list_groups"),
-        command!(system_groups, ("search", ["find", "query"]), ("query", OpaqueStringRemainder) => "system_search_groups"),
+        command!(system_groups, search => "system_search_groups"),
     ]
     .into_iter()
     .map(add_list_flags);
