@@ -66,6 +66,15 @@ public class ProxyService
 
         var autoproxySettings = await _repo.GetAutoproxySettings(ctx.SystemId.Value, guild.Id, null);
 
+        if (IsDisableAutoproxy(message))
+        {
+            await _repo.UpdateAutoproxy(ctx.SystemId.Value, guild.Id, null, new()
+            {
+                AutoproxyMode = AutoproxyMode.Off
+            });
+            return false;
+        }
+
         if (autoproxySettings.AutoproxyMode == AutoproxyMode.Latch && IsUnlatch(message))
         {
             // "unlatch"
@@ -494,6 +503,9 @@ public class ProxyService
 
     public static bool IsUnlatch(Message message)
         => message.Content.StartsWith(@"\\") || message.Content.StartsWith("\\\u200b\\");
+
+    public static bool IsDisableAutoproxy(Message message)
+        => message.Content.StartsWith(@"\\\") || message.Content.StartsWith("\\\u200b\\\u200b\\");
 
     private async Task HandleProxyExecutedActions(MessageContext ctx, AutoproxySettings autoproxySettings,
                                                   Message triggerMessage, Message proxyMessage, ProxyMatch match,
