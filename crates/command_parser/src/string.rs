@@ -85,7 +85,7 @@ pub(super) fn next_param<'a>(input: &'a str, current_pos: usize) -> Option<Match
     if let Some(end_quote_pos) = find_quotes(substr_to_match) {
         // return quoted string, without quotes
         return Some(MatchedParam {
-            value: &substr_to_match[1..end_quote_pos - 1],
+            value: &substr_to_match[1..end_quote_pos],
             next_pos: current_pos + end_quote_pos + 1,
             in_quotes: true,
         });
