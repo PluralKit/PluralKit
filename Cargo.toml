@@ -27,7 +27,7 @@ axum = { git = "https://github.com/pluralkit/axum", branch = "v0.8.4-pluralkit" 
 
 twilight-gateway = { git = "https://github.com/pluralkit/twilight", branch = "pluralkit-7f08d95" }
 twilight-cache-inmemory = { git = "https://github.com/pluralkit/twilight", branch = "pluralkit-7f08d95", features = ["permission-calculator"] }
-twilight-util = { git = "https://github.com/pluralkit/twilight", branch = "pluralkit-7f08d95", features = ["permission-calculator"] }
+twilight-util = { git = "https://github.com/pluralkit/twilight", branch = "pluralkit-7f08d95", features = ["permission-calculator", "builder"] }
 twilight-model = { git = "https://github.com/pluralkit/twilight", branch = "pluralkit-7f08d95" }
 twilight-http = { git = "https://github.com/pluralkit/twilight", branch = "pluralkit-7f08d95", default-features = false, features = ["rustls-aws_lc_rs", "rustls-native-roots"] }
 

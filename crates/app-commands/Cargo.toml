@@ -1,0 +1,14 @@
+[package]
+name = "app-commands"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+libpk = { path = "../libpk" }
+anyhow = { workspace = true }
+futures = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+twilight-http = { workspace = true }
+twilight-model = { workspace = true }
+twilight-util = { workspace = true }

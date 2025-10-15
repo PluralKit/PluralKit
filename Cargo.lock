@@ -105,6 +105,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "app-commands"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "futures",
+ "libpk",
+ "tokio",
+ "tracing",
+ "twilight-http",
+ "twilight-model",
+ "twilight-util",
+]
+
+[[package]]
 name = "arc-swap"
 version = "1.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4560,6 +4574,7 @@ version = "0.16.0"
 source = "git+https://github.com/pluralkit/twilight?branch=pluralkit-7f08d95#054a2aa5d29fb46220af1cd5df568b73511cdb26"
 dependencies = [
  "twilight-model",
+ "twilight-validate",
 ]
 
 [[package]]
