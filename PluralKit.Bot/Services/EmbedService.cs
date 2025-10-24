@@ -844,7 +844,7 @@ public class EmbedService
         };
 
         var avatarURL = msg.Member?.AvatarFor(ctx).TryGetCleanCdnUrl();
-        MessageComponent header = avatarURL == "" ? authorData : new MessageComponent()
+        MessageComponent header = (avatarURL == "" || avatarURL == null) ? authorData : new MessageComponent()
         {
             Type = ComponentType.Section,
             Components = [authorData],
