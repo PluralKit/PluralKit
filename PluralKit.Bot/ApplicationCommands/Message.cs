@@ -43,11 +43,10 @@ public class ApplicationCommandProxiedMessage
         if (channel == null)
             showContent = false;
 
-        var embeds = new List<Embed>();
-
+        var components = new List<MessageComponent>();
         var guild = await _cache.GetGuild(ctx.GuildId);
         if (msg.Member != null)
-            embeds.Add(await _embeds.CreateMemberEmbed(
+            components.AddRange(await _embeds.CreateMemberMessageComponents(
                 msg.System,
                 msg.Member,
                 guild,
@@ -55,10 +54,12 @@ public class ApplicationCommandProxiedMessage
                 LookupContext.ByNonOwner,
                 DateTimeZone.Utc
             ));
-
-        embeds.Add(await _embeds.CreateMessageInfoEmbed(msg, showContent, ctx.Config));
-
-        await ctx.Reply(embeds: embeds.ToArray());
+        components.Add(new MessageComponent()
+        {
+            Type = ComponentType.Separator
+        });
+        components.AddRange(await _embeds.CreateMessageInfoMessageComponents(msg, showContent, ctx.Config));
+        await ctx.Reply(components: components.ToArray());
     }
 
     private async Task QueryCommandMessage(InteractionContext ctx)
@@ -68,11 +69,7 @@ public class ApplicationCommandProxiedMessage
         if (msg == null)
             throw Errors.MessageNotFound(messageId);
 
-        var embeds = new List<Embed>();
-
-        embeds.Add(await _embeds.CreateCommandMessageInfoEmbed(msg, true));
-
-        await ctx.Reply(embeds: embeds.ToArray());
+        await ctx.Reply(components: await _embeds.CreateCommandMessageInfoMessageComponents(msg, true));
     }
 
     public async Task DeleteMessage(InteractionContext ctx)

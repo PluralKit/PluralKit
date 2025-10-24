@@ -11,6 +11,7 @@ public record MessageComponent
     public string? Url { get; init; }
     public bool? Disabled { get; init; }
     public uint? AccentColor { get; init; }
+    public int? Spacing { get; init; }
     public ComponentMedia? Media { get; init; }
     public ComponentMediaItem[]? Items { get; init; }
 

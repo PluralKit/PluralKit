@@ -766,6 +766,158 @@ public class EmbedService
             .Build();
     }
 
+    public async Task<MessageComponent[]> CreateMessageInfoMessageComponents(FullMessage msg, bool showContent, SystemConfig? ccfg = null)
+    {
+        var channel = await _cache.GetOrFetchChannel(_rest, msg.Message.Guild ?? 0, msg.Message.Channel);
+        var ctx = LookupContext.ByNonOwner;
+
+        var serverMsg = await _rest.GetMessageOrNull(msg.Message.Channel, msg.Message.Mid);
+
+        // Need this whole dance to handle cases where:
+        // - the user is deleted (userInfo == null)
+        // - the bot's no longer in the server we're querying (channel == null)
+        // - the member is no longer in the server we're querying (memberInfo == null)
+        // TODO: optimize ordering here a bit with new cache impl; and figure what happens if bot leaves server -> channel still cached -> hits this bit and 401s?
+        GuildMemberPartial memberInfo = null;
+        User userInfo = null;
+        if (channel != null)
+        {
+            GuildMember member = null;
+            try
+            {
+                member = await _rest.GetGuildMember(channel.GuildId!.Value, msg.Message.Sender);
+            }
+            catch (ForbiddenException)
+            {
+                // no permission, couldn't fetch, oh well
+            }
+
+            if (member != null)
+                // Don't do an extra request if we already have this info from the member lookup
+                userInfo = member.User;
+            memberInfo = member;
+        }
+
+        if (userInfo == null)
+            userInfo = await _cache.GetOrFetchUser(_rest, msg.Message.Sender);
+
+        // Calculate string displayed under "Sent by"
+        string userStr;
+        if (showContent && memberInfo != null && memberInfo.Nick != null)
+            userStr = $"**\n    Username:** {userInfo.NameAndMention()}\n**    Nickname:** {memberInfo.Nick}";
+        else if (userInfo != null) userStr = userInfo.NameAndMention();
+        else userStr = $"*(deleted user {msg.Message.Sender})*";
+
+        var content = serverMsg?.Content?.NormalizeLineEndSpacing();
+        if (content == null || !showContent)
+            content = "*(message contents deleted or inaccessible)*";
+
+        var systemStr = msg.System == null
+            ? "*(deleted or unknown system)*"
+            : msg.System.NameFor(ctx) != null ? $"{msg.System.NameFor(ctx)} (`{msg.System.DisplayHid(ccfg)}`)" : $"`{msg.System.DisplayHid(ccfg)}`";
+        var memberStr = msg.Member == null
+            ? "*(deleted member)*"
+            : $"{msg.Member.NameFor(ctx)} (`{msg.Member.DisplayHid(ccfg)}`)";
+
+        var roles = memberInfo?.Roles?.ToList();
+        var rolesContent = "";
+        if (roles != null && roles.Count > 0 && showContent)
+        {
+            var guild = await _cache.GetGuild(channel.GuildId!.Value);
+            var rolesString = string.Join(", ", (roles
+                    .Select(id =>
+                    {
+                        var role = Array.Find(guild.Roles, r => r.Id == id);
+                        if (role != null)
+                            return role;
+                        return new Role { Name = "*(unknown role)*", Position = 0 };
+                    }))
+                .OrderByDescending(role => role.Position)
+                .Select(role => role.Name));
+            rolesContent = $"**Account Roles ({roles.Count})**\n{rolesString}";
+        }
+
+        MessageComponent authorData = new MessageComponent()
+        {
+            Type = ComponentType.Text,
+            Content = $"**System:** {systemStr}\n**Member:** {memberStr}\n**Sent by:** {userStr}\n\n{rolesContent}"
+        };
+
+        var avatarURL = msg.Member?.AvatarFor(ctx).TryGetCleanCdnUrl();
+        MessageComponent header = avatarURL == "" ? authorData : new MessageComponent()
+        {
+            Type = ComponentType.Section,
+            Components = [authorData],
+            Accessory = new MessageComponent()
+            {
+                Type = ComponentType.Thumbnail,
+                Media = new ComponentMedia()
+                {
+                    Url = avatarURL
+                }
+            }
+        };
+
+        List<MessageComponent> body = [
+            new MessageComponent()
+            {
+                Type = ComponentType.Separator,
+                Spacing = 2
+            }
+        ];
+        if (content != "")
+        {
+            body.Add(new MessageComponent()
+            {
+                Type = ComponentType.Text,
+                Content = content
+            });
+        }
+
+        if (showContent)
+        {
+            if (serverMsg != null)
+            {
+                var media = new List<ComponentMediaItem>();
+                foreach (Message.Attachment attachment in serverMsg?.Attachments)
+                {
+                    var url = attachment.Url;
+                    if (url != null && url != "")
+                        media.Add(new ComponentMediaItem()
+                        {
+                            Media = new ComponentMedia()
+                            {
+                                Url = url
+                            }
+                        });
+                }
+                if (media.Count > 0)
+                    body.Add(new MessageComponent()
+                    {
+                        Type = ComponentType.MediaGallery,
+                        Items = media.ToArray()
+                    });
+            }
+        }
+
+        MessageComponent footer = new MessageComponent()
+        {
+            Type = ComponentType.Text,
+            Content = $"-# Original Message ID: {msg.Message.OriginalMid} · <t:{DiscordUtils.SnowflakeToTimestamp(msg.Message.Mid)}:f>"
+        };
+
+        return [
+            new MessageComponent()
+    {
+        Type = ComponentType.Container,
+                Components = [
+                    header,
+                    ..body
+                ]
+            },
+            footer
+        ];
+    }
     public async Task<Embed> CreateMessageInfoEmbed(FullMessage msg, bool showContent, SystemConfig? ccfg = null)
     {
         var channel = await _cache.GetOrFetchChannel(_rest, msg.Message.Guild ?? 0, msg.Message.Channel);
@@ -852,6 +1004,106 @@ public class EmbedService
         return eb.Build();
     }
 
+    public async Task<MessageComponent[]> CreateAuthorMessageComponents(User? user, FullMessage msg)
+    {
+        MessageComponent authorInfo;
+        var author = user != null
+            ? $"{user.Username}#{user.Discriminator}"
+            : $"Deleted user ${msg.Message.Sender}";
+        var avatarUrl = user?.AvatarUrl();
+        var authorString = $"{author}\n**ID: **`{msg.Message.Sender.ToString()}`";
+        if (user != null && avatarUrl != "")
+        {
+            authorInfo = new MessageComponent()
+            {
+                Type = ComponentType.Section,
+                Components = [
+                    new MessageComponent()
+                    {
+                        Type = ComponentType.Text,
+                        Content = authorString
+                    }
+                ],
+                Accessory = new MessageComponent()
+                {
+                    Type = ComponentType.Thumbnail,
+                    Media = new ComponentMedia()
+                    {
+                        Url = avatarUrl
+                    }
+                }
+            };
+        }
+        else
+        {
+            authorInfo = new MessageComponent()
+            {
+                Type = ComponentType.Text,
+                Content = authorString
+            };
+        }
+        MessageComponent container = new MessageComponent()
+        {
+            Type = ComponentType.Container,
+            Components = [
+                authorInfo,
+            ]
+        };
+        return (
+            [
+                new MessageComponent()
+                {
+                    Type = ComponentType.Text,
+                    Content = user != null ? $"{user.Mention()} ({user.Id})" : $"*(deleted user {msg.Message.Sender})*"
+                },
+                container
+            ]
+        );
+    }
+
+    public async Task<MessageComponent[]> CreateCommandMessageInfoMessageComponents(Core.CommandMessage msg, bool showContent)
+    {
+        var content = "*(command message deleted or inaccessible)*";
+        if (showContent)
+        {
+            var discordMessage = await _rest.GetMessageOrNull(msg.Channel, msg.OriginalMid);
+            if (discordMessage != null)
+                content = discordMessage.Content;
+        }
+
+        List<MessageComponent> body = [
+            new MessageComponent()
+            {
+                Type = ComponentType.Text,
+                Content = $"### Command response message\n**Original message:** https://discord.com/channels/{msg.Guild}/{msg.Channel}/{msg.OriginalMid}\n**Sent By:** <@{msg.Sender}>"
+            },
+            new MessageComponent()
+            {
+                Type = ComponentType.Separator,
+            },
+            new MessageComponent()
+            {
+                Type = ComponentType.Text,
+                Content = content
+            },
+        ];
+
+        MessageComponent footer = new MessageComponent()
+        {
+            Type = ComponentType.Text,
+            Content = $"-# Original Message ID: {msg.OriginalMid} · <t:{DiscordUtils.SnowflakeToTimestamp(msg.OriginalMid)}:f>"
+        };
+
+        return [
+            new MessageComponent(){
+                Type = ComponentType.Container,
+                Components = [
+                    ..body
+                ]
+            },
+            footer
+        ];
+    }
     public async Task<Embed> CreateCommandMessageInfoEmbed(Core.CommandMessage msg, bool showContent)
     {
         var content = "*(command message deleted or inaccessible)*";
