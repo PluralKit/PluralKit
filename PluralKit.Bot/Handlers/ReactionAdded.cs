@@ -201,7 +201,7 @@ public class ReactionAdded: IEventHandler<MessageReactionAddEvent>
                 Type = ComponentType.Separator
             });
             components.AddRange(await _embeds.CreateMessageInfoMessageComponents(msg, true, config));
-            await _rest.CreateMessage(dm, new MessageRequest { Components = components.ToArray(), Flags = Message.MessageFlags.IsComponentsV2 });
+            await _rest.CreateMessage(dm, new MessageRequest { Components = components.ToArray(), Flags = Message.MessageFlags.IsComponentsV2, AllowedMentions = new AllowedMentions() });
         }
         catch (ForbiddenException) { } // No permissions to DM, can't check for this :(
 
