@@ -249,16 +249,20 @@ pub fn edit() -> impl Iterator<Item = Command> {
             .help("Changes a specific privacy setting for your system"),
     ].into_iter();
 
-    let system_front = tokens!(system_target, ("front", ["fronter", "fronters", "f"]));
-    let system_front_cmd = [
-        command!(system_front => "system_fronter"),
-        command!(system_front, ("history", ["h"]) => "system_fronter_history").flag(CLEAR),
-        command!(system_front, ("percent", ["p", "%"]) => "system_fronter_percent")
-            .flag(("duration", OpaqueString))
-            .flag(("fronters-only", ["fo"]))
-            .flag("flat"),
-    ]
-    .into_iter();
+    let front = ("front", ["fronter", "fronters", "f"]);
+    let make_system_front_cmd = |prefix: TokensIterator, suffix: &str| {
+        [
+            command!(prefix => format!("system_fronter{}", suffix)),
+            command!(prefix, ("history", ["h"]) => format!("system_fronter_history{}", suffix)).flag(CLEAR),
+            command!(prefix, ("percent", ["p", "%"]) => format!("system_fronter_percent{}", suffix))
+                .flag(("duration", OpaqueString))
+                .flag(("fronters-only", ["fo"]))
+                .flag("flat"),
+        ]
+        .into_iter()
+    };
+    let system_front_cmd = make_system_front_cmd(tokens!(system_target, front), "");
+    let system_front_self_cmd = make_system_front_cmd(tokens!(system, front), "_self");
 
     let system_link = [
         command!("link", ("account", UserRef) => "system_link"),
@@ -266,7 +270,8 @@ pub fn edit() -> impl Iterator<Item = Command> {
     ]
     .into_iter();
 
-    let system_list = ("members", ["list", "l", "find", "f"]);
+    let list = ("list", ["ls", "l"]);
+    let system_list = tokens!("members", list);
     let search = tokens!(
         ("search", ["query", "find"]),
         ("query", OpaqueStringRemainder),
@@ -289,7 +294,7 @@ pub fn edit() -> impl Iterator<Item = Command> {
     let system_groups = tokens!(system_target, ("groups", ["gs"]));
     let system_groups_cmd = [
         command!(system_groups => "system_list_groups"),
-        command!(system_groups, ("list", ["ls"]) => "system_list_groups"),
+        command!(system_groups, list => "system_list_groups"),
         command!(system_groups, search => "system_search_groups"),
     ]
     .into_iter()
@@ -315,6 +320,7 @@ pub fn edit() -> impl Iterator<Item = Command> {
         .chain(system_banner_self_cmd)
         .chain(system_list_self_cmd)
         .chain(system_display_id_self_cmd)
+        .chain(system_front_self_cmd)
         .chain(system_delete)
         .chain(system_privacy_cmd)
         .chain(system_proxy_cmd)
