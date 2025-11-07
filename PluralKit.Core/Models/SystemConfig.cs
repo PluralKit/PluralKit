@@ -26,6 +26,7 @@ public class SystemConfig
     public bool CardShowColorHex { get; }
     public HidPadFormat HidListPadding { get; }
     public ProxySwitchAction ProxySwitch { get; }
+    public ListFormat FronterListFormat { get; }
     public string NameFormat { get; }
 
     public enum HidPadFormat
@@ -39,6 +40,11 @@ public class SystemConfig
         Off = 0,
         New = 1,
         Add = 2,
+    }
+    public enum ListFormat
+    {
+        Short = 0,
+        Full = 1,
     }
 }
 
@@ -62,6 +68,7 @@ public static class SystemConfigExt
         o.Add("hid_display_caps", cfg.HidDisplayCaps);
         o.Add("hid_list_padding", cfg.HidListPadding.ToUserString());
         o.Add("card_show_color_hex", cfg.CardShowColorHex);
+        o.Add("fronter_list_format", cfg.FronterListFormat.ToUserString());
         o.Add("proxy_switch", cfg.ProxySwitch.ToUserString());
         o.Add("name_format", cfg.NameFormat);
 
@@ -77,5 +84,5 @@ public static class SystemConfigExt
     }
 
     public static string ToUserString(this SystemConfig.ProxySwitchAction val) => val.ToString().ToLower();
-
+    public static string ToUserString(this SystemConfig.ListFormat val) => val.ToString().ToLower();
 }

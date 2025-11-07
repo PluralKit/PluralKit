@@ -766,6 +766,185 @@ public class EmbedService
             .Build();
     }
 
+    public async Task<MessageComponent[]> CreateFronterMessageComponents(Context cctx, PKSystem system, PKSwitch sw, LookupContext ctx)
+    {
+        var formatType = cctx.Config.FronterListFormat;
+        if (cctx.MatchFlag("short")) formatType = SystemConfig.ListFormat.Short;
+        if (cctx.MatchFlag("full")) formatType = SystemConfig.ListFormat.Full;
+
+        if (formatType == SystemConfig.ListFormat.Full)
+        {
+            return await CreateFronterList(cctx, system, sw, ctx);
+        }
+        return await CreateFronterListShort(cctx, system, sw, ctx);
+    }
+
+    public async Task<MessageComponent[]> CreateFronterListShort(Context cctx, PKSystem system, PKSwitch sw, LookupContext ctx)
+    {
+        var systemGuildSettings = await _repo.GetSystemGuild(cctx.Guild.Id, system.Id);
+        var members = await _db.Execute(c => _repo.GetSwitchMembers(c, sw.Id).ToListAsync().AsTask());
+        var memberStr = "*(no fronter)*";
+
+        if (members.Count > 0)
+        {
+            memberStr = "";
+            foreach (var item in members.Select((value, i) => new { i, value }))
+            {
+                memberStr += item.i == 0 ? "" : ", ";
+                if (memberStr.Length < 900)
+                    memberStr += item.value.NameFor(ctx);
+                else
+                {
+                    memberStr += $"*({members.Count - item.i} not shown)*";
+                    break;
+                }
+            }
+        }
+
+        return [
+            new MessageComponent(){
+                Type = ComponentType.Text,
+                Content = $"## Current fronter(s) in {systemGuildSettings.DisplayName ?? system.NameFor(ctx) ?? $"`{system.Hid}`"}"
+            },
+            new MessageComponent(){
+                Type = ComponentType.Container,
+                AccentColor = members.FirstOrDefault()?.Color?.ToDiscordColor(),
+                Components = [
+                    new MessageComponent(){
+                        Type = ComponentType.Text,
+                        Content = $"**Current fronters:** \n{memberStr}"
+                    },
+                    new MessageComponent(){
+                        Type = ComponentType.Separator,
+                    },
+                    new MessageComponent()
+                    {
+                        Type = ComponentType.Text,
+                        Content = $"**Since:** {DiscordUtils.InstantToTimestampString(sw.Timestamp)} (<t:{sw.Timestamp.ToUnixTimeSeconds()}:R>)"
+                    }
+                ]
+            },
+        ];
+    }
+
+    public async Task<MessageComponent[]> CreateFronterList(Context cctx, PKSystem system, PKSwitch sw, LookupContext ctx)
+    {
+        var systemGuildSettings = await _repo.GetSystemGuild(cctx.Guild.Id, system.Id);
+        var members = await _db.Execute(c => _repo.GetSwitchMembers(c, sw.Id).ToListAsync().AsTask());
+        var memberStr = "*(no fronter)*";
+        var memberList = new List<MessageComponent>();
+
+        if (members.Count > 0)
+        {
+            memberStr = "";
+            foreach (var item in members.Select((value, i) => new { i, value }))
+            {
+                if (item.i < 5)
+                {
+                    var guildSettings = cctx.Guild != null ? await _repo.GetMemberGuild(cctx.Guild.Id, item.value.Id) : null;
+                    var avatar = guildSettings?.AvatarUrl ?? item.value.AvatarFor(ctx) ?? systemGuildSettings.AvatarUrl ?? system.AvatarFor(ctx);
+                    var pronouns = item.value.PronounsFor(ctx);
+                    var displayName = (guildSettings?.DisplayName) ?? item.value.DisplayName;
+
+                    var headerText = "";
+                    if (!displayName.EmptyOrNull() && item.value.NamePrivacy.CanAccess(ctx))
+                    {
+                        headerText += $"**Display name:** {displayName}\n";
+                    }
+                    if (!pronouns.EmptyOrNull())
+                    {
+                        headerText += $"**Pronouns:** {item.value.PronounsFor(ctx)}\n";
+                    }
+                    headerText += $"[View on dashboard]({_coreConfig.DashboardBaseUrl}/profile/m/{item.value.Hid})";
+                    var nameItem = new MessageComponent()
+                    {
+                        Type = ComponentType.Text,
+                        Content = $"### {item.value.NameFor(ctx)}\n{headerText}"
+                    };
+                    if (!avatar.EmptyOrNull())
+                    {
+                        memberList.Add(new MessageComponent()
+                        {
+                            Type = ComponentType.Section,
+                            Components = [nameItem],
+                            Accessory = new MessageComponent()
+                            {
+                                Type = ComponentType.Thumbnail,
+                                Media = new ComponentMedia()
+                                {
+                                    Url = avatar.TryGetCleanCdnUrl()
+                                }
+                            }
+                        });
+                    }
+                    else
+                    {
+                        memberList.Add(nameItem);
+                    }
+
+                    memberList.Add(new MessageComponent()
+                    {
+                        Type = ComponentType.Separator,
+                    });
+                }
+                else
+                {
+                    memberStr += item.i == 5 ? "+ " : ", ";
+                    if (memberStr.Length < 900)
+                        memberStr += item.value.NameFor(ctx);
+                    else
+                    {
+                        memberStr += $"*({members.Count - item.i} not shown)*";
+                        break;
+                    }
+                }
+            }
+            if (memberStr.Length > 0)
+            {
+                memberList.Add(new MessageComponent()
+                {
+                    Type = ComponentType.Text,
+                    Content = $"{memberStr}"
+                });
+                memberList.Add(new MessageComponent()
+                {
+                    Type = ComponentType.Separator,
+                });
+            }
+        }
+        else
+        {
+            memberList.Add(new MessageComponent()
+            {
+                Type = ComponentType.Text,
+                Content = "*(no fronter)*"
+            });
+            memberList.Add(new MessageComponent()
+            {
+                Type = ComponentType.Separator
+            });
+        }
+
+        memberList.Add(new MessageComponent()
+        {
+            Type = ComponentType.Text,
+            Content = $"**Since:** {DiscordUtils.InstantToTimestampString(sw.Timestamp)} (<t:{sw.Timestamp.ToUnixTimeSeconds()}:R>)"
+        });
+        return [
+            new MessageComponent(){
+                Type = ComponentType.Text,
+                Content = $"## Current fronter(s) in {systemGuildSettings.DisplayName ?? system.NameFor(ctx) ?? $"`{system.Hid}`"}"
+            },
+            new MessageComponent(){
+                Type = ComponentType.Container,
+                AccentColor = members.FirstOrDefault()?.Color?.ToDiscordColor(),
+                Components = [
+                    .. memberList.ToArray()
+                ]
+            }
+        ];
+    }
+
     public async Task<MessageComponent[]> CreateMessageInfoMessageComponents(FullMessage msg, bool showContent, SystemConfig? ccfg = null)
     {
         var channel = await _cache.GetOrFetchChannel(_rest, msg.Message.Guild ?? 0, msg.Message.Channel);

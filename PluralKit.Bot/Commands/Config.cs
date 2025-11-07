@@ -9,6 +9,7 @@ using NodaTime.TimeZones;
 using PluralKit.Core;
 
 namespace PluralKit.Bot;
+
 public class Config
 {
     private record PaginatedConfigItem(string Key, string Description, string? CurrentValue, string DefaultValue);
@@ -128,6 +129,13 @@ public class Config
             "Whether to show color codes in system/member/group cards",
             EnabledDisabled(ctx.Config.CardShowColorHex),
             "disabled"
+        ));
+
+        items.Add(new(
+            "fronter list format",
+            "Whether to show the fronter list as full or short.",
+            ctx.Config.FronterListFormat.ToUserString(),
+            "short"
         ));
 
         items.Add(new(
@@ -589,6 +597,29 @@ public class Config
         var newVal = ctx.MatchToggle(false);
         await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { CardShowColorHex = newVal });
         await ctx.Reply($"Showing color codes on system/member/group cards is now {EnabledDisabled(newVal)}.");
+    }
+
+    public async Task FronterListFormat(Context ctx)
+    {
+        if (!ctx.HasNext())
+        {
+            var msg = $"Format of the fronter list is currently **{ctx.Config.FronterListFormat}**.";
+            await ctx.Reply(msg);
+            return;
+        }
+
+        var badInputError = "Valid list format settings are `short` or `full`.";
+        if (ctx.Match("full", "f"))
+        {
+            await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { FronterListFormat = SystemConfig.ListFormat.Full });
+            await ctx.Reply($"Fronter lists are now formatted as `full`");
+        }
+        else if (ctx.Match("short", "s"))
+        {
+            await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { FronterListFormat = SystemConfig.ListFormat.Short });
+            await ctx.Reply($"Fronter lists are now formatted as `short`");
+        }
+        else throw new PKError(badInputError);
     }
 
     public async Task ProxySwitch(Context ctx)
