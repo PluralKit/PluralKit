@@ -1,0 +1,151 @@
+using PluralKit.Core;
+using Myriad.Types;
+
+namespace PluralKit.Bot;
+
+public static class ContextParametersExt
+{
+    public static async Task<string?> ParamResolveOpaque(this Context ctx, string param_name)
+    {
+        return await ctx.Parameters.ResolveParameter(
+            ctx, param_name,
+            param => (param as Parameter.Opaque)?.value
+        );
+    }
+
+    public static async Task<int?> ParamResolveNumber(this Context ctx, string param_name)
+    {
+        return await ctx.Parameters.ResolveParameter(
+            ctx, param_name,
+            param => (param as Parameter.Number)?.value
+        );
+    }
+
+    public static async Task<PKMember?> ParamResolveMember(this Context ctx, string param_name)
+    {
+        return await ctx.Parameters.ResolveParameter(
+            ctx, param_name,
+            param => (param as Parameter.MemberRef)?.member
+        );
+    }
+
+    public static async Task<List<PKMember>?> ParamResolveMembers(this Context ctx, string param_name)
+    {
+        return await ctx.Parameters.ResolveParameter(
+            ctx, param_name,
+            param => (param as Parameter.MemberRefs)?.members
+        );
+    }
+
+    public static async Task<PKGroup?> ParamResolveGroup(this Context ctx, string param_name)
+    {
+        return await ctx.Parameters.ResolveParameter(
+            ctx, param_name,
+            param => (param as Parameter.GroupRef)?.group
+        );
+    }
+
+    public static async Task<List<PKGroup>?> ParamResolveGroups(this Context ctx, string param_name)
+    {
+        return await ctx.Parameters.ResolveParameter(
+            ctx, param_name,
+            param => (param as Parameter.GroupRefs)?.groups
+        );
+    }
+
+    public static async Task<PKSystem?> ParamResolveSystem(this Context ctx, string param_name)
+    {
+        return await ctx.Parameters.ResolveParameter(
+            ctx, param_name,
+            param => (param as Parameter.SystemRef)?.system
+        );
+    }
+
+    public static async Task<User?> ParamResolveUser(this Context ctx, string param_name)
+    {
+        return await ctx.Parameters.ResolveParameter(
+            ctx, param_name,
+            param => (param as Parameter.UserRef)?.user
+        );
+    }
+
+    public static async Task<MemberPrivacySubject?> ParamResolveMemberPrivacyTarget(this Context ctx, string param_name)
+    {
+        return await ctx.Parameters.ResolveParameter(
+            ctx, param_name,
+            param => (param as Parameter.MemberPrivacyTarget)?.target
+        );
+    }
+
+    public static async Task<GroupPrivacySubject?> ParamResolveGroupPrivacyTarget(this Context ctx, string param_name)
+    {
+        return await ctx.Parameters.ResolveParameter(
+            ctx, param_name,
+            param => (param as Parameter.GroupPrivacyTarget)?.target
+        );
+    }
+
+    public static async Task<SystemPrivacySubject?> ParamResolveSystemPrivacyTarget(this Context ctx, string param_name)
+    {
+        return await ctx.Parameters.ResolveParameter(
+            ctx, param_name,
+            param => (param as Parameter.SystemPrivacyTarget)?.target
+        );
+    }
+
+    public static async Task<PrivacyLevel?> ParamResolvePrivacyLevel(this Context ctx, string param_name)
+    {
+        return await ctx.Parameters.ResolveParameter(
+            ctx, param_name,
+            param => (param as Parameter.PrivacyLevel)?.level
+        );
+    }
+
+    public static async Task<SystemConfig.ProxySwitchAction?> ParamResolveProxySwitchAction(this Context ctx, string param_name)
+    {
+        return await ctx.Parameters.ResolveParameter(
+            ctx, param_name,
+            param => (param as Parameter.ProxySwitchAction)?.action
+        );
+    }
+
+    public static async Task<bool?> ParamResolveToggle(this Context ctx, string param_name)
+    {
+        return await ctx.Parameters.ResolveParameter(
+            ctx, param_name,
+            param => (param as Parameter.Toggle)?.value
+        );
+    }
+
+    public static async Task<ParsedImage?> ParamResolveAvatar(this Context ctx, string param_name)
+    {
+        return await ctx.Parameters.ResolveParameter(
+            ctx, param_name,
+            param => (param as Parameter.Avatar)?.avatar
+        );
+    }
+
+    public static async Task<Myriad.Types.Message.Reference?> ParamResolveMessage(this Context ctx, string param_name)
+    {
+        return await ctx.Parameters.ResolveParameter(
+            ctx, param_name,
+            param => (param as Parameter.MessageRef)?.message
+        );
+    }
+
+    public static async Task<Myriad.Types.Channel?> ParamResolveChannel(this Context ctx, string param_name)
+    {
+        return await ctx.Parameters.ResolveParameter(
+            ctx, param_name,
+            param => (param as Parameter.ChannelRef)?.channel
+        );
+    }
+
+    public static async Task<Myriad.Types.Guild?> ParamResolveGuild(this Context ctx, string param_name)
+    {
+        return await ctx.Parameters.ResolveParameter(
+            ctx, param_name,
+            param => (param as Parameter.GuildRef)?.guild
+        );
+    }
+}

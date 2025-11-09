@@ -7,9 +7,9 @@ namespace PluralKit.Bot;
 
 public class Help
 {
-    public Task HelpRoot(Context ctx)
+    public Task HelpRoot(Context ctx, bool showEmbed = false)
     {
-        if (ctx.MatchFlag("show-embed", "se"))
+        if (showEmbed)
             return HelpRootOld(ctx);
 
         return ctx.Reply(BuildComponents(ctx.Author.Id, Help.Description.Replace("{prefix}", ctx.DefaultPrefix), -1));
