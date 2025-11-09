@@ -5,7 +5,7 @@ Because PluralKit deletes messages as part of proxying, this can often clutter u
 ## Bots with PluralKit support
 Some moderation bots have official PluralKit support, and properly handle excluding proxy deletes, as well as add PK-specific information to relevant log messages:
 
-- [**Catalogger**](https://catalogger.starshines.xyz/docs)
+- [**Catalogger**](https://catalogger.app)
 - [**Aero**](https://aero.bot/) 
 - [**CoreBot**](https://discord.gg/GAAj6DDrCJ)
 - [**Quark**](https://quark.bot)
