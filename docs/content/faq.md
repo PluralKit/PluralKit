@@ -55,8 +55,8 @@ This includes:
 For more information about why certain information must be public, see [this github issue](https://github.com/PluralKit/PluralKit/issues/238).
 
 ### Is there a way to restrict PluralKit usage to a certain role? / Can I remove PluralKit access for specific users in my server?
-This is not a feature currently available in PluralKit. It may be added in the future.
-In the meantime, this feature is supported in Tupperbox (an alternative proxying bot) - ask about it in their support server: <https://discord.gg/Z4BHccHhy3>
+PluralKit does not, and *will not*, support restricting usage of the bot by role.
+This feature is supported in Tupperbox (an alternative proxying bot) - ask about it in their support server: <https://discord.gg/Z4BHccHhy3>
 
 ### Is it possible to block proxied messages (like blocking a user)?
 No. Since proxied messages are posted through webhooks, and those technically aren't real users on Discord's end, it's not possible to block them. Blocking PluralKit itself will also not block the webhook messages. Discord also does not allow you to control who can receive a specific message, so it's not possible to integrate a blocking system in the bot, either. Sorry :/
