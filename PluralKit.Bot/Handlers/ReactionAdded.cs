@@ -186,10 +186,9 @@ public class ReactionAdded: IEventHandler<MessageReactionAddEvent>
         {
             var dm = await _dmCache.GetOrCreateDmChannel(evt.UserId);
 
-            var embeds = new List<Embed>();
-
+            var components = new List<MessageComponent>();
             if (msg.Member != null)
-                embeds.Add(await _embeds.CreateMemberEmbed(
+                components.AddRange(await _embeds.CreateMemberMessageComponents(
                     msg.System,
                     msg.Member,
                     guild,
@@ -197,10 +196,12 @@ public class ReactionAdded: IEventHandler<MessageReactionAddEvent>
                     LookupContext.ByNonOwner,
                     DateTimeZone.Utc
                 ));
-
-            embeds.Add(await _embeds.CreateMessageInfoEmbed(msg, true, config));
-
-            await _rest.CreateMessage(dm, new MessageRequest { Embeds = embeds.ToArray() });
+            components.Add(new MessageComponent()
+            {
+                Type = ComponentType.Separator
+            });
+            components.AddRange(await _embeds.CreateMessageInfoMessageComponents(msg, true, config));
+            await _rest.CreateMessage(dm, new MessageRequest { Components = components.ToArray(), Flags = Message.MessageFlags.IsComponentsV2, AllowedMentions = new AllowedMentions() });
         }
         catch (ForbiddenException) { } // No permissions to DM, can't check for this :(
 

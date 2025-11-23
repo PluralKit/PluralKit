@@ -12,3 +12,13 @@ This bot detects messages with certain tags associated with a profile, then repl
 ![demonstration of PluralKit](./assets/demo.gif)
 
 For more information, see the links to the left, or click [here](https://discord.com/oauth2/authorize?client_id=466378653216014359&scope=bot%20applications.commands&permissions=536995904) to invite the bot to your server!
+
+## Sponsors
+
+<div style="text-align:center;">
+
+![Prodigi logo](./assets/prodigi.png)
+
+</div>
+
+PluralKit's infrastructure is generously sponsored by [Prodigi](https://prodigi.nz), a New Zealand based technology services provider.

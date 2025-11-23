@@ -5,6 +5,7 @@ using Autofac;
 using Myriad.Cache;
 using Myriad.Gateway;
 using Myriad.Rest;
+using Myriad.Rest.Types;
 using Myriad.Types;
 
 using PluralKit.Core;
@@ -73,6 +74,17 @@ public class InteractionContext
                 Content = content,
                 Embeds = embeds,
                 Flags = Message.MessageFlags.Ephemeral
+            });
+    }
+
+    public async Task Reply(MessageComponent[] components = null, AllowedMentions? mentions = null)
+    {
+        await Respond(InteractionResponse.ResponseType.ChannelMessageWithSource,
+            new InteractionApplicationCommandCallbackData
+            {
+                Components = components,
+                Flags = Message.MessageFlags.Ephemeral | Message.MessageFlags.IsComponentsV2,
+                AllowedMentions = mentions ?? new AllowedMentions()
             });
     }
 

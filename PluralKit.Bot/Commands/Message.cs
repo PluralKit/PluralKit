@@ -407,21 +407,33 @@ public class ProxiedMessage
         if (author)
         {
             var user = await _rest.GetUser(message.Message.Sender);
-            var eb = new EmbedBuilder()
-                .Author(new Embed.EmbedAuthor(
-                    user != null
-                        ? $"{user.Username}#{user.Discriminator}"
-                        : $"Deleted user ${message.Message.Sender}",
-                    IconUrl: user != null ? user.AvatarUrl() : null))
-                .Description(message.Message.Sender.ToString());
+            if (ctx.MatchFlag("show-embed", "se"))
+            {
+                var eb = new EmbedBuilder()
+                    .Author(new Embed.EmbedAuthor(
+                        user != null
+                            ? $"{user.Username}#{user.Discriminator}"
+                            : $"Deleted user ${message.Message.Sender}",
+                        IconUrl: user != null ? user.AvatarUrl() : null))
+                    .Description(message.Message.Sender.ToString());
 
-            await ctx.Reply(
-                user != null ? $"{user.Mention()} ({user.Id})" : $"*(deleted user {message.Message.Sender})*",
-                eb.Build());
+                await ctx.Reply(
+                    user != null ? $"{user.Mention()} ({user.Id})" : $"*(deleted user {message.Message.Sender})*",
+                    eb.Build());
+                return;
+            }
+
+            await ctx.Reply(components: await _embeds.CreateAuthorMessageComponents(user, message));
             return;
         }
 
-        await ctx.Reply(embed: await _embeds.CreateMessageInfoEmbed(message, showContent, ctx.Config));
+        if (ctx.MatchFlag("show-embed", "se"))
+        {
+            await ctx.Reply(embed: await _embeds.CreateMessageInfoEmbed(message, showContent, ctx.Config));
+            return;
+        }
+
+        await ctx.Reply(components: await _embeds.CreateMessageInfoMessageComponents(message, showContent, ctx.Config));
     }
 
     private async Task GetCommandMessage(Context ctx, ulong messageId, bool isDelete)
@@ -453,6 +465,11 @@ public class ProxiedMessage
         else if (!await ctx.CheckPermissionsInGuildChannel(channel, PermissionSet.ViewChannel))
             showContent = false;
 
-        await ctx.Reply(embed: await _embeds.CreateCommandMessageInfoEmbed(msg, showContent));
+        if (ctx.MatchFlag("show-embed", "se"))
+        {
+            await ctx.Reply(embed: await _embeds.CreateCommandMessageInfoEmbed(msg, showContent));
+            return;
+        }
+        await ctx.Reply(components: await _embeds.CreateCommandMessageInfoMessageComponents(msg, showContent));
     }
 }

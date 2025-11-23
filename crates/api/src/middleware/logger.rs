@@ -12,9 +12,10 @@ const MIN_LOG_TIME: u128 = 2_000;
 
 pub async fn logger(request: Request, next: Next) -> Response {
     let method = request.method().clone();
+    let headers = request.headers().clone();
 
-    let remote_ip = header_or_unknown(request.headers().get("X-PluralKit-Client-IP"));
-    let user_agent = header_or_unknown(request.headers().get("User-Agent"));
+    let remote_ip = header_or_unknown(headers.get("X-PluralKit-Client-IP"));
+    let user_agent = header_or_unknown(headers.get("User-Agent"));
 
     let extensions = request.extensions().clone();
 
@@ -23,10 +24,6 @@ pub async fn logger(request: Request, next: Next) -> Response {
         .cloned()
         .map(|v| v.as_str().to_string())
         .unwrap_or("unknown".to_string());
-
-    let auth = extensions
-        .get::<AuthState>()
-        .expect("should always have AuthState");
 
     let uri = request.uri().clone();
 
@@ -43,15 +40,24 @@ pub async fn logger(request: Request, next: Next) -> Response {
     let response = next.run(request).instrument(request_span).await;
     let elapsed = start.elapsed().as_millis();
 
-    let system_id = auth
-        .system_id()
-        .map(|v| v.to_string())
-        .unwrap_or("none".to_string());
+    let rext = response.extensions().clone();
+    let auth = rext.get::<AuthState>();
 
-    let app_id = auth
-        .app_id()
-        .map(|v| v.to_string())
-        .unwrap_or("none".to_string());
+    let system_id = if let Some(auth) = auth {
+        auth.system_id()
+            .map(|v| v.to_string())
+            .unwrap_or("none".to_string())
+    } else {
+        "none".to_string()
+    };
+
+    let app_id = if let Some(auth) = auth {
+        auth.app_id()
+            .map(|v| v.to_string())
+            .unwrap_or("none".to_string())
+    } else {
+        "none".to_string()
+    };
 
     counter!(
         "pluralkit_api_requests",
@@ -73,6 +79,14 @@ pub async fn logger(request: Request, next: Next) -> Response {
     .record(elapsed as f64 / 1_000_f64);
 
     info!(
+        status = response.status().as_str(),
+        method = method.to_string(),
+        endpoint,
+        elapsed,
+        user_agent,
+        remote_ip,
+        system_id,
+        app_id,
         "{} handled request for {} {} in {}ms",
         response.status(),
         method,

@@ -76,5 +76,10 @@ pub async fn auth(State(ctx): State<ApiContext>, mut req: Request, next: Next) -
     req.extensions_mut()
         .insert(AuthState::new(authed_system_id, authed_app_id, internal));
 
-    next.run(req).await
+    let mut res = next.run(req).await;
+
+    res.extensions_mut()
+        .insert(AuthState::new(authed_system_id, authed_app_id, internal));
+
+    res
 }
