@@ -167,8 +167,6 @@ pub fn cmds() -> impl Iterator<Item = Command> {
         [
             command!(member_proxy => "member_proxy_show")
                 .help("Shows a member's proxy tags"),
-            command!(member_proxy, Remainder(("tags", OpaqueString)) => "member_proxy_set")
-                .help("Sets a member's proxy tags"),
             command!(member_proxy, ("add", ["a"]), ("tag", OpaqueString) => "member_proxy_add")
                 .help("Adds proxy tag to a member"),
             command!(member_proxy, ("remove", ["r", "rm"]), ("tag", OpaqueString) => "member_proxy_remove")
@@ -176,6 +174,8 @@ pub fn cmds() -> impl Iterator<Item = Command> {
             command!(member_proxy, CLEAR => "member_proxy_clear")
                 .flag(YES)
                 .help("Clears all proxy tags from a member"),
+            command!(member_proxy, Remainder(("tags", OpaqueString)) => "member_proxy_set")
+                .help("Sets a member's proxy tags"),
         ].into_iter()
     };
 
