@@ -250,18 +250,26 @@ pub fn edit() -> impl Iterator<Item = Command> {
 
     let front = ("front", ["fronter", "fronters", "f"]);
     let make_system_front_cmd = |prefix: TokensIterator, suffix: &str| {
-        [
-            command!(prefix => format!("system_fronter{}", suffix)),
-            command!(prefix, ("history", ["h"]) => format!("system_fronter_history{}", suffix)).flag(CLEAR),
-            command!(prefix, ("percent", ["p", "%"]) => format!("system_fronter_percent{}", suffix))
+        let make_front_history = |subcmd: TokensIterator| {
+            command!(prefix, subcmd => format!("system_fronter_history{}", suffix)).flag(CLEAR)
+        };
+        let make_front_percent = |subcmd: TokensIterator| {
+            command!(prefix, subcmd => format!("system_fronter_percent{}", suffix))
                 .flag(("duration", OpaqueString))
                 .flag(("fronters-only", ["fo"]))
-                .flag("flat"),
+                .flag("flat")
+        };
+        [
+            command!(prefix, front => format!("system_fronter{}", suffix)),
+            make_front_history(tokens!(front, ("history", ["h"]))),
+            make_front_history(tokens!(("fronthistory", ["fh"]))),
+            make_front_percent(tokens!(front, ("percent", ["p", "%"]))),
+            make_front_percent(tokens!(("frontpercent", ["fp"]))),
         ]
         .into_iter()
     };
-    let system_front_cmd = make_system_front_cmd(tokens!(system_target, front), "");
-    let system_front_self_cmd = make_system_front_cmd(tokens!(system, front), "_self");
+    let system_front_cmd = make_system_front_cmd(tokens!(system_target), "");
+    let system_front_self_cmd = make_system_front_cmd(tokens!(system), "_self");
 
     let system_link = [
         command!("link", ("account", UserRef) => "system_link"),
