@@ -83,7 +83,7 @@ public class GroupMember
             target.Color, opts, all);
     }
 
-    public async Task AddRemoveMembers(Context ctx, PKGroup target, List<PKMember> _members, Groups.AddRemoveOperation op, bool all, bool confirmYes)
+    public async Task AddRemoveMembers(Context ctx, PKGroup target, List<PKMember>? _members, Groups.AddRemoveOperation op, bool all, bool confirmYes)
     {
         ctx.CheckOwnGroup(target);
 
@@ -98,6 +98,9 @@ public class GroupMember
         }
         else
         {
+            if (_members == null)
+                throw new PKError("Please provide a list of members to add/remove.");
+
             members = _members
                 .FindAll(m => m.System == ctx.System.Id)
                 .Select(m => m.Id)
