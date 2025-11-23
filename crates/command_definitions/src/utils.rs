@@ -48,7 +48,7 @@ pub fn get_list_flags() -> [Flag; 22] {
             ["with-image", "with-icon", "wa", "wi", "ia", "ii", "img"],
         )),
         Flag::from(("with-pronouns", ["wp", "wprns"])),
-        Flag::from(("with-displayname", ["wdn"])),
+        Flag::from(("with-display-name", ["wdn"])),
         Flag::from(("with-birthday", ["wbd", "wb"])),
     ]
 }

@@ -1,3 +1,5 @@
+use std::iter::once;
+
 use command_parser::token::TokensIterator;
 
 use crate::utils::get_list_flags;
@@ -294,15 +296,11 @@ pub fn cmds() -> impl Iterator<Item = Command> {
         .chain(member_webhook_avatar_cmd)
         .chain(member_server_avatar_cmd);
 
-    let member_group = tokens!(member_target, group::group());
-    let member_list_group_cmds = [
-        command!(member_group => "member_list_groups"),
-        command!(member_group, "list" => "member_list_groups"),
-        command!(member_group, ("search", ["find", "query"]), Remainder(("query", OpaqueString)) => "member_search_groups"),
-    ]
-    .into_iter()
+    let member_group = tokens!(member_target, ("groups", ["group"]));
+    let member_list_group_cmds = once(
+        command!(member_group, Optional(Remainder(("query", OpaqueString))) => "member_groups"),
+    )
     .map(|cmd| cmd.flags(get_list_flags()));
-
     let member_add_remove_group_cmds = [
         command!(member_group, "add", Optional(("groups", GroupRefs)) => "member_group_add")
             .help("Adds a member to one or more groups"),
@@ -339,6 +337,6 @@ pub fn cmds() -> impl Iterator<Item = Command> {
         .chain(member_display_id_cmd)
         .chain(member_delete_cmd)
         .chain(member_easter_eggs)
-        .chain(member_list_group_cmds)
         .chain(member_add_remove_group_cmds)
+        .chain(member_list_group_cmds)
 }

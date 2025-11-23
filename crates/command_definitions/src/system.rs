@@ -269,35 +269,24 @@ pub fn edit() -> impl Iterator<Item = Command> {
     ]
     .into_iter();
 
-    let list = ("list", ["ls", "l"]);
-    let system_list = tokens!("members", list);
-    let search = tokens!(
-        ("search", ["query", "find"]),
-        Remainder(("query", OpaqueString))
-    );
-    let add_list_flags = |cmd: Command| cmd.flags(get_list_flags());
-    let system_list_cmd = [
-        command!(system_target, system_list => "system_members_list"),
-        command!(system_target, search => "system_members_search"),
-    ]
-    .into_iter()
-    .map(add_list_flags);
-    let system_list_self_cmd = [
-        command!(system_list => "system_members_list_self"),
-        command!(system, system_list => "system_members_list_self"),
-        command!(system, search => "system_members_search_self"),
-    ]
-    .into_iter()
-    .map(add_list_flags);
+    let search_param = Optional(Remainder(("query", OpaqueString)));
+    let apply_list_opts = |cmd: Command| cmd.flags(get_list_flags());
 
-    let system_groups = tokens!(system_target, group::group());
-    let system_groups_cmd = [
-        command!(system_groups => "system_list_groups"),
-        command!(system_groups, list => "system_list_groups"),
-        command!(system_groups, search => "system_search_groups"),
+    let members_subcmd = tokens!(("members", ["ls", "list"]), search_param);
+    let system_members_cmd =
+        once(command!(system_target, members_subcmd => "system_members")).map(apply_list_opts);
+    let system_members_self_cmd = [
+        command!(system, members_subcmd => "system_members_self"),
+        command!(members_subcmd => "system_members_self"),
     ]
     .into_iter()
-    .map(add_list_flags);
+    .map(apply_list_opts);
+
+    let groups_subcmd = tokens!("groups", search_param);
+    let system_groups_cmd =
+        once(command!(system_target, groups_subcmd => "system_groups")).map(apply_list_opts);
+    let system_group_self_cmd =
+        once(command!(system, groups_subcmd => "system_groups_self")).map(apply_list_opts);
 
     let system_display_id_self_cmd = once(command!(system, "id" => "system_display_id_self"));
     let system_display_id_cmd = once(command!(system_target, "id" => "system_display_id"));
@@ -315,7 +304,8 @@ pub fn edit() -> impl Iterator<Item = Command> {
         .chain(system_avatar_self_cmd)
         .chain(system_server_avatar_self_cmd)
         .chain(system_banner_self_cmd)
-        .chain(system_list_self_cmd)
+        .chain(system_members_self_cmd)
+        .chain(system_group_self_cmd)
         .chain(system_display_id_self_cmd)
         .chain(system_front_self_cmd)
         .chain(system_delete)
@@ -334,7 +324,7 @@ pub fn edit() -> impl Iterator<Item = Command> {
         .chain(system_info_cmd)
         .chain(system_front_cmd)
         .chain(system_link)
-        .chain(system_list_cmd)
+        .chain(system_members_cmd)
         .chain(system_groups_cmd)
         .chain(system_display_id_cmd)
 }

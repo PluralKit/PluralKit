@@ -1,11 +1,13 @@
+use std::iter::once;
+
 use command_parser::token::TokensIterator;
 
 use crate::utils::get_list_flags;
 
 use super::*;
 
-pub fn group() -> (&'static str, [&'static str; 2]) {
-    ("group", ["g", "groups"])
+pub fn group() -> (&'static str, [&'static str; 1]) {
+    ("group", ["g"])
 }
 
 pub fn targeted() -> TokensIterator {
@@ -151,19 +153,11 @@ pub fn cmds() -> impl Iterator<Item = Command> {
     .into_iter();
 
     let apply_list_opts = |cmd: Command| cmd.flags(get_list_flags());
+    let search_param = Optional(Remainder(("query", OpaqueString)));
 
-    let search = tokens!(
-        ("search", ["find", "query"]),
-        Remainder(("query", OpaqueString))
-    );
-    let group_list_members = tokens!(group_target, ("members", ["list", "ls"]));
-    let group_list_members_cmd = [
-        command!(group_list_members => "group_list_members"),
-        command!(group_list_members, "list" => "group_list_members"),
-        command!(group_list_members, search => "group_search_members"),
-    ]
-    .into_iter()
-    .map(apply_list_opts);
+    let group_list_members_cmd =
+        once(command!(group_target, ("members", ["list", "ls"]), search_param => "group_members"))
+            .map(apply_list_opts);
 
     let group_modify_members_cmd = [
         command!(group_target, "add", Optional(MemberRefs) => "group_add_member")
@@ -173,12 +167,8 @@ pub fn cmds() -> impl Iterator<Item = Command> {
     ]
     .into_iter();
 
-    let system_groups_cmd = [
-        command!(group, ("list", ["ls"]) => "group_list_groups"),
-        command!(group, search => "group_search_groups"),
-    ]
-    .into_iter()
-    .map(apply_list_opts);
+    let system_groups_cmd =
+        once(command!(group, ("list", ["ls"]), search_param => "groups_self")).map(apply_list_opts);
 
     system_groups_cmd
         .chain(group_new_cmd)
