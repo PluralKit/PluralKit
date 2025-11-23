@@ -139,23 +139,10 @@ impl Parameter {
             ParameterKind::MemberRefs => Ok(ParameterValue::MemberRefs(
                 input.split(' ').map(|s| s.trim().to_string()).collect(),
             )),
-            ParameterKind::SystemRef => Ok(ParameterValue::SystemRef(input.into())),
-            ParameterKind::UserRef => {
-                if let Ok(user_id) = input.parse::<u64>() {
-                    return Ok(ParameterValue::UserRef(user_id));
-                }
-
-                static RE: std::sync::LazyLock<Regex> =
-                    std::sync::LazyLock::new(|| Regex::new(r"<@!?(\\d{17,19})>").unwrap());
-                if let Some(captures) = RE.captures(&input) {
-                    return captures[1]
-                        .parse::<u64>()
-                        .map(|id| ParameterValue::UserRef(id))
-                        .map_err(|_| SmolStr::new("invalid user ID"));
-                }
-
-                Err(SmolStr::new("invalid user ID"))
+            ParameterKind::SystemRef => {
+                Ok(parse_user_ref(input).unwrap_or(ParameterValue::SystemRef(input.into())))
             }
+            ParameterKind::UserRef => parse_user_ref(input),
             ParameterKind::MemberPrivacyTarget => MemberPrivacyTargetKind::from_str(input)
                 .map(|target| ParameterValue::MemberPrivacyTarget(target.as_ref().into())),
             ParameterKind::GroupPrivacyTarget => GroupPrivacyTargetKind::from_str(input)
@@ -326,6 +313,23 @@ impl<P: Into<Parameter>> From<Skip<P>> for Parameter {
         let p = value.0.into();
         p.skip()
     }
+}
+
+fn parse_user_ref(input: &str) -> Result<ParameterValue, SmolStr> {
+    if let Ok(user_id) = input.parse::<u64>() {
+        return Ok(ParameterValue::UserRef(user_id));
+    }
+
+    static RE: std::sync::LazyLock<Regex> =
+        std::sync::LazyLock::new(|| Regex::new(r"<@!?(\\d{17,19})>").unwrap());
+    if let Some(captures) = RE.captures(&input) {
+        return captures[1]
+            .parse::<u64>()
+            .map(|id| ParameterValue::UserRef(id))
+            .map_err(|_| SmolStr::new("invalid user ID"));
+    }
+
+    Err(SmolStr::new("invalid user ID"))
 }
 
 macro_rules! impl_enum {
