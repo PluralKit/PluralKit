@@ -10,33 +10,35 @@ pub fn cmds() -> impl Iterator<Item = Command> {
     let ap_timeout = tokens!(ap, ("timeout", ["tm"]));
 
     let timezone = tokens!(cfg, ("timezone", ["zone", "tz"]));
-    let ping = tokens!(cfg, ("ping", ["ping"]));
+    let ping = tokens!(cfg, "ping");
 
     let priv_ = ("private", ["priv"]);
     let member_privacy = tokens!(cfg, priv_, ("member", ["mem"]));
-    let member_privacy_short = tokens!(cfg, ("mp", ["mp"]));
+    let member_privacy_short = tokens!(cfg, "mp");
     let group_privacy = tokens!(cfg, priv_, ("group", ["grp"]));
-    let group_privacy_short = tokens!(cfg, ("gp", ["gp"]));
+    let group_privacy_short = tokens!(cfg, "gp");
 
-    let show = ("show", ["show"]);
+    let show = "show";
     let show_private = tokens!(cfg, show, priv_);
-    let show_private_short = tokens!(cfg, ("sp", ["sp"]));
+    let show_private_short = tokens!(cfg, "sp");
 
     let proxy = ("proxy", ["px"]);
     let proxy_case = tokens!(cfg, proxy, ("case", ["caps", "capitalize", "capitalise"]));
     let proxy_error = tokens!(cfg, proxy, ("error", ["errors"]));
-    let proxy_error_short = tokens!(cfg, ("pe", ["pe"]));
+    let proxy_error_short = tokens!(cfg, "pe");
+    let proxy_switch = tokens!(cfg, proxy, "switch");
+    let proxy_switch_short = tokens!(cfg, ("proxyswitch", ["ps"]));
 
     let id = ("id", ["ids"]);
-    let split_id = tokens!(cfg, ("split", ["split"]), id);
-    let split_id_short = tokens!(cfg, ("sid", ["sid", "sids"]));
+    let split_id = tokens!(cfg, "split", id);
+    let split_id_short = tokens!(cfg, ("sid", ["sids"]));
     let cap_id = tokens!(cfg, ("cap", ["caps", "capitalize", "capitalise"]), id);
-    let cap_id_short = tokens!(cfg, ("capid", ["capid", "capids"]));
+    let cap_id_short = tokens!(cfg, ("capid", ["capids"]));
 
     let pad = ("pad", ["padding"]);
     let pad_id = tokens!(cfg, pad, id);
     let id_pad = tokens!(cfg, id, pad);
-    let id_pad_short = tokens!(cfg, ("idpad", ["idpad", "padid", "padids"]));
+    let id_pad_short = tokens!(cfg, ("idpad", ["padid", "padids"]));
 
     let show_color = tokens!(cfg, show, ("color", ["colour", "colors", "colours"]));
     let show_color_short = tokens!(
@@ -53,29 +55,23 @@ pub fn cmds() -> impl Iterator<Item = Command> {
         )
     );
 
-    let proxy_switch = tokens!(cfg, ("proxy", ["proxy"]), ("switch", ["switch"]));
-    let proxy_switch_short = tokens!(cfg, ("proxyswitch", ["proxyswitch", "ps"]));
+    let format = "format";
+    let name_format = tokens!(cfg, "name", format);
+    let name_format_short = tokens!(cfg, ("nameformat", ["nf"]));
 
-    let format = ("format", ["format"]);
-    let name_format = tokens!(cfg, ("name", ["name"]), format);
-    let name_format_short = tokens!(cfg, ("nameformat", ["nameformat", "nf"]));
-
-    let server = ("server", ["server"]);
-    let server_name_format = tokens!(cfg, server, ("name", ["name"]), format);
+    let server = "server";
+    let server_name_format = tokens!(cfg, server, "name", format);
     let server_format = tokens!(
         cfg,
-        ("server", ["server", "servername"]),
-        ("format", ["format", "nameformat", "nf"])
+        ("server", ["servername"]),
+        ("format", ["nameformat", "nf"])
     );
     let server_format_short = tokens!(
         cfg,
-        (
-            "snf",
-            ["snf", "servernf", "servernameformat", "snameformat"]
-        )
+        ("snf", ["servernf", "servernameformat", "snameformat"])
     );
 
-    let limit_ = ("limit", ["limit", "lim"]);
+    let limit_ = ("limit", ["lim"]);
     let member_limit = tokens!(cfg, ("member", ["mem"]), limit_);
     let group_limit = tokens!(cfg, ("group", ["grp"]), limit_);
     let limit = tokens!(cfg, limit_);

@@ -180,7 +180,8 @@ pub fn cmds() -> impl Iterator<Item = Command> {
     .into_iter()
     .map(apply_list_opts);
 
-    group_new_cmd
+    system_groups_cmd
+        .chain(group_new_cmd)
         .chain(group_info_cmd)
         .chain(group_name_cmd)
         .chain(group_display_name_cmd)
@@ -196,5 +197,4 @@ pub fn cmds() -> impl Iterator<Item = Command> {
         .chain(group_delete_cmd)
         .chain(group_id_cmd)
         .chain(group_list_members_cmd)
-        .chain(system_groups_cmd)
 }
