@@ -14,7 +14,7 @@ pub fn cmds() -> impl Iterator<Item = Command> {
                 .help("Shows an abuse log entry"),
             command!(abuselog, ("flagdeny", ["fd"]), log_param, Optional(("value", Toggle)) => format!("admin_abuselog_flag_deny_{}", log_param.name()))
                 .help("Sets the deny flag on an abuse log entry"),
-            command!(abuselog, ("description", ["desc"]), log_param, Optional(("desc", OpaqueStringRemainder)) => format!("admin_abuselog_description_{}", log_param.name()))
+            command!(abuselog, ("description", ["desc"]), log_param, Optional(Remainder(("desc", OpaqueString))) => format!("admin_abuselog_description_{}", log_param.name()))
                 .flag(CLEAR)
                 .flag(YES)
                 .help("Sets the description of an abuse log entry"),
@@ -27,7 +27,7 @@ pub fn cmds() -> impl Iterator<Item = Command> {
         ].into_iter()
     };
     let abuselog_cmds = [
-        command!(abuselog, ("create", ["c", "new"]), ("account", UserRef), Optional(("description", OpaqueStringRemainder)) => "admin_abuselog_create")
+        command!(abuselog, ("create", ["c", "new"]), ("account", UserRef), Optional(Remainder(("description", OpaqueString))) => "admin_abuselog_create")
             .flag(("deny-boy-usage", ["deny"]))
             .help("Creates an abuse log entry")
     ]
@@ -66,7 +66,7 @@ pub fn cmds() -> impl Iterator<Item = Command> {
             .help("Recovers a system"),
         command!(admin, ("systemdelete", ["sd"]), SystemRef => "admin_system_delete")
             .help("Deletes a system"),
-        command!(admin, ("sendmessage", ["sendmsg"]), ("account", UserRef), ("content", OpaqueStringRemainder) => "admin_send_message")
+        command!(admin, ("sendmessage", ["sendmsg"]), ("account", UserRef), Remainder(("content", OpaqueString)) => "admin_send_message")
             .help("Sends a message to a user"),
     ]
     .into_iter()

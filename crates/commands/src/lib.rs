@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fmt::Write, usize};
+use std::{collections::HashMap, fmt::Write};
 
 use command_parser::{parameter::ParameterValue, token::TokenMatchResult, Tree};
 

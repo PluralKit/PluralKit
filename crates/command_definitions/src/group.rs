@@ -18,7 +18,7 @@ pub fn cmds() -> impl Iterator<Item = Command> {
 
     let group_new = tokens!(group, ("new", ["n"]));
     let group_new_cmd = [
-        command!(group_new, ("name", OpaqueStringRemainder) => "group_new")
+        command!(group_new, Remainder(("name", OpaqueString)) => "group_new")
             .help("Creates a new group"),
     ]
     .into_iter();
@@ -37,7 +37,7 @@ pub fn cmds() -> impl Iterator<Item = Command> {
         command!(group_name, CLEAR => "group_clear_name")
             .flag(YES)
             .help("Clears the group's name"),
-        command!(group_name, ("name", OpaqueStringRemainder) => "group_rename")
+        command!(group_name, Remainder(("name", OpaqueString)) => "group_rename")
             .help("Renames the group"),
     ]
     .into_iter();
@@ -49,7 +49,7 @@ pub fn cmds() -> impl Iterator<Item = Command> {
         command!(group_display_name, CLEAR => "group_clear_display_name")
             .flag(YES)
             .help("Clears the group's display name"),
-        command!(group_display_name, ("name", OpaqueStringRemainder) => "group_change_display_name")
+        command!(group_display_name, Remainder(("name", OpaqueString)) => "group_change_display_name")
             .help("Changes the group's display name"),
     ]
     .into_iter();
@@ -67,7 +67,7 @@ pub fn cmds() -> impl Iterator<Item = Command> {
         command!(group_description, CLEAR => "group_clear_description")
             .flag(YES)
             .help("Clears the group's description"),
-        command!(group_description, ("description", OpaqueStringRemainder) => "group_change_description")
+        command!(group_description, Remainder(("description", OpaqueString)) => "group_change_description")
             .help("Changes the group's description"),
     ]
     .into_iter();
@@ -154,7 +154,7 @@ pub fn cmds() -> impl Iterator<Item = Command> {
 
     let search = tokens!(
         ("search", ["find", "query"]),
-        ("query", OpaqueStringRemainder)
+        Remainder(("query", OpaqueString))
     );
     let group_list_members = tokens!(group_target, ("members", ["list", "ls"]));
     let group_list_members_cmd = [

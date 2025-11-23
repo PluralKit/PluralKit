@@ -262,7 +262,7 @@ fn command_callback_to_name(cb: &str) -> String {
 
 fn get_param_ty(kind: ParameterKind) -> &'static str {
     match kind {
-        ParameterKind::OpaqueString | ParameterKind::OpaqueStringRemainder => "string",
+        ParameterKind::OpaqueString => "string",
         ParameterKind::OpaqueInt => "int",
         ParameterKind::MemberRef => "PKMember",
         ParameterKind::MemberRefs => "List<PKMember>",
@@ -285,7 +285,7 @@ fn get_param_ty(kind: ParameterKind) -> &'static str {
 
 fn get_param_param_ty(kind: ParameterKind) -> &'static str {
     match kind {
-        ParameterKind::OpaqueString | ParameterKind::OpaqueStringRemainder => "Opaque",
+        ParameterKind::OpaqueString => "Opaque",
         ParameterKind::OpaqueInt => "Number",
         ParameterKind::MemberRef => "Member",
         ParameterKind::MemberRefs => "Members",

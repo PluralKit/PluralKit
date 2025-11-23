@@ -23,7 +23,7 @@ pub fn edit() -> impl Iterator<Item = Command> {
     let system_new = tokens!(system, ("new", ["n"]));
     let system_new_cmd = [
         command!(system_new => "system_new").help("Creates a new system"),
-        command!(system_new, ("name", OpaqueStringRemainder) => "system_new_name")
+        command!(system_new, Remainder(("name", OpaqueString)) => "system_new_name")
             .help("Creates a new system (using the provided name)"),
     ]
     .into_iter();
@@ -62,7 +62,7 @@ pub fn edit() -> impl Iterator<Item = Command> {
         command!(system_name_self, CLEAR => "system_clear_name")
             .flag(YES)
             .help("Clears your system's name"),
-        command!(system_name_self, ("name", OpaqueStringRemainder) => "system_rename")
+        command!(system_name_self, Remainder(("name", OpaqueString)) => "system_rename")
             .help("Renames your system"),
     ]
     .into_iter();
@@ -80,7 +80,7 @@ pub fn edit() -> impl Iterator<Item = Command> {
         command!(system_server_name_self, CLEAR => "system_clear_server_name")
             .flag(YES)
             .help("Clears your system's server name"),
-        command!(system_server_name_self, ("name", OpaqueStringRemainder) => "system_rename_server_name")
+        command!(system_server_name_self, Remainder(("name", OpaqueString)) => "system_rename_server_name")
             .help("Renames your system's server name"),
     ]
     .into_iter();
@@ -97,7 +97,7 @@ pub fn edit() -> impl Iterator<Item = Command> {
         command!(system_description_self, CLEAR => "system_clear_description")
         .flag(YES)
             .help("Clears your system's description"),
-        command!(system_description_self, ("description", OpaqueStringRemainder) => "system_change_description")
+        command!(system_description_self, Remainder(("description", OpaqueString)) => "system_change_description")
             .help("Changes your system's description"),
     ]
     .into_iter();
@@ -128,7 +128,7 @@ pub fn edit() -> impl Iterator<Item = Command> {
         command!(system_tag_self, CLEAR => "system_clear_tag")
             .flag(YES)
             .help("Clears your system's tag"),
-        command!(system_tag_self, ("tag", OpaqueStringRemainder) => "system_change_tag")
+        command!(system_tag_self, Remainder(("tag", OpaqueString)) => "system_change_tag")
             .help("Changes your system's tag"),
     ]
     .into_iter();
@@ -146,7 +146,7 @@ pub fn edit() -> impl Iterator<Item = Command> {
         command!(system_server_tag_self, CLEAR => "system_clear_server_tag")
             .flag(YES)
             .help("Clears your system's server tag"),
-        command!(system_server_tag_self, ("tag", OpaqueStringRemainder) => "system_change_server_tag")
+        command!(system_server_tag_self, Remainder(("tag", OpaqueString)) => "system_change_server_tag")
             .help("Changes your system's server tag"),
     ]
     .into_iter();
@@ -163,7 +163,7 @@ pub fn edit() -> impl Iterator<Item = Command> {
         command!(system_pronouns_self, CLEAR => "system_clear_pronouns")
             .flag(YES)
             .help("Clears your system's pronouns"),
-        command!(system_pronouns_self, ("pronouns", OpaqueStringRemainder) => "system_change_pronouns")
+        command!(system_pronouns_self, Remainder(("pronouns", OpaqueString)) => "system_change_pronouns")
             .help("Changes your system's pronouns"),
     ]
     .into_iter();
@@ -274,7 +274,7 @@ pub fn edit() -> impl Iterator<Item = Command> {
     let system_list = tokens!("members", list);
     let search = tokens!(
         ("search", ["query", "find"]),
-        ("query", OpaqueStringRemainder),
+        Remainder(("query", OpaqueString))
     );
     let add_list_flags = |cmd: Command| cmd.flags(get_list_flags());
     let system_list_cmd = [

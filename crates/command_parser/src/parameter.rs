@@ -12,7 +12,6 @@ use crate::token::{Token, TokenMatchResult};
 pub enum ParameterKind {
     OpaqueString,
     OpaqueInt,
-    OpaqueStringRemainder,
     MemberRef,
     MemberRefs,
     GroupRef,
@@ -36,7 +35,6 @@ impl ParameterKind {
         match self {
             ParameterKind::OpaqueString => "string",
             ParameterKind::OpaqueInt => "number",
-            ParameterKind::OpaqueStringRemainder => "string",
             ParameterKind::MemberRef => "target",
             ParameterKind::MemberRefs => "targets",
             ParameterKind::GroupRef => "target",
@@ -78,13 +76,6 @@ pub enum ParameterValue {
     Avatar(String),
     ProxySwitchAction(ProxySwitchAction),
     Null,
-}
-
-fn is_remainder(kind: ParameterKind) -> bool {
-    matches!(
-        kind,
-        ParameterKind::OpaqueStringRemainder | ParameterKind::MemberRefs | ParameterKind::GroupRefs
-    )
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -135,9 +126,7 @@ impl Parameter {
     pub fn match_value(&self, input: &str) -> Result<ParameterValue, SmolStr> {
         match self.kind {
             // TODO: actually parse image url
-            ParameterKind::OpaqueString | ParameterKind::OpaqueStringRemainder => {
-                Ok(ParameterValue::OpaqueString(input.into()))
-            }
+            ParameterKind::OpaqueString => Ok(ParameterValue::OpaqueString(input.into())),
             ParameterKind::OpaqueInt => input
                 .parse::<i32>()
                 .map(|num| ParameterValue::OpaqueInt(num))
@@ -254,13 +243,10 @@ impl Display for Parameter {
             ParameterKind::OpaqueInt => {
                 write!(f, "[{}]", self.name)
             }
-            ParameterKind::OpaqueStringRemainder => {
-                write!(f, "[{}]...", self.name)
-            }
             ParameterKind::MemberRef => write!(f, "<target member>"),
-            ParameterKind::MemberRefs => write!(f, "<member 1> <member 2> <member 3>..."),
+            ParameterKind::MemberRefs => write!(f, "<member 1> <member 2> <member 3>"),
             ParameterKind::GroupRef => write!(f, "<target group>"),
-            ParameterKind::GroupRefs => write!(f, "<group 1> <group 2> <group 3>..."),
+            ParameterKind::GroupRefs => write!(f, "<group 1> <group 2> <group 3>"),
             ParameterKind::SystemRef => write!(f, "<target system>"),
             ParameterKind::UserRef => write!(f, "<target user>"),
             ParameterKind::MessageRef => write!(f, "<target message>"),
@@ -273,8 +259,16 @@ impl Display for Parameter {
             ParameterKind::Toggle => write!(f, "<on|off>"),
             ParameterKind::Avatar => write!(f, "<url|@mention>"),
             ParameterKind::ProxySwitchAction => write!(f, "<new|add|off>"),
+        }?;
+        if self.is_remainder() {
+            write!(f, "...")?;
         }
+        Ok(())
     }
+}
+
+fn is_remainder(kind: ParameterKind) -> bool {
+    matches!(kind, ParameterKind::MemberRefs | ParameterKind::GroupRefs)
 }
 
 impl From<ParameterKind> for Parameter {
@@ -301,6 +295,7 @@ impl From<(&str, ParameterKind)> for Parameter {
     }
 }
 
+/// if no input is left to parse, this parameter matches to Null
 #[derive(Clone)]
 pub struct Optional<P: Into<Parameter>>(pub P);
 
@@ -311,6 +306,7 @@ impl<P: Into<Parameter>> From<Optional<P>> for Parameter {
     }
 }
 
+/// tells the parser to use the remainder of the input as the input to this parameter
 #[derive(Clone)]
 pub struct Remainder<P: Into<Parameter>>(pub P);
 
@@ -321,8 +317,7 @@ impl<P: Into<Parameter>> From<Remainder<P>> for Parameter {
     }
 }
 
-// todo(dusk): this is kind of annoying to use, should probably introduce
-// a way to match multiple parameters in a single parameter
+/// skips the branch this parameter is in if it does not match
 #[derive(Clone)]
 pub struct Skip<P: Into<Parameter>>(pub P);
 

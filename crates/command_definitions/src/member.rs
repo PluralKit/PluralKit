@@ -48,7 +48,7 @@ pub fn cmds() -> impl Iterator<Item = Command> {
         let member_name = tokens!(member_target, name);
         [
             command!(member_name => "member_name_show").help("Shows a member's name"),
-            command!(member_name, ("name", OpaqueStringRemainder) => "member_name_update")
+            command!(member_name, Remainder(("name", OpaqueString)) => "member_name_update")
                 .flag(YES)
                 .help("Changes a member's name"),
         ]
@@ -62,7 +62,7 @@ pub fn cmds() -> impl Iterator<Item = Command> {
             command!(member_desc, CLEAR => "member_desc_clear")
                 .flag(YES)
                 .help("Clears a member's description"),
-            command!(member_desc, ("description", OpaqueStringRemainder) => "member_desc_update")
+            command!(member_desc, Remainder(("description", OpaqueString)) => "member_desc_update")
                 .help("Changes a member's description"),
         ]
         .into_iter()
@@ -87,7 +87,7 @@ pub fn cmds() -> impl Iterator<Item = Command> {
         [
             command!(member_pronouns => "member_pronouns_show")
                 .help("Shows a member's pronouns"),
-            command!(member_pronouns, ("pronouns", OpaqueStringRemainder) => "member_pronouns_update")
+            command!(member_pronouns, Remainder(("pronouns", OpaqueString)) => "member_pronouns_update")
                 .help("Changes a member's pronouns"),
             command!(member_pronouns, CLEAR => "member_pronouns_clear")
                 .flag(YES)
@@ -139,7 +139,7 @@ pub fn cmds() -> impl Iterator<Item = Command> {
         [
             command!(member_display_name => "member_displayname_show")
                 .help("Shows a member's display name"),
-            command!(member_display_name, ("name", OpaqueStringRemainder) => "member_displayname_update")
+            command!(member_display_name, Remainder(("name", OpaqueString)) => "member_displayname_update")
                 .help("Changes a member's display name"),
             command!(member_display_name, CLEAR => "member_displayname_clear")
                 .flag(YES)
@@ -152,7 +152,7 @@ pub fn cmds() -> impl Iterator<Item = Command> {
         [
             command!(member_server_name => "member_servername_show")
                 .help("Shows a member's server name"),
-            command!(member_server_name, ("name", OpaqueStringRemainder) => "member_servername_update")
+            command!(member_server_name, Remainder(("name", OpaqueString)) => "member_servername_update")
                 .help("Changes a member's server name"),
             command!(member_server_name, CLEAR => "member_servername_clear")
                 .flag(YES)
@@ -165,7 +165,7 @@ pub fn cmds() -> impl Iterator<Item = Command> {
         [
             command!(member_proxy => "member_proxy_show")
                 .help("Shows a member's proxy tags"),
-            command!(member_proxy, ("tags", OpaqueString) => "member_proxy_set")
+            command!(member_proxy, Remainder(("tags", OpaqueString)) => "member_proxy_set")
                 .help("Sets a member's proxy tags"),
             command!(member_proxy, ("add", ["a"]), ("tag", OpaqueString) => "member_proxy_add")
                 .help("Adds proxy tag to a member"),
@@ -298,7 +298,7 @@ pub fn cmds() -> impl Iterator<Item = Command> {
     let member_list_group_cmds = [
         command!(member_group => "member_list_groups"),
         command!(member_group, "list" => "member_list_groups"),
-        command!(member_group, ("search", ["find", "query"]), ("query", OpaqueStringRemainder) => "member_search_groups"),
+        command!(member_group, ("search", ["find", "query"]), Remainder(("query", OpaqueString)) => "member_search_groups"),
     ]
     .into_iter()
     .map(|cmd| cmd.flags(get_list_flags()));
