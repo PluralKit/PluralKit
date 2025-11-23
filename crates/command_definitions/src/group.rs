@@ -162,7 +162,7 @@ pub fn cmds() -> impl Iterator<Item = Command> {
     let group_modify_members_cmd = [
         command!(group_target, "add", Optional(MemberRefs) => "group_add_member")
             .flag(ALL).flag(YES),
-        command!(group_target, ("remove", ["delete", "del", "rem"]), Optional(MemberRefs) => "group_remove_member")
+        command!(group_target, ("remove", ["rem", "rm"]), Optional(MemberRefs) => "group_remove_member")
             .flag(ALL).flag(YES),
     ]
     .into_iter();
