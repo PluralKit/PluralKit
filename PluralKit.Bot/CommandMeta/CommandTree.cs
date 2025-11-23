@@ -223,11 +223,15 @@ public partial class CommandTree
             flags.group
                 ? ctx.Execute<Random>(GroupRandom, m => m.Group(ctx, ctx.System, flags.all, flags.show_embed))
                 : ctx.Execute<Random>(MemberRandom, m => m.Member(ctx, ctx.System, flags.all, flags.show_embed)),
+            Commands.RandomGroupSelf(_, var flags) => ctx.Execute<Random>(GroupRandom, m => m.Group(ctx, ctx.System, flags.all, flags.show_embed)),
+            Commands.RandomGroupMemberSelf(var param, var flags) => ctx.Execute<Random>(GroupMemberRandom, m => m.GroupMember(ctx, param.target, flags.all, flags.show_embed, flags)),
             Commands.SystemRandom(var param, var flags) =>
             flags.group
                 ? ctx.Execute<Random>(GroupRandom, m => m.Group(ctx, param.target, flags.all, flags.show_embed))
                 : ctx.Execute<Random>(MemberRandom, m => m.Member(ctx, param.target, flags.all, flags.show_embed)),
-            Commands.GroupRandomMember(var param, var flags) => ctx.Execute<Random>(GroupMemberRandom, m => m.GroupMember(ctx, param.target, flags)),
+            Commands.SystemRandomGroup(var param, var flags) =>
+                ctx.Execute<Random>(GroupRandom, m => m.Group(ctx, param.target, flags.all, flags.show_embed)),
+            Commands.GroupRandomMember(var param, var flags) => ctx.Execute<Random>(GroupMemberRandom, m => m.GroupMember(ctx, param.target, flags.all, flags.show_embed, flags)),
             Commands.SystemLink(var param, _) => ctx.Execute<SystemLink>(Link, m => m.LinkSystem(ctx, param.account)),
             Commands.SystemUnlink(var param, var flags) => ctx.Execute<SystemLink>(Unlink, m => m.UnlinkAccount(ctx, param.account, flags.yes)),
             Commands.SystemMembersListSelf(var param, var flags) => ctx.Execute<SystemList>(SystemList, m => m.MemberList(ctx, ctx.System, null, flags)),

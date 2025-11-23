@@ -1,3 +1,5 @@
+use std::iter::once;
+
 use command_parser::token::TokensIterator;
 
 use crate::utils::get_list_flags;
@@ -44,17 +46,17 @@ pub fn edit() -> impl Iterator<Item = Command> {
             .flag(("private", ["priv"]))
             .flag(ALL)
     };
-    let system_info_cmd_self = std::iter::once(add_info_flags(
+    let system_info_cmd_self = once(add_info_flags(
         command!(system => "system_info_self").help("Shows information about your system"),
     ));
-    let system_info_cmd = std::iter::once(add_info_flags(
+    let system_info_cmd = once(add_info_flags(
         command!(system_target, ("info", ["show", "view"]) => "system_info")
             .help("Shows information about your system"),
     ));
 
     let system_name = tokens!(system_target, "name");
     let system_name_cmd =
-        std::iter::once(command!(system_name => "system_show_name").help("Shows the systems name"));
+        once(command!(system_name => "system_show_name").help("Shows the systems name"));
 
     let system_name_self = tokens!(system, "name");
     let system_name_self_cmd = [
@@ -68,7 +70,7 @@ pub fn edit() -> impl Iterator<Item = Command> {
     .into_iter();
 
     let system_server_name = tokens!(system_target, ("servername", ["sn", "guildname"]));
-    let system_server_name_cmd = std::iter::once(
+    let system_server_name_cmd = once(
         command!(system_server_name => "system_show_server_name")
             .help("Shows the system's server name"),
     );
@@ -86,7 +88,7 @@ pub fn edit() -> impl Iterator<Item = Command> {
     .into_iter();
 
     let system_description = tokens!(system_target, ("description", ["desc", "d"]));
-    let system_description_cmd = std::iter::once(
+    let system_description_cmd = once(
         command!(system_description => "system_show_description")
             .help("Shows the system's description"),
     );
@@ -103,9 +105,8 @@ pub fn edit() -> impl Iterator<Item = Command> {
     .into_iter();
 
     let system_color = tokens!(system_target, ("color", ["colour"]));
-    let system_color_cmd = std::iter::once(
-        command!(system_color => "system_show_color").help("Shows the system's color"),
-    );
+    let system_color_cmd =
+        once(command!(system_color => "system_show_color").help("Shows the system's color"));
 
     let system_color_self = tokens!(system, ("color", ["colour"]));
     let system_color_self_cmd = [
@@ -120,7 +121,7 @@ pub fn edit() -> impl Iterator<Item = Command> {
 
     let system_tag = tokens!(system_target, ("tag", ["suffix"]));
     let system_tag_cmd =
-        std::iter::once(command!(system_tag => "system_show_tag").help("Shows the system's tag"));
+        once(command!(system_tag => "system_show_tag").help("Shows the system's tag"));
 
     let system_tag_self = tokens!(system, ("tag", ["suffix"]));
     let system_tag_self_cmd = [
@@ -134,7 +135,7 @@ pub fn edit() -> impl Iterator<Item = Command> {
     .into_iter();
 
     let system_server_tag = tokens!(system_target, ("servertag", ["st", "guildtag"]));
-    let system_server_tag_cmd = std::iter::once(
+    let system_server_tag_cmd = once(
         command!(system_server_tag => "system_show_server_tag")
             .help("Shows the system's server tag"),
     );
@@ -152,7 +153,7 @@ pub fn edit() -> impl Iterator<Item = Command> {
     .into_iter();
 
     let system_pronouns = tokens!(system_target, ("pronouns", ["prns"]));
-    let system_pronouns_cmd = std::iter::once(
+    let system_pronouns_cmd = once(
         command!(system_pronouns => "system_show_pronouns").help("Shows the system's pronouns"),
     );
 
@@ -169,9 +170,8 @@ pub fn edit() -> impl Iterator<Item = Command> {
     .into_iter();
 
     let system_avatar = tokens!(system_target, ("avatar", ["pfp"]));
-    let system_avatar_cmd = std::iter::once(
-        command!(system_avatar => "system_show_avatar").help("Shows the system's avatar"),
-    );
+    let system_avatar_cmd =
+        once(command!(system_avatar => "system_show_avatar").help("Shows the system's avatar"));
 
     let system_avatar_self = tokens!(system, ("avatar", ["pfp"]));
     let system_avatar_self_cmd = [
@@ -186,7 +186,7 @@ pub fn edit() -> impl Iterator<Item = Command> {
     .into_iter();
 
     let system_server_avatar = tokens!(system_target, ("serveravatar", ["spfp"]));
-    let system_server_avatar_cmd = std::iter::once(
+    let system_server_avatar_cmd = once(
         command!(system_server_avatar => "system_show_server_avatar")
             .help("Shows the system's server avatar"),
     );
@@ -204,9 +204,8 @@ pub fn edit() -> impl Iterator<Item = Command> {
     .into_iter();
 
     let system_banner = tokens!(system_target, ("banner", ["cover"]));
-    let system_banner_cmd = std::iter::once(
-        command!(system_banner => "system_show_banner").help("Shows the system's banner"),
-    );
+    let system_banner_cmd =
+        once(command!(system_banner => "system_show_banner").help("Shows the system's banner"));
 
     let system_banner_self = tokens!(system, ("banner", ["cover"]));
     let system_banner_self_cmd = [
@@ -220,7 +219,7 @@ pub fn edit() -> impl Iterator<Item = Command> {
     ]
     .into_iter();
 
-    let system_delete = std::iter::once(
+    let system_delete = once(
         command!(system, ("delete", ["erase", "remove", "yeet"]) => "system_delete")
             .flag(("no-export", ["ne"]))
             .help("Deletes the system"),
@@ -300,10 +299,8 @@ pub fn edit() -> impl Iterator<Item = Command> {
     .into_iter()
     .map(add_list_flags);
 
-    let system_display_id_self_cmd =
-        std::iter::once(command!(system, "id" => "system_display_id_self"));
-    let system_display_id_cmd =
-        std::iter::once(command!(system_target, "id" => "system_display_id"));
+    let system_display_id_self_cmd = once(command!(system, "id" => "system_display_id_self"));
+    let system_display_id_cmd = once(command!(system_target, "id" => "system_display_id"));
 
     system_info_cmd_self
         .chain(system_new_cmd)

@@ -82,7 +82,7 @@ public class Random
             components: await _embeds.CreateGroupMessageComponents(ctx, target, groups.ToArray()[randInt], all));
     }
 
-    public async Task GroupMember(Context ctx, PKGroup group, GroupRandomMemberFlags flags)
+    public async Task GroupMember(Context ctx, PKGroup group, bool all, bool show_embed, IHasListOptions flags)
     {
         ctx.CheckSystemPrivacy(group.System, group.ListPrivacy);
 
@@ -96,7 +96,7 @@ public class Random
                 "This group has no members!"
                 + (ctx.System?.Id == group.System ? " Please add at least one member to this group before using this command." : ""));
 
-        if (!flags.all)
+        if (!all)
             members = members.Where(g => g.MemberVisibility == PrivacyLevel.Public);
         else
             ctx.CheckOwnGroup(group);
@@ -112,7 +112,7 @@ public class Random
 
         var randInt = randGen.Next(ms.Count);
 
-        if (flags.show_embed)
+        if (show_embed)
         {
             await ctx.Reply(
                 text: EmbedService.LEGACY_EMBED_WARNING,
