@@ -13,7 +13,7 @@ pub fn cmds() -> impl Iterator<Item = Command> {
         cmd.flag(("append", ["a"]))
             .flag(("prepend", ["p"]))
             .flag(("regex", ["r"]))
-            .flag(("mutate-space", ["ms"]))
+            .flag(("no-space", ["nospace", "ns"]))
             .flag(("clear-embeds", ["ce"]))
             .flag(("clear-attachments", ["ca"]))
             .help("Edits a proxied message")

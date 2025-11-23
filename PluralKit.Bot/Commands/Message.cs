@@ -91,7 +91,7 @@ public class ProxiedMessage
         }
     }
 
-    public async Task EditMessage(Context ctx, ulong? messageId, string newContent, bool useRegex, bool mutateSpace, bool append, bool prepend, bool clearEmbeds, bool clearAttachments)
+    public async Task EditMessage(Context ctx, ulong? messageId, string newContent, bool useRegex, bool noSpace, bool append, bool prepend, bool clearEmbeds, bool clearAttachments)
     {
         var (msg, systemId) = await GetMessageToEdit(ctx, messageId, EditTimeout, false);
 
@@ -101,6 +101,8 @@ public class ProxiedMessage
         var originalMsg = await _rest.GetMessageOrNull(msg.Channel, msg.Mid);
         if (originalMsg == null)
             throw new PKError("Could not edit message.");
+
+        var mutateSpace = noSpace ? "" : " ";
 
         // Grab the original message content and new message content
         var originalContent = originalMsg.Content;
