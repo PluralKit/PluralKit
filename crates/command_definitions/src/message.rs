@@ -14,8 +14,8 @@ pub fn cmds() -> impl Iterator<Item = Command> {
             .flag(("prepend", ["p"]))
             .flag(("regex", ["r"]))
             .flag(("no-space", ["nospace", "ns"]))
-            .flag(("clear-embeds", ["ce"]))
-            .flag(("clear-attachments", ["ca"]))
+            .flag(("clear-embeds", ["clear-embed", "ce"]))
+            .flag(("clear-attachments", ["clear-attachment", "ca"]))
             .help("Edits a proxied message")
     };
 

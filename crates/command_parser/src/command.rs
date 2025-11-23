@@ -105,7 +105,7 @@ impl Display for Command {
                     break;
                 }
                 write!(f, "{flag}")?;
-                if max_flags - 1 > written {
+                if max_flags > written {
                     write!(f, " ")?;
                 }
                 written += 1;
