@@ -46,13 +46,16 @@ pub fn edit() -> impl Iterator<Item = Command> {
             .flag(("private", ["priv"]))
             .flag(ALL)
     };
-    let system_info_cmd_self = once(add_info_flags(
-        command!(system => "system_info_self").help("Shows information about your system"),
-    ));
-    let system_info_cmd = once(add_info_flags(
+    let system_info_cmd_self =
+        once(command!(system => "system_info_self").help("Shows information about your system"))
+            .map(add_info_flags);
+    let system_info_cmd = [
+        command!(system_target => "system_info").help("Shows information about your system"),
         command!(system_target, ("info", ["show", "view"]) => "system_info")
             .help("Shows information about your system"),
-    ));
+    ]
+    .into_iter()
+    .map(add_info_flags);
 
     let system_name = tokens!(system_target, "name");
     let system_name_cmd =

@@ -139,9 +139,7 @@ impl Parameter {
             ParameterKind::MemberRefs => Ok(ParameterValue::MemberRefs(
                 input.split(' ').map(|s| s.trim().to_string()).collect(),
             )),
-            ParameterKind::SystemRef => {
-                Ok(parse_user_ref(input).unwrap_or(ParameterValue::SystemRef(input.into())))
-            }
+            ParameterKind::SystemRef => Ok(ParameterValue::SystemRef(input.into())),
             ParameterKind::UserRef => parse_user_ref(input),
             ParameterKind::MemberPrivacyTarget => MemberPrivacyTargetKind::from_str(input)
                 .map(|target| ParameterValue::MemberPrivacyTarget(target.as_ref().into())),
@@ -321,7 +319,7 @@ fn parse_user_ref(input: &str) -> Result<ParameterValue, SmolStr> {
     }
 
     static RE: std::sync::LazyLock<Regex> =
-        std::sync::LazyLock::new(|| Regex::new(r"<@!?(\\d{17,19})>").unwrap());
+        std::sync::LazyLock::new(|| Regex::new(r"<@!?(\d{17,19})>").unwrap());
     if let Some(captures) = RE.captures(&input) {
         return captures[1]
             .parse::<u64>()
