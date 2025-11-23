@@ -291,7 +291,7 @@ pub fn edit() -> impl Iterator<Item = Command> {
     .into_iter()
     .map(add_list_flags);
 
-    let system_groups = tokens!(system_target, ("groups", ["gs"]));
+    let system_groups = tokens!(system_target, group::group());
     let system_groups_cmd = [
         command!(system_groups => "system_list_groups"),
         command!(system_groups, list => "system_list_groups"),
