@@ -207,7 +207,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     p.IncludeCreated = with_created;
                     p.IncludeAvatar = with_avatar;
                     p.IncludePronouns = with_pronouns;
-                    p.IncludeDisplayName = with_displayname;
+                    p.IncludeDisplayName = with_display_name;
                     p.IncludeBirthday = with_birthday;
 
                     // Always show the sort property (unless short list and already showing something else)

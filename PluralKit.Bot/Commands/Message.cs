@@ -320,7 +320,7 @@ public class ProxiedMessage
         return lastMessage;
     }
 
-    public async Task GetMessage(Context ctx, ulong? messageId, ReplyFormat format, bool isDelete, bool author)
+    public async Task GetMessage(Context ctx, ulong? messageId, ReplyFormat format, bool isDelete, bool author, bool showEmbed)
     {
         if (messageId == null)
         {
@@ -330,7 +330,7 @@ public class ProxiedMessage
         var message = await ctx.Repository.GetFullMessage(messageId.Value);
         if (message == null)
         {
-            await GetCommandMessage(ctx, messageId.Value, isDelete);
+            await GetCommandMessage(ctx, messageId.Value, isDelete, showEmbed);
             return;
         }
 
@@ -407,7 +407,7 @@ public class ProxiedMessage
         if (author)
         {
             var user = await _rest.GetUser(message.Message.Sender);
-            if (ctx.MatchFlag("show-embed", "se"))
+            if (showEmbed)
             {
                 var eb = new EmbedBuilder()
                     .Author(new Embed.EmbedAuthor(
@@ -427,7 +427,7 @@ public class ProxiedMessage
             return;
         }
 
-        if (ctx.MatchFlag("show-embed", "se"))
+        if (showEmbed)
         {
             await ctx.Reply(embed: await _embeds.CreateMessageInfoEmbed(message, showContent, ctx.Config));
             return;
@@ -436,7 +436,7 @@ public class ProxiedMessage
         await ctx.Reply(components: await _embeds.CreateMessageInfoMessageComponents(message, showContent, ctx.Config));
     }
 
-    private async Task GetCommandMessage(Context ctx, ulong messageId, bool isDelete)
+    private async Task GetCommandMessage(Context ctx, ulong messageId, bool isDelete, bool showEmbed)
     {
         var msg = await _repo.GetCommandMessage(messageId);
         if (msg == null)
@@ -465,7 +465,7 @@ public class ProxiedMessage
         else if (!await ctx.CheckPermissionsInGuildChannel(channel, PermissionSet.ViewChannel))
             showContent = false;
 
-        if (ctx.MatchFlag("show-embed", "se"))
+        if (showEmbed)
         {
             await ctx.Reply(embed: await _embeds.CreateCommandMessageInfoEmbed(msg, showContent));
             return;
