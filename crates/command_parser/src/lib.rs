@@ -153,16 +153,15 @@ pub fn parse_command(
             let mut flags: HashMap<String, Option<ParameterValue>> = HashMap::new();
             let mut misplaced_flags: Vec<MatchedFlag> = Vec::new();
             let mut invalid_flags: Vec<MatchedFlag> = Vec::new();
-            for (token_idx, matched_flag) in raw_flags {
-                if token_idx != command.parse_flags_before {
-                    misplaced_flags.push(matched_flag);
-                    continue;
-                }
-                let Some(matched_flag) = match_flag(command.flags.iter(), matched_flag.clone())
-                else {
-                    invalid_flags.push(matched_flag);
+            for (token_idx, raw_flag) in raw_flags {
+                let Some(matched_flag) = match_flag(command.flags.iter(), raw_flag.clone()) else {
+                    invalid_flags.push(raw_flag);
                     continue;
                 };
+                if token_idx != command.parse_flags_before {
+                    misplaced_flags.push(raw_flag);
+                    continue;
+                }
                 match matched_flag {
                     // a flag was matched
                     Ok((name, value)) => {
