@@ -104,7 +104,7 @@ public class SystemFront
         );
     }
 
-    public async Task FrontPercent(Context ctx, PKSystem? system = null, string durationStr = "30d", bool ignoreNoFronters = false, bool showFlat = false, PKGroup? group = null)
+    public async Task FrontPercent(Context ctx, PKSystem? system, string? durationStr, bool ignoreNoFronters = false, bool showFlat = false, PKGroup? group = null)
     {
         if (system == null && group == null) throw Errors.NoSystemError(ctx.DefaultPrefix);
         if (system == null) system = await GetGroupSystem(ctx, group);
@@ -113,6 +113,9 @@ public class SystemFront
 
         var totalSwitches = await ctx.Repository.GetSwitchCount(system.Id);
         if (totalSwitches == 0) throw Errors.NoRegisteredSwitches;
+
+        if (durationStr == null)
+            durationStr = "30d";
 
         // Picked the UNIX epoch as a random date
         // even though we don't store switch timestamps in UNIX time
