@@ -168,7 +168,8 @@ pub fn cmds() -> impl Iterator<Item = Command> {
     .into_iter();
 
     let system_groups_cmd =
-        once(command!(group, ("list", ["ls"]), search_param => "groups_self")).map(apply_list_opts);
+        once(command!(group, ("list", ["ls", "l"]), search_param => "groups_self"))
+            .map(apply_list_opts);
 
     system_groups_cmd
         .chain(group_new_cmd)
