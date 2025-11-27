@@ -122,75 +122,72 @@ public partial class CommandTree
             Commands.FunRool => ctx.Execute<Fun>(null, m => m.Rool(ctx)),
             Commands.Amogus => ctx.Execute<Fun>(null, m => m.Sus(ctx)),
             Commands.FunError => ctx.Execute<Fun>(null, m => m.Error(ctx)),
-            Commands.SystemInfo(var param, var flags) => ctx.Execute<System>(SystemInfo, m => m.Query(ctx, param.target, flags.all, flags.@public, flags.@private)),
-            Commands.SystemInfoSelf(_, var flags) => ctx.Execute<System>(SystemInfo, m => m.Query(ctx, ctx.System, flags.all, flags.@public, flags.@private)),
-            Commands.SystemNew(var param, _) => ctx.Execute<System>(SystemNew, m => m.New(ctx, null)),
-            Commands.SystemNewName(var param, _) => ctx.Execute<System>(SystemNew, m => m.New(ctx, param.name)),
-            Commands.SystemShowNameSelf(_, var flags) => ctx.Execute<SystemEdit>(SystemRename, m => m.ShowName(ctx, ctx.System, flags.GetReplyFormat())),
-            Commands.SystemShowName(var param, var flags) => ctx.Execute<SystemEdit>(SystemRename, m => m.ShowName(ctx, param.target, flags.GetReplyFormat())),
+            Commands.SystemInfo(var param, var flags) => ctx.Execute<System>(SystemInfo, m => m.Query(ctx, param.target ?? ctx.System, flags.all, flags.@public, flags.@private)),
+            Commands.SystemNew(var param, _) => ctx.Execute<System>(SystemNew, m => m.New(ctx, param.name)),
+            Commands.SystemShowName(var param, var flags) => ctx.Execute<SystemEdit>(SystemRename, m => m.ShowName(ctx, param.target ?? ctx.System, flags.GetReplyFormat())),
             Commands.SystemRename(var param, _) => ctx.Execute<SystemEdit>(SystemRename, m => m.Rename(ctx, ctx.System, param.name)),
             Commands.SystemClearName(var param, var flags) => ctx.Execute<SystemEdit>(SystemRename, m => m.ClearName(ctx, ctx.System, flags.yes)),
-            Commands.SystemShowServerNameSelf(_, var flags) => ctx.Execute<SystemEdit>(SystemServerName, m => m.ShowServerName(ctx, ctx.System, flags.GetReplyFormat())),
-            Commands.SystemShowServerName(var param, var flags) => ctx.Execute<SystemEdit>(SystemServerName, m => m.ShowServerName(ctx, param.target, flags.GetReplyFormat())),
+            Commands.SystemShowServerName(var param, var flags) => ctx.Execute<SystemEdit>(SystemServerName, m => m.ShowServerName(ctx, param.target ?? ctx.System, flags.GetReplyFormat())),
             Commands.SystemClearServerName(var param, var flags) => ctx.Execute<SystemEdit>(SystemServerName, m => m.ClearServerName(ctx, ctx.System, flags.yes)),
             Commands.SystemRenameServerName(var param, _) => ctx.Execute<SystemEdit>(SystemServerName, m => m.RenameServerName(ctx, ctx.System, param.name)),
-            Commands.SystemShowDescriptionSelf(_, var flags) => ctx.Execute<SystemEdit>(SystemDesc, m => m.ShowDescription(ctx, ctx.System, flags.GetReplyFormat())),
-            Commands.SystemShowDescription(var param, var flags) => ctx.Execute<SystemEdit>(SystemDesc, m => m.ShowDescription(ctx, param.target, flags.GetReplyFormat())),
+            Commands.SystemShowDescription(var param, var flags) => ctx.Execute<SystemEdit>(SystemDesc, m => m.ShowDescription(ctx, param.target ?? ctx.System, flags.GetReplyFormat())),
             Commands.SystemClearDescription(var param, var flags) => ctx.Execute<SystemEdit>(SystemDesc, m => m.ClearDescription(ctx, ctx.System, flags.yes)),
             Commands.SystemChangeDescription(var param, _) => ctx.Execute<SystemEdit>(SystemDesc, m => m.ChangeDescription(ctx, ctx.System, param.description)),
-            Commands.SystemShowColorSelf(_, var flags) => ctx.Execute<SystemEdit>(SystemColor, m => m.ShowColor(ctx, ctx.System, flags.GetReplyFormat())),
-            Commands.SystemShowColor(var param, var flags) => ctx.Execute<SystemEdit>(SystemColor, m => m.ShowColor(ctx, param.target, flags.GetReplyFormat())),
+            Commands.SystemShowColor(var param, var flags) => ctx.Execute<SystemEdit>(SystemColor, m => m.ShowColor(ctx, param.target ?? ctx.System, flags.GetReplyFormat())),
             Commands.SystemClearColor(var param, var flags) => ctx.Execute<SystemEdit>(SystemColor, m => m.ClearColor(ctx, ctx.System, flags.yes)),
             Commands.SystemChangeColor(var param, _) => ctx.Execute<SystemEdit>(SystemColor, m => m.ChangeColor(ctx, ctx.System, param.color)),
-            Commands.SystemShowTagSelf(_, var flags) => ctx.Execute<SystemEdit>(SystemTag, m => m.ShowTag(ctx, ctx.System, flags.GetReplyFormat())),
-            Commands.SystemShowTag(var param, var flags) => ctx.Execute<SystemEdit>(SystemTag, m => m.ShowTag(ctx, param.target, flags.GetReplyFormat())),
+            Commands.SystemShowTag(var param, var flags) => ctx.Execute<SystemEdit>(SystemTag, m => m.ShowTag(ctx, param.target ?? ctx.System, flags.GetReplyFormat())),
             Commands.SystemClearTag(var param, var flags) => ctx.Execute<SystemEdit>(SystemTag, m => m.ClearTag(ctx, ctx.System, flags.yes)),
             Commands.SystemChangeTag(var param, _) => ctx.Execute<SystemEdit>(SystemTag, m => m.ChangeTag(ctx, ctx.System, param.tag)),
-            Commands.SystemShowServerTagSelf(_, var flags) => ctx.Execute<SystemEdit>(SystemServerTag, m => m.ShowServerTag(ctx, ctx.System, flags.GetReplyFormat())),
-            Commands.SystemShowServerTag(var param, var flags) => ctx.Execute<SystemEdit>(SystemServerTag, m => m.ShowServerTag(ctx, param.target, flags.GetReplyFormat())),
+            Commands.SystemShowServerTag(var param, var flags) => ctx.Execute<SystemEdit>(SystemServerTag, m => m.ShowServerTag(ctx, param.target ?? ctx.System, flags.GetReplyFormat())),
             Commands.SystemClearServerTag(var param, var flags) => ctx.Execute<SystemEdit>(SystemServerTag, m => m.ClearServerTag(ctx, ctx.System, flags.yes)),
             Commands.SystemChangeServerTag(var param, _) => ctx.Execute<SystemEdit>(SystemServerTag, m => m.ChangeServerTag(ctx, ctx.System, param.tag)),
-            Commands.SystemShowPronounsSelf(_, var flags) => ctx.Execute<SystemEdit>(SystemPronouns, m => m.ShowPronouns(ctx, ctx.System, flags.GetReplyFormat())),
-            Commands.SystemShowPronouns(var param, var flags) => ctx.Execute<SystemEdit>(SystemPronouns, m => m.ShowPronouns(ctx, param.target, flags.GetReplyFormat())),
+            Commands.SystemShowPronouns(var param, var flags) => ctx.Execute<SystemEdit>(SystemPronouns, m => m.ShowPronouns(ctx, param.target ?? ctx.System, flags.GetReplyFormat())),
             Commands.SystemClearPronouns(var param, var flags) => ctx.Execute<SystemEdit>(SystemPronouns, m => m.ClearPronouns(ctx, ctx.System, flags.yes)),
             Commands.SystemChangePronouns(var param, _) => ctx.Execute<SystemEdit>(SystemPronouns, m => m.ChangePronouns(ctx, ctx.System, param.pronouns)),
-            Commands.SystemShowAvatarSelf(_, var flags) => ((Func<Task>)(() =>
+            Commands.SystemShowAvatar(var param, var flags) => ((Func<Task>)(() =>
             {
-                // we want to change avatar if an attached image is passed
-                // we can't have a separate parsed command for this since the parser can't be aware of any attachments
-                var attachedImage = ctx.ExtractImageFromAttachment();
-                if (attachedImage is { } image)
-                    return ctx.Execute<SystemEdit>(SystemAvatar, m => m.ChangeAvatar(ctx, ctx.System, image));
+                if (param.target == null)
+                {
+                    // we want to change avatar if an attached image is passed
+                    // we can't have a separate parsed command for this since the parser can't be aware of any attachments
+                    var attachedImage = ctx.ExtractImageFromAttachment();
+                    if (attachedImage is { } image)
+                        return ctx.Execute<SystemEdit>(SystemAvatar, m => m.ChangeAvatar(ctx, ctx.System, image));
+                }
                 // if no attachment show the avatar like intended
-                return ctx.Execute<SystemEdit>(SystemAvatar, m => m.ShowAvatar(ctx, ctx.System, flags.GetReplyFormat()));
+                return ctx.Execute<SystemEdit>(SystemAvatar, m => m.ShowAvatar(ctx, param.target ?? ctx.System, flags.GetReplyFormat()));
             }))(),
-            Commands.SystemShowAvatar(var param, var flags) => ctx.Execute<SystemEdit>(SystemAvatar, m => m.ShowAvatar(ctx, param.target, flags.GetReplyFormat())),
             Commands.SystemClearAvatar(var param, var flags) => ctx.Execute<SystemEdit>(SystemAvatar, m => m.ClearAvatar(ctx, ctx.System, flags.yes)),
             Commands.SystemChangeAvatar(var param, _) => ctx.Execute<SystemEdit>(SystemAvatar, m => m.ChangeAvatar(ctx, ctx.System, param.avatar)),
-            Commands.SystemShowServerAvatarSelf(_, var flags) => ((Func<Task>)(() =>
+            Commands.SystemShowServerAvatar(var param, var flags) => ((Func<Task>)(() =>
             {
-                // we want to change avatar if an attached image is passed
-                // we can't have a separate parsed command for this since the parser can't be aware of any attachments
-                var attachedImage = ctx.ExtractImageFromAttachment();
-                if (attachedImage is { } image)
-                    return ctx.Execute<SystemEdit>(SystemServerAvatar, m => m.ChangeServerAvatar(ctx, ctx.System, image));
+                if (param.target == null)
+                {
+                    // we want to change avatar if an attached image is passed
+                    // we can't have a separate parsed command for this since the parser can't be aware of any attachments
+                    var attachedImage = ctx.ExtractImageFromAttachment();
+                    if (attachedImage is { } image)
+                        return ctx.Execute<SystemEdit>(SystemServerAvatar, m => m.ChangeServerAvatar(ctx, ctx.System, image));
+                }
                 // if no attachment show the avatar like intended
-                return ctx.Execute<SystemEdit>(SystemServerAvatar, m => m.ShowServerAvatar(ctx, ctx.System, flags.GetReplyFormat()));
+                return ctx.Execute<SystemEdit>(SystemServerAvatar, m => m.ShowServerAvatar(ctx, param.target ?? ctx.System, flags.GetReplyFormat()));
             }))(),
-            Commands.SystemShowServerAvatar(var param, var flags) => ctx.Execute<SystemEdit>(SystemServerAvatar, m => m.ShowServerAvatar(ctx, param.target, flags.GetReplyFormat())),
             Commands.SystemClearServerAvatar(var param, var flags) => ctx.Execute<SystemEdit>(SystemServerAvatar, m => m.ClearServerAvatar(ctx, ctx.System, flags.yes)),
             Commands.SystemChangeServerAvatar(var param, _) => ctx.Execute<SystemEdit>(SystemServerAvatar, m => m.ChangeServerAvatar(ctx, ctx.System, param.avatar)),
-            Commands.SystemShowBannerSelf(_, var flags) => ((Func<Task>)(() =>
+            Commands.SystemShowBanner(var param, var flags) => ((Func<Task>)(() =>
             {
-                // we want to change banner if an attached image is passed
-                // we can't have a separate parsed command for this since the parser can't be aware of any attachments
-                var attachedImage = ctx.ExtractImageFromAttachment();
-                if (attachedImage is { } image)
-                    return ctx.Execute<SystemEdit>(SystemBannerImage, m => m.ChangeBannerImage(ctx, ctx.System, image));
+                if (param.target == null)
+                {
+                    // we want to change banner if an attached image is passed
+                    // we can't have a separate parsed command for this since the parser can't be aware of any attachments
+                    var attachedImage = ctx.ExtractImageFromAttachment();
+                    if (attachedImage is { } image)
+                        return ctx.Execute<SystemEdit>(SystemBannerImage, m => m.ChangeBannerImage(ctx, ctx.System, image));
+                }
                 // if no attachment show the banner like intended
-                return ctx.Execute<SystemEdit>(SystemBannerImage, m => m.ShowBannerImage(ctx, ctx.System, flags.GetReplyFormat()));
+                return ctx.Execute<SystemEdit>(SystemBannerImage, m => m.ShowBannerImage(ctx, param.target ?? ctx.System, flags.GetReplyFormat()));
             }))(),
-            Commands.SystemShowBanner(var param, var flags) => ctx.Execute<SystemEdit>(SystemBannerImage, m => m.ShowBannerImage(ctx, param.target, flags.GetReplyFormat())),
             Commands.SystemClearBanner(var param, var flags) => ctx.Execute<SystemEdit>(SystemBannerImage, m => m.ClearBannerImage(ctx, ctx.System, flags.yes)),
             Commands.SystemChangeBanner(var param, _) => ctx.Execute<SystemEdit>(SystemBannerImage, m => m.ChangeBannerImage(ctx, ctx.System, param.banner)),
             Commands.SystemDelete(_, var flags) => ctx.Execute<SystemEdit>(SystemDelete, m => m.Delete(ctx, ctx.System, flags.no_export)),
@@ -208,14 +205,10 @@ public partial class CommandTree
             Commands.SwitchEditOut(_, var flags) => ctx.Execute<Switch>(SwitchEditOut, m => m.SwitchEditOut(ctx, flags.yes)),
             Commands.SwitchDelete(var param, var flags) => ctx.Execute<Switch>(SwitchDelete, m => m.SwitchDelete(ctx, flags.all)),
             Commands.SwitchCopy(var param, var flags) => ctx.Execute<Switch>(SwitchCopy, m => m.SwitchEdit(ctx, param.targets, true, flags.first, flags.remove, flags.append, flags.prepend)),
-            Commands.SystemFronter(var param, var flags) => ctx.Execute<SystemFront>(SystemFronter, m => m.Fronter(ctx, param.target)),
-            Commands.SystemFronterHistory(var param, var flags) => ctx.Execute<SystemFront>(SystemFrontHistory, m => m.FrontHistory(ctx, param.target, flags.clear)),
-            Commands.SystemFronterPercent(var param, var flags) => ctx.Execute<SystemFront>(SystemFrontPercent, m => m.FrontPercent(ctx, param.target, flags.duration, flags.fronters_only, flags.flat)),
-            Commands.SystemFronterSelf(_, var flags) => ctx.Execute<SystemFront>(SystemFronter, m => m.Fronter(ctx, ctx.System)),
-            Commands.SystemFronterHistorySelf(_, var flags) => ctx.Execute<SystemFront>(SystemFrontHistory, m => m.FrontHistory(ctx, ctx.System, flags.clear)),
-            Commands.SystemFronterPercentSelf(_, var flags) => ctx.Execute<SystemFront>(SystemFrontPercent, m => m.FrontPercent(ctx, ctx.System, flags.duration, flags.fronters_only, flags.flat)),
-            Commands.SystemDisplayId(var param, _) => ctx.Execute<System>(SystemId, m => m.DisplayId(ctx, param.target)),
-            Commands.SystemDisplayIdSelf => ctx.Execute<System>(SystemId, m => m.DisplayId(ctx, ctx.System)),
+            Commands.SystemFronter(var param, var flags) => ctx.Execute<SystemFront>(SystemFronter, m => m.Fronter(ctx, param.target ?? ctx.System)),
+            Commands.SystemFronterHistory(var param, var flags) => ctx.Execute<SystemFront>(SystemFrontHistory, m => m.FrontHistory(ctx, param.target ?? ctx.System, flags.clear)),
+            Commands.SystemFronterPercent(var param, var flags) => ctx.Execute<SystemFront>(SystemFrontPercent, m => m.FrontPercent(ctx, param.target ?? ctx.System, flags.duration, flags.fronters_only, flags.flat)),
+            Commands.SystemDisplayId(var param, _) => ctx.Execute<System>(SystemId, m => m.DisplayId(ctx, param.target ?? ctx.System)),
             Commands.SystemWebhookShow => ctx.Execute<Api>(null, m => m.GetSystemWebhook(ctx)),
             Commands.SystemWebhookClear(_, var flags) => ctx.Execute<Api>(null, m => m.ClearSystemWebhook(ctx, flags.yes)),
             Commands.SystemWebhookSet(var param, _) => ctx.Execute<Api>(null, m => m.SetSystemWebhook(ctx, param.url)),
@@ -238,8 +231,7 @@ public partial class CommandTree
             Commands.SystemMembers(var param, var flags) => ctx.Execute<SystemList>(SystemList, m => m.MemberList(ctx, param.target, param.query, flags)),
             Commands.MemberGroups(var param, var flags) => ctx.Execute<GroupMember>(MemberGroups, m => m.ListMemberGroups(ctx, param.target, param.query, flags, flags.all)),
             Commands.GroupMembers(var param, var flags) => ctx.Execute<GroupMember>(GroupMemberList, m => m.ListGroupMembers(ctx, param.target, param.query, flags)),
-            Commands.SystemGroups(var param, var flags) => ctx.Execute<Groups>(GroupList, g => g.ListSystemGroups(ctx, param.target, param.query, flags, flags.all)),
-            Commands.SystemGroupsSelf(var param, var flags) => ctx.Execute<Groups>(GroupList, g => g.ListSystemGroups(ctx, ctx.System, param.query, flags, flags.all)),
+            Commands.SystemGroups(var param, var flags) => ctx.Execute<Groups>(GroupList, g => g.ListSystemGroups(ctx, param.target ?? ctx.System, param.query, flags, flags.all)),
             Commands.GroupsSelf(var param, var flags) => ctx.Execute<Groups>(GroupList, g => g.ListSystemGroups(ctx, ctx.System, param.query, flags, flags.all)),
             Commands.GroupNew(var param, _) => ctx.Execute<Groups>(GroupNew, g => g.CreateGroup(ctx, param.name)),
             Commands.GroupInfo(var param, var flags) => ctx.Execute<Groups>(GroupInfo, g => g.ShowGroupCard(ctx, param.target, flags.show_embed, flags.all)),

@@ -302,6 +302,7 @@ impl<P: Into<Parameter>> From<Remainder<P>> for Parameter {
     }
 }
 
+// todo: this should ideally be removed in favor of making Token::Parameter take multiple parameters
 /// skips the branch this parameter is in if it does not match
 #[derive(Clone)]
 pub struct Skip<P: Into<Parameter>>(pub P);

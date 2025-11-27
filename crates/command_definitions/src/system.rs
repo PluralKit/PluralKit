@@ -22,13 +22,11 @@ pub fn edit() -> impl Iterator<Item = Command> {
     let system = system();
     let system_target = targeted();
 
-    let system_new = tokens!(system, ("new", ["n"]));
-    let system_new_cmd = [
-        command!(system_new => "system_new").help("Creates a new system"),
-        command!(system_new, Remainder(("name", OpaqueString)) => "system_new_name")
-            .help("Creates a new system (using the provided name)"),
-    ]
-    .into_iter();
+    let system_new_cmd =
+        once(
+            command!(system, ("new", ["n"]), Optional(Remainder(("name", OpaqueString))) => "system_new")
+                .help("Creates a new system")
+        );
 
     let system_webhook = tokens!(system, ("webhook", ["hook"]));
     let system_webhook_cmd = [
@@ -46,24 +44,22 @@ pub fn edit() -> impl Iterator<Item = Command> {
             .flag(("private", ["priv"]))
             .flag(ALL)
     };
-    let system_info_cmd_self =
-        once(command!(system => "system_info_self").help("Shows information about your system"))
-            .map(add_info_flags);
     let system_info_cmd = [
-        command!(system_target => "system_info").help("Shows information about your system"),
-        command!(system_target, ("info", ["show", "view"]) => "system_info")
+        command!(system, Optional(SystemRef) => "system_info")
+            .help("Shows information about your system"),
+        command!(system, Optional(SystemRef), ("info", ["show", "view"]) => "system_info")
             .help("Shows information about your system"),
     ]
     .into_iter()
     .map(add_info_flags);
 
-    let system_name = tokens!(system_target, "name");
-    let system_name_cmd =
-        once(command!(system_name => "system_show_name").help("Shows the systems name"));
-
-    let system_name_self = tokens!(system, "name");
+    let name = "name";
+    let system_name_cmd = once(
+        command!(system, Optional(SystemRef), name => "system_show_name")
+            .help("Shows the systems name"),
+    );
+    let system_name_self = tokens!(system, name);
     let system_name_self_cmd = [
-        command!(system_name_self => "system_show_name_self").help("Shows your system's name"),
         command!(system_name_self, CLEAR => "system_clear_name")
             .flag(YES)
             .help("Clears your system's name"),
@@ -72,16 +68,13 @@ pub fn edit() -> impl Iterator<Item = Command> {
     ]
     .into_iter();
 
-    let system_server_name = tokens!(system_target, ("servername", ["sn", "guildname"]));
+    let server_name = ("servername", ["sn", "guildname"]);
     let system_server_name_cmd = once(
-        command!(system_server_name => "system_show_server_name")
+        command!(system, Optional(SystemRef), server_name => "system_show_server_name")
             .help("Shows the system's server name"),
     );
-
-    let system_server_name_self = tokens!(system, ("servername", ["sn", "guildname"]));
+    let system_server_name_self = tokens!(system, server_name);
     let system_server_name_self_cmd = [
-        command!(system_server_name_self => "system_show_server_name_self")
-            .help("Shows your system's server name"),
         command!(system_server_name_self, CLEAR => "system_clear_server_name")
             .flag(YES)
             .help("Clears your system's server name"),
@@ -90,15 +83,13 @@ pub fn edit() -> impl Iterator<Item = Command> {
     ]
     .into_iter();
 
-    let system_description = tokens!(system_target, ("description", ["desc", "d"]));
+    let description = ("description", ["desc", "d"]);
     let system_description_cmd = once(
-        command!(system_description => "system_show_description")
+        command!(system, Optional(SystemRef), description => "system_show_description")
             .help("Shows the system's description"),
     );
-
-    let system_description_self = tokens!(system, ("description", ["desc", "d"]));
+    let system_description_self = tokens!(system, description);
     let system_description_self_cmd = [
-        command!(system_description_self => "system_show_description_self").help("Shows your system's description"),
         command!(system_description_self, CLEAR => "system_clear_description")
         .flag(YES)
             .help("Clears your system's description"),
@@ -107,13 +98,13 @@ pub fn edit() -> impl Iterator<Item = Command> {
     ]
     .into_iter();
 
-    let system_color = tokens!(system_target, ("color", ["colour"]));
-    let system_color_cmd =
-        once(command!(system_color => "system_show_color").help("Shows the system's color"));
-
-    let system_color_self = tokens!(system, ("color", ["colour"]));
+    let color = ("color", ["colour"]);
+    let system_color_cmd = once(
+        command!(system, Optional(SystemRef), color => "system_show_color")
+            .help("Shows the system's color"),
+    );
+    let system_color_self = tokens!(system, color);
     let system_color_self_cmd = [
-        command!(system_color_self => "system_show_color_self").help("Shows your system's color"),
         command!(system_color_self, CLEAR => "system_clear_color")
             .flag(YES)
             .help("Clears your system's color"),
@@ -122,13 +113,13 @@ pub fn edit() -> impl Iterator<Item = Command> {
     ]
     .into_iter();
 
-    let system_tag = tokens!(system_target, ("tag", ["suffix"]));
-    let system_tag_cmd =
-        once(command!(system_tag => "system_show_tag").help("Shows the system's tag"));
-
-    let system_tag_self = tokens!(system, ("tag", ["suffix"]));
+    let tag = ("tag", ["suffix"]);
+    let system_tag_cmd = once(
+        command!(system, Optional(SystemRef), tag => "system_show_tag")
+            .help("Shows the system's tag"),
+    );
+    let system_tag_self = tokens!(system, tag);
     let system_tag_self_cmd = [
-        command!(system_tag_self => "system_show_tag_self").help("Shows your system's tag"),
         command!(system_tag_self, CLEAR => "system_clear_tag")
             .flag(YES)
             .help("Clears your system's tag"),
@@ -137,16 +128,13 @@ pub fn edit() -> impl Iterator<Item = Command> {
     ]
     .into_iter();
 
-    let system_server_tag = tokens!(system_target, ("servertag", ["st", "guildtag"]));
+    let servertag = ("servertag", ["st", "guildtag"]);
     let system_server_tag_cmd = once(
-        command!(system_server_tag => "system_show_server_tag")
+        command!(system, Optional(SystemRef) => "system_show_server_tag")
             .help("Shows the system's server tag"),
     );
-
-    let system_server_tag_self = tokens!(system, ("servertag", ["st", "guildtag"]));
+    let system_server_tag_self = tokens!(system, servertag);
     let system_server_tag_self_cmd = [
-        command!(system_server_tag_self => "system_show_server_tag_self")
-            .help("Shows your system's server tag"),
         command!(system_server_tag_self, CLEAR => "system_clear_server_tag")
             .flag(YES)
             .help("Clears your system's server tag"),
@@ -155,15 +143,13 @@ pub fn edit() -> impl Iterator<Item = Command> {
     ]
     .into_iter();
 
-    let system_pronouns = tokens!(system_target, ("pronouns", ["prns"]));
+    let pronouns = ("pronouns", ["prns"]);
     let system_pronouns_cmd = once(
-        command!(system_pronouns => "system_show_pronouns").help("Shows the system's pronouns"),
+        command!(system, Optional(SystemRef), pronouns => "system_show_pronouns")
+            .help("Shows the system's pronouns"),
     );
-
-    let system_pronouns_self = tokens!(system, ("pronouns", ["prns"]));
+    let system_pronouns_self = tokens!(system, pronouns);
     let system_pronouns_self_cmd = [
-        command!(system_pronouns_self => "system_show_pronouns_self")
-            .help("Shows your system's pronouns"),
         command!(system_pronouns_self, CLEAR => "system_clear_pronouns")
             .flag(YES)
             .help("Clears your system's pronouns"),
@@ -172,14 +158,13 @@ pub fn edit() -> impl Iterator<Item = Command> {
     ]
     .into_iter();
 
-    let system_avatar = tokens!(system_target, ("avatar", ["pfp"]));
-    let system_avatar_cmd =
-        once(command!(system_avatar => "system_show_avatar").help("Shows the system's avatar"));
-
-    let system_avatar_self = tokens!(system, ("avatar", ["pfp"]));
+    let avatar = ("avatar", ["pfp"]);
+    let system_avatar_cmd = once(
+        command!(system, Optional(SystemRef), avatar => "system_show_avatar")
+            .help("Shows the system's avatar"),
+    );
+    let system_avatar_self = tokens!(system, avatar);
     let system_avatar_self_cmd = [
-        command!(system_avatar_self => "system_show_avatar_self")
-            .help("Shows your system's avatar"),
         command!(system_avatar_self, CLEAR => "system_clear_avatar")
             .flag(YES)
             .help("Clears your system's avatar"),
@@ -188,16 +173,14 @@ pub fn edit() -> impl Iterator<Item = Command> {
     ]
     .into_iter();
 
-    let system_server_avatar = tokens!(system_target, ("serveravatar", ["spfp"]));
+    let serveravatar = ("serveravatar", ["spfp"]);
+    let system_server_avatar = tokens!(system_target, serveravatar);
     let system_server_avatar_cmd = once(
-        command!(system_server_avatar => "system_show_server_avatar")
+        command!(system, Optional(SystemRef), serveravatar => "system_show_server_avatar")
             .help("Shows the system's server avatar"),
     );
-
-    let system_server_avatar_self = tokens!(system, ("serveravatar", ["spfp"]));
+    let system_server_avatar_self = tokens!(system, serveravatar);
     let system_server_avatar_self_cmd = [
-        command!(system_server_avatar_self => "system_show_server_avatar_self")
-            .help("Shows your system's server avatar"),
         command!(system_server_avatar_self, CLEAR => "system_clear_server_avatar")
             .flag(YES)
             .help("Clears your system's server avatar"),
@@ -206,14 +189,13 @@ pub fn edit() -> impl Iterator<Item = Command> {
     ]
     .into_iter();
 
-    let system_banner = tokens!(system_target, ("banner", ["cover"]));
-    let system_banner_cmd =
-        once(command!(system_banner => "system_show_banner").help("Shows the system's banner"));
-
-    let system_banner_self = tokens!(system, ("banner", ["cover"]));
+    let banner = ("banner", ["cover"]);
+    let system_banner_cmd = once(
+        command!(system, Optional(SystemRef), banner => "system_show_banner")
+            .help("Shows the system's banner"),
+    );
+    let system_banner_self = tokens!(system, banner);
     let system_banner_self_cmd = [
-        command!(system_banner_self => "system_show_banner_self")
-            .help("Shows your system's banner"),
         command!(system_banner_self, CLEAR => "system_clear_banner")
             .flag(YES)
             .help("Clears your system's banner"),
@@ -221,12 +203,6 @@ pub fn edit() -> impl Iterator<Item = Command> {
             .help("Changes your system's banner"),
     ]
     .into_iter();
-
-    let system_delete = once(
-        command!(system, ("delete", ["erase", "remove", "yeet"]) => "system_delete")
-            .flag(("no-export", ["ne"]))
-            .help("Deletes the system"),
-    );
 
     let system_proxy = tokens!(system, "proxy");
     let system_proxy_cmd = [
@@ -245,38 +221,28 @@ pub fn edit() -> impl Iterator<Item = Command> {
     let system_privacy_cmd = [
         command!(system_privacy => "system_show_privacy")
             .help("Shows your system's privacy settings"),
-            command!(system_privacy, ALL, ("level", PrivacyLevel) => "system_change_privacy_all")
+        command!(system_privacy, ALL, ("level", PrivacyLevel) => "system_change_privacy_all")
             .help("Changes all privacy settings for your system"),
         command!(system_privacy, ("privacy", SystemPrivacyTarget), ("level", PrivacyLevel) => "system_change_privacy")
             .help("Changes a specific privacy setting for your system"),
     ].into_iter();
 
     let front = ("front", ["fronter", "fronters", "f"]);
-    let make_system_front_cmd = |prefix: TokensIterator, suffix: &str| {
-        let make_front_history = |subcmd: TokensIterator| {
-            command!(prefix, subcmd => format!("system_fronter_history{}", suffix)).flag(CLEAR)
-        };
-        let make_front_percent = |subcmd: TokensIterator| {
-            command!(prefix, subcmd => format!("system_fronter_percent{}", suffix))
-                .flag(("duration", OpaqueString))
-                .flag(("fronters-only", ["fo"]))
-                .flag("flat")
-        };
-        [
-            command!(prefix, front => format!("system_fronter{}", suffix)),
-            make_front_history(tokens!(front, ("history", ["h"]))),
-            make_front_history(tokens!(("fronthistory", ["fh"]))),
-            make_front_percent(tokens!(front, ("percent", ["p", "%"]))),
-            make_front_percent(tokens!(("frontpercent", ["fp"]))),
-        ]
-        .into_iter()
+    let make_front_history = |subcmd: TokensIterator| {
+        command!(system, Optional(SystemRef), subcmd => "system_fronter_history").flag(CLEAR)
     };
-    let system_front_cmd = make_system_front_cmd(tokens!(system_target), "");
-    let system_front_self_cmd = make_system_front_cmd(tokens!(system), "_self");
-
-    let system_link = [
-        command!("link", ("account", UserRef) => "system_link"),
-        command!("unlink", ("account", OpaqueString) => "system_unlink").flag(YES),
+    let make_front_percent = |subcmd: TokensIterator| {
+        command!(system, Optional(SystemRef), subcmd => "system_fronter_percent")
+            .flag(("duration", OpaqueString))
+            .flag(("fronters-only", ["fo"]))
+            .flag("flat")
+    };
+    let system_front_cmd = [
+        command!(system, Optional(SystemRef), front => "system_fronter"),
+        make_front_history(tokens!(front, ("history", ["h"]))),
+        make_front_history(tokens!(("fronthistory", ["fh"]))),
+        make_front_percent(tokens!(front, ("percent", ["p", "%"]))),
+        make_front_percent(tokens!(("frontpercent", ["fp"]))),
     ]
     .into_iter();
 
@@ -285,25 +251,31 @@ pub fn edit() -> impl Iterator<Item = Command> {
 
     let members_subcmd = tokens!(("members", ["ls", "list"]), search_param);
     let system_members_cmd =
-        once(command!(system_target, members_subcmd => "system_members")).map(apply_list_opts);
-    let system_members_self_cmd = [
-        command!(system, members_subcmd => "system_members_self"),
-        command!(members_subcmd => "system_members_self"),
-    ]
-    .into_iter()
-    .map(apply_list_opts);
+        once(command!(system, Optional(SystemRef), members_subcmd => "system_members"))
+            .map(apply_list_opts);
+    let system_members_self_cmd =
+        once(command!(members_subcmd => "system_members_self")).map(apply_list_opts);
 
-    let groups_subcmd = tokens!("groups", search_param);
     let system_groups_cmd =
-        once(command!(system_target, groups_subcmd => "system_groups")).map(apply_list_opts);
-    let system_group_self_cmd =
-        once(command!(system, groups_subcmd => "system_groups_self")).map(apply_list_opts);
+        once(command!(system, Optional(SystemRef), "groups", search_param => "system_groups"))
+            .map(apply_list_opts);
 
-    let system_display_id_self_cmd = once(command!(system, "id" => "system_display_id_self"));
-    let system_display_id_cmd = once(command!(system_target, "id" => "system_display_id"));
+    let system_display_id_cmd =
+        once(command!(system, Optional(SystemRef), "id" => "system_display_id"));
 
-    system_info_cmd_self
-        .chain(system_new_cmd)
+    let system_delete = once(
+        command!(system, ("delete", ["erase", "remove", "yeet"]) => "system_delete")
+            .flag(("no-export", ["ne"]))
+            .help("Deletes the system"),
+    );
+
+    let system_link = [
+        command!("link", ("account", UserRef) => "system_link"),
+        command!("unlink", ("account", OpaqueString) => "system_unlink").flag(YES),
+    ]
+    .into_iter();
+
+    system_new_cmd
         .chain(system_webhook_cmd)
         .chain(system_name_self_cmd)
         .chain(system_server_name_self_cmd)
@@ -316,9 +288,6 @@ pub fn edit() -> impl Iterator<Item = Command> {
         .chain(system_server_avatar_self_cmd)
         .chain(system_banner_self_cmd)
         .chain(system_members_self_cmd)
-        .chain(system_group_self_cmd)
-        .chain(system_display_id_self_cmd)
-        .chain(system_front_self_cmd)
         .chain(system_delete)
         .chain(system_privacy_cmd)
         .chain(system_proxy_cmd)
