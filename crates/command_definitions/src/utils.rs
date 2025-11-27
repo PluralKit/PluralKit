@@ -19,7 +19,7 @@ pub fn get_list_flags() -> [Flag; 22] {
         )),
         // Sort properties
         Flag::from(("by-name", ["bn"])),
-        Flag::from(("by-display-name", ["bdn"])),
+        Flag::from(("by-display-name", ["by-displayname", "bdn"])),
         Flag::from(("by-id", ["bid"])),
         Flag::from(("by-message-count", ["bmc"])),
         Flag::from(("by-created", ["bc", "bcd"])),
@@ -48,7 +48,7 @@ pub fn get_list_flags() -> [Flag; 22] {
             ["with-image", "with-icon", "wa", "wi", "ia", "ii", "img"],
         )),
         Flag::from(("with-pronouns", ["wp", "wprns"])),
-        Flag::from(("with-display-name", ["wdn"])),
+        Flag::from(("with-display-name", ["with-displayname", "wdn"])),
         Flag::from(("with-birthday", ["wbd", "wb"])),
     ]
 }
