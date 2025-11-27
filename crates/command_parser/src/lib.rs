@@ -48,19 +48,14 @@ pub fn parse_command(
     let mut params: HashMap<String, ParameterValue> = HashMap::new();
     let mut raw_flags: Vec<(usize, MatchedFlag)> = Vec::new();
 
-    let mut matched_tokens: Vec<(Tree, (Token, TokenMatchResult, usize))> = Vec::new();
+    let mut matched_tokens: Vec<(Tree, (Token, TokenMatchResult, usize), usize)> = Vec::new();
     let mut filtered_tokens: Vec<Token> = Vec::new();
+    let mut last_optional_param_error: Option<(SmolStr, SmolStr)> = None;
+
     loop {
         let mut possible_tokens = local_tree
             .possible_tokens()
             .filter(|t| !filtered_tokens.contains(t))
-            // .filter(|t| {
-            //     if !filtered_tokens.is_empty() {
-            //         !matches!(t, Token::Parameter(param) if param.is_optional())
-            //     } else {
-            //         true
-            //     }
-            // })
             .collect::<Vec<_>>();
         // sort so parameters come last
         // we always want to test values first
@@ -86,17 +81,26 @@ pub fn parse_command(
                         ));
                     }
                     TokenMatchResult::ParameterMatchError { input: raw, msg } => {
-                        if matches!(found_token, Token::Parameter(param) if param.is_skip())
+                        // we can try other branches if the parameter is optional or skip-on-error parameter
+                        if matches!(found_token, Token::Parameter(param) if param.is_optional() || param.is_skip())
                             && possible_tokens.len() > 1
                         {
+                            // save error for later, will be used if no other tokens match
+                            last_optional_param_error = Some((raw.clone(), msg.clone()));
+                            // try the other branches first
+                            filtered_tokens.push(found_token.clone());
                             continue;
                         }
+
                         return Err(format!(
                             "Parameter `{raw}` in command `{prefix}{input}` could not be parsed: {msg}."
                         ));
                     }
                     // don't use a catch-all here, we want to make sure compiler errors when new errors are added
-                    TokenMatchResult::MatchedParameter { .. } | TokenMatchResult::MatchedValue => {}
+                    TokenMatchResult::MatchedParameter { .. } | TokenMatchResult::MatchedValue => {
+                        // clear the error since we successfully matched forward, we dont need it anymore
+                        last_optional_param_error = None;
+                    }
                 }
 
                 // add parameter if any
@@ -109,6 +113,7 @@ pub fn parse_command(
                     matched_tokens.push((
                         local_tree.clone(),
                         (found_token.clone(), result.clone(), *new_pos),
+                        current_pos,
                     ));
                     filtered_tokens.clear(); // new branch, new tokens
                     local_tree = next_tree.clone();
@@ -123,14 +128,21 @@ pub fn parse_command(
             None => {
                 // redo the previous branches if we didnt match on a parameter
                 // this is a bit of a hack, but its necessary for making parameters on the same depth work
-                if let Some((match_tree, match_next)) = matched_tokens
+                if let Some((match_tree, match_next, old_pos)) = matched_tokens
                     .pop()
                     .and_then(|m| matches!(m.1, (Token::Parameter(_), _, _)).then_some(m))
                 {
                     println!("redoing previous branch: {:?}", match_next.0);
                     local_tree = match_tree;
+                    current_pos = old_pos; // reset position to previous branch's start
                     filtered_tokens.push(match_next.0);
                     continue;
+                }
+
+                if let Some((raw, msg)) = last_optional_param_error {
+                    return Err(format!(
+                        "Parameter `{raw}` in command `{prefix}{input}` could not be parsed: {msg}."
+                    ));
                 }
 
                 let mut error = format!("Unknown command `{prefix}{input}`.");
