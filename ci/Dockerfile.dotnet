@@ -2,6 +2,15 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 
 WORKDIR /app
 
+RUN apt-get update && apt-get install -y curl build-essential && \
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+
+ENV PATH="/root/.cargo/bin:${PATH}"
+ENV RUSTFLAGS='-C link-arg=-s'
+
+# Install uniffi-bindgen-cs
+RUN cargo install uniffi-bindgen-cs --git https://github.com/90-008/uniffi-bindgen-cs
+
 # Restore/fetch dependencies excluding app code to make use of caching
 COPY PluralKit.sln /app/
 COPY Myriad/Myriad.csproj /app/Myriad/
@@ -13,8 +22,21 @@ COPY .git/ /app/.git
 COPY Serilog/ /app/Serilog/
 RUN dotnet restore PluralKit.sln
 
-# Copy the rest of the code and build
+# Copy the rest of the code
 COPY . /app
+
+# copy parser code
+COPY Cargo.toml /app/
+COPY Cargo.lock /app/
+
+COPY crates/ /app/crates
+
+# Generate command parser bindings
+RUN mkdir -p /app/bin && cargo -Z unstable-options build --package commands --lib --release --artifact-dir /app/bin/
+RUN uniffi-bindgen-cs "/app/bin/libcommands.so" --library --out-dir="/app/PluralKit.Bot"
+RUN cargo run --package commands --bin write_cs_glue -- "/app/PluralKit.Bot/commandtypes.cs"
+
+# build bot
 RUN dotnet build -c Release -o bin
 
 # Build runtime stage (doesn't include SDK)
