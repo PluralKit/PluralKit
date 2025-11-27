@@ -58,9 +58,9 @@ public class ProxiedMessage
         _redisService = redisService;
     }
 
-    public async Task ReproxyMessage(Context ctx, ulong? messageId, PKMember target)
+    public async Task ReproxyMessage(Context ctx, Message.Reference? messageRef, PKMember target)
     {
-        var (msg, systemId) = await GetMessageToEdit(ctx, messageId, ReproxyTimeout, true);
+        var (msg, systemId) = await GetMessageToEdit(ctx, messageRef?.MessageId, ReproxyTimeout, true);
 
         if (ctx.System.Id != systemId)
             throw new PKError("Can't reproxy a message sent by a different system.");
@@ -91,9 +91,9 @@ public class ProxiedMessage
         }
     }
 
-    public async Task EditMessage(Context ctx, ulong? messageId, string newContent, bool useRegex, bool noSpace, bool append, bool prepend, bool clearEmbeds, bool clearAttachments)
+    public async Task EditMessage(Context ctx, Message.Reference? messageRef, string newContent, bool useRegex, bool noSpace, bool append, bool prepend, bool clearEmbeds, bool clearAttachments)
     {
-        var (msg, systemId) = await GetMessageToEdit(ctx, messageId, EditTimeout, false);
+        var (msg, systemId) = await GetMessageToEdit(ctx, messageRef?.MessageId, EditTimeout, false);
 
         if (ctx.System.Id != systemId)
             throw new PKError("Can't edit a message sent by a different system.");
@@ -320,17 +320,20 @@ public class ProxiedMessage
         return lastMessage;
     }
 
-    public async Task GetMessage(Context ctx, ulong? messageId, ReplyFormat format, bool isDelete, bool author, bool showEmbed)
+    public async Task GetMessage(Context ctx, Message.Reference? messageRef, ReplyFormat format, bool isDelete, bool author, bool showEmbed)
     {
-        if (messageId == null)
+        if (ctx.Message.Type == Message.MessageType.Reply && ctx.Message.MessageReference?.MessageId != null)
+            messageRef = ctx.Message.MessageReference;
+
+        if (messageRef == null || messageRef.MessageId == null)
         {
             throw new PKSyntaxError("You must pass a message ID or link.");
         }
 
-        var message = await ctx.Repository.GetFullMessage(messageId.Value);
+        var message = await ctx.Repository.GetFullMessage(messageRef.MessageId.Value);
         if (message == null)
         {
-            await GetCommandMessage(ctx, messageId.Value, isDelete, showEmbed);
+            await GetCommandMessage(ctx, messageRef.MessageId.Value, isDelete, showEmbed);
             return;
         }
 

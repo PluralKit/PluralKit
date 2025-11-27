@@ -1,6 +1,6 @@
 use ordermap::OrderMap;
 
-use crate::{command::Command, token::Token};
+use crate::{command::Command, parameter::Skip, token::Token};
 
 #[derive(Debug, Clone)]
 pub struct TreeBranch {
@@ -21,7 +21,17 @@ impl TreeBranch {
     pub fn register_command(&mut self, command: Command) {
         let mut current_branch = self;
         // iterate over tokens in command
-        for token in command.tokens.clone() {
+        for (index, token) in command.tokens.clone().into_iter().enumerate() {
+            // if the token is an optional parameter, register rest of the tokens to a separate branch
+            // this allows optional parameters to work if they are not the last token
+            if matches!(token, Token::Parameter(ref param) if param.is_optional())
+                && index < command.tokens.len() - 1
+            {
+                current_branch.register_command(Command {
+                    tokens: command.tokens[index + 1..].to_vec(),
+                    ..command.clone()
+                });
+            }
             // recursively get or create a sub-branch for each token
             current_branch = current_branch
                 .branches
@@ -36,7 +46,7 @@ impl TreeBranch {
         self.current_command.clone()
     }
 
-    pub fn possible_tokens(&self) -> impl Iterator<Item = &Token> {
+    pub fn possible_tokens(&self) -> impl Iterator<Item = &Token> + Clone {
         self.branches.keys()
     }
 

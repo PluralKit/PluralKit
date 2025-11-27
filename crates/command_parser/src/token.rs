@@ -76,16 +76,10 @@ impl Token {
                     name: param.name().into(),
                     value: matched,
                 },
-                Err(err) => {
-                    if param.is_skip() {
-                        return None;
-                    } else {
-                        TokenMatchResult::ParameterMatchError {
-                            input: input.into(),
-                            msg: err,
-                        }
-                    }
-                }
+                Err(err) => TokenMatchResult::ParameterMatchError {
+                    input: input.into(),
+                    msg: err,
+                },
             }),
             // don't add a _ match here!
         }

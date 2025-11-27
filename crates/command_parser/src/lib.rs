@@ -51,21 +51,31 @@ pub fn parse_command(
     let mut matched_tokens: Vec<(Tree, (Token, TokenMatchResult, usize))> = Vec::new();
     let mut filtered_tokens: Vec<Token> = Vec::new();
     loop {
-        // println!(
-        //     "possible: {:?}",
-        //     local_tree
-        //         .possible_tokens()
-        //         .filter(|t| filtered_tokens.contains(t))
-        //         .collect::<Vec<_>>()
-        // );
-        let next = next_token(
-            local_tree
-                .possible_tokens()
-                .filter(|t| !filtered_tokens.contains(t)),
-            &input,
-            current_pos,
-        );
-        // println!("next: {:?}", next);
+        let mut possible_tokens = local_tree
+            .possible_tokens()
+            .filter(|t| !filtered_tokens.contains(t))
+            // .filter(|t| {
+            //     if !filtered_tokens.is_empty() {
+            //         !matches!(t, Token::Parameter(param) if param.is_optional())
+            //     } else {
+            //         true
+            //     }
+            // })
+            .collect::<Vec<_>>();
+        // sort so parameters come last
+        // we always want to test values first
+        // parameters that parse the remainder come last (otherwise they would always match)
+        possible_tokens.sort_by(|a, b| match (a, b) {
+            (Token::Parameter(param), _) if param.is_remainder() => std::cmp::Ordering::Greater,
+            (_, Token::Parameter(param)) if param.is_remainder() => std::cmp::Ordering::Less,
+            (Token::Parameter(_), Token::Parameter(_)) => std::cmp::Ordering::Equal,
+            (Token::Parameter(_), _) => std::cmp::Ordering::Greater,
+            (_, Token::Parameter(_)) => std::cmp::Ordering::Less,
+            _ => std::cmp::Ordering::Equal,
+        });
+        println!("possible: {:?}", possible_tokens);
+        let next = next_token(possible_tokens.iter().cloned(), &input, current_pos);
+        println!("next: {:?}", next);
         match &next {
             Some((found_token, result, new_pos)) => {
                 match &result {
@@ -76,6 +86,11 @@ pub fn parse_command(
                         ));
                     }
                     TokenMatchResult::ParameterMatchError { input: raw, msg } => {
+                        if matches!(found_token, Token::Parameter(param) if param.is_skip())
+                            && possible_tokens.len() > 1
+                        {
+                            continue;
+                        }
                         return Err(format!(
                             "Parameter `{raw}` in command `{prefix}{input}` could not be parsed: {msg}."
                         ));
@@ -112,6 +127,7 @@ pub fn parse_command(
                     .pop()
                     .and_then(|m| matches!(m.1, (Token::Parameter(_), _, _)).then_some(m))
                 {
+                    println!("redoing previous branch: {:?}", match_next.0);
                     local_tree = match_tree;
                     filtered_tokens.push(match_next.0);
                     continue;
