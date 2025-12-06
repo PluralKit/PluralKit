@@ -4,7 +4,6 @@ namespace PluralKit.Core;
 
 public static class MiscUtils
 {
-
     // discord mediaproxy URLs used to be stored directly in the database, so now we cleanup image urls before using them outside of proxying
     private static readonly Regex MediaProxyUrl =
         new(
