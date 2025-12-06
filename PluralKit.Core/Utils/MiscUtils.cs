@@ -12,7 +12,7 @@ public static class MiscUtils
     private static readonly string DiscordCdnReplacement = "https://cdn.discordapp.com/attachments/$1/$2/$3.$4";
 
     // Rewrite time "cachebuster" parameters for randomly generated/chosen avatars with custom URLs.
-    private static readonly Regex TimePlaceholder = new(@"\{(time(?:stamp|_(?:1m|5m|30m|1h|6h|1d)))\}");
+    private static readonly Regex TimePlaceholder = new(@"(?:\{|%7B)(time(?:stamp|_(?:1m|5m|30m|1h|6h|1d)))(?:\}|%7D)");
     private const Int64 TimeAccuracy = 60;
 
     public static bool TryMatchUri(string input, out Uri uri)
