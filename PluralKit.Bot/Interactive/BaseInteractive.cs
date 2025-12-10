@@ -5,6 +5,7 @@ using Myriad.Rest.Types.Requests;
 using Myriad.Types;
 
 using NodaTime;
+using PluralKit.Core;
 
 namespace PluralKit.Bot.Interactive;
 
@@ -45,6 +46,11 @@ public abstract class BaseInteractive
     {
         await ctx.Respond(InteractionResponse.ResponseType.UpdateMessage,
             new InteractionApplicationCommandCallbackData { Components = GetComponents() });
+    }
+
+    protected async Task Error(InteractionContext ctx, PKError error)
+    {
+        await ctx.Reply(content: $"{Emojis.Error} {error.Message}");
     }
 
     protected async Task Finish(InteractionContext? ctx = null)

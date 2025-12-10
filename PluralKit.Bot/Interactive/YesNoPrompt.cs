@@ -43,7 +43,7 @@ public class YesNoPrompt: BaseInteractive
     {
         if (ctx.User.Id != User)
         {
-            await Update(ctx);
+            await Error(ctx, Errors.InteractionWrongAccount(User ?? 0));
             return;
         }
 

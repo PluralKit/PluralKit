@@ -183,4 +183,6 @@ public static class Errors
 
     public static PKError ChannelNotFound(string channelString) =>
         new($"Channel \"{channelString}\" not found or is not in this server.");
+
+    public static PKError InteractionWrongAccount(ulong user) => new($"This prompt is only available for <@{user}>");
 }
