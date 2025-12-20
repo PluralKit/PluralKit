@@ -1,12 +1,23 @@
-pids
-logs
 node_modules
-npm-debug.log
-coverage/
-run
-dist
+
+# Output
+.output
+.vercel
+.netlify
+.wrangler
+/.svelte-kit
+/build
+
+# OS
 .DS_Store
-.nyc_output
-.basement
-config.local.js
-basement_dist
+Thumbs.db
+
+# Env
+.env
+.env.*
+!.env.example
+!.env.test
+
+# Vite
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
