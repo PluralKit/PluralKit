@@ -1,0 +1,212 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  height: 100%;
+}
+
+@layer components {
+  hr {
+    @apply border-muted/50;
+  }
+
+  .btn-menu {
+    @apply px-4 py-2 h-auto min-h-0 justify-start;
+  }
+
+  .box {
+    @apply rounded-xl bg-base-200 p-4;
+  }
+
+  .menu :where(li:not(.menu-title) > :not(ul):not(details):not(.menu-title)),
+  .menu :where(li:not(.menu-title) > details > summary:not(.menu-title)) {
+    @apply select-text;
+  }
+
+  .tabs-lifted.tabs-box > .tab.tab-active:not(.tab-disabled):not([disabled]) {
+    @apply bg-base-200;
+  }
+
+  .tabs-lifted.tabs-box .tab.tab-active:not(.tab-disabled):not([disabled])::before,
+  .tabs-lifted.tabs-box .tab.tab-active:not(.tab-disabled):not([disabled]):first-child::before,
+  .tabs-lifted.tabs-box .tab.tab-active:not(.tab-disabled):not([disabled]):last-child::before {
+    background-image: none;
+  }
+
+  /* start of discord markdown styling */
+  .discord-markdown {
+    blockquote {
+      @apply pl-3 border-l-4 border-muted/50;
+    }
+
+    ul {
+      @apply list-disc pl-4;
+    }
+
+    ol {
+      @apply list-decimal pl-4;
+    }
+
+    .d-emoji {
+      @apply h-4 w-auto inline;
+    }
+
+    .d-spoiler {
+      @apply bg-base-content text-base-content;
+      border-radius: 4px;
+      transition-delay: 6000s;
+
+      &::selection {
+        @apply text-base-content;
+        background-color: transparent;
+      }
+
+      &:active {
+        @apply bg-base-300;
+        transition-delay: 0s;
+      }
+    }
+
+    code {
+      @apply px-1 text-sm rounded-sm bg-base-200;
+    }
+
+    pre > code {
+      @apply py-1 px-2 md:px-3 md:py-2 rounded-xl;
+    }
+
+    a {
+      @apply link-primary;
+    }
+
+    small {
+      @apply block text-muted;
+    }
+  }
+
+  /* end of discord markdown styling */
+
+  /* button styling! */
+  .btn {
+    @apply font-normal;
+  }
+
+  /* daisyUI applies some styling to lists in .menu that we don't want */
+  /* so we reset them here */
+  :where(.menu li),
+  :where(.menu ul) {
+    position: static;
+  }
+
+  .discord-markdown ul {
+    position: static;
+    white-space: normal;
+    margin-inline-start: 0;
+    margin-inline-end: 0;
+  }
+
+  .discord-markdown li {
+    position: static;
+    display: list-item;
+  }
+
+  .menu .discord-markdown :where(li:not(.menu-title) > :not(ul, details, .menu-title, .btn)),
+  .menu .discord-markdown :where(li:not(.menu-title) > details > summary:not(.menu-title)) {
+    display: unset;
+    padding: unset;
+  }
+
+  /* end of the .menu reset */
+}
+
+[data-theme="dark"],
+[data-theme="light"],
+[data-theme="acid"],
+[data-theme="cotton"],
+[data-theme="autumn"],
+[data-theme="coffee"] {
+  --sv-min-height: 40px;
+  --sv-bg: var(--fallback-b1, oklch(var(--b1) / var(--tw-bg-opacity)));
+  --sv-disabled-bg: var(--fallback-b3, oklch(var(--b3) / var(--tw-bg-opacity)));
+  --sv-border: 1px solid oklch(var(--muted) / 0.5);
+  --sv-border-radius: 6px;
+  --sv-general-padding: 0.25rem;
+  --sv-control-bg: var(--sv-bg);
+  --sv-item-wrap-padding: 3px 3px 3px 6px;
+  --sv-item-selected-bg: var(--fallback-b3, oklch(var(--b3) / var(--tw-bg-opacity)));
+  --sv-item-btn-color: var(--fallback-bc, oklch(var(--bc) / 1));
+  --sv-item-btn-color-hover: var(
+    --fallback-bc,
+    oklch(var(--bc) / 0.6)
+  ); /* same as icon-color-hover in default theme */
+  --sv-item-btn-bg: transparent;
+  --sv-item-btn-bg-hover: transparent;
+  --sv-icon-color: var(--sv-item-btn-color);
+  --sv-icon-color-hover: var(--sv-item-btn-color-hover);
+  --sv-icon-bg: transparent;
+  --sv-icon-size: 20px;
+  --sv-separator-bg: transparent;
+  --sv-btn-border: 0;
+  --sv-placeholder-color: transparent;
+  --sv-dropdown-bg: var(--sv-bg);
+  --sv-dropdown-offset: 1px;
+  --sv-dropdown-border: 1px solid oklch(var(--muted) / 0.5);
+  --sv-dropdown-width: auto;
+  --sv-dropdown-shadow: none;
+  --sv-dropdown-height: 320px;
+  --sv-dropdown-active-bg: var(--fallback-b3, oklch(var(--b3) / var(--tw-bg-opacity)));
+  --sv-dropdown-selected-bg: oklch(var(--p) / 0.2);
+  --sv-create-kbd-border: none;
+  --sv-create-kbd-bg: transparent;
+  --sv-create-disabled-bg: transparent;
+  --sv-loader-border: none;
+  --sv-item-wrap-padding: 0.375rem 0.25rem;
+}
+
+.join-item.svelecte-control-pk {
+  --sv-min-height: 2rem;
+
+  .sv-control {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+  }
+}
+
+.group-control {
+  --sv-dropdown-active-bg: transparent;
+  --sv-item-wrap-padding: 0.25rem 0;
+}
+
+.group-control .option {
+  width: calc(100% + 0.5rem);
+}
+
+.sv-item--wrap {
+  border-radius: 4px;
+  padding: 0.25rem;
+  font-size: 14px;
+}
+
+.sv-item--wrap.in-dropdown {
+  padding: 0;
+  position: relative;
+}
+
+.sv-item--wrap.in-dropdown:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 0;
+  border-bottom: 1px solid oklch(var(--muted) / 0.5);
+}
+
+.sv-dropdown-scroll {
+  padding: 0 0.75rem !important;
+}
+
+.svelecte {
+  flex: auto !important;
+}

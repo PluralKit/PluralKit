@@ -467,7 +467,7 @@ Features:
 
 Bugfixes:
 - fixed importing pronouns and message count
-- fixed looking up messages with a discord canary link (and then fixed looking up normal links >.<)
+- fixed looking up messages with a discord canary link (and then fixed looking up normal links >.\<)
 - fixed a few "internal error" messages and other miscellaneous bugs
 (also, `pk;member <name> soulscream` is a semi-secret command for the time being, if you know what this means, have fun :3 🍬)
 
