@@ -11,7 +11,8 @@ use hyper_util::{
     client::legacy::{Client, connect::HttpConnector},
     rt::TokioExecutor,
 };
-use tracing::info;
+use libpk::config;
+use tracing::{info, warn};
 
 use pk_macros::api_endpoint;
 
@@ -128,7 +129,15 @@ fn router(ctx: ApiContext) -> Router {
         .route("/v2/members/{member_id}/oembed.json", get(rproxy))
         .route("/v2/groups/{group_id}/oembed.json", get(rproxy))
 
-        .layer(middleware::ratelimit::ratelimiter(middleware::ratelimit::do_request_ratelimited)) // this sucks
+        .layer(axum::middleware::from_fn_with_state(
+            if config.api().use_ratelimiter {
+                Some(ctx.redis.clone())
+            } else {
+                warn!("running without request rate limiting!");
+                None
+            },
+            middleware::ratelimit::do_request_ratelimited)
+        )
         .layer(axum::middleware::from_fn(middleware::ignore_invalid_routes::ignore_invalid_routes))
         .layer(axum::middleware::from_fn_with_state(ctx.clone(), middleware::params::params))
         .layer(axum::middleware::from_fn_with_state(ctx.clone(), middleware::auth::auth))
@@ -146,14 +155,7 @@ async fn main() -> anyhow::Result<()> {
     let db = libpk::db::init_data_db().await?;
     let redis = libpk::db::init_redis().await?;
 
-    let rproxy_uri = Uri::from_static(
-        &libpk::config
-            .api
-            .as_ref()
-            .expect("missing api config")
-            .remote_url,
-    )
-    .to_string();
+    let rproxy_uri = Uri::from_static(&libpk::config.api().remote_url).to_string();
     let rproxy_client = hyper_util::client::legacy::Client::<(), ()>::builder(TokioExecutor::new())
         .build(HttpConnector::new());
 
@@ -167,12 +169,7 @@ async fn main() -> anyhow::Result<()> {
 
     let app = router(ctx);
 
-    let addr: &str = libpk::config
-        .api
-        .as_ref()
-        .expect("missing api config")
-        .addr
-        .as_ref();
+    let addr: &str = libpk::config.api().addr.as_ref();
 
     let listener = tokio::net::TcpListener::bind(addr).await?;
     info!("listening on {}", addr);
