@@ -31,6 +31,32 @@ public class Misc
         _shards = shards;
     }
 
+    public async Task Premium(Context ctx)
+    {
+        ctx.CheckSystem();
+
+        String message;
+
+        if (ctx.Config?.PremiumLifetime ?? false)
+        {
+            message = $"Your system has lifetime PluralKit Premium. {ctx.PremiumEmoji} Thanks for the support!";
+        }
+        else if (ctx.Premium)
+        {
+            message = $"Your system has PluralKit Premium active until <t:{ctx.Config.PremiumUntil?.ToUnixTimeSeconds()}>. {ctx.PremiumEmoji} Thanks for the support!";
+        }
+        else
+        {
+            message = "PluralKit Premium is not currently active for your system.";
+            if (ctx.Config?.PremiumUntil != null)
+            {
+                message += $" The subscription expired at <t:{ctx.Config.PremiumUntil?.ToUnixTimeSeconds()}> (<t:{ctx.Config.PremiumUntil?.ToUnixTimeSeconds()}:R>)";
+            }
+        }
+
+        await ctx.Reply(message + $"\n\nManage your subscription at <{_botConfig.PremiumDashboardUrl}>");
+    }
+
     public async Task Invite(Context ctx)
     {
         var permissions =
