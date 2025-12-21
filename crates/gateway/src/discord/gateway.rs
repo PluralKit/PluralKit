@@ -23,9 +23,7 @@ use super::cache::DiscordCache;
 
 pub fn cluster_config() -> ClusterSettings {
     libpk::config
-        .discord
-        .as_ref()
-        .expect("missing discord config")
+        .discord()
         .cluster
         .clone()
         .unwrap_or(libpk::_config::ClusterSettings {
@@ -63,28 +61,15 @@ pub fn create_shards(redis: fred::clients::RedisPool) -> anyhow::Result<Vec<Shar
         )
     };
 
-    let prefix = libpk::config
-        .discord
-        .as_ref()
-        .expect("missing discord config")
-        .bot_prefix_for_gateway
-        .clone();
+    let prefix = libpk::config.discord().bot_prefix_for_gateway.clone();
 
     let shards = create_iterator(
         start_shard..end_shard + 1,
         cluster_settings.total_shards,
-        ConfigBuilder::new(
-            libpk::config
-                .discord
-                .as_ref()
-                .expect("missing discord config")
-                .bot_token
-                .to_owned(),
-            intents,
-        )
-        .presence(presence(format!("{prefix}help").as_str(), false))
-        .queue(queue.clone())
-        .build(),
+        ConfigBuilder::new(libpk::config.discord().bot_token.to_owned(), intents)
+            .presence(presence(format!("{prefix}help").as_str(), false))
+            .queue(queue.clone())
+            .build(),
         |_, builder| builder.build(),
     );
 
@@ -105,11 +90,7 @@ pub async fn runner(
     // let _span = info_span!("shard_runner", shard_id = shard.id().number()).entered();
     let shard_id = shard.id().number();
 
-    let our_user_id = libpk::config
-        .discord
-        .as_ref()
-        .expect("missing discord config")
-        .client_id;
+    let our_user_id = libpk::config.discord().client_id;
 
     info!("waiting for events");
     while let Some(item) = shard.next().await {
