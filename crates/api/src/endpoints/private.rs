@@ -1,5 +1,9 @@
 use crate::{ApiContext, auth::AuthState, error::fail};
-use axum::{Extension, extract::State, response::Json};
+use axum::{
+    Extension,
+    extract::{Path, State},
+    response::Json,
+};
 use fred::interfaces::*;
 use libpk::state::ShardState;
 use pk_macros::api_endpoint;
@@ -201,7 +205,9 @@ pub enum DashViewRequest {
         name: Option<String>,
         value: Option<String>,
     },
-    Remove { id: String },
+    Remove {
+        id: String,
+    },
 }
 
 #[api_endpoint]
@@ -292,5 +298,22 @@ pub async fn dash_views(
                 Err(err) => fail!(?err, "failed to query dash views"),
             }
         }
+    }
+}
+
+#[api_endpoint]
+pub async fn dash_view(State(ctx): State<ApiContext>, Path(id): Path<String>) -> Json<Value> {
+    match sqlx::query_as::<Postgres, PKDashView>("select * from dash_views where id = $1")
+        .bind(id)
+        .fetch_optional(&ctx.db)
+        .await
+    {
+        Ok(val) => {
+            let Some(val) = val else {
+                return Err(crate::error::GENERIC_BAD_REQUEST);
+            };
+            Ok(Json(val.to_json()))
+        }
+        Err(err) => fail!(?err, "failed to query dash views"),
     }
 }
