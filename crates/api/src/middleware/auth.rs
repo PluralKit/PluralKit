@@ -44,12 +44,7 @@ pub async fn auth(State(ctx): State<ApiContext>, mut req: Request, next: Next) -
         .get("x-pluralkit-app")
         .map(|h| h.to_str().ok())
         .flatten()
-        && let Some(config_token2) = libpk::config
-            .api
-            .as_ref()
-            .expect("missing api config")
-            .temp_token2
-            .as_ref()
+        && let Some(config_token2) = libpk::config.api().temp_token2.as_ref()
         && app_auth_header
             .as_bytes()
             .ct_eq(config_token2.as_bytes())

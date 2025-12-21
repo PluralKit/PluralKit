@@ -56,7 +56,7 @@ pub struct ApiConfig {
     pub addr: String,
 
     #[serde(default)]
-    pub ratelimit_redis_addr: Option<String>,
+    pub use_ratelimiter: bool,
 
     pub remote_url: String,
 
@@ -109,11 +109,11 @@ pub struct PKConfig {
     pub db: DatabaseConfig,
 
     #[serde(default)]
-    pub discord: Option<DiscordConfig>,
+    discord: Option<DiscordConfig>,
     #[serde(default)]
-    pub api: Option<ApiConfig>,
+    api: Option<ApiConfig>,
     #[serde(default)]
-    pub avatars: Option<AvatarsConfig>,
+    avatars: Option<AvatarsConfig>,
     #[serde(default)]
     pub scheduled_tasks: Option<ScheduledTasksConfig>,
 
@@ -134,12 +134,18 @@ pub struct PKConfig {
 }
 
 impl PKConfig {
-    pub fn api(self) -> ApiConfig {
-        self.api.expect("missing api config")
+    pub fn api(&self) -> &ApiConfig {
+        self.api.as_ref().expect("missing api config")
     }
 
-    pub fn discord_config(self) -> DiscordConfig {
-        self.discord.expect("missing discord config")
+    pub fn discord(&self) -> &DiscordConfig {
+        self.discord.as_ref().expect("missing discord config")
+    }
+
+    pub fn avatars(&self) -> &AvatarsConfig {
+        self.avatars
+            .as_ref()
+            .expect("missing avatar service config")
     }
 }
 

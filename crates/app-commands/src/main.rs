@@ -1,30 +1,14 @@
-use twilight_model::{
-    application::command::{Command, CommandType},
-    guild::IntegrationApplication,
-};
+use twilight_model::application::command::CommandType;
 use twilight_util::builder::command::CommandBuilder;
 
 #[libpk::main]
 async fn main() -> anyhow::Result<()> {
     let discord = twilight_http::Client::builder()
-        .token(
-            libpk::config
-                .discord
-                .as_ref()
-                .expect("missing discord config")
-                .bot_token
-                .clone(),
-        )
+        .token(libpk::config.discord().bot_token.clone())
         .build();
 
     let interaction = discord.interaction(twilight_model::id::Id::new(
-        libpk::config
-            .discord
-            .as_ref()
-            .expect("missing discord config")
-            .client_id
-            .clone()
-            .get(),
+        libpk::config.discord().client_id.clone().get(),
     ));
 
     let commands = vec![
