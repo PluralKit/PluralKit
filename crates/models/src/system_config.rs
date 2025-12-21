@@ -88,3 +88,14 @@ struct SystemConfig {
     #[json = "description_templates"]
     description_templates: Vec<String>,
 }
+
+#[pk_model]
+struct DashView {
+    #[json = "id"]
+    id: String,
+    system: SystemId,
+    #[json = "name"]
+    name: String,
+    #[json = "value"]
+    value: String
+}
