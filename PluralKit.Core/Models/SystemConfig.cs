@@ -28,6 +28,9 @@ public class SystemConfig
     public ProxySwitchAction ProxySwitch { get; }
     public string NameFormat { get; }
 
+    public bool PremiumLifetime { get; }
+    public Instant? PremiumUntil { get; }
+
     public enum HidPadFormat
     {
         None = 0,
