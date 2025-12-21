@@ -21,14 +21,16 @@ public class EmbedService
     private readonly IDatabase _db;
     private readonly ModelRepository _repo;
     private readonly DiscordApiClient _rest;
+    private readonly BotConfig _config;
     private readonly CoreConfig _coreConfig;
 
-    public EmbedService(IDatabase db, ModelRepository repo, IDiscordCache cache, DiscordApiClient rest, CoreConfig coreConfig)
+    public EmbedService(IDatabase db, ModelRepository repo, IDiscordCache cache, DiscordApiClient rest, BotConfig config, CoreConfig coreConfig)
     {
         _db = db;
         _repo = repo;
         _cache = cache;
         _rest = rest;
+        _config = config;
         _coreConfig = coreConfig;
     }
 
@@ -192,7 +194,7 @@ public class EmbedService
                     new MessageComponent()
                     {
                         Type = ComponentType.Text,
-                        Content = $"-# System ID: `{system.DisplayHid(cctx.Config)}`\n-# Created: {system.Created.FormatZoned(cctx.Zone)}",
+                        Content = $"-# System ID: `{system.DisplayHid(cctx.Config)}`{cctx.PremiumEmoji}\n-# Created: {system.Created.FormatZoned(cctx.Zone)}",
                     },
                 ],
                 Accessory = new MessageComponent()

@@ -28,6 +28,8 @@ public class Context
 
     private Command? _currentCommand;
 
+    private BotConfig _botConfig;
+
     public Context(ILifetimeScope provider, int shardId, Guild? guild, Channel channel, MessageCreateEvent message,
                                                     int commandParseOffset, PKSystem senderSystem, SystemConfig config,
                                                     GuildConfig? guildConfig, string[] prefixes)
@@ -46,6 +48,7 @@ public class Context
         _metrics = provider.Resolve<IMetrics>();
         _provider = provider;
         _commandMessageService = provider.Resolve<CommandMessageService>();
+        _botConfig = provider.Resolve<BotConfig>();
         CommandPrefix = message.Content?.Substring(0, commandParseOffset);
         DefaultPrefix = prefixes[0];
         Parameters = new Parameters(message.Content?.Substring(commandParseOffset));
@@ -73,6 +76,23 @@ public class Context
     public readonly PKSystem System;
     public readonly SystemConfig Config;
     public DateTimeZone Zone => Config?.Zone ?? DateTimeZone.Utc;
+
+    public bool Premium
+    {
+        get
+        {
+            if (Config?.PremiumLifetime ?? false) return true;
+            // generate _this_ current instant _before_ the check, otherwise it will always be true...
+            var premiumUntil = Config?.PremiumUntil ?? SystemClock.Instance.GetCurrentInstant();
+            return SystemClock.Instance.GetCurrentInstant() < premiumUntil;
+        }
+    }
+
+    public string PremiumEmoji => (Config?.PremiumLifetime ?? false)
+        ? ($"<:lifetime_premium:{_botConfig.PremiumLifetimeEmoji}>" ?? "\u2729")
+        : Premium
+            ? ($"<:premium_subscriber:{_botConfig.PremiumSubscriberEmoji}>" ?? "\u2729")
+            : "";
 
     public readonly string CommandPrefix;
     public readonly string DefaultPrefix;
