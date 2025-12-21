@@ -172,10 +172,7 @@ pub struct AppState {
 
 #[libpk::main]
 async fn main() -> anyhow::Result<()> {
-    let config = libpk::config
-        .avatars
-        .as_ref()
-        .expect("missing avatar service config");
+    let config = libpk::config.avatars();
 
     let bucket = {
         let region = s3::Region::Custom {
