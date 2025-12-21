@@ -123,6 +123,7 @@ fn router(ctx: ApiContext) -> Router {
         .route("/private/discord/callback", post(rproxy))
         .route("/private/discord/callback2", post(endpoints::private::discord_callback))
         .route("/private/discord/shard_state", get(endpoints::private::discord_state))
+        .route("/private/dash_views", post(endpoints::private::dash_views))
         .route("/private/stats", get(endpoints::private::meta))
 
         .route("/v2/systems/{system_id}/oembed.json", get(rproxy))
