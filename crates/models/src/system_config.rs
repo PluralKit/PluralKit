@@ -1,3 +1,4 @@
+use chrono::NaiveDateTime;
 use pk_macros::pk_model;
 
 use sqlx::{postgres::PgTypeInfo, Database, Decode, Postgres, Type};
@@ -87,4 +88,8 @@ struct SystemConfig {
     name_format: Option<String>,
     #[json = "description_templates"]
     description_templates: Vec<String>,
+    #[json = "premium_until"]
+    premium_until: Option<NaiveDateTime>,
+    #[json = "premium_lifetime"]
+    premium_lifetime: bool
 }
