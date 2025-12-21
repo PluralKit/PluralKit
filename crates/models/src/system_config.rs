@@ -93,3 +93,14 @@ struct SystemConfig {
     #[json = "premium_lifetime"]
     premium_lifetime: bool
 }
+
+#[pk_model]
+struct DashView {
+    #[json = "id"]
+    id: String,
+    system: SystemId,
+    #[json = "name"]
+    name: String,
+    #[json = "value"]
+    value: String
+}

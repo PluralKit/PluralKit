@@ -1,10 +1,11 @@
-use crate::ApiContext;
-use axum::{extract::State, response::Json};
+use crate::{ApiContext, auth::AuthState, error::fail};
+use axum::{Extension, extract::State, response::Json};
 use fred::interfaces::*;
 use libpk::state::ShardState;
 use pk_macros::api_endpoint;
 use serde::Deserialize;
 use serde_json::{Value, json};
+use sqlx::Postgres;
 use std::collections::HashMap;
 
 #[allow(dead_code)]
@@ -53,7 +54,7 @@ use axum::{
 };
 use hyper::StatusCode;
 use libpk::config;
-use pluralkit_models::{PKSystem, PKSystemConfig, PrivacyLevel};
+use pluralkit_models::{PKDashView, PKSystem, PKSystemConfig, PrivacyLevel};
 use reqwest::ClientBuilder;
 
 #[derive(serde::Deserialize, Debug)]
@@ -186,4 +187,110 @@ pub async fn discord_callback(
         .expect("should not error"),
     )
         .into_response()
+}
+
+#[derive(serde::Deserialize, Debug)]
+#[serde(tag = "action", rename_all = "snake_case")]
+pub enum DashViewRequest {
+    Add {
+        name: String,
+        value: String,
+    },
+    Patch {
+        id: String,
+        name: Option<String>,
+        value: Option<String>,
+    },
+    Remove { id: String },
+}
+
+#[api_endpoint]
+pub async fn dash_views(
+    Extension(auth): Extension<AuthState>,
+    State(ctx): State<ApiContext>,
+    extract::Json(body): extract::Json<DashViewRequest>,
+) -> Json<Value> {
+    let Some(system_id) = auth.system_id() else {
+        return Err(crate::error::GENERIC_AUTH_ERROR);
+    };
+
+    match body {
+        DashViewRequest::Add { name, value } => {
+            match sqlx::query_as::<Postgres, PKDashView>(
+                "select * from dash_views where name = $1 and system = $2",
+            )
+            .bind(&name)
+            .bind(system_id)
+            .fetch_optional(&ctx.db)
+            .await
+            {
+                Ok(val) => {
+                    if val.is_some() {
+                        return Err(crate::error::GENERIC_BAD_REQUEST);
+                    };
+
+                    match sqlx::query_as::<Postgres, PKDashView>(
+                        "insert into dash_views (system, name, value) values ($1, $2, $3) returning *",
+                    )
+                    .bind(system_id)
+                    .bind(name)
+                    .bind(value)
+                    .fetch_one(&ctx.db)
+                    .await
+                    {
+                        Ok(res) => Ok(Json(res.to_json())),
+                        Err(err) => fail!(?err, "failed to insert dash views"),
+                    }
+                }
+                Err(err) => fail!(?err, "failed to query dash views"),
+            }
+        }
+        DashViewRequest::Patch { id, name, value } => {
+            match sqlx::query_as::<Postgres, PKDashView>(
+                "select * from dash_views where id = $1 and system = $2",
+            )
+            .bind(id)
+            .bind(system_id)
+            .fetch_optional(&ctx.db)
+            .await
+            {
+                Ok(val) => {
+                    let Some(val) = val else {
+                        return Err(crate::error::GENERIC_BAD_REQUEST);
+                    };
+                    // update
+                    Ok(Json(Value::Null))
+                }
+                Err(err) => fail!(?err, "failed to query dash views"),
+            }
+        }
+        DashViewRequest::Remove { id } => {
+            match sqlx::query_as::<Postgres, PKDashView>(
+                "select * from dash_views where id = $1 and system = $2",
+            )
+            .bind(id)
+            .bind(system_id)
+            .fetch_optional(&ctx.db)
+            .await
+            {
+                Ok(val) => {
+                    let Some(val) = val else {
+                        return Err(crate::error::GENERIC_BAD_REQUEST);
+                    };
+                    match sqlx::query::<Postgres>(
+                        "delete from dash_views where id = $1 and system = $2 returning *",
+                    )
+                    .bind(val.id)
+                    .bind(system_id)
+                    .fetch_one(&ctx.db)
+                    .await
+                    {
+                        Ok(_) => Ok(Json(Value::Null)),
+                        Err(err) => fail!(?err, "failed to remove dash views"),
+                    }
+                }
+                Err(err) => fail!(?err, "failed to query dash views"),
+            }
+        }
+    }
 }
