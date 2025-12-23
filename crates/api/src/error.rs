@@ -93,6 +93,14 @@ macro_rules! fail {
 
 pub(crate) use fail;
 
+#[macro_export]
+macro_rules! fail_html {
+    ($($stuff:tt)+) => {{
+        tracing::error!($($stuff)+);
+        return (axum::http::StatusCode::INTERNAL_SERVER_ERROR, "internal server error").into_response();
+    }};
+}
+
 macro_rules! define_error {
     ( $name:ident, $response_code:expr, $json_code:expr, $message:expr ) => {
         #[allow(dead_code)]
