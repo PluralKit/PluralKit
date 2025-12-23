@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<head>
+    <title>PluralKit Premium</title>
+    <link rel="stylesheet" href="/static/stylesheet.css" />
+</head>
+<body>
+<h2>PluralKit Premium</h2>
+
+{% if let Some(session) = session %}
+<form action="/logout" method="post">
+    <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
+    <p>logged in as <strong>{{ session.email }}.</strong></p>
+    <button type="submit">log out</button>
+</form>
+{% endif %}
+
+{% if show_login_form %}
+<p>Enter your email address to log in.</p>
+
+<form method="POST" action="/login">
+    <input type="email" name="email" placeholder="you@example.com" required />
+    <button type="submit">Send</button>
+</form>
+{% endif %}
+
+{% if let Some(msg) = message %}
+<div>{{ msg }}</div>
+{% endif %}
+</body>

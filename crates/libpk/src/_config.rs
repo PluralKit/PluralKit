@@ -97,6 +97,13 @@ pub struct ScheduledTasksConfig {
     pub prometheus_url: String,
 }
 
+#[derive(Deserialize, Clone, Debug)]
+pub struct PremiumConfig {
+    pub postmark_token: String,
+    pub from_email: String,
+    pub base_url: String,
+}
+
 fn _metrics_default() -> bool {
     false
 }
@@ -116,6 +123,8 @@ pub struct PKConfig {
     avatars: Option<AvatarsConfig>,
     #[serde(default)]
     pub scheduled_tasks: Option<ScheduledTasksConfig>,
+    #[serde(default)]
+    premium: Option<PremiumConfig>,
 
     #[serde(default = "_metrics_default")]
     pub run_metrics_server: bool,
@@ -146,6 +155,10 @@ impl PKConfig {
         self.avatars
             .as_ref()
             .expect("missing avatar service config")
+    }
+
+    pub fn premium(&self) -> &PremiumConfig {
+        self.premium.as_ref().expect("missing premium config")
     }
 }
 
