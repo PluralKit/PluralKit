@@ -76,7 +76,10 @@ async fn update_basebackup_ts(repo: String) -> anyhow::Result<()> {
 
     env.insert(
         "WALG_S3_PREFIX".to_string(),
-        format!("s3://pluralkit-backups/{repo}/"),
+        format!(
+            "s3://{}/{repo}/",
+            libpk::config.scheduled_tasks().walg_s3_bucket
+        ),
     );
 
     let output = Command::new("wal-g")
