@@ -45,6 +45,17 @@ public class EmbedService
         return Task.WhenAll(ids.Select(Inner));
     }
 
+    private async Task<(bool Premium, string? Emoji)> SystemHasPremium(PKSystem system)
+    {
+        var config = await _repo.GetSystemConfig(system.Id);
+        if (config.PremiumLifetime)
+            return (true, (_config.PremiumLifetimeEmoji != null ? $"<:lifetime_premium:{_config.PremiumLifetimeEmoji}>" : "\u2729"));
+        else if (config.PremiumUntil != null && SystemClock.Instance.GetCurrentInstant() < config.PremiumUntil!)
+            return (true, (_config.PremiumSubscriberEmoji != null ? $"<:premium_subscriber:{_config.PremiumSubscriberEmoji}>" : "\u2729"));
+
+        return (false, null);
+    }
+
     public async Task<MessageComponent[]> CreateSystemMessageComponents(Context cctx, PKSystem system, LookupContext ctx)
     {
         // Fetch/render info for all accounts simultaneously
@@ -143,7 +154,9 @@ public class EmbedService
             });
 
         var systemName = (cctx.Guild != null && guildSettings?.DisplayName != null) ? guildSettings?.DisplayName! : system.NameFor(ctx);
-        var premiumText = ""; // TODO(iris): "\n\U0001F31F *PluralKit Premium supporter!*";
+
+        var systemPremium = await SystemHasPremium(system);
+        var premiumText = systemPremium.Premium ? $"\n{systemPremium.Emoji} *PluralKit Premium supporter*" : "";
         List<MessageComponent> header = [
             new MessageComponent()
             {
@@ -194,7 +207,7 @@ public class EmbedService
                     new MessageComponent()
                     {
                         Type = ComponentType.Text,
-                        Content = $"-# System ID: `{system.DisplayHid(cctx.Config)}`{cctx.PremiumEmoji}\n-# Created: {system.Created.FormatZoned(cctx.Zone)}",
+                        Content = $"-# System ID: `{system.DisplayHid(cctx.Config)}`\n-# Created: {system.Created.FormatZoned(cctx.Zone)}",
                     },
                 ],
                 Accessory = new MessageComponent()
@@ -457,6 +470,7 @@ public class EmbedService
                 },
             ];
 
+        var systemPremium = await SystemHasPremium(system);
         return [
             new MessageComponent()
             {
@@ -471,7 +485,7 @@ public class EmbedService
                     new MessageComponent()
                     {
                         Type = ComponentType.Text,
-                        Content = $"-# System ID: `{system.DisplayHid(ccfg)}` \u2219 Member ID: `{member.DisplayHid(ccfg)}`{(member.MetadataPrivacy.CanAccess(ctx) ? $"\n-# Created: {member.Created.FormatZoned(zone)}" : "")}",
+                        Content = $"-# System ID: `{system.DisplayHid(ccfg)}`{(systemPremium.Premium ? $" {systemPremium.Emoji}" : "")} \u2219 Member ID: `{member.DisplayHid(ccfg)}`{(member.MetadataPrivacy.CanAccess(ctx) ? $"\n-# Created: {member.Created.FormatZoned(zone)}" : "")}",
                     },
                 ],
                 Accessory = new MessageComponent()
@@ -647,6 +661,7 @@ public class EmbedService
                 },
             ];
 
+        var systemPremium = await SystemHasPremium(system);
         return [
             new MessageComponent()
             {
@@ -661,7 +676,7 @@ public class EmbedService
                     new MessageComponent()
                     {
                         Type = ComponentType.Text,
-                        Content = $"-# System ID: `{system.DisplayHid(ctx.Config)}` \u2219 Group ID: `{target.DisplayHid(ctx.Config)}`{(target.MetadataPrivacy.CanAccess(pctx) ? $"\n-# Created: {target.Created.FormatZoned(ctx.Zone)}" : "")}",
+                        Content = $"-# System ID: `{system.DisplayHid(ctx.Config)}`{(systemPremium.Premium ? $" {systemPremium.Emoji}" : "")} \u2219 Group ID: `{target.DisplayHid(ctx.Config)}`{(target.MetadataPrivacy.CanAccess(pctx) ? $"\n-# Created: {target.Created.FormatZoned(ctx.Zone)}" : "")}",
                     },
                 ],
                 Accessory = new MessageComponent()
