@@ -89,9 +89,9 @@ public class Context
     }
 
     public string PremiumEmoji => (Config?.PremiumLifetime ?? false)
-        ? ($"<:lifetime_premium:{_botConfig.PremiumLifetimeEmoji}>" ?? "\u2729")
+        ? (_botConfig.PremiumLifetimeEmoji != null ? $"<:lifetime_premium:{_botConfig.PremiumLifetimeEmoji}>" : "\u2729")
         : Premium
-            ? ($"<:premium_subscriber:{_botConfig.PremiumSubscriberEmoji}>" ?? "\u2729")
+            ? (_botConfig.PremiumSubscriberEmoji != null ? $"<:premium_subscriber:{_botConfig.PremiumSubscriberEmoji}>" : "\u2729")
             : "";
 
     public readonly string CommandPrefix;
