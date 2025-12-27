@@ -182,6 +182,8 @@ public partial class CommandTree
             await ctx.Execute<Admin>(Admin, a => a.SystemRecover(ctx));
         else if (ctx.Match("sd", "systemdelete"))
             await ctx.Execute<Admin>(Admin, a => a.SystemDelete(ctx));
+        else if (ctx.Match("pe", "premiumexpiry", "premium"))
+            await ctx.Execute<Admin>(Admin, a => a.PremiumExpiry(ctx));
         else if (ctx.Match("sendmsg", "sendmessage"))
             await ctx.Execute<Admin>(Admin, a => a.SendAdminMessage(ctx));
         else if (ctx.Match("al", "abuselog"))

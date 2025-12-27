@@ -2,6 +2,8 @@ using System.Text.RegularExpressions;
 
 using Humanizer;
 using Dapper;
+using NodaTime;
+using NodaTime.Text;
 using SqlKata;
 
 using Myriad.Builders;
@@ -78,6 +80,16 @@ public class Admin
         var groupLimit = config.GroupLimitOverride ?? Limits.MaxGroupCount;
         var groupCount = await ctx.Repository.GetSystemGroupCount(system.Id);
         eb.Field(new Embed.Field("Group limit", $"{groupLimit} {UntilLimit(groupCount, groupLimit)}", true));
+
+        var premiumEntitlement = "none";
+        if (config.PremiumLifetime)
+            premiumEntitlement = $"<:lifetime_premium:{_botConfig.PremiumLifetimeEmoji}> **lifetime**";
+        else if (config.PremiumUntil != null)
+            if (SystemClock.Instance.GetCurrentInstant() < config.PremiumUntil!)
+                premiumEntitlement = $"<:premium_subscriber:{_botConfig.PremiumSubscriberEmoji}> <t:{config.PremiumUntil?.ToUnixTimeSeconds()}> <t:{config.PremiumUntil?.ToUnixTimeSeconds()}:R>";
+            else
+                premiumEntitlement = $"Expired! <t:{config.PremiumUntil?.ToUnixTimeSeconds()}> <t:{config.PremiumUntil?.ToUnixTimeSeconds()}:R>";
+        eb.Field(new Embed.Field("Premium entitlement", premiumEntitlement, false));
 
         return eb.Build();
     }
@@ -394,6 +406,75 @@ public class Admin
         await ctx.BusyIndicator(async () =>
             await ctx.Repository.DeleteSystem(target.Id));
         await ctx.Reply($"{Emojis.Success} System deletion succesful.");
+    }
+
+    public async Task PremiumExpiry(Context ctx)
+    {
+        ctx.AssertBotAdmin();
+
+        var target = await ctx.MatchSystem();
+        if (target == null)
+            throw new PKError("Unknown system.");
+
+        await ctx.Reply(null, await CreateEmbed(ctx, target));
+        if (!ctx.HasNext())
+            return;
+
+        if (ctx.Match("lifetime", "staff"))
+        {
+            if (!await ctx.PromptYesNo($"Grant system `{target.Hid}` lifetime premium?", "Grant"))
+                throw new PKError("Premium entitlement change cancelled.");
+
+            await ctx.Repository.UpdateSystemConfig(target.Id, new SystemConfigPatch
+            {
+                PremiumLifetime = true,
+                PremiumUntil = null,
+            });
+            await ctx.Reply($"{Emojis.Success} Premium entitlement changed.");
+        }
+        else if (ctx.Match("none", "clear"))
+        {
+            if (!await ctx.PromptYesNo($"Clear premium entitlements for system `{target.Hid}`?", "Clear"))
+                throw new PKError("Premium entitlement change cancelled.");
+
+            await ctx.Repository.UpdateSystemConfig(target.Id, new SystemConfigPatch
+            {
+                PremiumLifetime = false,
+                PremiumUntil = null,
+            });
+            await ctx.Reply($"{Emojis.Success} Premium entitlement changed.");
+        }
+        else
+        {
+            var timeToMove = ctx.RemainderOrNull() ??
+                throw new PKSyntaxError("Must pass a date/time to set premium expiry to.");
+
+            Instant? time = null;
+
+            // DateUtils.ParseDateTime expects periods to be in the past, so we have to do
+            // this explicitly here...
+            var duration = DateUtils.ParsePeriod(timeToMove);
+            if (duration != null)
+            {
+                time = SystemClock.Instance.GetCurrentInstant() + duration;
+            }
+            else
+            {
+                var result = DateUtils.ParseDateTime(timeToMove, false);
+                if (result == null) throw Errors.InvalidDateTime(timeToMove);
+                time = result.Value.ToInstant();
+            }
+
+            if (!await ctx.PromptYesNo($"Change premium expiry for system `{target.Hid}` to <t:{time?.ToUnixTimeSeconds()}>?", "Change"))
+                throw new PKError("Premium entitlement change cancelled.");
+
+            await ctx.Repository.UpdateSystemConfig(target.Id, new SystemConfigPatch
+            {
+                PremiumLifetime = false,
+                PremiumUntil = time,
+            });
+            await ctx.Reply($"{Emojis.Success} Premium entitlement changed.");
+        }
     }
 
     public async Task AbuseLogCreate(Context ctx)
