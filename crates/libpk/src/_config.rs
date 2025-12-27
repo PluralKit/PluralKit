@@ -95,6 +95,7 @@ pub struct ScheduledTasksConfig {
     pub expected_gateway_count: usize,
     pub gateway_url: String,
     pub prometheus_url: String,
+    pub walg_s3_bucket: String,
 }
 
 #[derive(Deserialize, Clone, Debug)]
@@ -155,6 +156,12 @@ impl PKConfig {
         self.avatars
             .as_ref()
             .expect("missing avatar service config")
+    }
+
+    pub fn scheduled_tasks(&self) -> &ScheduledTasksConfig {
+        self.scheduled_tasks
+            .as_ref()
+            .expect("missing scheduled_tasks config")
     }
 
     pub fn premium(&self) -> &PremiumConfig {
