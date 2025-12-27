@@ -21,6 +21,39 @@ public class MemberEdit
         _avatarHosting = avatarHosting;
     }
 
+    public async Task ChangeId(Context ctx, PKMember target)
+    {
+        ctx.CheckSystem().CheckOwnMember(target);
+        if (!ctx.Premium)
+            throw Errors.PremiumExclusiveCommand();
+
+        var input = ctx.PopArgument();
+        if (!input.TryParseHid(out var newHid))
+            throw new PKError($"Invalid new member ID `{input}`.");
+
+        var existingMember = await ctx.Repository.GetMemberByHid(newHid);
+        if (existingMember != null)
+            throw new PKError($"Another member already exists with ID `{newHid.DisplayHid(ctx.Config)}`.");
+
+        var allowance = await ctx.Repository.GetPremiumAllowance(ctx.System.Id)!;
+        if (allowance.IdChangesRemaining < 1)
+            throw new PKError("You do not have enough available ID changes to do this.");
+        if ((await ctx.Repository.GetHidChangelogCountForDate(ctx.System.Id, SystemClock.Instance.GetCurrentInstant().InUtc().Date)) >= Limits.PremiumDailyHidChanges)
+            throw new PKError($"You have already changed {Limits.PremiumDailyHidChanges} IDs today. Please try again tomorrow.");
+
+        if (!await ctx.PromptYesNo($"Change ID  for member **{target.NameFor(ctx)}** (`{target.DisplayHid(ctx.Config)}`) to `{newHid.DisplayHid(ctx.Config)}`?", "Change"))
+            throw new PKError("ID change cancelled.");
+
+        if (!await ctx.Repository.UpdatePremiumAllowanceForIdChange(ctx.System.Id))
+            throw new PKError("You do not have enough available ID changes to do this.");
+
+        await ctx.Repository.CreateHidChangelog(ctx.System.Id, ctx.Message.Author.Id, "member", target.Hid, newHid);
+        await ctx.Repository.UpdateMember(target.Id, new MemberPatch { Hid = newHid });
+
+        var newAllowance = await ctx.Repository.GetPremiumAllowance(ctx.System.Id)!;
+        await ctx.Reply($"{Emojis.Success} Member ID changed to `{newHid.DisplayHid(ctx.Config)}`. You have **{newAllowance.IdChangesRemaining}** ID changes remaining.");
+    }
+
     public async Task Name(Context ctx, PKMember target)
     {
         var format = ctx.MatchFormat();

@@ -54,7 +54,58 @@ public class Misc
             }
         }
 
-        await ctx.Reply(message + $"\n\nManage your subscription at <{_botConfig.PremiumDashboardUrl}>");
+        List<MessageComponent> components = [
+            new MessageComponent()
+            {
+                Type = ComponentType.Text,
+                Content = message,
+            },
+        ];
+
+        if (ctx.Premium)
+        {
+            var allowance = await ctx.Repository.GetPremiumAllowance(ctx.System.Id)!;
+            var hidChangesLeftToday = Limits.PremiumDailyHidChanges - await ctx.Repository.GetHidChangelogCountForDate(ctx.System.Id, SystemClock.Instance.GetCurrentInstant().InUtc().Date);
+            var limitMessage = $"You have **{allowance.IdChangesRemaining}** ID changes available, of which you can use **{hidChangesLeftToday}** today.";
+
+            components.Add(new()
+            {
+                Type = ComponentType.Separator,
+            });
+            components.Add(new()
+            {
+                Type = ComponentType.Text,
+                Content = limitMessage,
+            });
+        }
+
+        await ctx.Reply(components: [
+            new()
+            {
+                Type = ComponentType.Container,
+                Components = [
+                    new()
+                    {
+                        Type = ComponentType.Text,
+                        Content = $"## {(_botConfig.PremiumSubscriberEmoji != null ? $"<:premium_subscriber:{_botConfig.PremiumSubscriberEmoji}>" : "\u2729")} PluralKit Premium",
+                    },
+                    ..components,
+                ],
+            },
+            new()
+            {
+                Type = ComponentType.ActionRow,
+                Components = [
+                    new()
+                    {
+                        Type = ComponentType.Button,
+                        Style = ButtonStyle.Link,
+                        Label = "Manage your subscription",
+                        Url = _botConfig.PremiumDashboardUrl,
+                    },
+                ],
+            },
+        ]);
     }
 
     public async Task Invite(Context ctx)

@@ -9,6 +9,8 @@ using Myriad.Types;
 
 using Newtonsoft.Json;
 
+using NodaTime;
+
 using PluralKit.Core;
 using SqlKata.Compilers;
 
@@ -20,13 +22,48 @@ public class SystemEdit
     private readonly DataFileService _dataFiles;
     private readonly PrivateChannelService _dmCache;
     private readonly AvatarHostingService _avatarHosting;
+    private readonly BotConfig _botConfig;
 
-    public SystemEdit(DataFileService dataFiles, HttpClient client, PrivateChannelService dmCache, AvatarHostingService avatarHosting)
+    public SystemEdit(DataFileService dataFiles, HttpClient client, PrivateChannelService dmCache, AvatarHostingService avatarHosting, BotConfig botConfig)
     {
         _dataFiles = dataFiles;
         _client = client;
         _dmCache = dmCache;
         _avatarHosting = avatarHosting;
+        _botConfig = botConfig;
+    }
+
+    public async Task ChangeId(Context ctx, PKSystem target)
+    {
+        ctx.CheckSystem().CheckOwnSystem(target);
+        if (!ctx.Premium)
+            throw Errors.PremiumExclusiveCommand();
+
+        var input = ctx.PopArgument();
+        if (!input.TryParseHid(out var newHid))
+            throw new PKError($"Invalid new system ID `{input}`.");
+
+        var existingSystem = await ctx.Repository.GetSystemByHid(newHid);
+        if (existingSystem != null)
+            throw new PKError($"Another system already exists with ID `{newHid.DisplayHid(ctx.Config)}`.");
+
+        var allowance = await ctx.Repository.GetPremiumAllowance(ctx.System.Id)!;
+        if (allowance.IdChangesRemaining < 1)
+            throw new PKError("You do not have enough available ID changes to do this.");
+        if ((await ctx.Repository.GetHidChangelogCountForDate(target.Id, SystemClock.Instance.GetCurrentInstant().InUtc().Date)) >= Limits.PremiumDailyHidChanges)
+            throw new PKError($"You have already changed {Limits.PremiumDailyHidChanges} IDs today. Please try again tomorrow.");
+
+        if (!await ctx.PromptYesNo($"Change your system ID to `{newHid.DisplayHid(ctx.Config)}`?", "Change"))
+            throw new PKError("ID change cancelled.");
+
+        if (!await ctx.Repository.UpdatePremiumAllowanceForIdChange(target.Id))
+            throw new PKError("You do not have enough available ID changes to do this.");
+
+        await ctx.Repository.CreateHidChangelog(target.Id, ctx.Message.Author.Id, "system", target.Hid, newHid);
+        await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { Hid = newHid });
+
+        var newAllowance = await ctx.Repository.GetPremiumAllowance(target.Id)!;
+        await ctx.Reply($"{Emojis.Success} System ID changed to `{newHid.DisplayHid(ctx.Config)}`. You have **{newAllowance.IdChangesRemaining}** ID changes remaining.");
     }
 
     public async Task Name(Context ctx, PKSystem target)

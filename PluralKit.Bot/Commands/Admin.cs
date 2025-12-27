@@ -62,6 +62,7 @@ public class Admin
         }
 
         var config = await ctx.Repository.GetSystemConfig(system.Id);
+        // var allowance = await ctx.Repository.GetPremiumAllowance(target.Id);
 
         // Fetch/render info for all accounts simultaneously
         var accounts = await ctx.Repository.GetSystemAccounts(system.Id);
@@ -416,15 +417,19 @@ public class Admin
         if (target == null)
             throw new PKError("Unknown system.");
 
-        await ctx.Reply(null, await CreateEmbed(ctx, target));
         if (!ctx.HasNext())
+        {
+            await ctx.Reply(null, await CreateEmbed(ctx, target));
             return;
+        }
 
         if (ctx.Match("lifetime", "staff"))
         {
+            await ctx.Reply(null, await CreateEmbed(ctx, target));
             if (!await ctx.PromptYesNo($"Grant system `{target.Hid}` lifetime premium?", "Grant"))
                 throw new PKError("Premium entitlement change cancelled.");
 
+            await ctx.Repository.CreatePremiumAllowance(target.Id);
             await ctx.Repository.UpdateSystemConfig(target.Id, new SystemConfigPatch
             {
                 PremiumLifetime = true,
@@ -434,9 +439,11 @@ public class Admin
         }
         else if (ctx.Match("none", "clear"))
         {
+            await ctx.Reply(null, await CreateEmbed(ctx, target));
             if (!await ctx.PromptYesNo($"Clear premium entitlements for system `{target.Hid}`?", "Clear"))
                 throw new PKError("Premium entitlement change cancelled.");
 
+            await ctx.Repository.CreatePremiumAllowance(target.Id);
             await ctx.Repository.UpdateSystemConfig(target.Id, new SystemConfigPatch
             {
                 PremiumLifetime = false,
@@ -465,9 +472,11 @@ public class Admin
                 time = result.Value.ToInstant();
             }
 
+            await ctx.Reply(null, await CreateEmbed(ctx, target));
             if (!await ctx.PromptYesNo($"Change premium expiry for system `{target.Hid}` to <t:{time?.ToUnixTimeSeconds()}>?", "Change"))
                 throw new PKError("Premium entitlement change cancelled.");
 
+            await ctx.Repository.CreatePremiumAllowance(target.Id);
             await ctx.Repository.UpdateSystemConfig(target.Id, new SystemConfigPatch
             {
                 PremiumLifetime = false,
@@ -475,6 +484,39 @@ public class Admin
             });
             await ctx.Reply($"{Emojis.Success} Premium entitlement changed.");
         }
+    }
+
+    public async Task PremiumIdChangeAllowance(Context ctx)
+    {
+        ctx.AssertBotAdmin();
+
+        var target = await ctx.MatchSystem();
+        if (target == null)
+            throw new PKError("Unknown system.");
+
+        if (!ctx.HasNext())
+        {
+            await ctx.Reply(null, await CreateEmbed(ctx, target));
+            return;
+        }
+
+        await ctx.Repository.CreatePremiumAllowance(target.Id);
+        var allowance = await ctx.Repository.GetPremiumAllowance(target.Id)!;
+
+        var newAllowanceStr = ctx.PopArgument().ToLower().Replace(",", null).Replace("k", "000");
+        if (!int.TryParse(newAllowanceStr, out var newAllowance))
+            throw new PKError($"Couldn't parse `{newAllowanceStr}` as number.");
+
+        await ctx.Reply(null, await CreateEmbed(ctx, target));
+        if (!await ctx.PromptYesNo($"Update premium ID change allowance from **{allowance.IdChangesRemaining}** to **{newAllowance}**?", "Update"))
+            throw new PKError("ID change allowance cancelled.");
+
+        await ctx.Repository.UpdatePremiumAllowance(target.Id, new PremiumAllowancePatch
+        {
+            IdChangesRemaining = newAllowance,
+        });
+
+        await ctx.Reply($"{Emojis.Success} Premium entitlement changed.");
     }
 
     public async Task AbuseLogCreate(Context ctx)

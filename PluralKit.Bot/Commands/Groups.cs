@@ -4,6 +4,8 @@ using System.Text.RegularExpressions;
 using Myriad.Builders;
 using Myriad.Types;
 
+using NodaTime;
+
 using Newtonsoft.Json.Linq;
 
 using PluralKit.Core;
@@ -97,6 +99,39 @@ public class Groups
             replyStr += $"\n{Emojis.Warn} You are approaching the per-system group limit ({existingGroupCount} / {groupLimit} groups). Once you reach this limit, you will be unable to create new groups until existing groups are deleted, or you can ask for your limit to be raised in the PluralKit support server: <https://discord.gg/PczBt78>";
 
         await ctx.Reply(replyStr, eb.Build());
+    }
+
+    public async Task ChangeId(Context ctx, PKGroup target)
+    {
+        ctx.CheckSystem().CheckOwnGroup(target);
+        if (!ctx.Premium)
+            throw Errors.PremiumExclusiveCommand();
+
+        var input = ctx.PopArgument();
+        if (!input.TryParseHid(out var newHid))
+            throw new PKError($"Invalid new member ID `{input}`.");
+
+        var existingGroup = await ctx.Repository.GetGroupByHid(newHid);
+        if (existingGroup != null)
+            throw new PKError($"Another group already exists with ID `{newHid.DisplayHid(ctx.Config)}`.");
+
+        var allowance = await ctx.Repository.GetPremiumAllowance(ctx.System.Id)!;
+        if (allowance.IdChangesRemaining < 1)
+            throw new PKError("You do not have enough available ID changes to do this.");
+        if ((await ctx.Repository.GetHidChangelogCountForDate(ctx.System.Id, SystemClock.Instance.GetCurrentInstant().InUtc().Date)) >= Limits.PremiumDailyHidChanges)
+            throw new PKError($"You have already changed {Limits.PremiumDailyHidChanges} IDs today. Please try again tomorrow.");
+
+        if (!await ctx.PromptYesNo($"Change ID for group **{target.NameFor(ctx)}** (`{target.DisplayHid(ctx.Config)}`) to `{newHid.DisplayHid(ctx.Config)}`?", "Change"))
+            throw new PKError("ID change cancelled.");
+
+        if (!await ctx.Repository.UpdatePremiumAllowanceForIdChange(ctx.System.Id))
+            throw new PKError("You do not have enough available ID changes to do this.");
+
+        await ctx.Repository.CreateHidChangelog(ctx.System.Id, ctx.Message.Author.Id, "group", target.Hid, newHid);
+        await ctx.Repository.UpdateGroup(target.Id, new GroupPatch { Hid = newHid });
+
+        var newAllowance = await ctx.Repository.GetPremiumAllowance(ctx.System.Id)!;
+        await ctx.Reply($"{Emojis.Success} Group ID changed to `{newHid.DisplayHid(ctx.Config)}`. You have **{newAllowance.IdChangesRemaining}** ID changes remaining.");
     }
 
     public async Task RenameGroup(Context ctx, PKGroup target)

@@ -1,4 +1,5 @@
 using SqlKata;
+using Npgsql;
 
 namespace PluralKit.Core;
 
