@@ -1,4 +1,5 @@
 using SqlKata;
+using Npgsql;
 
 namespace PluralKit.Core;
 
@@ -19,5 +20,28 @@ public partial class ModelRepository
         });
 
         return config;
+    }
+
+    public async Task<bool> TryUpdateSystemConfigForIdChange(SystemId system, IPKConnection conn = null)
+    {
+        var query = new Query("system_config")
+            .AsUpdate(new
+            {
+                premium_id_changes_remaining = new UnsafeLiteral("premium_id_changes_remaining - 1")
+            })
+            .Where("system", system);
+
+        try
+        {
+            await _db.ExecuteQuery(conn, query);
+        }
+        catch (PostgresException pe)
+        {
+            if (!pe.Message.Contains("violates check constraint"))
+                throw;
+            return false;
+        }
+
+        return true;
     }
 }

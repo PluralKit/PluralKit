@@ -28,6 +28,7 @@ public class SystemConfigPatch: PatchObject
     public Partial<SystemConfig.ProxySwitchAction> ProxySwitch { get; set; }
     public Partial<bool> PremiumLifetime { get; set; }
     public Partial<Instant?> PremiumUntil { get; set; }
+    public Partial<int?> PremiumIdChangesRemaining { get; set; }
 
     public override Query Apply(Query q) => q.ApplyPatch(wrapper => wrapper
         .With("ui_tz", UiTz)
@@ -49,6 +50,7 @@ public class SystemConfigPatch: PatchObject
         .With("name_format", NameFormat)
         .With("premium_lifetime", PremiumLifetime)
         .With("premium_until", PremiumUntil)
+        .With("premium_id_changes_remaining", PremiumIdChangesRemaining)
     );
 
     public new void AssertIsValid()
@@ -127,6 +129,9 @@ public class SystemConfigPatch: PatchObject
 
         if (PremiumUntil.IsPresent)
             o.Add("premium_until", PremiumUntil.Value?.FormatExport());
+
+        if (PremiumIdChangesRemaining.IsPresent)
+            o.Add("premium_id_changes_remaining", PremiumIdChangesRemaining.Value);
 
         return o;
     }

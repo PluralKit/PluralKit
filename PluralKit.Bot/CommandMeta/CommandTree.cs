@@ -184,6 +184,8 @@ public partial class CommandTree
             await ctx.Execute<Admin>(Admin, a => a.SystemDelete(ctx));
         else if (ctx.Match("pe", "premiumexpiry", "premium"))
             await ctx.Execute<Admin>(Admin, a => a.PremiumExpiry(ctx));
+        else if (ctx.Match("pid", "premiumidchange", "premiumid"))
+            await ctx.Execute<Admin>(Admin, a => a.PremiumIdChangeAllowance(ctx));
         else if (ctx.Match("sendmsg", "sendmessage"))
             await ctx.Execute<Admin>(Admin, a => a.SendAdminMessage(ctx));
         else if (ctx.Match("al", "abuselog"))
@@ -320,6 +322,8 @@ public partial class CommandTree
             await ctx.CheckSystem(target).Execute<SystemEdit>(SystemDelete, m => m.Delete(ctx, target));
         else if (ctx.Match("id"))
             await ctx.CheckSystem(target).Execute<System>(SystemId, m => m.DisplayId(ctx, target));
+        else if (ctx.Match("changeid", "updateid"))
+            await ctx.CheckSystem(target).Execute<SystemEdit>(SystemIdChange, m => m.ChangeId(ctx, target));
         else if (ctx.Match("random", "rand", "r"))
             if (ctx.Match("group", "g") || ctx.MatchFlag("group", "g"))
                 await ctx.CheckSystem(target).Execute<Random>(GroupRandom, r => r.Group(ctx, target));
@@ -395,6 +399,8 @@ public partial class CommandTree
             await ctx.Execute<MemberEdit>(MemberServerKeepProxy, m => m.ServerKeepProxy(ctx, target));
         else if (ctx.Match("id"))
             await ctx.Execute<Member>(MemberId, m => m.DisplayId(ctx, target));
+        else if (ctx.Match("changeid", "updateid"))
+            await ctx.Execute<MemberEdit>(MemberIdChange, m => m.ChangeId(ctx, target));
         else if (ctx.Match("privacy"))
             await ctx.Execute<MemberEdit>(MemberPrivacy, m => m.Privacy(ctx, target, null));
         else if (ctx.Match("private", "hidden", "hide"))
@@ -457,6 +463,8 @@ public partial class CommandTree
                 await ctx.Execute<Groups>(GroupColor, g => g.GroupColor(ctx, target));
             else if (ctx.Match("id"))
                 await ctx.Execute<Groups>(GroupId, g => g.DisplayId(ctx, target));
+            else if (ctx.Match("changeid", "updateid"))
+                await ctx.Execute<Groups>(GroupIdChange, g => g.ChangeId(ctx, target));
             else if (!ctx.HasNext())
                 await ctx.Execute<Groups>(GroupInfo, g => g.ShowGroupCard(ctx, target));
             else

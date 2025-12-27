@@ -30,6 +30,7 @@ public class SystemConfig
 
     public bool PremiumLifetime { get; }
     public Instant? PremiumUntil { get; }
+    public int? PremiumIdChangesRemaining { get; }
 
     public enum HidPadFormat
     {

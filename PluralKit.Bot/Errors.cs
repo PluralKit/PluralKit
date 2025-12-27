@@ -185,4 +185,6 @@ public static class Errors
         new($"Channel \"{channelString}\" not found or is not in this server.");
 
     public static PKError InteractionWrongAccount(ulong user) => new($"This prompt is only available for <@{user}>");
+
+    public static PKError PremiumExclusiveCommand() => new("This command is only available for PluralKit Premium subscribers.");
 }

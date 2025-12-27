@@ -22,4 +22,6 @@ public static class Limits
 
     public static readonly long AvatarFileSizeLimit = 1024 * 1024;
     public static readonly int AvatarDimensionLimit = 1000;
+
+    public static readonly int PremiumDailyHidChanges = 3;
 }
