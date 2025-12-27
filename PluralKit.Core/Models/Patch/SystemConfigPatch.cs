@@ -26,6 +26,8 @@ public class SystemConfigPatch: PatchObject
     public Partial<string?> NameFormat { get; set; }
     public Partial<SystemConfig.HidPadFormat> HidListPadding { get; set; }
     public Partial<SystemConfig.ProxySwitchAction> ProxySwitch { get; set; }
+    public Partial<bool> PremiumLifetime { get; set; }
+    public Partial<Instant?> PremiumUntil { get; set; }
 
     public override Query Apply(Query q) => q.ApplyPatch(wrapper => wrapper
         .With("ui_tz", UiTz)
@@ -45,6 +47,8 @@ public class SystemConfigPatch: PatchObject
         .With("card_show_color_hex", CardShowColorHex)
         .With("proxy_switch", ProxySwitch)
         .With("name_format", NameFormat)
+        .With("premium_lifetime", PremiumLifetime)
+        .With("premium_until", PremiumUntil)
     );
 
     public new void AssertIsValid()
@@ -117,6 +121,12 @@ public class SystemConfigPatch: PatchObject
 
         if (NameFormat.IsPresent)
             o.Add("name_format", NameFormat.Value);
+
+        if (PremiumLifetime.IsPresent)
+            o.Add("premium_lifetime", PremiumLifetime.Value);
+
+        if (PremiumUntil.IsPresent)
+            o.Add("premium_until", PremiumUntil.Value?.FormatExport());
 
         return o;
     }
