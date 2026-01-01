@@ -645,10 +645,10 @@ public class Config
         var clearFlag = ctx.MatchClear();
         var format = ctx.MatchFormat();
 
+        var guildCfg = await ctx.Repository.GetSystemGuild(ctx.Guild.Id, ctx.System.Id);
         // if there's nothing next or what's next is raw/plaintext and we're not clearing, it's a query
         if ((!ctx.HasNext() || format != ReplyFormat.Standard) && !clearFlag)
         {
-            var guildCfg = await ctx.Repository.GetSystemGuild(ctx.Guild.Id, ctx.System.Id);
             if (guildCfg.NameFormat == null)
                 await ctx.Reply("You do not have a specific name format set for this server and member names are formatted with your global name format.");
             else
