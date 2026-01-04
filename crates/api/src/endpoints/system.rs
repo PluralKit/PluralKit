@@ -5,7 +5,7 @@ use sqlx::Postgres;
 
 use pluralkit_models::{PKDashView, PKSystem, PKSystemConfig, PrivacyLevel};
 
-use crate::{ApiContext, auth::AuthState, error::fail};
+use crate::{ApiContext, auth::AuthState, fail};
 
 #[api_endpoint]
 pub async fn get_system_settings(

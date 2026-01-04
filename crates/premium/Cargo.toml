@@ -11,6 +11,7 @@ api = { path = "../api" }
 
 anyhow = { workspace = true }
 axum = { workspace = true }
+chrono = { workspace = true }
 axum-extra = { workspace = true }
 fred = { workspace = true }
 lazy_static = { workspace = true }
@@ -30,6 +31,6 @@ postmark = { version = "0.11", features = ["reqwest"] }
 rand = "0.8"
 thiserror = "1.0"
 hex = "0.4"
-chrono = { workspace = true }
+paddle-rust-sdk = { version = "0.16.0", default-features = false, features = ["rustls-native-roots"] }
 serde_urlencoded = "0.7"
 time = "0.3"

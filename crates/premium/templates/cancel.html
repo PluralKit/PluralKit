@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<head>
+    <title>Cancel Subscription - PluralKit Premium</title>
+    <link rel="stylesheet" href="/static/stylesheet.css" />
+</head>
+<body>
+<h2>PluralKit Premium</h2>
+
+{% if subscription.is_cancellable() %}
+<h3>Cancel Subscription</h3>
+
+<p>Are you sure you want to cancel subscription <strong>{{ subscription.subscription_id() }}</strong>?</p>
+<p>Your subscription will remain active until the end of the current billing period.</p>
+
+<form action="/cancel" method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+    <input type="hidden" name="subscription_id" value="{{ subscription.subscription_id() }}" />
+    <button type="submit">Yes, cancel subscription</button>
+    <a href="/"><button type="button">No, go back</button></a>
+</form>
+{% else %}
+<p>This subscription (<strong>{{ subscription.subscription_id() }}</strong>) has already been canceled and will end on <strong>{{ subscription.next_renewal() }}</strong>.</p>
+
+<a href="/"><button type="button">Go back</button></a>
+{% endif %}
+
+<br/><br/>
+<p>for assistance please email us at <a href="mailto:billing@pluralkit.me">billing@pluralkit.me</a></p>
+</body>

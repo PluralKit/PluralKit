@@ -1,4 +1,4 @@
-use crate::{ApiContext, auth::AuthState, error::fail};
+use crate::{ApiContext, auth::AuthState, fail};
 use axum::{
     Extension,
     extract::{Path, State},
