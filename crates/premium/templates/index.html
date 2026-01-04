@@ -2,6 +2,7 @@
 <head>
     <title>PluralKit Premium</title>
     <link rel="stylesheet" href="/static/stylesheet.css" />
+    <script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
 </head>
 <body>
 <h2>PluralKit Premium</h2>
@@ -9,9 +10,126 @@
 {% if let Some(session) = session %}
 <form action="/logout" method="post">
     <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
-    <p>logged in as <strong>{{ session.email }}.</strong></p>
-    <button type="submit">log out</button>
+    <p>
+        logged in as <strong>{{ session.email }}.</strong>
+        <button type="submit">log out</button>
+    </p>
 </form>
+<br/>
+
+{% if subscriptions.is_empty() %}
+<p>You are not currently subscribed to PluralKit Premium.</p>
+<p>Enter your system token to subscribe. yes this will be fixed before release</p>
+<div>
+    <input type="text" id="system-token" placeholder="token" required />
+    <button id="buy-button">Subscribe to PluralKit Premium</button>
+</div>
+<p id="token-error" style="color: red; display: none;"></p>
+<p id="system-info" style="color: green; display: none;"></p>
+{% else %}
+You are currently subscribed to PluralKit Premium. Thanks for the support!
+<br/>
+{% for sub in &subscriptions %}
+<p>
+    <strong>Subscription ID:</strong> {{ sub.subscription_id() }}<br/>
+    <strong>Status:</strong> {{ sub.status() }}<br/>
+    <strong>Next Renewal:</strong> {{ sub.next_renewal() }}<br/>
+    <strong>Linked System:</strong> {{ sub.system_id_display()|safe }}<br/>
+    {% if sub.is_cancellable() %}
+    <a href="/cancel?id={{ sub.subscription_id() }}">Cancel</a><br/>
+    {% endif %}
+</div>
+{% endfor %}
+{% endif %}
+
+{% if let Some(paddle) = paddle %}
+<script>
+Paddle.Environment.set("{{ paddle.environment }}");
+Paddle.Initialize({
+    token: "{{ paddle.client_token }}",
+    eventCallback: function(event) {
+        if (event.name === "checkout.completed") {
+            // webhook request sometimes takes a while, artificially delay here
+            document.body.innerHTML = "<h2>PluralKit Premium</h2><p>Processing your subscription, please wait...</p>";
+            setTimeout(function() {
+                window.location.href = "{{ base_url }}";
+            }, 3000);
+        }
+    }
+});
+
+const buyButton = document.getElementById("buy-button");
+if (buyButton) {
+    buyButton.addEventListener("click", async function() {
+        const tokenInput = document.getElementById("system-token");
+        const errorEl = document.getElementById("token-error");
+        const infoEl = document.getElementById("system-info");
+
+        if (!tokenInput || !tokenInput.value.trim()) {
+            errorEl.textContent = "Please enter your system token.";
+            errorEl.style.display = "block";
+            infoEl.style.display = "none";
+            return;
+        }
+
+        // Validate the token
+        buyButton.disabled = true;
+        buyButton.textContent = "Validating...";
+        errorEl.style.display = "none";
+        infoEl.style.display = "none";
+
+        try {
+            const response = await fetch("/validate-token", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    csrf_token: "{{ session.csrf_token }}",
+                    token: tokenInput.value.trim()
+                })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                errorEl.textContent = data.error || "Invalid token.";
+                errorEl.style.display = "block";
+                buyButton.disabled = false;
+                buyButton.textContent = "Subscribe to PluralKit Premium";
+                return;
+            }
+
+            // Token is valid, open Paddle checkout
+            Paddle.Checkout.open({
+                settings: {
+                    allowLogout: false,
+                },
+                items: [
+                    { priceId: "{{ paddle.price_id }}", quantity: 1 }
+                ],
+                customer: {
+                    email: "{{ session.email }}"
+                },
+                customData: {
+                    email: "{{ session.email }}",
+                    system_id: data.system_id
+                }
+            });
+
+            buyButton.disabled = false;
+            buyButton.textContent = "Subscribe to PluralKit Premium";
+        } catch (err) {
+            errorEl.textContent = "Failed to validate token. Please try again.";
+            errorEl.style.display = "block";
+            buyButton.disabled = false;
+            buyButton.textContent = "Subscribe to PluralKit Premium";
+        }
+    });
+}
+</script>
+{% else %}
+error initializing paddle client
+{% endif %}
+
 {% endif %}
 
 {% if show_login_form %}
@@ -26,4 +144,7 @@
 {% if let Some(msg) = message %}
 <div>{{ msg }}</div>
 {% endif %}
+
+<br/><br/>
+<p>for assistance please email us at <a href="mailto:billing@pluralkit.me">billing@pluralkit.me</a></p>
 </body>

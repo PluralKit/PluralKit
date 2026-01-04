@@ -100,6 +100,13 @@ pub struct ScheduledTasksConfig {
 
 #[derive(Deserialize, Clone, Debug)]
 pub struct PremiumConfig {
+    pub paddle_webhook_secret: String,
+    pub paddle_api_key: String,
+    pub paddle_client_token: String,
+    pub paddle_price_id: String,
+    #[serde(default)]
+    pub is_paddle_production: bool,
+
     pub postmark_token: String,
     pub from_email: String,
     pub base_url: String,

@@ -14,7 +14,7 @@ use fred::{
 use rand::{Rng, distributions::Alphanumeric};
 use serde::{Deserialize, Serialize};
 
-use crate::web::{render, message};
+use crate::web::{message, render};
 
 const LOGIN_TOKEN_TTL_SECS: i64 = 60 * 10;
 
@@ -162,9 +162,12 @@ pub async fn middleware(
                 refresh_session_cookie(session, response)
             } else {
                 return render!(crate::web::Index {
+                    base_url: libpk::config.premium().base_url.clone(),
                     session: None,
                     show_login_form: true,
                     message: None,
+                    subscriptions: vec![],
+                    paddle: None,
                 });
             }
         }
@@ -185,17 +188,23 @@ pub async fn middleware(
                     };
                 let Some(email) = form.get("email") else {
                     return render!(crate::web::Index {
+                        base_url: libpk::config.premium().base_url.clone(),
                         session: None,
                         show_login_form: true,
                         message: Some("email field is required".to_string()),
+                        subscriptions: vec![],
+                        paddle: None,
                     });
                 };
                 let email = email.trim().to_lowercase();
                 if email.is_empty() {
                     return render!(crate::web::Index {
+                        base_url: libpk::config.premium().base_url.clone(),
                         session: None,
                         show_login_form: true,
                         message: Some("email field is required".to_string()),
+                        subscriptions: vec![],
+                        paddle: None,
                     });
                 }
 
@@ -237,9 +246,12 @@ pub async fn middleware(
             let token = path.strip_prefix("/login/").unwrap_or("");
             if token.is_empty() {
                 return render!(crate::web::Index {
+                    base_url: libpk::config.premium().base_url.clone(),
                     session: None,
                     show_login_form: true,
                     message: Some("invalid login link".to_string()),
+                    subscriptions: vec![],
+                    paddle: None,
                 });
             }
 
@@ -251,11 +263,14 @@ pub async fn middleware(
 
             let Some(email) = email else {
                 return render!(crate::web::Index {
+                    base_url: libpk::config.premium().base_url.clone(),
                     session: None,
                     show_login_form: true,
                     message: Some(
                         "invalid or expired login link. please request a new one.".to_string()
                     ),
+                    subscriptions: vec![],
+                    paddle: None,
                 });
             };
 
@@ -312,6 +327,14 @@ pub async fn middleware(
                 Redirect::to("/"),
             )
                 .into_response()
+        }
+        "/cancel" | "/validate-token" => {
+            if let Some(ref session) = session {
+                let response = next.run(request).await;
+                refresh_session_cookie(session, response)
+            } else {
+                Redirect::to("/").into_response()
+            }
         }
         _ => (axum::http::StatusCode::NOT_FOUND, "404 not found").into_response(),
     }
