@@ -73,7 +73,7 @@ public class ServerConfig
         items.Add(new(
             "proxy blacklist",
             "Channels where message proxying is disabled",
-            ChannelListMessage(ctx.GuildConfig!.Blacklist.Length, "proxy blacklist"),
+            ChannelListMessage(ctx.GuildConfig!.ProxyBlacklist.Length, "proxy blacklist"),
             ChannelListMessage(0, "proxy blacklist")
         ));
 
@@ -197,7 +197,7 @@ public class ServerConfig
         var blacklist = await ctx.Repository.GetGuild(ctx.Guild.Id);
 
         // Resolve all channels from the cache and order by position
-        var channels = (await Task.WhenAll(blacklist.Blacklist
+        var channels = (await Task.WhenAll(blacklist.ProxyBlacklist
                 .Select(id => _cache.TryGetChannel(ctx.Guild.Id, id))))
             .Where(c => c != null)
             .OrderBy(c => c.Position)
@@ -314,13 +314,13 @@ public class ServerConfig
 
         var guild = await ctx.Repository.GetGuild(ctx.Guild.Id);
 
-        var blacklist = guild.Blacklist.ToHashSet();
+        var blacklist = guild.ProxyBlacklist.ToHashSet();
         if (shouldAdd)
             blacklist.UnionWith(affectedChannels.Select(c => c.Id));
         else
             blacklist.ExceptWith(affectedChannels.Select(c => c.Id));
 
-        await ctx.Repository.UpdateGuild(ctx.Guild.Id, new GuildPatch { Blacklist = blacklist.ToArray() });
+        await ctx.Repository.UpdateGuild(ctx.Guild.Id, new GuildPatch { ProxyBlacklist = blacklist.ToArray() });
 
         await ctx.Reply(
             $"{Emojis.Success} Channels {(shouldAdd ? "added to" : "removed from")} the proxy blacklist.");
