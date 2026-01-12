@@ -32,7 +32,7 @@ public class MessageContext
     public Instant? LastSwitchTimestamp { get; }
 
     public ulong? LogChannel { get; }
-    public bool InBlacklist { get; }
+    public bool InProxyBlacklist { get; }
     public bool InLogBlacklist { get; }
     public bool LogCleanupEnabled { get; }
     public bool RequireSystemTag { get; }

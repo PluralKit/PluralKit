@@ -69,11 +69,11 @@ public partial class CommandTree
             return ctx.Execute<ServerConfig>(ServerConfigLogClean, m => m.SetLogCleanup(ctx), true);
         if (ctx.Match("blacklist", "bl"))
             if (ctx.Match("enable", "on", "add", "deny"))
-                return ctx.Execute<ServerConfig>(BlacklistAdd, m => m.SetProxyBlacklisted(ctx, true), true);
+                return ctx.Execute<ServerConfig>(ProxyBlacklistAdd, m => m.SetProxyBlacklisted(ctx, true), true);
             else if (ctx.Match("disable", "off", "remove", "allow"))
-                return ctx.Execute<ServerConfig>(BlacklistRemove, m => m.SetProxyBlacklisted(ctx, false), true);
+                return ctx.Execute<ServerConfig>(ProxyBlacklistRemove, m => m.SetProxyBlacklisted(ctx, false), true);
             else if (ctx.Match("list", "show"))
-                return ctx.Execute<ServerConfig>(BlacklistShow, m => m.ShowProxyBlacklisted(ctx), true);
+                return ctx.Execute<ServerConfig>(ProxyBlacklistShow, m => m.ShowProxyBlacklisted(ctx), true);
             else
                 return ctx.Reply($"{Emojis.Warn} Blacklist commands have moved to `{ctx.DefaultPrefix}serverconfig`.");
         if (ctx.Match("proxy"))
@@ -530,7 +530,7 @@ public partial class CommandTree
                 break;
             case "blacklist":
             case "bl":
-                await PrintCommandList(ctx, "channel blacklisting", BlacklistCommands);
+                await PrintCommandList(ctx, "channel proxy blacklisting", ProxyBlacklistCommands);
                 break;
             case "config":
             case "cfg":
