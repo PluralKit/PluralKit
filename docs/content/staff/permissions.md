@@ -2,21 +2,23 @@
 
 PluralKit requires some channel permissions in order to function properly:
 
-- Message proxying requires the **Manage Messages** and **Manage Webhooks** permissions in a channel.
-- Most commands require the **Embed Links**, **Attach Files** and **Add Reactions** permissions to function properly.
+- *Everything* PluralKit does aside from the Message Info app command requires **View Channel** permissions in a channel. 
+- Message proxying requires the **Manage Messages**, **Manage Webhooks**, and **Send Messages** permissions in a channel.
+- Most commands require the **Embed Links** and **Add Reactions** permissions to function properly.
   - Commands with reaction menus also require **Manage Messages** to remove reactions after clicking.
+  - Commands executed via reactions (for example the :x:, :bell:, and :question: reactions, as well as any commands with reaction menus) need **Read Message History** to be able to see that reactions were added. 
+  - A couple commands (`pk;s color` and `pk;m <name> color`) currently require **Attach Files**. 
 - [Proxy logging](/staff/logging) requires the **Send Messages** permission in the log channel.
 - [Log cleanup](/staff/compatibility/#log-cleanup) requires the **Manage Messages** permission in the log channels.
 
-Denying the **Send Messages** permission will *not* stop the bot from proxying, although it will prevent it from sending command responses. Denying the **Read Messages** permission will, as any other bot, prevent the bot from interacting in that channel at all.
-
 ## Webhook permissions
-Webhooks exist outside of the normal Discord permissions system, and (with a few exceptions) it's not possible to modify their permissions.
+Webhooks exist outside of the normal Discord permissions system, but as of August 2022 they mostly follow the permissions of the webhook owner (in this case, PluralKit).
 
-However, PluralKit will make an attempt to apply the sender account's permissions to proxied messages. For example, role mentions, `@everyone`, and `@here`
+PluralKit will also make an attempt to apply the sender account's permissions to proxied messages. For example, role mentions, `@everyone`, and `@here`
 will only function if the sender account has that permission. The same applies to link embeds.
 
-For external emojis to work in proxied messages, the `@everyone` role must have the "Use External Emojis" permission. If it still doesn't work, check if the permission was denied in channel-specific permission settings.
+For external emojis to work in proxied messages, PluralKit or one of its roles must have the "Use External Emojis" permission. If it still doesn't work, 
+check if the permission was denied in channel-specific permission settings. PluralKit must also be in the server the external emoji belongs to.
 
 ## Troubleshooting
 
