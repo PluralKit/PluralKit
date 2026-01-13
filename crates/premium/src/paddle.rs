@@ -17,9 +17,12 @@ use paddle_rust_sdk::{
 use pk_macros::api_endpoint;
 use serde::Serialize;
 use sqlx::postgres::Postgres;
+use time::{Date, OffsetDateTime, format_description::well_known::Rfc3339};
 use tracing::{error, info};
 
 use crate::fail;
+
+const MONTHLY_ID_CHANGES: i32 = 10;
 
 // ew
 fn html_escape(s: &str) -> String {
@@ -51,7 +54,7 @@ const SUBSCRIPTION_QUERY: &str = r#"
     select
         p.id, p.provider, p.provider_id, p.email, p.system_id,
         s.hid as system_hid, s.name as system_name,
-        p.status, p.next_renewal_at
+        p.allowance_id, p.status, p.next_renewal_at
     from premium_subscriptions p
     left join systems s on p.system_id = s.id
 "#;
@@ -94,6 +97,7 @@ pub struct DbSubscription {
     pub system_id: Option<i32>,
     pub system_hid: Option<String>,
     pub system_name: Option<String>,
+    pub allowance_id: Option<i32>,
     pub status: Option<String>,
     pub next_renewal_at: Option<String>,
 }
@@ -265,6 +269,45 @@ pub async fn fetch_subscriptions_for_email(
     Ok(results)
 }
 
+#[derive(Debug, Clone)]
+struct Allowances {
+    pub id_changes: i32,
+}
+
+impl Allowances {
+    fn zero() -> Self {
+        Self { id_changes: 0 }
+    }
+}
+
+async fn calculate_allowances(
+    ctx: &ApiContext,
+    provider_id: &str,
+    email: &str,
+    next_renew: Date,
+) -> anyhow::Result<Allowances> {
+    let subscription = get_subscription(ctx, provider_id, email).await?;
+    let last_renew = if let Some(sub) = subscription {
+        if let Some(Ok(next)) = sub
+            .next_renewal_at
+            .map(|dt| Date::parse(dt.split('T').next().unwrap_or(&dt), &Rfc3339))
+        {
+            next
+        } else {
+            OffsetDateTime::now_utc().date()
+        }
+    } else {
+        OffsetDateTime::now_utc().date()
+    };
+
+    // todo: this sucks
+    let month_diff = (next_renew - last_renew).whole_days() as i32 / 28i32;
+
+    Ok(Allowances {
+        id_changes: MONTHLY_ID_CHANGES * month_diff,
+    })
+}
+
 async fn save_subscription(
     ctx: &ApiContext,
     sub: &Subscription,
@@ -279,11 +322,34 @@ async fn save_subscription(
         .and_then(|v| v.as_i64())
         .map(|v| v as i32);
 
+    // update allowances
+    let allowances = if let Some(renewal) = &next_renewal_at {
+        calculate_allowances(ctx, "paddle", email, Date::parse(renewal, &Rfc3339)?).await?
+    } else {
+        Allowances::zero()
+    };
+
+    let allowance_id: i32 = sqlx::query_scalar(
+        r#"
+            insert into premium_allowances (system_id, id_changes_remaining)
+            values ($1, $2)
+            on conflict (system_id) do update set
+                id_changes_remaining = id_changes_remaining + excluded.id_changes_remaining
+            returning premium_allowances.id
+        "#,
+    )
+    .bind(system_id)
+    .bind(allowances.id_changes)
+    .fetch_one(&ctx.db)
+    .await?;
+
+    // and then update subscription
     sqlx::query::<Postgres>(
         r#"
-        insert into premium_subscriptions (provider, provider_id, email, system_id, status, next_renewal_at)
-        values ('paddle', $1, $2, $3, $4, $5)
+        insert into premium_subscriptions (provider, provider_id, email, system_id, allowance_id, status, next_renewal_at)
+        values ('paddle', $1, $2, $3, $4, $5, $6)
         on conflict (provider, provider_id) do update set
+            allowance_id = excluded.allowance_id,
             status = excluded.status,
             next_renewal_at = excluded.next_renewal_at
         "#,
@@ -291,6 +357,7 @@ async fn save_subscription(
     .bind(sub.id.as_ref())
     .bind(email)
     .bind(system_id)
+    .bind(allowance_id)
     .bind(&status)
     .bind(&next_renewal_at)
     .execute(&ctx.db)
