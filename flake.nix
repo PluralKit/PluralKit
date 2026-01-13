@@ -11,7 +11,7 @@
     # rust
     d2n.url = "github:nix-community/dream2nix";
     d2n.inputs.nixpkgs.follows = "nixpkgs";
-    nci.url = "github:yusdacra/nix-cargo-integration";
+    nci.url = "github:90-008/nix-cargo-integration";
     nci.inputs.parts.follows = "parts";
     nci.inputs.nixpkgs.follows = "nixpkgs";
     nci.inputs.dream2nix.follows = "d2n";
@@ -167,8 +167,7 @@
                 let
                   mkServiceProcess =
                     name: attrs:
-                    attrs
-                    // {
+                    {
                       command = pkgs.writeShellApplication {
                         name = "pluralkit-${name}";
                         runtimeInputs = [ pkgs.coreutils ];
@@ -178,7 +177,7 @@
                           nix develop .#services -c cargo run --package ${name}
                         '';
                       };
-                    };
+                    } // attrs;
                 in
                 {
                   ### migrations ###
