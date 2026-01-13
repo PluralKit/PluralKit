@@ -324,6 +324,12 @@ public class ProxyService
         // Mangle embeds (for reply embed color changing)
         var mangledEmbeds = originalMsg.Embeds!.Select(embed => MangleReproxyEmbed(embed, member)).Where(embed => embed != null).ToArray();
 
+        Message.MessageFlags flags = 0;
+        if (originalMsg.Flags.HasFlag(Message.MessageFlags.SuppressNotifications))
+            flags |= Message.MessageFlags.SuppressNotifications;
+        if (originalMsg.Flags.HasFlag(Message.MessageFlags.VoiceMessage))
+            flags |= Message.MessageFlags.VoiceMessage;
+
         // Send the reproxied webhook
         var proxyMessage = await _webhookExecutor.ExecuteWebhook(new ProxyRequest
         {
@@ -339,7 +345,7 @@ public class ProxyService
             Embeds = mangledEmbeds,
             Stickers = originalMsg.StickerItems!,
             AllowEveryone = allowEveryone,
-            Flags = originalMsg.Flags.HasFlag(Message.MessageFlags.VoiceMessage) ? Message.MessageFlags.VoiceMessage : null,
+            Flags = flags,
             Tts = tts,
             Poll = originalMsg.Poll,
         });
