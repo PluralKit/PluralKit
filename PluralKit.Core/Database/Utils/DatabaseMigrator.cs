@@ -9,7 +9,7 @@ namespace PluralKit.Core;
 internal class DatabaseMigrator
 {
     private const string RootPath = "PluralKit.Core.Database"; // "resource path" root for SQL files
-    private const int TargetSchemaVersion = 54;
+    private const int TargetSchemaVersion = 55;
     private readonly ILogger _logger;
 
     public DatabaseMigrator(ILogger logger)

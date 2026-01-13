@@ -642,6 +642,15 @@ public partial class CommandTree
             else
                 return ctx.Execute<ServerConfig>(null, m => m.ShowProxyBlacklisted(ctx));
         }
+        if (ctx.MatchMultiple(new[] { "command" }, new[] { "blacklist" }))
+        {
+            if (ctx.Match("enable", "on", "add", "deny"))
+                return ctx.Execute<ServerConfig>(null, m => m.SetCommandBlacklisted(ctx, true));
+            else if (ctx.Match("disable", "off", "remove", "allow"))
+                return ctx.Execute<ServerConfig>(null, m => m.SetCommandBlacklisted(ctx, false));
+            else
+                return ctx.Execute<ServerConfig>(null, m => m.ShowCommandBlacklisted(ctx));
+        }
 
         // todo: maybe add the list of configuration keys here?
         return ctx.Reply($"{Emojis.Error} Could not find a setting with that name. Please see `{ctx.DefaultPrefix}commands serverconfig` for the list of possible config settings.");

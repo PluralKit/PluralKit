@@ -77,6 +77,13 @@ public class ServerConfig
             ChannelListMessage(0, "proxy blacklist")
         ));
 
+        items.Add(new(
+            "command blacklist",
+            "Channels where running text commands is disabled",
+            ChannelListMessage(ctx.GuildConfig!.CommandBlacklist.Length, "command blacklist"),
+            ChannelListMessage(0, "command blacklist")
+        ));
+
         await ctx.Paginate<PaginatedConfigItem>(
             items.ToAsyncEnumerable(),
             items.Count,
@@ -210,7 +217,57 @@ public class ServerConfig
         }
 
         await ctx.Paginate(channels.ToAsyncEnumerable(), channels.Count, 25,
-            $"Blacklisted channels for {ctx.Guild.Name}",
+            $"Blacklisted channels for proxying in {ctx.Guild.Name}",
+            null,
+            async (eb, l) =>
+            {
+                async Task<string> CategoryName(ulong? id) =>
+                    id != null ? (await _cache.GetChannel(ctx.Guild.Id, id.Value)).Name : "(no category)";
+
+                ulong? lastCategory = null;
+
+                var fieldValue = new StringBuilder();
+                foreach (var channel in l)
+                {
+                    if (lastCategory != channel!.ParentId && fieldValue.Length > 0)
+                    {
+                        eb.Field(new Embed.Field(await CategoryName(lastCategory), fieldValue.ToString()));
+                        fieldValue.Clear();
+                    }
+                    else
+                    {
+                        fieldValue.Append("\n");
+                    }
+
+                    fieldValue.Append(channel.Mention());
+                    lastCategory = channel.ParentId;
+                }
+
+                eb.Field(new Embed.Field(await CategoryName(lastCategory), fieldValue.ToString()));
+            });
+    }
+
+    public async Task ShowCommandBlacklisted(Context ctx)
+    {
+        await ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
+
+        var blacklist = await ctx.Repository.GetGuild(ctx.Guild.Id);
+
+        // Resolve all channels from the cache and order by position
+        var channels = (await Task.WhenAll(blacklist.CommandBlacklist
+                .Select(id => _cache.TryGetChannel(ctx.Guild.Id, id))))
+            .Where(c => c != null)
+            .OrderBy(c => c.Position)
+            .ToList();
+
+        if (channels.Count == 0)
+        {
+            await ctx.Reply("This server has no channels where running text commands is disabled.");
+            return;
+        }
+
+        await ctx.Paginate(channels.ToAsyncEnumerable(), channels.Count, 25,
+            $"Blacklisted channels for running text commands in {ctx.Guild.Name}",
             null,
             async (eb, l) =>
             {
@@ -323,7 +380,40 @@ public class ServerConfig
         await ctx.Repository.UpdateGuild(ctx.Guild.Id, new GuildPatch { ProxyBlacklist = blacklist.ToArray() });
 
         await ctx.Reply(
-            $"{Emojis.Success} Channels {(shouldAdd ? "added to" : "removed from")} the proxy blacklist.");
+            $"{Emojis.Success} Channel(s) {(shouldAdd ? "added to" : "removed from")} the proxy blacklist.");
+    }
+
+    public async Task SetCommandBlacklisted(Context ctx, bool shouldAdd)
+    {
+        await ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
+
+        var affectedChannels = new List<Channel>();
+        if (ctx.Match("all"))
+            affectedChannels = (await _cache.GetGuildChannels(ctx.Guild.Id))
+                // All the channel types you can proxy in
+                .Where(x => DiscordUtils.IsValidGuildChannel(x)).ToList();
+        else if (!ctx.HasNext()) throw new PKSyntaxError("You must pass one or more #channels.");
+        else
+            while (ctx.HasNext())
+            {
+                var channelString = ctx.PeekArgument();
+                var channel = await ctx.MatchChannel();
+                if (channel == null || channel.GuildId != ctx.Guild.Id) throw Errors.ChannelNotFound(channelString);
+                affectedChannels.Add(channel);
+            }
+
+        var guild = await ctx.Repository.GetGuild(ctx.Guild.Id);
+
+        var blacklist = guild.CommandBlacklist.ToHashSet();
+        if (shouldAdd)
+            blacklist.UnionWith(affectedChannels.Select(c => c.Id));
+        else
+            blacklist.ExceptWith(affectedChannels.Select(c => c.Id));
+
+        await ctx.Repository.UpdateGuild(ctx.Guild.Id, new GuildPatch { CommandBlacklist = blacklist.ToArray() });
+
+        await ctx.Reply(
+            $"{Emojis.Success} Channel(s) {(shouldAdd ? "added to" : "removed from")} the command blacklist.");
     }
 
     public async Task SetLogBlacklisted(Context ctx, bool shouldAdd)
