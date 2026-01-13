@@ -24,6 +24,7 @@ create function message_context(account_id bigint, guild_id bigint, channel_id b
 
         log_channel bigint,
         in_proxy_blacklist bool,
+        in_command_blacklist bool,
         in_log_blacklist bool,
         log_cleanup_enabled bool,
         require_system_tag bool,
@@ -61,9 +62,11 @@ as $$
         system_last_switch.timestamp                   as last_switch_timestamp,
 
         -- servers table
-        servers.log_channel                             as log_channel,
+        servers.log_channel                            as log_channel,
         ((channel_id = any (servers.proxy_blacklist))
          or (thread_id = any (servers.proxy_blacklist)))      as in_proxy_blacklist,
+        ((channel_id = any (servers.command_blacklist))
+         or (thread_id = any (servers.command_blacklist)))    as in_command_blacklist,
         ((channel_id = any (servers.log_blacklist))
          or (thread_id = any (servers.log_blacklist)))  as in_log_blacklist,
         coalesce(servers.log_cleanup_enabled, false)    as log_cleanup_enabled,

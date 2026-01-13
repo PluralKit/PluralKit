@@ -33,6 +33,7 @@ public class MessageContext
 
     public ulong? LogChannel { get; }
     public bool InProxyBlacklist { get; }
+    public bool InCommandBlacklist { get; }
     public bool InLogBlacklist { get; }
     public bool LogCleanupEnabled { get; }
     public bool RequireSystemTag { get; }
