@@ -37,5 +37,5 @@ public class MessageContext
     public bool LogCleanupEnabled { get; }
     public bool RequireSystemTag { get; }
     public bool DenyBotUsage { get; }
-    public bool SuppressNotifications { get; }
+    public GuildConfig.SuppressCondition SuppressNotifications { get; }
 }
