@@ -49,7 +49,7 @@ public class ServerConfig
 
         items.Add(new(
             "suppress notifications",
-            "When proxied messages will have notifications suppressed (sent as `@silent` messages)",
+            "Under what conditions proxied messages will have notifications suppressed (sent as `@silent` messages)",
             ctx.GuildConfig!.SuppressNotifications.ToUserString(),
             "never"
         ));
@@ -438,20 +438,20 @@ public class ServerConfig
 
         if (!ctx.HasNext())
         {
-            var msg = $"Suppressing notifications for proxied messages is currently set to **{ctx.GuildConfig!.SuppressNotifications.ToUserString()}**. Proxied messages will ";
+            var msg = $"Suppressing notifications for proxied messages is currently set to **{ctx.GuildConfig!.SuppressNotifications.ToUserString()}**. Proxied messages are ";
             switch (ctx.GuildConfig!.SuppressNotifications)
             {
                 case GuildConfig.SuppressCondition.Never:
-                    msg += "never be marked as silent.";
+                    msg += "never marked as silent.";
                     break;
                 case GuildConfig.SuppressCondition.Always:
-                    msg += "always be marked as silent.";
+                    msg += "always marked as silent.";
                     break;
                 case GuildConfig.SuppressCondition.Match:
-                    msg += "be marked as silent if the trigger message was marked as silent.";
+                    msg += "marked as silent if the trigger message was marked as silent.";
                     break;
                 case GuildConfig.SuppressCondition.Invert:
-                    msg += "be marked as silent if the trigger message was **not** marked as silent.";
+                    msg += "marked as silent if the trigger message was **not** marked as silent.";
                     break;
             }
             await ctx.Reply(msg);
@@ -470,6 +470,24 @@ public class ServerConfig
             throw new PKError("You must pass one of \"always\", \"never\", \"match\", or \"invert\" to this command.");
         }
         await ctx.Repository.UpdateGuild(ctx.Guild.Id, new() { SuppressNotifications = newVal });
-        await ctx.Reply($"Suppressing notifications for proxied messages is now set to {newVal.ToUserString()}.");
+
+        var changeMsg = $"Suppressing notifications for proxied messages is now set to {newVal.ToUserString()}. Proxied messages will ";
+        switch (newVal)
+        {
+            case GuildConfig.SuppressCondition.Never:
+                changeMsg += "never be marked as silent.";
+                break;
+            case GuildConfig.SuppressCondition.Always:
+                changeMsg += "always be marked as silent.";
+                break;
+            case GuildConfig.SuppressCondition.Match:
+                changeMsg += "be marked as silent if the trigger message was marked as silent.";
+                break;
+            case GuildConfig.SuppressCondition.Invert:
+                changeMsg += "be marked as silent if the trigger message was **not** marked as silent.";
+                break;
+        }
+        ;
+        await ctx.Reply(changeMsg);
     }
 }
