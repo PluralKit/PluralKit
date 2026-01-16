@@ -171,6 +171,14 @@ pub async fn middleware(
                 });
             }
         }
+        "/info/" => {
+            let response = next.run(request).await;
+            if let Some(ref session) = session {
+                refresh_session_cookie(session, response)
+            } else {
+                response
+            }
+        }
         "/login" => {
             if let Some(ref session) = session {
                 // no session here because that shows the "you're logged in as" component

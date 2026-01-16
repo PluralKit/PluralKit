@@ -61,6 +61,7 @@ fn router(ctx: ApiContext) -> Router {
     // processed upside down (???) so we have to put middleware at the end
     Router::new()
         .route("/", get(home_handler))
+        .route("/info/", get(|| async { Html(include_str!("../templates/info.html")) }))
 
         .route("/login/{token}", get(|| async {
             "handled in auth middleware"
