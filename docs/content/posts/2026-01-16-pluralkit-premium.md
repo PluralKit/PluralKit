@@ -12,8 +12,9 @@ existing features (or new core features) will ever be paywalled.**
 
 Our goal for PK Premium is to have the income from subscriptions cover all the
 running costs of the bot - which, up until now, has been paid for partly by
-donations to our Patreon / Buy Me A Coffee; and partly out of the pockets of
-the developers.
+donations to our [Patreon](https://patreon.com/pluralkit) /
+[Buy Me A Coffee](https://buymeacoffee.com/pluralkit); and partly out of the
+pockets of the developers.
 
 PluralKit Premium will cost **US$5/month** (plus tax), and will be **launching
 before the end of February 2026**.
@@ -29,7 +30,7 @@ At launch, PK Premium will offer the following:
 We will be adding more perks to PK Premium in future - including, but not
 limited to:
 - more description customisation options,
-- automatic regex-based proxy text substitution,
+- automatic regex-based proxy text substitution ("automated typing quirks"),
 - and more!
 
 <div style="text-align:center;">
