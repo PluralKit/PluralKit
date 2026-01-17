@@ -158,12 +158,12 @@ public class MemberEdit
         if (ctx.System?.Id == target.System)
             noPronounsSetMessage += $" To set some, type `{ctx.DefaultPrefix}member {target.Reference(ctx)} pronouns <pronouns>`.";
 
-        if (format != ReplyFormat.Standard)
-            if (target.Pronouns == null)
-            {
-                await ctx.Reply(noPronounsSetMessage);
-                return;
-            }
+        // check for null since we are doing a query
+        if (target.Pronouns == null)
+        {
+            await ctx.Reply(noPronounsSetMessage);
+            return;
+        }
 
         if (format == ReplyFormat.Raw)
         {
