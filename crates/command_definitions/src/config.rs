@@ -14,13 +14,13 @@ pub fn cmds() -> impl IntoIterator<Item = Command> {
         command!(ap_account => "cfg_ap_account_show")
             .help("Shows autoproxy status for the account"),
         command!(ap_account, Toggle => "cfg_ap_account_update")
-            .help("Toggles autoproxy for the account"),
+            .help("Toggles autoproxy globally for the current account"),
         command!(ap_timeout => "cfg_ap_timeout_show").help("Shows the autoproxy timeout"),
         command!(ap_timeout, RESET => "cfg_ap_timeout_reset").help("Resets the autoproxy timeout"),
         command!(ap_timeout, parameter::Toggle::Off => "cfg_ap_timeout_off")
             .help("Disables the autoproxy timeout"),
         command!(ap_timeout, ("timeout", OpaqueString) => "cfg_ap_timeout_update")
-            .help("Sets the autoproxy timeout"),
+            .help("Sets the latch timeout duration for your system"),
     ];
 
     let timezone_tokens = tokens!(cfg, ("timezone", ["zone", "tz"]));
@@ -28,13 +28,14 @@ pub fn cmds() -> impl IntoIterator<Item = Command> {
         command!(timezone_tokens => "cfg_timezone_show").help("Shows the system timezone"),
         command!(timezone_tokens, RESET => "cfg_timezone_reset").help("Resets the system timezone"),
         command!(timezone_tokens, ("timezone", OpaqueString) => "cfg_timezone_update")
-            .help("Sets the system timezone"),
+            .help("Changes your system's time zone"),
     ];
 
     let ping_tokens = tokens!(cfg, "ping");
     let ping = [
-        command!(ping_tokens => "cfg_ping_show").help("Shows the ping setting"),
-        command!(ping_tokens, Toggle => "cfg_ping_update").help("Updates the ping setting"),
+        command!(ping_tokens => "cfg_ping_show").help("Shows ping preferences"),
+        command!(ping_tokens, Toggle => "cfg_ping_update")
+            .help("Changes your system's ping preferences"),
     ];
 
     let priv_ = ("private", ["priv"]);
@@ -46,19 +47,19 @@ pub fn cmds() -> impl IntoIterator<Item = Command> {
         command!(member_privacy => "cfg_member_privacy_show")
             .help("Shows the default privacy for new members"),
         command!(member_privacy, Toggle => "cfg_member_privacy_update")
-            .help("Sets the default privacy for new members"),
+            .help("Sets whether member privacy is automatically set to private when creating a new member"),
         command!(member_privacy_short => "cfg_member_privacy_show")
             .help("Shows the default privacy for new members"),
         command!(member_privacy_short, Toggle => "cfg_member_privacy_update")
-            .help("Sets the default privacy for new members"),
+            .help("Sets whether member privacy is automatically set to private when creating a new member"),
         command!(group_privacy => "cfg_group_privacy_show")
             .help("Shows the default privacy for new groups"),
         command!(group_privacy, Toggle => "cfg_group_privacy_update")
-            .help("Sets the default privacy for new groups"),
+            .help("Sets whether group privacy is automatically set to private when creating a new group"),
         command!(group_privacy_short => "cfg_group_privacy_show")
             .help("Shows the default privacy for new groups"),
         command!(group_privacy_short, Toggle => "cfg_group_privacy_update")
-            .help("Sets the default privacy for new groups"),
+            .help("Sets whether group privacy is automatically set to private when creating a new group"),
     ];
 
     let show = "show";
@@ -68,11 +69,11 @@ pub fn cmds() -> impl IntoIterator<Item = Command> {
         command!(show_private => "cfg_show_private_info_show")
             .help("Shows whether private info is shown"),
         command!(show_private, Toggle => "cfg_show_private_info_update")
-            .help("Toggles showing private info"),
+            .help("Sets whether private information is shown to linked accounts by default"),
         command!(show_private_short => "cfg_show_private_info_show")
             .help("Shows whether private info is shown"),
         command!(show_private_short, Toggle => "cfg_show_private_info_update")
-            .help("Toggles showing private info"),
+            .help("Sets whether private information is shown to linked accounts by default"),
     ];
 
     let proxy = ("proxy", ["px"]);
@@ -96,11 +97,11 @@ pub fn cmds() -> impl IntoIterator<Item = Command> {
             .help("Toggles proxy error messages"),
         command!(proxy_switch => "cfg_proxy_switch_show").help("Shows the proxy switch behavior"),
         command!(proxy_switch, ProxySwitchAction => "cfg_proxy_switch_update")
-            .help("Sets the proxy switch behavior"),
+            .help("Sets the switching behavior when proxy tags are used"),
         command!(proxy_switch_short => "cfg_proxy_switch_show")
             .help("Shows the proxy switch behavior"),
         command!(proxy_switch_short, ProxySwitchAction => "cfg_proxy_switch_update")
-            .help("Sets the proxy switch behavior"),
+            .help("Sets the switching behavior when proxy tags are used"),
     ];
 
     let id = ("id", ["ids"]);
@@ -169,12 +170,12 @@ pub fn cmds() -> impl IntoIterator<Item = Command> {
         command!(name_format => "cfg_name_format_show").help("Shows the name format"),
         command!(name_format, RESET => "cfg_name_format_reset").help("Resets the name format"),
         command!(name_format, ("format", OpaqueString) => "cfg_name_format_update")
-            .help("Sets the name format"),
+            .help("Changes your system's username formatting"),
         command!(name_format_short => "cfg_name_format_show").help("Shows the name format"),
         command!(name_format_short, RESET => "cfg_name_format_reset")
             .help("Resets the name format"),
         command!(name_format_short, ("format", OpaqueString) => "cfg_name_format_update")
-            .help("Sets the name format"),
+            .help("Changes your system's username formatting"),
     ];
 
     let server = "server";
@@ -194,19 +195,19 @@ pub fn cmds() -> impl IntoIterator<Item = Command> {
         command!(server_name_format, RESET => "cfg_server_name_format_reset")
             .help("Resets the server name format"),
         command!(server_name_format, ("format", OpaqueString) => "cfg_server_name_format_update")
-            .help("Sets the server name format"),
+            .help("Changes your system's username formatting in the current server"),
         command!(server_format => "cfg_server_name_format_show")
             .help("Shows the server name format"),
         command!(server_format, RESET => "cfg_server_name_format_reset")
             .help("Resets the server name format"),
         command!(server_format, ("format", OpaqueString) => "cfg_server_name_format_update")
-            .help("Sets the server name format"),
+            .help("Changes your system's username formatting in the current server"),
         command!(server_format_short => "cfg_server_name_format_show")
             .help("Shows the server name format"),
         command!(server_format_short, RESET => "cfg_server_name_format_reset")
             .help("Resets the server name format"),
         command!(server_format_short, ("format", OpaqueString) => "cfg_server_name_format_update")
-            .help("Sets the server name format"),
+            .help("Changes your system's username formatting in the current server"),
     ];
 
     let limit_ = ("limit", ["lim"]);

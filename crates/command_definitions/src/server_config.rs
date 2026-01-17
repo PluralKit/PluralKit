@@ -50,7 +50,7 @@ pub fn cmds() -> impl Iterator<Item = Command> {
         command!(log_channel => "server_config_log_channel_show")
             .help("Shows the current log channel"),
         command!(log_channel, ("channel", ChannelRef) => "server_config_log_channel_set")
-            .help("Sets the log channel"),
+            .help("Designates a channel to post proxied messages to"),
         command!(log_channel, CLEAR => "server_config_log_channel_clear")
             .flag(YES)
             .help("Clears the log channel"),
@@ -60,11 +60,11 @@ pub fn cmds() -> impl Iterator<Item = Command> {
         command!(log_cleanup => "server_config_log_cleanup_show")
             .help("Shows whether log cleanup is enabled"),
         command!(log_cleanup, Toggle => "server_config_log_cleanup_set")
-            .help("Enables or disables log cleanup"),
+            .help("Toggles whether to clean up other bots' log channels"),
         command!(log_cleanup_short => "server_config_log_cleanup_show")
             .help("Shows whether log cleanup is enabled"),
         command!(log_cleanup_short, Toggle => "server_config_log_cleanup_set")
-            .help("Enables or disables log cleanup"),
+            .help("Toggles whether to clean up other bots' log channels"),
     ];
 
     let log_blacklist_cmds = [
@@ -72,10 +72,10 @@ pub fn cmds() -> impl Iterator<Item = Command> {
             .help("Shows channels where logging is disabled"),
         command!(log_blacklist, add, Optional(("channel", ChannelRef)) => "server_config_log_blacklist_add")
             .flag(ALL)
-            .help("Adds a channel (or all channels with --all) to the log blacklist"),
+            .help("Disables message logging in certain channels"),
         command!(log_blacklist, remove, Optional(("channel", ChannelRef)) => "server_config_log_blacklist_remove")
             .flag(ALL)
-            .help("Removes a channel (or all channels with --all) from the log blacklist"),
+            .help("Enables message logging in certain channels"),
     ];
 
     let proxy_blacklist_cmds = [
@@ -83,43 +83,45 @@ pub fn cmds() -> impl Iterator<Item = Command> {
             .help("Shows channels where proxying is disabled"),
         command!(proxy_blacklist, add, Optional(("channel", ChannelRef)) => "server_config_proxy_blacklist_add")
             .flag(ALL)
-            .help("Adds a channel (or all channels with --all) to the proxy blacklist"),
+            .help("Disables message proxying in certain channels"),
         command!(proxy_blacklist, remove, Optional(("channel", ChannelRef)) => "server_config_proxy_blacklist_remove")
             .flag(ALL)
-            .help("Removes a channel (or all channels with --all) from the proxy blacklist"),
+            .help("Enables message proxying in certain channels"),
     ];
 
     let invalid_cmds = [
         command!(invalid => "server_config_invalid_command_response_show")
             .help("Shows whether error responses for invalid commands are enabled"),
         command!(invalid, Toggle => "server_config_invalid_command_response_set")
-            .help("Enables or disables error responses for invalid commands"),
+            .help("Sets whether to show an error message when an unknown command is sent"),
         command!(invalid_short => "server_config_invalid_command_response_show")
             .help("Shows whether error responses for invalid commands are enabled"),
         command!(invalid_short, Toggle => "server_config_invalid_command_response_set")
-            .help("Enables or disables error responses for invalid commands"),
+            .help("Sets whether to show an error message when an unknown command is sent"),
     ];
 
     let require_tag_cmds = [
         command!(require_tag => "server_config_require_system_tag_show")
             .help("Shows whether system tags are required"),
-        command!(require_tag, Toggle => "server_config_require_system_tag_set")
-            .help("Requires or unrequires system tags for proxied messages"),
+        command!(require_tag, Toggle => "server_config_require_system_tag_set").help(
+            "Sets whether server users are required to have a system tag on proxied messages",
+        ),
         command!(require_tag_short => "server_config_require_system_tag_show")
             .help("Shows whether system tags are required"),
-        command!(require_tag_short, Toggle => "server_config_require_system_tag_set")
-            .help("Requires or unrequires system tags for proxied messages"),
+        command!(require_tag_short, Toggle => "server_config_require_system_tag_set").help(
+            "Sets whether server users are required to have a system tag on proxied messages",
+        ),
     ];
 
     let suppress_cmds = [
         command!(suppress => "server_config_suppress_notifications_show")
             .help("Shows whether notifications are suppressed for proxied messages"),
         command!(suppress, Toggle => "server_config_suppress_notifications_set")
-            .help("Enables or disables notification suppression for proxied messages"),
+            .help("Sets whether all proxied messages will have notifications suppressed (sent as `@silent` messages)"),
         command!(suppress_short => "server_config_suppress_notifications_show")
             .help("Shows whether notifications are suppressed for proxied messages"),
         command!(suppress_short, Toggle => "server_config_suppress_notifications_set")
-            .help("Enables or disables notification suppression for proxied messages"),
+            .help("Sets whether all proxied messages will have notifications suppressed (sent as `@silent` messages)"),
     ];
 
     let main_cmd = once(

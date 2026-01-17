@@ -36,14 +36,13 @@ pub fn cmds() -> impl Iterator<Item = Command> {
     let delete = ("delete", ["del", "remove"]);
 
     let member_new_cmd = once(
-        command!(member, new, ("name", OpaqueString) => "member_new")
-            .help("Creates a new system member"),
+        command!(member, new, ("name", OpaqueString) => "member_new").help("Creates a new member"),
     );
 
     let member_info_cmd = once(
         command!(member_target => "member_show")
             .flag("pt")
-            .help("Shows information about a member"),
+            .help("Looks up information about a member"),
     );
 
     let member_name_cmd = {
@@ -52,7 +51,7 @@ pub fn cmds() -> impl Iterator<Item = Command> {
             command!(member_name => "member_name_show").help("Shows a member's name"),
             command!(member_name, Remainder(("name", OpaqueString)) => "member_name_update")
                 .flag(YES)
-                .help("Changes a member's name"),
+                .help("Renames a member"),
         ]
     };
 
@@ -99,7 +98,7 @@ pub fn cmds() -> impl Iterator<Item = Command> {
         [
             command!(member_banner => "member_banner_show").help("Shows a member's banner image"),
             command!(member_banner, ("banner", Avatar) => "member_banner_update")
-                .help("Changes a member's banner image"),
+                .help("Sets the member's banner image"),
             command!(member_banner, CLEAR => "member_banner_clear")
                 .flag(YES)
                 .help("Clears a member's banner image"),
@@ -149,7 +148,7 @@ pub fn cmds() -> impl Iterator<Item = Command> {
             command!(member_server_name => "member_servername_show")
                 .help("Shows a member's server name"),
             command!(member_server_name, Remainder(("name", OpaqueString)) => "member_servername_update")
-                .help("Changes a member's server name"),
+                .help("Changes a member's display name in the current server"),
             command!(member_server_name, CLEAR => "member_servername_clear")
                 .flag(YES)
                 .help("Clears a member's server name"),
@@ -180,14 +179,14 @@ pub fn cmds() -> impl Iterator<Item = Command> {
             command!(member_keep_proxy => "member_keepproxy_show")
                 .help("Shows a member's keep-proxy setting"),
             command!(member_keep_proxy, ("value", Toggle) => "member_keepproxy_update")
-                .help("Changes a member's keep-proxy setting"),
+                .help("Sets whether to include a member's proxy tags when proxying"),
             command!(member_server_keep_proxy => "member_server_keepproxy_show")
                 .help("Shows a member's server-specific keep-proxy setting"),
             command!(member_server_keep_proxy, CLEAR => "member_server_keepproxy_clear")
                 .flag(YES)
                 .help("Clears a member's server-specific keep-proxy setting"),
             command!(member_server_keep_proxy, ("value", Toggle) => "member_server_keepproxy_update")
-                .help("Changes a member's server-specific keep-proxy setting"),
+                .help("Sets whether to include a member's proxy tags when proxying in the current server"),
         ]
     };
 
@@ -198,11 +197,11 @@ pub fn cmds() -> impl Iterator<Item = Command> {
             command!(member_tts => "member_tts_show")
                 .help("Shows whether a member's messages are sent as TTS"),
             command!(member_tts, ("value", Toggle) => "member_tts_update")
-                .help("Changes whether a member's messages are sent as TTS"),
+                .help("Sets whether to send a member's messages as text-to-speech messages"),
             command!(member_autoproxy => "member_autoproxy_show")
                 .help("Shows whether a member can be autoproxied"),
             command!(member_autoproxy, ("value", Toggle) => "member_autoproxy_update")
-                .help("Changes whether a member can be autoproxied"),
+                .help("Sets whether a member will be autoproxied when autoproxy is set to latch or front mode"),
         ]
     };
 
@@ -275,7 +274,7 @@ pub fn cmds() -> impl Iterator<Item = Command> {
             command!(member_server_avatar => "member_server_avatar_show")
                 .help("Shows a member's server-specific avatar"),
             command!(member_server_avatar, ("avatar", Avatar) => "member_server_avatar_update")
-                .help("Changes a member's server-specific avatar"),
+                .help("Changes a member's avatar in the current server"),
             command!(member_server_avatar, CLEAR => "member_server_avatar_clear")
                 .flag(YES)
                 .help("Clears a member's server-specific avatar"),
@@ -295,7 +294,7 @@ pub fn cmds() -> impl Iterator<Item = Command> {
     ];
 
     let member_display_id_cmd =
-        [command!(member_target, "id" => "member_id").help("Displays a member's ID")];
+        [command!(member_target, "id" => "member_id").help("Prints a member's ID")];
 
     let member_delete_cmd =
         [command!(member_target, delete => "member_delete").help("Deletes a member")];

@@ -215,16 +215,20 @@ pub fn edit() -> impl Iterator<Item = Command> {
 
     let front = ("front", ["fronter", "fronters", "f"]);
     let make_front_history = |subcmd: TokensIterator| {
-        command!(system, Optional(SystemRef), subcmd => "system_fronter_history").flag(CLEAR)
+        command!(system, Optional(SystemRef), subcmd => "system_fronter_history")
+            .help("Shows a system's front history")
+            .flag(CLEAR)
     };
     let make_front_percent = |subcmd: TokensIterator| {
         command!(system, Optional(SystemRef), subcmd => "system_fronter_percent")
+            .help("Shows a system's front breakdown")
             .flag(("duration", OpaqueString))
             .flag(("fronters-only", ["fo"]))
             .flag("flat")
     };
     let system_front_cmd = [
-        command!(system, Optional(SystemRef), front => "system_fronter"),
+        command!(system, Optional(SystemRef), front => "system_fronter")
+            .help("Shows a system's fronter(s)"),
         make_front_history(tokens!(front, ("history", ["h"]))),
         make_front_history(tokens!(("fronthistory", ["fh"]))),
         make_front_percent(tokens!(front, ("percent", ["p", "%"]))),
@@ -243,8 +247,10 @@ pub fn edit() -> impl Iterator<Item = Command> {
         once(command!(system, Optional(SystemRef), "groups", search_param => "system_groups"))
             .map(apply_list_opts);
 
-    let system_display_id_cmd =
-        once(command!(system, Optional(SystemRef), "id" => "system_display_id"));
+    let system_display_id_cmd = once(
+        command!(system, Optional(SystemRef), "id" => "system_display_id")
+            .help("Prints a system's ID"),
+    );
 
     let system_delete = once(
         command!(system, ("delete", ["erase", "remove", "yeet"]) => "system_delete")
@@ -253,8 +259,11 @@ pub fn edit() -> impl Iterator<Item = Command> {
     );
 
     let system_link = [
-        command!("link", ("account", UserRef) => "system_link"),
-        command!("unlink", ("account", OpaqueString) => "system_unlink").flag(YES),
+        command!("link", ("account", UserRef) => "system_link")
+            .help("Links another Discord account to your system"),
+        command!("unlink", ("account", OpaqueString) => "system_unlink")
+            .help("Unlinks a Discord account from your system")
+            .flag(YES),
     ];
 
     system_new_cmd

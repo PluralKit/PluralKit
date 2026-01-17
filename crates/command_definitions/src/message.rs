@@ -16,13 +16,13 @@ pub fn cmds() -> impl IntoIterator<Item = Command> {
             .flag(("no-space", ["nospace", "ns"]))
             .flag(("clear-embeds", ["clear-embed", "ce"]))
             .flag(("clear-attachments", ["clear-attachment", "ca"]))
-            .help("Edits a proxied message")
+            .help("Edits a previously proxied message")
     };
 
     [
         apply_edit(command!(edit, Optional(MessageRef), new_content_param => "message_edit")),
         command!(reproxy, Optional(("msg", MessageRef)), ("member", MemberRef) => "message_reproxy")
-            .help("Reproxies a message with a different member"),
+            .help("Reproxies a previously proxied message with a different member"),
         command!(message, author => "message_author").help("Shows the author of a proxied message"),
         command!(message, delete => "message_delete").help("Deletes a proxied message"),
         apply_edit(command!(message, edit, new_content_param => "message_edit")),
