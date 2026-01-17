@@ -253,8 +253,6 @@ pub fn edit() -> impl Iterator<Item = Command> {
     let system_members_cmd =
         once(command!(system, Optional(SystemRef), members_subcmd => "system_members"))
             .map(apply_list_opts);
-    let system_members_self_cmd =
-        once(command!(members_subcmd => "system_members_self")).map(apply_list_opts);
 
     let system_groups_cmd =
         once(command!(system, Optional(SystemRef), "groups", search_param => "system_groups"))
@@ -287,7 +285,6 @@ pub fn edit() -> impl Iterator<Item = Command> {
         .chain(system_avatar_self_cmd)
         .chain(system_server_avatar_self_cmd)
         .chain(system_banner_self_cmd)
-        .chain(system_members_self_cmd)
         .chain(system_delete)
         .chain(system_privacy_cmd)
         .chain(system_proxy_cmd)
