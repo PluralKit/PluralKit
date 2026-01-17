@@ -1,6 +1,6 @@
 use super::*;
 
-pub fn cmds() -> impl Iterator<Item = Command> {
+pub fn cmds() -> impl IntoIterator<Item = Command> {
     let message = tokens!(("message", ["msg", "messageinfo"]), Optional(MessageRef));
 
     let author = ("author", ["sender", "a"]);
@@ -31,5 +31,4 @@ pub fn cmds() -> impl Iterator<Item = Command> {
             .flag(author)
             .help("Shows information about a proxied message"),
     ]
-    .into_iter()
 }

@@ -1,6 +1,6 @@
 use ordermap::OrderMap;
 
-use crate::{command::Command, parameter::Skip, token::Token};
+use crate::{command::Command, token::Token};
 
 #[derive(Debug, Clone)]
 pub struct TreeBranch {

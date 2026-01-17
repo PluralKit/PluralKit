@@ -1,6 +1,6 @@
 use super::*;
 
-pub fn cmds() -> impl Iterator<Item = Command> {
+pub fn cmds() -> impl IntoIterator<Item = Command> {
     let switch = ("switch", ["sw"]);
 
     let edit = ("edit", ["e", "replace"]);
@@ -26,5 +26,4 @@ pub fn cmds() -> impl Iterator<Item = Command> {
         command!(switch, copy, Optional(MemberRefs) => "switch_copy").flags(edit_flags),
         command!(switch, MemberRefs => "switch_do"),
     ]
-    .into_iter()
 }

@@ -1,6 +1,6 @@
 use super::*;
 
-pub fn cmds() -> impl Iterator<Item = Command> {
+pub fn cmds() -> impl IntoIterator<Item = Command> {
     let help = ("help", ["h"]);
     [
         command!(("commands", ["cmd", "c"]), ("subject", OpaqueString) => "commands_list"),
@@ -10,5 +10,4 @@ pub fn cmds() -> impl Iterator<Item = Command> {
         command!(help, "commands" => "help_commands").help("help commands"),
         command!(help, "proxy" => "help_proxy").help("help proxy"),
     ]
-    .into_iter()
 }

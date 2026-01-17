@@ -20,7 +20,6 @@ pub fn targeted() -> TokensIterator {
 
 pub fn edit() -> impl Iterator<Item = Command> {
     let system = system();
-    let system_target = targeted();
 
     let system_new_cmd =
         once(
@@ -36,8 +35,7 @@ pub fn edit() -> impl Iterator<Item = Command> {
             .help("Clears your system's webhook URL"),
         command!(system_webhook, ("url", OpaqueString) => "system_webhook_set")
             .help("Sets your system's webhook URL"),
-    ]
-    .into_iter();
+    ];
 
     let add_info_flags = |cmd: Command| {
         cmd.flag(("public", ["pub"]))
@@ -65,8 +63,7 @@ pub fn edit() -> impl Iterator<Item = Command> {
             .help("Clears your system's name"),
         command!(system_name_self, Remainder(("name", OpaqueString)) => "system_rename")
             .help("Renames your system"),
-    ]
-    .into_iter();
+    ];
 
     let server_name = ("servername", ["sn", "guildname"]);
     let system_server_name_cmd = once(
@@ -80,8 +77,7 @@ pub fn edit() -> impl Iterator<Item = Command> {
             .help("Clears your system's server name"),
         command!(system_server_name_self, Remainder(("name", OpaqueString)) => "system_rename_server_name")
             .help("Renames your system's server name"),
-    ]
-    .into_iter();
+    ];
 
     let description = ("description", ["desc", "d"]);
     let system_description_cmd = once(
@@ -95,8 +91,7 @@ pub fn edit() -> impl Iterator<Item = Command> {
             .help("Clears your system's description"),
         command!(system_description_self, Remainder(("description", OpaqueString)) => "system_change_description")
             .help("Changes your system's description"),
-    ]
-    .into_iter();
+    ];
 
     let color = ("color", ["colour"]);
     let system_color_cmd = once(
@@ -110,8 +105,7 @@ pub fn edit() -> impl Iterator<Item = Command> {
             .help("Clears your system's color"),
         command!(system_color_self, ("color", OpaqueString) => "system_change_color")
             .help("Changes your system's color"),
-    ]
-    .into_iter();
+    ];
 
     let tag = ("tag", ["suffix"]);
     let system_tag_cmd = once(
@@ -125,8 +119,7 @@ pub fn edit() -> impl Iterator<Item = Command> {
             .help("Clears your system's tag"),
         command!(system_tag_self, Remainder(("tag", OpaqueString)) => "system_change_tag")
             .help("Changes your system's tag"),
-    ]
-    .into_iter();
+    ];
 
     let servertag = ("servertag", ["st", "guildtag"]);
     let system_server_tag_cmd = once(
@@ -140,8 +133,7 @@ pub fn edit() -> impl Iterator<Item = Command> {
             .help("Clears your system's server tag"),
         command!(system_server_tag_self, Remainder(("tag", OpaqueString)) => "system_change_server_tag")
             .help("Changes your system's server tag"),
-    ]
-    .into_iter();
+    ];
 
     let pronouns = ("pronouns", ["prns"]);
     let system_pronouns_cmd = once(
@@ -155,8 +147,7 @@ pub fn edit() -> impl Iterator<Item = Command> {
             .help("Clears your system's pronouns"),
         command!(system_pronouns_self, Remainder(("pronouns", OpaqueString)) => "system_change_pronouns")
             .help("Changes your system's pronouns"),
-    ]
-    .into_iter();
+    ];
 
     let avatar = ("avatar", ["pfp"]);
     let system_avatar_cmd = once(
@@ -170,11 +161,9 @@ pub fn edit() -> impl Iterator<Item = Command> {
             .help("Clears your system's avatar"),
         command!(system_avatar_self, ("avatar", Avatar) => "system_change_avatar")
             .help("Changes your system's avatar"),
-    ]
-    .into_iter();
+    ];
 
     let serveravatar = ("serveravatar", ["spfp"]);
-    let system_server_avatar = tokens!(system_target, serveravatar);
     let system_server_avatar_cmd = once(
         command!(system, Optional(SystemRef), serveravatar => "system_show_server_avatar")
             .help("Shows the system's server avatar"),
@@ -186,8 +175,7 @@ pub fn edit() -> impl Iterator<Item = Command> {
             .help("Clears your system's server avatar"),
         command!(system_server_avatar_self, ("avatar", Avatar) => "system_change_server_avatar")
             .help("Changes your system's server avatar"),
-    ]
-    .into_iter();
+    ];
 
     let banner = ("banner", ["cover"]);
     let system_banner_cmd = once(
@@ -201,8 +189,7 @@ pub fn edit() -> impl Iterator<Item = Command> {
             .help("Clears your system's banner"),
         command!(system_banner_self, ("banner", Avatar) => "system_change_banner")
             .help("Changes your system's banner"),
-    ]
-    .into_iter();
+    ];
 
     let system_proxy = tokens!(system, "proxy");
     let system_proxy_cmd = [
@@ -214,8 +201,7 @@ pub fn edit() -> impl Iterator<Item = Command> {
             .help("Shows your system's proxy setting for a guild"),
         command!(system_proxy, GuildRef, Toggle => "system_toggle_proxy")
             .help("Toggle your system's proxy for a guild"),
-    ]
-    .into_iter();
+    ];
 
     let system_privacy = tokens!(system, ("privacy", ["priv"]));
     let system_privacy_cmd = [
@@ -225,7 +211,7 @@ pub fn edit() -> impl Iterator<Item = Command> {
             .help("Changes all privacy settings for your system"),
         command!(system_privacy, ("privacy", SystemPrivacyTarget), ("level", PrivacyLevel) => "system_change_privacy")
             .help("Changes a specific privacy setting for your system"),
-    ].into_iter();
+    ];
 
     let front = ("front", ["fronter", "fronters", "f"]);
     let make_front_history = |subcmd: TokensIterator| {
@@ -243,8 +229,7 @@ pub fn edit() -> impl Iterator<Item = Command> {
         make_front_history(tokens!(("fronthistory", ["fh"]))),
         make_front_percent(tokens!(front, ("percent", ["p", "%"]))),
         make_front_percent(tokens!(("frontpercent", ["fp"]))),
-    ]
-    .into_iter();
+    ];
 
     let search_param = Optional(Remainder(("query", OpaqueString)));
     let apply_list_opts = |cmd: Command| cmd.flags(get_list_flags());
@@ -270,8 +255,7 @@ pub fn edit() -> impl Iterator<Item = Command> {
     let system_link = [
         command!("link", ("account", UserRef) => "system_link"),
         command!("unlink", ("account", OpaqueString) => "system_unlink").flag(YES),
-    ]
-    .into_iter();
+    ];
 
     system_new_cmd
         .chain(system_webhook_cmd)

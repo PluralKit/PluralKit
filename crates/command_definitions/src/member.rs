@@ -35,16 +35,16 @@ pub fn cmds() -> impl Iterator<Item = Command> {
     let tts = ("tts", ["texttospeech"]);
     let delete = ("delete", ["del", "remove"]);
 
-    let member_new_cmd = [
+    let member_new_cmd = once(
         command!(member, new, ("name", OpaqueString) => "member_new")
             .help("Creates a new system member"),
-    ]
-    .into_iter();
+    );
 
-    let member_info_cmd = [command!(member_target => "member_show")
-        .flag("pt")
-        .help("Shows information about a member")]
-    .into_iter();
+    let member_info_cmd = once(
+        command!(member_target => "member_show")
+            .flag("pt")
+            .help("Shows information about a member"),
+    );
 
     let member_name_cmd = {
         let member_name = tokens!(member_target, name);
@@ -54,7 +54,6 @@ pub fn cmds() -> impl Iterator<Item = Command> {
                 .flag(YES)
                 .help("Changes a member's name"),
         ]
-        .into_iter()
     };
 
     let member_description_cmd = {
@@ -67,7 +66,6 @@ pub fn cmds() -> impl Iterator<Item = Command> {
             command!(member_desc, Remainder(("description", OpaqueString)) => "member_desc_update")
                 .help("Changes a member's description"),
         ]
-        .into_iter()
     };
 
     let member_privacy_cmd = {
@@ -81,7 +79,6 @@ pub fn cmds() -> impl Iterator<Item = Command> {
             )
             .help("Changes a member's privacy settings"),
         ]
-        .into_iter()
     };
 
     let member_pronouns_cmd = {
@@ -94,7 +91,7 @@ pub fn cmds() -> impl Iterator<Item = Command> {
             command!(member_pronouns, CLEAR => "member_pronouns_clear")
                 .flag(YES)
                 .help("Clears a member's pronouns"),
-        ].into_iter()
+        ]
     };
 
     let member_banner_cmd = {
@@ -107,7 +104,6 @@ pub fn cmds() -> impl Iterator<Item = Command> {
                 .flag(YES)
                 .help("Clears a member's banner image"),
         ]
-        .into_iter()
     };
 
     let member_color_cmd = {
@@ -120,7 +116,6 @@ pub fn cmds() -> impl Iterator<Item = Command> {
                 .flag(YES)
                 .help("Clears a member's color"),
         ]
-        .into_iter()
     };
 
     let member_birthday_cmd = {
@@ -133,7 +128,6 @@ pub fn cmds() -> impl Iterator<Item = Command> {
                 .flag(YES)
                 .help("Clears a member's birthday"),
         ]
-        .into_iter()
     };
 
     let member_display_name_cmd = {
@@ -146,7 +140,7 @@ pub fn cmds() -> impl Iterator<Item = Command> {
             command!(member_display_name, CLEAR => "member_displayname_clear")
                 .flag(YES)
                 .help("Clears a member's display name"),
-        ].into_iter()
+        ]
     };
 
     let member_server_name_cmd = {
@@ -159,7 +153,7 @@ pub fn cmds() -> impl Iterator<Item = Command> {
             command!(member_server_name, CLEAR => "member_servername_clear")
                 .flag(YES)
                 .help("Clears a member's server name"),
-        ].into_iter()
+        ]
     };
 
     let member_proxy_cmd = {
@@ -176,7 +170,7 @@ pub fn cmds() -> impl Iterator<Item = Command> {
                 .help("Clears all proxy tags from a member"),
             command!(member_proxy, Remainder(("tags", OpaqueString)) => "member_proxy_set")
                 .help("Sets a member's proxy tags"),
-        ].into_iter()
+        ]
     };
 
     let member_proxy_settings_cmd = {
@@ -194,7 +188,7 @@ pub fn cmds() -> impl Iterator<Item = Command> {
                 .help("Clears a member's server-specific keep-proxy setting"),
             command!(member_server_keep_proxy, ("value", Toggle) => "member_server_keepproxy_update")
                 .help("Changes a member's server-specific keep-proxy setting"),
-        ].into_iter()
+        ]
     };
 
     let member_message_settings_cmd = {
@@ -210,7 +204,6 @@ pub fn cmds() -> impl Iterator<Item = Command> {
             command!(member_autoproxy, ("value", Toggle) => "member_autoproxy_update")
                 .help("Changes whether a member can be autoproxied"),
         ]
-        .into_iter()
     };
 
     let member_avatar_cmd = {
@@ -229,7 +222,6 @@ pub fn cmds() -> impl Iterator<Item = Command> {
                 .flag(YES)
                 .help("Clears a member's avatar"),
         ]
-        .into_iter()
     };
 
     let member_webhook_avatar_cmd = {
@@ -256,7 +248,6 @@ pub fn cmds() -> impl Iterator<Item = Command> {
                 .flag(YES)
                 .help("Clears a member's proxy avatar"),
         ]
-        .into_iter()
     };
 
     let member_server_avatar_cmd = {
@@ -289,12 +280,7 @@ pub fn cmds() -> impl Iterator<Item = Command> {
                 .flag(YES)
                 .help("Clears a member's server-specific avatar"),
         ]
-        .into_iter()
     };
-
-    let member_avatar_cmds = member_avatar_cmd
-        .chain(member_webhook_avatar_cmd)
-        .chain(member_server_avatar_cmd);
 
     let member_group = tokens!(member_target, ("groups", ["group"]));
     let member_list_group_cmds = once(
@@ -306,18 +292,16 @@ pub fn cmds() -> impl Iterator<Item = Command> {
             .help("Adds a member to one or more groups"),
         command!(member_group, ("remove", ["rem"]), Optional(("groups", GroupRefs)) => "member_group_remove")
             .help("Removes a member from one or more groups"),
-    ]
-    .into_iter();
+    ];
 
     let member_display_id_cmd =
-        [command!(member_target, "id" => "member_id").help("Displays a member's ID")].into_iter();
+        [command!(member_target, "id" => "member_id").help("Displays a member's ID")];
 
     let member_delete_cmd =
-        [command!(member_target, delete => "member_delete").help("Deletes a member")].into_iter();
+        [command!(member_target, delete => "member_delete").help("Deletes a member")];
 
     let member_easter_eggs =
-        [command!(member_target, "soulscream" => "member_soulscream").show_in_suggestions(false)]
-            .into_iter();
+        [command!(member_target, "soulscream" => "member_soulscream").show_in_suggestions(false)];
 
     member_new_cmd
         .chain(member_info_cmd)
@@ -331,7 +315,9 @@ pub fn cmds() -> impl Iterator<Item = Command> {
         .chain(member_display_name_cmd)
         .chain(member_server_name_cmd)
         .chain(member_proxy_cmd)
-        .chain(member_avatar_cmds)
+        .chain(member_avatar_cmd)
+        .chain(member_webhook_avatar_cmd)
+        .chain(member_server_avatar_cmd)
         .chain(member_proxy_settings_cmd)
         .chain(member_message_settings_cmd)
         .chain(member_display_id_cmd)

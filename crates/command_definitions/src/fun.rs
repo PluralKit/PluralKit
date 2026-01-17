@@ -1,6 +1,6 @@
 use super::*;
 
-pub fn cmds() -> impl Iterator<Item = Command> {
+pub fn cmds() -> impl IntoIterator<Item = Command> {
     [
         command!("thunder" => "fun_thunder"),
         command!("meow" => "fun_meow"),
@@ -13,5 +13,4 @@ pub fn cmds() -> impl Iterator<Item = Command> {
         command!("sus" => "amogus"),
         command!("error" => "fun_error"),
     ]
-    .into_iter()
 }

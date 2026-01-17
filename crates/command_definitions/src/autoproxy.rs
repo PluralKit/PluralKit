@@ -4,7 +4,7 @@ pub fn autoproxy() -> (&'static str, [&'static str; 2]) {
     ("autoproxy", ["ap", "auto"])
 }
 
-pub fn cmds() -> impl Iterator<Item = Command> {
+pub fn cmds() -> impl IntoIterator<Item = Command> {
     let ap = autoproxy();
 
     [
@@ -17,5 +17,4 @@ pub fn cmds() -> impl Iterator<Item = Command> {
             .help("Sets autoproxy to front mode"),
         command!(ap, MemberRef => "autoproxy_member").help("Sets autoproxy to a specific member"),
     ]
-    .into_iter()
 }

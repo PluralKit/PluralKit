@@ -4,7 +4,7 @@ pub fn admin() -> &'static str {
     "admin"
 }
 
-pub fn cmds() -> impl Iterator<Item = Command> {
+pub fn cmds() -> impl IntoIterator<Item = Command> {
     let admin = admin();
 
     let abuselog = tokens!(admin, ("abuselog", ["al"]));
@@ -24,7 +24,7 @@ pub fn cmds() -> impl Iterator<Item = Command> {
                 .help("Removes a user from an abuse log entry"),
             command!(abuselog, ("delete", ["d"]), log_param => format!("admin_abuselog_delete_{}", log_param.name()))
                 .help("Deletes an abuse log entry"),
-        ].into_iter()
+        ]
     };
     let abuselog_cmds = [
         command!(abuselog, ("create", ["c", "new"]), ("account", UserRef), Optional(Remainder(("description", OpaqueString))) => "admin_abuselog_create")

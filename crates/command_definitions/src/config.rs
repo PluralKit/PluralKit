@@ -2,7 +2,7 @@ use command_parser::parameter;
 
 use super::*;
 
-pub fn cmds() -> impl Iterator<Item = Command> {
+pub fn cmds() -> impl IntoIterator<Item = Command> {
     let cfg = ("config", ["cfg", "configure"]);
     let ap = tokens!(cfg, ("autoproxy", ["ap"]));
 
@@ -198,5 +198,4 @@ pub fn cmds() -> impl Iterator<Item = Command> {
         command!(group_limit => "cfg_limits_update").help("Refreshes member/group limits"),
         command!(limit => "cfg_limits_update").help("Refreshes member/group limits"),
     ]
-    .into_iter()
 }

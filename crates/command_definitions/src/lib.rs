@@ -25,7 +25,8 @@ use command_parser::{
 };
 
 pub fn all() -> impl Iterator<Item = Command> {
-    (help::cmds())
+    std::iter::empty()
+        .chain(help::cmds())
         .chain(system::cmds())
         .chain(group::cmds())
         .chain(member::cmds())

@@ -1,3 +1,5 @@
+use std::iter::once;
+
 use super::*;
 
 pub fn cmds() -> impl Iterator<Item = Command> {
@@ -44,7 +46,6 @@ pub fn cmds() -> impl Iterator<Item = Command> {
     let add = ("add", ["enable", "on", "deny"]);
     let remove = ("remove", ["disable", "off", "allow"]);
 
-    // Log channel commands
     let log_channel_cmds = [
         command!(log_channel => "server_config_log_channel_show")
             .help("Shows the current log channel"),
@@ -53,10 +54,8 @@ pub fn cmds() -> impl Iterator<Item = Command> {
         command!(log_channel, CLEAR => "server_config_log_channel_clear")
             .flag(YES)
             .help("Clears the log channel"),
-    ]
-    .into_iter();
+    ];
 
-    // Log cleanup commands
     let log_cleanup_cmds = [
         command!(log_cleanup => "server_config_log_cleanup_show")
             .help("Shows whether log cleanup is enabled"),
@@ -66,10 +65,8 @@ pub fn cmds() -> impl Iterator<Item = Command> {
             .help("Shows whether log cleanup is enabled"),
         command!(log_cleanup_short, Toggle => "server_config_log_cleanup_set")
             .help("Enables or disables log cleanup"),
-    ]
-    .into_iter();
+    ];
 
-    // Log blacklist commands
     let log_blacklist_cmds = [
         command!(log_blacklist => "server_config_log_blacklist_show")
             .help("Shows channels where logging is disabled"),
@@ -79,10 +76,8 @@ pub fn cmds() -> impl Iterator<Item = Command> {
         command!(log_blacklist, remove, Optional(("channel", ChannelRef)) => "server_config_log_blacklist_remove")
             .flag(ALL)
             .help("Removes a channel (or all channels with --all) from the log blacklist"),
-    ]
-    .into_iter();
+    ];
 
-    // Proxy blacklist commands
     let proxy_blacklist_cmds = [
         command!(proxy_blacklist => "server_config_proxy_blacklist_show")
             .help("Shows channels where proxying is disabled"),
@@ -92,10 +87,8 @@ pub fn cmds() -> impl Iterator<Item = Command> {
         command!(proxy_blacklist, remove, Optional(("channel", ChannelRef)) => "server_config_proxy_blacklist_remove")
             .flag(ALL)
             .help("Removes a channel (or all channels with --all) from the proxy blacklist"),
-    ]
-    .into_iter();
+    ];
 
-    // Invalid command error commands
     let invalid_cmds = [
         command!(invalid => "server_config_invalid_command_response_show")
             .help("Shows whether error responses for invalid commands are enabled"),
@@ -105,10 +98,8 @@ pub fn cmds() -> impl Iterator<Item = Command> {
             .help("Shows whether error responses for invalid commands are enabled"),
         command!(invalid_short, Toggle => "server_config_invalid_command_response_set")
             .help("Enables or disables error responses for invalid commands"),
-    ]
-    .into_iter();
+    ];
 
-    // Require system tag commands
     let require_tag_cmds = [
         command!(require_tag => "server_config_require_system_tag_show")
             .help("Shows whether system tags are required"),
@@ -118,10 +109,8 @@ pub fn cmds() -> impl Iterator<Item = Command> {
             .help("Shows whether system tags are required"),
         command!(require_tag_short, Toggle => "server_config_require_system_tag_set")
             .help("Requires or unrequires system tags for proxied messages"),
-    ]
-    .into_iter();
+    ];
 
-    // Suppress notifications commands
     let suppress_cmds = [
         command!(suppress => "server_config_suppress_notifications_show")
             .help("Shows whether notifications are suppressed for proxied messages"),
@@ -131,13 +120,12 @@ pub fn cmds() -> impl Iterator<Item = Command> {
             .help("Shows whether notifications are suppressed for proxied messages"),
         command!(suppress_short, Toggle => "server_config_suppress_notifications_set")
             .help("Enables or disables notification suppression for proxied messages"),
-    ]
-    .into_iter();
+    ];
 
-    // Main config overview
-    let main_cmd = [command!(server_config => "server_config_show")
-        .help("Shows the current server configuration")]
-    .into_iter();
+    let main_cmd = once(
+        command!(server_config => "server_config_show")
+            .help("Shows the current server configuration"),
+    );
 
     main_cmd
         .chain(log_channel_cmds)
