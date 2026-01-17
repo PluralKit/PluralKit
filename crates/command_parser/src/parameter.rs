@@ -331,8 +331,8 @@ fn parse_user_ref(input: &str) -> Result<ParameterValue, SmolStr> {
     Err(SmolStr::new("invalid user ID"))
 }
 
-macro_rules! impl_enum {
-    ($name:ident ($pretty_name:expr): $($variant:ident),*) => {
+macro_rules! define_enum {
+    ($name:ident ($pretty_name:expr): $($variant:ident),* $(,)?) => {
         #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
         pub enum $name {
             $($variant),*
@@ -358,179 +358,82 @@ macro_rules! impl_enum {
     };
 }
 
-impl_enum! {
+macro_rules! str_enum {
+    ($name:ident: $($variant:ident = $variant_str:literal),* $(,)?) => {
+        impl AsRef<str> for $name {
+            fn as_ref(&self) -> &str {
+                match self {
+                    $(Self::$variant => $variant_str),*
+                }
+            }
+        }
+    };
+}
+
+macro_rules! auto_enum {
+    ($name:ident ($pretty_name:expr): $($variant:ident = $variant_str:literal $(| $variant_matches:literal)*),* $(,)?) => {
+        define_enum!($name($pretty_name): $($variant),*);
+
+        str_enum!($name: $($variant = $variant_str),*);
+
+        impl FromStr for $name {
+            type Err = SmolStr;
+
+            fn from_str(s: &str) -> Result<Self, Self::Err> {
+                match s.to_lowercase().as_str() {
+                    $($variant_str $(| $variant_matches)* => Ok(Self::$variant),)*
+                    _ => Err(Self::get_error()),
+                }
+            }
+        }
+    };
+}
+
+auto_enum! {
     MemberPrivacyTargetKind("member privacy target"):
-        Visibility,
-        Name,
-        Description,
-        Banner,
-        Avatar,
-        Birthday,
-        Pronouns,
-        Proxy,
-        Metadata
+        Visibility = "visibility",
+        Name = "name",
+        Description = "description",
+        Banner = "banner",
+        Avatar = "avatar",
+        Birthday = "birthday",
+        Pronouns = "pronouns",
+        Proxy = "proxy",
+        Metadata = "metadata",
 }
 
-impl AsRef<str> for MemberPrivacyTargetKind {
-    fn as_ref(&self) -> &str {
-        match self {
-            Self::Visibility => "visibility",
-            Self::Name => "name",
-            Self::Description => "description",
-            Self::Banner => "banner",
-            Self::Avatar => "avatar",
-            Self::Birthday => "birthday",
-            Self::Pronouns => "pronouns",
-            Self::Proxy => "proxy",
-            Self::Metadata => "metadata",
-        }
-    }
-}
-
-impl FromStr for MemberPrivacyTargetKind {
-    type Err = SmolStr;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        // todo: this doesnt parse all the possible ways
-        match s.to_lowercase().as_str() {
-            "visibility" => Ok(Self::Visibility),
-            "name" => Ok(Self::Name),
-            "description" => Ok(Self::Description),
-            "banner" => Ok(Self::Banner),
-            "avatar" => Ok(Self::Avatar),
-            "birthday" => Ok(Self::Birthday),
-            "pronouns" => Ok(Self::Pronouns),
-            "proxy" => Ok(Self::Proxy),
-            "metadata" => Ok(Self::Metadata),
-            _ => Err(Self::get_error()),
-        }
-    }
-}
-
-impl_enum! {
+auto_enum! {
     GroupPrivacyTargetKind("group privacy target"):
-        Name,
-        Icon,
-        Description,
-        Banner,
-        List,
-        Metadata,
-        Visibility
+        Name = "name",
+        Icon = "icon" | "avatar",
+        Description = "description",
+        Banner = "banner",
+        List = "list",
+        Metadata = "metadata",
+        Visibility = "visibility",
 }
 
-impl AsRef<str> for GroupPrivacyTargetKind {
-    fn as_ref(&self) -> &str {
-        match self {
-            Self::Name => "name",
-            Self::Icon => "icon",
-            Self::Description => "description",
-            Self::Banner => "banner",
-            Self::List => "list",
-            Self::Metadata => "metadata",
-            Self::Visibility => "visibility",
-        }
-    }
-}
-
-impl FromStr for GroupPrivacyTargetKind {
-    type Err = SmolStr;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        // todo: this doesnt parse all the possible ways
-        match s.to_lowercase().as_str() {
-            "name" => Ok(Self::Name),
-            "avatar" | "icon" => Ok(Self::Icon),
-            "description" => Ok(Self::Description),
-            "banner" => Ok(Self::Banner),
-            "list" => Ok(Self::List),
-            "metadata" => Ok(Self::Metadata),
-            "visibility" => Ok(Self::Visibility),
-            _ => Err(Self::get_error()),
-        }
-    }
-}
-
-impl_enum! {
+auto_enum! {
     SystemPrivacyTargetKind("system privacy target"):
-        Name,
-        Avatar,
-        Description,
-        Banner,
-        Pronouns,
-        MemberList,
-        GroupList,
-        Front,
-        FrontHistory
+        Name = "name",
+        Avatar = "avatar" | "pfp" | "pic" | "icon",
+        Description = "description" | "desc" | "bio" | "info",
+        Banner = "banner" | "splash" | "cover",
+        Pronouns = "pronouns" | "prns" | "pn",
+        MemberList = "members" | "memberlist" | "list",
+        GroupList = "groups" | "gs",
+        Front = "front" | "fronter" | "fronters",
+        FrontHistory = "fronthistory" | "fh" | "switches",
 }
 
-impl AsRef<str> for SystemPrivacyTargetKind {
-    fn as_ref(&self) -> &str {
-        match self {
-            Self::Name => "name",
-            Self::Avatar => "avatar",
-            Self::Description => "description",
-            Self::Banner => "banner",
-            Self::Pronouns => "pronouns",
-            Self::MemberList => "members",
-            Self::GroupList => "groups",
-            Self::Front => "front",
-            Self::FrontHistory => "fronthistory",
-        }
-    }
+auto_enum! {
+    PrivacyLevelKind("privacy level"):
+        Public = "public",
+        Private = "private",
 }
 
-impl FromStr for SystemPrivacyTargetKind {
-    type Err = SmolStr;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.to_lowercase().as_str() {
-            "name" => Ok(Self::Name),
-            "avatar" | "pfp" | "pic" | "icon" => Ok(Self::Avatar),
-            "description" | "desc" | "bio" | "info" => Ok(Self::Description),
-            "banner" | "splash" | "cover" => Ok(Self::Banner),
-            "pronouns" | "prns" | "pn" => Ok(Self::Pronouns),
-            "members" | "memberlist" | "list" => Ok(Self::MemberList),
-            "groups" | "gs" => Ok(Self::GroupList),
-            "front" | "fronter" | "fronters" => Ok(Self::Front),
-            "fronthistory" | "fh" | "switches" => Ok(Self::FrontHistory),
-            _ => Err(Self::get_error()),
-        }
-    }
-}
-
-impl_enum!(PrivacyLevelKind("privacy level"): Public, Private);
-
-impl AsRef<str> for PrivacyLevelKind {
-    fn as_ref(&self) -> &str {
-        match self {
-            Self::Public => "public",
-            Self::Private => "private",
-        }
-    }
-}
-
-impl FromStr for PrivacyLevelKind {
-    type Err = SmolStr; // todo
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "public" => Ok(PrivacyLevelKind::Public),
-            "private" => Ok(PrivacyLevelKind::Private),
-            _ => Err(Self::get_error()),
-        }
-    }
-}
-
-impl_enum!(Toggle("toggle"): On, Off);
-
-impl AsRef<str> for Toggle {
-    fn as_ref(&self) -> &str {
-        match self {
-            Self::On => "on",
-            Self::Off => "off",
-        }
-    }
-}
+define_enum!(Toggle("toggle"): On, Off);
+str_enum!(Toggle: On = "on", Off = "off");
 
 impl FromStr for Toggle {
     type Err = SmolStr;
@@ -566,17 +469,8 @@ impl Into<bool> for Toggle {
     }
 }
 
-impl_enum!(ProxySwitchAction("proxy switch action"): New, Add, Off);
-
-impl AsRef<str> for ProxySwitchAction {
-    fn as_ref(&self) -> &str {
-        match self {
-            ProxySwitchAction::New => "new",
-            ProxySwitchAction::Add => "add",
-            ProxySwitchAction::Off => "off",
-        }
-    }
-}
+define_enum!(ProxySwitchAction("proxy switch action"): New, Add, Off);
+str_enum!(ProxySwitchAction: New = "new", Add = "add", Off = "off");
 
 impl FromStr for ProxySwitchAction {
     type Err = SmolStr;
