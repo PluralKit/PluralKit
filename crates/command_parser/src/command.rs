@@ -1,6 +1,7 @@
 use std::{
     collections::HashSet,
     fmt::{Debug, Display},
+    sync::Arc,
 };
 
 use smol_str::SmolStr;
@@ -17,6 +18,7 @@ pub struct Command {
     pub show_in_suggestions: bool,
     pub parse_flags_before: usize,
     pub hidden_flags: HashSet<SmolStr>,
+    pub original: Option<Arc<Command>>,
 }
 
 impl Command {
@@ -41,6 +43,7 @@ impl Command {
             parse_flags_before,
             tokens,
             hidden_flags: HashSet::new(),
+            original: None,
         }
     }
 

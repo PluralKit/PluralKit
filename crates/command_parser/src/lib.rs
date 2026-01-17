@@ -181,15 +181,18 @@ pub fn parse_command(
             let mut flags: HashMap<String, Option<ParameterValue>> = HashMap::new();
             let mut misplaced_flags: Vec<MatchedFlag> = Vec::new();
             let mut invalid_flags: Vec<MatchedFlag> = Vec::new();
+
             for (token_idx, raw_flag) in raw_flags {
                 let Some(matched_flag) = match_flag(command.flags.iter(), raw_flag.clone()) else {
                     invalid_flags.push(raw_flag);
                     continue;
                 };
+
                 if token_idx != command.parse_flags_before {
                     misplaced_flags.push(raw_flag);
                     continue;
                 }
+
                 match matched_flag {
                     // a flag was matched
                     Ok((name, value)) => {
@@ -216,6 +219,8 @@ pub fn parse_command(
                     }
                 }
             }
+            
+            let full_cmd = command.original.as_deref().unwrap_or(&command);
             if misplaced_flags.is_empty().not() {
                 let mut error = format!(
                     "Flag{} ",
@@ -230,7 +235,8 @@ pub fn parse_command(
                 write!(
                     &mut error,
                     " in command `{prefix}{input}` {} misplaced. Try reordering to match the command usage `{prefix}{command}`.",
-                    (misplaced_flags.len() > 1).then_some("are").unwrap_or("is")
+                    (misplaced_flags.len() > 1).then_some("are").unwrap_or("is"),
+                    command = full_cmd
                 ).expect("oom");
                 return Err(error);
             }
@@ -250,7 +256,8 @@ pub fn parse_command(
                     " {} seem to be applicable in this command (`{prefix}{command}`).",
                     (invalid_flags.len() > 1)
                         .then_some("don't")
-                        .unwrap_or("doesn't")
+                        .unwrap_or("doesn't"),
+                    command = full_cmd
                 )
                 .expect("oom");
                 return Err(error);

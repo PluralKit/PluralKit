@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use ordermap::OrderMap;
 
 use crate::{command::Command, token::Token};
@@ -27,10 +29,20 @@ impl TreeBranch {
             if matches!(token, Token::Parameter(ref param) if param.is_optional())
                 && index < command.tokens.len() - 1
             {
-                current_branch.register_command(Command {
-                    tokens: command.tokens[index + 1..].to_vec(),
-                    ..command.clone()
-                });
+                let mut new_command = command.clone();
+                new_command.tokens = command.tokens[index + 1..].to_vec();
+                new_command.original = command
+                    .original
+                    .clone()
+                    .or_else(|| Some(Arc::new(command.clone())));
+
+                // if the optional parameter we're skipping is *before* the flag insertion point,
+                // we need to shift the index left by 1 to account for the removed token
+                if new_command.parse_flags_before > index {
+                    new_command.parse_flags_before -= 1;
+                }
+
+                current_branch.register_command(new_command);
             }
             // recursively get or create a sub-branch for each token
             current_branch = current_branch
