@@ -238,10 +238,13 @@ pub fn edit() -> impl Iterator<Item = Command> {
     let search_param = Optional(Remainder(("query", OpaqueString)));
     let apply_list_opts = |cmd: Command| cmd.flags(get_list_flags());
 
-    let members_subcmd = tokens!(("members", ["ls", "list"]), search_param);
-    let system_members_cmd =
-        once(command!(system, Optional(SystemRef), members_subcmd => "system_members"))
-            .map(apply_list_opts);
+    let members_subcmd = tokens!(("members", ["l", "ls", "list"]), search_param);
+    let system_members_cmd = [
+        command!(system, Optional(SystemRef), members_subcmd => "system_members")
+            .help("Lists a system's members"),
+        command!(members_subcmd => "system_members").help("Lists your system's members"),
+    ]
+    .map(apply_list_opts);
 
     let system_groups_cmd =
         once(command!(system, Optional(SystemRef), "groups", search_param => "system_groups"))
