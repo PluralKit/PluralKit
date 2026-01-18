@@ -52,6 +52,14 @@ pub fn parse_command(
     let mut filtered_tokens: Vec<Token> = Vec::new();
     let mut last_optional_param_error: Option<(SmolStr, SmolStr)> = None;
 
+    // track the best attempt at parsing (deepest matched tokens)
+    // so we can use it for error messages/suggestions even if we backtrack later
+    let mut best_attempt: Option<(
+        Tree,
+        Vec<(Tree, (Token, TokenMatchResult, usize), usize)>,
+        usize,
+    )> = None;
+
     loop {
         let mut possible_tokens = local_tree
             .possible_tokens()
@@ -115,6 +123,17 @@ pub fn parse_command(
                         (found_token.clone(), result.clone(), *new_pos),
                         current_pos,
                     ));
+
+                    // update best attempt if we're deeper
+                    if best_attempt.as_ref().map(|x| x.1.len()).unwrap_or(0) < matched_tokens.len()
+                    {
+                        best_attempt = Some((
+                            next_tree.clone(),
+                            matched_tokens.clone(),
+                            *new_pos,
+                        ));
+                    }
+
                     filtered_tokens.clear(); // new branch, new tokens
                     local_tree = next_tree.clone();
                 } else {
@@ -145,10 +164,29 @@ pub fn parse_command(
                     ));
                 }
 
+                // restore best attempt if it's deeper than current state
+                // this helps when we backtracked out of the correct path because of a later error
+                if let Some((best_tree, best_matched, best_pos)) = best_attempt {
+                    if best_matched.len() > matched_tokens.len() {
+                        local_tree = best_tree;
+                        matched_tokens = best_matched;
+                        current_pos = best_pos;
+                    }
+                }
+
                 let mut error = format!("Unknown command `{prefix}{input}`.");
 
-                let possible_commands =
-                    rank_possible_commands(&input, local_tree.possible_commands(usize::MAX));
+                // normalize input by replacing parameters with placeholders
+                let mut normalized_input = String::new();
+                for (_, (token, _, _), _) in &matched_tokens {
+                    write!(&mut normalized_input, "{token} ").unwrap();
+                }
+                normalized_input.push_str(&input[current_pos..].trim_start());
+
+                let possible_commands = rank_possible_commands(
+                    &normalized_input,
+                    local_tree.possible_commands(usize::MAX),
+                );
                 if possible_commands.is_empty().not() {
                     error.push_str(" Perhaps you meant one of the following commands:\n");
                     fmt_commands_list(&mut error, &prefix, possible_commands);
@@ -339,7 +377,6 @@ fn next_token<'a>(
 }
 
 // todo: should probably move this somewhere else
-/// returns true if wrote possible commands, false if not
 fn rank_possible_commands(
     input: &str,
     possible_commands: impl IntoIterator<Item = &Command>,
