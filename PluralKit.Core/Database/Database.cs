@@ -23,18 +23,16 @@ internal partial class Database: IDatabase
     private readonly ILogger _logger;
     private readonly IMetrics _metrics;
     private readonly DbConnectionCountHolder _countHolder;
-    private readonly DatabaseMigrator _migrator;
 
     private readonly NpgsqlDataSource _dataSource;
     private readonly NpgsqlDataSource _dataSourceMessages;
 
     public Database(CoreConfig config, DbConnectionCountHolder countHolder, ILogger logger,
-                    IMetrics metrics, DatabaseMigrator migrator)
+                    IMetrics metrics)
     {
         _config = config;
         _countHolder = countHolder;
         _metrics = metrics;
-        _migrator = migrator;
         _logger = logger.ForContext<Database>();
 
         string connectionString(string src)
@@ -119,12 +117,6 @@ internal partial class Database: IDatabase
         var conn = new PKConnection((messages ? _dataSourceMessages : _dataSource).CreateConnection(), _countHolder, _logger, _metrics);
         await conn.OpenAsync();
         return conn;
-    }
-
-    public async Task ApplyMigrations()
-    {
-        using var conn = await Obtain();
-        await _migrator.ApplyMigrations(conn);
     }
 
     private class PassthroughTypeHandler<T>: SqlMapper.TypeHandler<T>

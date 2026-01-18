@@ -6,7 +6,6 @@ namespace PluralKit.Core;
 
 public interface IDatabase
 {
-    Task ApplyMigrations();
     Task<IPKConnection> Obtain(bool messages = false);
     Task Execute(Func<IPKConnection, Task> func);
     Task<T> Execute<T>(Func<IPKConnection, Task<T>> func);
