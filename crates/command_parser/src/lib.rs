@@ -219,7 +219,7 @@ pub fn parse_command(
                     }
                 }
             }
-            
+
             let full_cmd = command.original.as_deref().unwrap_or(&command);
             if misplaced_flags.is_empty().not() {
                 let mut error = format!(
@@ -346,6 +346,7 @@ fn rank_possible_commands(
 ) -> Vec<(Command, String, bool)> {
     let mut commands_with_scores: Vec<(&Command, String, f64, bool)> = possible_commands
         .into_iter()
+        .map(|cmd| cmd.original.as_deref().unwrap_or(cmd))
         .filter(|cmd| cmd.show_in_suggestions)
         .flat_map(|cmd| {
             let versions = generate_command_versions(cmd);
