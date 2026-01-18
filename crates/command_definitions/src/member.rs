@@ -281,7 +281,7 @@ pub fn cmds() -> impl Iterator<Item = Command> {
         ]
     };
 
-    let member_group = tokens!(member_target, ("groups", ["group"]));
+    let member_group = tokens!(member_target, ("groups", ["group", "g"]));
     let member_list_group_cmds = once(
         command!(member_group, Optional(Remainder(("query", OpaqueString))) => "member_groups"),
     )
