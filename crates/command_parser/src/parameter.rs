@@ -8,6 +8,15 @@ use smol_str::{SmolStr, format_smolstr};
 
 use crate::token::{Token, TokenMatchResult};
 
+pub const MESSAGE_REF: ParameterKind = ParameterKind::MessageRef {
+    id: true,
+    link: true,
+};
+pub const MESSAGE_LINK: ParameterKind = ParameterKind::MessageRef {
+    id: false,
+    link: true,
+};
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ParameterKind {
     OpaqueString,
@@ -18,7 +27,7 @@ pub enum ParameterKind {
     GroupRefs,
     SystemRef,
     UserRef,
-    MessageRef,
+    MessageRef { id: bool, link: bool },
     ChannelRef,
     GuildRef,
     MemberPrivacyTarget,
@@ -41,7 +50,7 @@ impl ParameterKind {
             ParameterKind::GroupRefs => "targets",
             ParameterKind::SystemRef => "target",
             ParameterKind::UserRef => "target",
-            ParameterKind::MessageRef => "target",
+            ParameterKind::MessageRef { .. } => "target",
             ParameterKind::ChannelRef => "target",
             ParameterKind::GuildRef => "target",
             ParameterKind::MemberPrivacyTarget => "member_privacy_target",
@@ -153,48 +162,56 @@ impl Parameter {
                 Toggle::from_str(input).map(|t| ParameterValue::Toggle(t.into()))
             }
             ParameterKind::Avatar => Ok(ParameterValue::Avatar(input.into())),
-            ParameterKind::MessageRef => {
-                if let Ok(message_id) = input.parse::<u64>() {
-                    return Ok(ParameterValue::MessageRef(None, None, message_id));
+            ParameterKind::MessageRef { id, link } => {
+                if id {
+                    if let Ok(message_id) = input.parse::<u64>() {
+                        return Ok(ParameterValue::MessageRef(None, None, message_id));
+                    }
                 }
 
-                static SERVER_RE: std::sync::LazyLock<regex::Regex> = std::sync::LazyLock::new(
-                    || {
-                        regex::Regex::new(
-                        r"https://(?:\w+\.)?discord(?:app)?\.com/channels/(?P<guild>\d+)/(?P<channel>\d+)/(?P<message>\d+)",
-                    )
-                    .unwrap()
-                    },
-                );
+                if link {
+                    static SERVER_RE: std::sync::LazyLock<regex::Regex> = std::sync::LazyLock::new(
+                        || {
+                            regex::Regex::new(
+                                r"https://(?:\w+\.)?discord(?:app)?\.com/channels/(?P<guild>\d+)/(?P<channel>\d+)/(?P<message>\d+)",
+                            )
+                            .unwrap()
+                        },
+                    );
 
-                static DM_RE: std::sync::LazyLock<regex::Regex> = std::sync::LazyLock::new(|| {
-                    regex::Regex::new(
-                        r"https://(?:\w+\.)?discord(?:app)?\.com/channels/@me/(?P<channel>\d+)/(?P<message>\d+)",
-                    )
-                    .unwrap()
-                });
+                    static DM_RE: std::sync::LazyLock<regex::Regex> = std::sync::LazyLock::new(
+                        || {
+                            regex::Regex::new(
+                                r"https://(?:\w+\.)?discord(?:app)?\.com/channels/@me/(?P<channel>\d+)/(?P<message>\d+)",
+                            )
+                            .unwrap()
+                        },
+                    );
 
-                if let Some(captures) = SERVER_RE.captures(input) {
-                    let guild_id = captures.parse_id("guild")?;
-                    let channel_id = captures.parse_id("channel")?;
-                    let message_id = captures.parse_id("message")?;
+                    if let Some(captures) = SERVER_RE.captures(input) {
+                        let guild_id = captures.parse_id("guild")?;
+                        let channel_id = captures.parse_id("channel")?;
+                        let message_id = captures.parse_id("message")?;
 
-                    Ok(ParameterValue::MessageRef(
-                        Some(guild_id),
-                        Some(channel_id),
-                        message_id,
-                    ))
-                } else if let Some(captures) = DM_RE.captures(input) {
-                    let channel_id = captures.parse_id("channel")?;
-                    let message_id = captures.parse_id("message")?;
+                        Ok(ParameterValue::MessageRef(
+                            Some(guild_id),
+                            Some(channel_id),
+                            message_id,
+                        ))
+                    } else if let Some(captures) = DM_RE.captures(input) {
+                        let channel_id = captures.parse_id("channel")?;
+                        let message_id = captures.parse_id("message")?;
 
-                    Ok(ParameterValue::MessageRef(
-                        None,
-                        Some(channel_id),
-                        message_id,
-                    ))
+                        Ok(ParameterValue::MessageRef(
+                            None,
+                            Some(channel_id),
+                            message_id,
+                        ))
+                    } else {
+                        Err(SmolStr::new("invalid message reference"))
+                    }
                 } else {
-                    Err(SmolStr::new("invalid message reference"))
+                    unreachable!("link and id both cant be false")
                 }
             }
             ParameterKind::ChannelRef => {
@@ -234,7 +251,15 @@ impl Display for Parameter {
             ParameterKind::GroupRefs => write!(f, "<group 1> <group 2> <group 3>"),
             ParameterKind::SystemRef => write!(f, "<target system>"),
             ParameterKind::UserRef => write!(f, "<target user>"),
-            ParameterKind::MessageRef => write!(f, "<target message>"),
+            ParameterKind::MessageRef { link, id } => write!(
+                f,
+                "<target message {}>",
+                link.then_some("link")
+                    .into_iter()
+                    .chain(id.then_some("id"))
+                    .collect::<Vec<_>>()
+                    .join("/")
+            ),
             ParameterKind::ChannelRef => write!(f, "<target channel>"),
             ParameterKind::GuildRef => write!(f, "<target guild>"),
             ParameterKind::MemberPrivacyTarget => write!(f, "<privacy target>"),

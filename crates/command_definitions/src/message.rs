@@ -1,7 +1,9 @@
+use command_parser::parameter::{MESSAGE_LINK, MESSAGE_REF};
+
 use super::*;
 
 pub fn cmds() -> impl IntoIterator<Item = Command> {
-    let message = tokens!(("message", ["msg", "messageinfo"]), Optional(MessageRef));
+    let message = tokens!(("message", ["msg", "messageinfo"]), Optional(MESSAGE_REF));
 
     let author = ("author", ["sender", "a"]);
     let delete = ("delete", ["del", "d"]);
@@ -20,8 +22,8 @@ pub fn cmds() -> impl IntoIterator<Item = Command> {
     };
 
     [
-        apply_edit(command!(edit, Optional(MessageRef), new_content_param => "message_edit")),
-        command!(reproxy, Optional(("msg", MessageRef)), ("member", MemberRef) => "message_reproxy")
+        apply_edit(command!(edit, Optional(MESSAGE_LINK), new_content_param => "message_edit")),
+        command!(reproxy, Optional(("msg", MESSAGE_REF)), ("member", MemberRef) => "message_reproxy")
             .help("Reproxies a previously proxied message with a different member"),
         command!(message, author => "message_author").help("Shows the author of a proxied message"),
         command!(message, delete => "message_delete").help("Deletes a proxied message"),
