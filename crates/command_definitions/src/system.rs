@@ -121,9 +121,9 @@ pub fn edit() -> impl Iterator<Item = Command> {
             .help("Changes your system's tag"),
     ];
 
-    let servertag = ("servertag", ["st", "guildtag"]);
+    let servertag = ("servertag", ["st", "guildtag", "stag", "deer"]);
     let system_server_tag_cmd = once(
-        command!(system, Optional(SystemRef) => "system_show_server_tag")
+        command!(system, Optional(SystemRef), servertag => "system_show_server_tag")
             .help("Shows the system's server tag"),
     );
     let system_server_tag_self = tokens!(system, servertag);
