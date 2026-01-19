@@ -5,11 +5,13 @@ use super::*;
 pub fn cmds() -> impl Iterator<Item = Command> {
     let random = ("random", ["rand"]);
     let group = group::group();
+    let member = member::member();
 
     [
         command!(random => "random_self")
             .help("Shows the info card of a randomly selected member in your system")
             .flag(group),
+        command!(random, member => "random_self"),
         command!(random, group => "random_group_self")
             .help("Shows the info card of a randomly selected group in your system"),
         command!(random, group::targeted() => "random_group_member_self")

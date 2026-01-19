@@ -247,7 +247,7 @@ pub fn edit() -> impl Iterator<Item = Command> {
     .map(apply_list_opts);
 
     let system_groups_cmd = once(
-        command!(system, Optional(SystemRef), "groups", search_param => "system_groups")
+        command!(system, Optional(SystemRef), ("groups", ["g"]), search_param => "system_groups")
             .help("Lists groups in a system"),
     )
     .map(apply_list_opts);
