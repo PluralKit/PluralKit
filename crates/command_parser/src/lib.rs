@@ -33,6 +33,15 @@ pub struct ParsedCommand {
     pub flags: HashMap<String, Option<ParameterValue>>,
 }
 
+#[derive(Clone, Debug)]
+struct MatchedTokenState {
+    tree: Tree,
+    token: Token,
+    match_result: TokenMatchResult,
+    start_pos: usize,
+    filtered_tokens: Vec<Token>,
+}
+
 pub fn parse_command(
     command_tree: Tree,
     prefix: String,
@@ -44,21 +53,16 @@ pub fn parse_command(
     // end position of all currently matched tokens
     let mut current_pos: usize = 0;
     let mut current_token_idx: usize = 0;
-
-    let mut params: HashMap<String, ParameterValue> = HashMap::new();
     let mut raw_flags: Vec<(usize, MatchedFlag)> = Vec::new();
 
-    let mut matched_tokens: Vec<(Tree, (Token, TokenMatchResult, usize), usize)> = Vec::new();
-    let mut filtered_tokens: Vec<Token> = Vec::new();
+    let mut matched_tokens: Vec<MatchedTokenState> = Vec::new();
+    let mut filtered_tokens: Vec<Token> = Vec::new(); // these are tokens that we've already tried (and failed)
+
     let mut last_optional_param_error: Option<(SmolStr, SmolStr)> = None;
 
     // track the best attempt at parsing (deepest matched tokens)
     // so we can use it for error messages/suggestions even if we backtrack later
-    let mut best_attempt: Option<(
-        Tree,
-        Vec<(Tree, (Token, TokenMatchResult, usize), usize)>,
-        usize,
-    )> = None;
+    let mut best_attempt: Option<(Tree, Vec<MatchedTokenState>, usize)> = None;
 
     loop {
         let mut possible_tokens = local_tree
@@ -111,18 +115,21 @@ pub fn parse_command(
                     }
                 }
 
-                // add parameter if any
-                if let TokenMatchResult::MatchedParameter { name, value } = result {
-                    params.insert(name.to_string(), value.clone());
+                if let TokenMatchResult::MatchedParameter { .. } = result {
+                    // we don't add params here, but wait until we matched a full command
+                    // then we can use matched_tokens to extract the params
+                    // this is so we don't have to keep track of "params" when trying branches
                 }
 
                 // move to the next branch
                 if let Some(next_tree) = local_tree.get_branch(&found_token) {
-                    matched_tokens.push((
-                        local_tree.clone(),
-                        (found_token.clone(), result.clone(), *new_pos),
-                        current_pos,
-                    ));
+                    matched_tokens.push(MatchedTokenState {
+                        tree: local_tree.clone(),
+                        token: found_token.clone(),
+                        match_result: result.clone(),
+                        start_pos: current_pos,
+                        filtered_tokens: filtered_tokens.clone(),
+                    });
 
                     // update best attempt if we're deeper
                     if best_attempt.as_ref().map(|x| x.1.len()).unwrap_or(0) < matched_tokens.len()
@@ -147,14 +154,15 @@ pub fn parse_command(
             None => {
                 // redo the previous branches if we didnt match on a parameter
                 // this is a bit of a hack, but its necessary for making parameters on the same depth work
-                if let Some((match_tree, match_next, old_pos)) = matched_tokens
+                if let Some(state) = matched_tokens
                     .pop()
-                    .and_then(|m| matches!(m.1, (Token::Parameter(_), _, _)).then_some(m))
+                    .and_then(|m| matches!(m.token, Token::Parameter(_)).then_some(m))
                 {
-                    println!("redoing previous branch: {:?}", match_next.0);
-                    local_tree = match_tree;
-                    current_pos = old_pos; // reset position to previous branch's start
-                    filtered_tokens.push(match_next.0);
+                    println!("redoing previous branch: {:?}", state.token);
+                    local_tree = state.tree;
+                    current_pos = state.start_pos; // reset position to previous branch's start
+                    filtered_tokens = state.filtered_tokens; // reset filtered tokens to the previous branch's
+                    filtered_tokens.push(state.token);
                     continue;
                 }
 
@@ -178,8 +186,8 @@ pub fn parse_command(
 
                 // normalize input by replacing parameters with placeholders
                 let mut normalized_input = String::new();
-                for (_, (token, _, _), _) in &matched_tokens {
-                    write!(&mut normalized_input, "{token} ").unwrap();
+                for state in &matched_tokens {
+                    write!(&mut normalized_input, "{} ", state.token).unwrap();
                 }
                 normalized_input.push_str(&input[current_pos..].trim_start());
 
@@ -219,6 +227,13 @@ pub fn parse_command(
             let mut flags: HashMap<String, Option<ParameterValue>> = HashMap::new();
             let mut misplaced_flags: Vec<MatchedFlag> = Vec::new();
             let mut invalid_flags: Vec<MatchedFlag> = Vec::new();
+
+            let mut params: HashMap<String, ParameterValue> = HashMap::new();
+            for state in &matched_tokens {
+                if let TokenMatchResult::MatchedParameter { name, value } = &state.match_result {
+                    params.insert(name.to_string(), value.clone());
+                }
+            }
 
             for (token_idx, raw_flag) in raw_flags {
                 let Some(matched_flag) = match_flag(command.flags.iter(), raw_flag.clone()) else {
