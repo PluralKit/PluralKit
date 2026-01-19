@@ -308,7 +308,7 @@ pub fn parse_command(
                 }
             }
 
-            let full_cmd = command.original.as_deref().unwrap_or(&command);
+            let full_cmd = command.original.as_ref().unwrap_or(&command);
             if misplaced_flags.is_empty().not() {
                 let mut error = format!(
                     "Flag{} ",
@@ -355,9 +355,9 @@ pub fn parse_command(
                 flags.insert(name.to_string(), value.clone());
             }
 
-            println!("{} {flags:?} {params:?}", command.cb);
+            println!("{} {flags:?} {params:?}", full_cmd.cb);
             return Ok(ParsedCommand {
-                command_def: command,
+                command_def: full_cmd.clone(),
                 flags,
                 parameters: params,
             });
