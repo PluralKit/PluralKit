@@ -2,6 +2,8 @@
 #![feature(round_char_boundary)]
 #![feature(iter_intersperse)]
 
+use std::sync::Arc;
+
 pub mod command;
 pub mod flag;
 pub mod parameter;
@@ -28,14 +30,14 @@ pub type Tree = tree::TreeBranch;
 
 #[derive(Debug)]
 pub struct ParsedCommand {
-    pub command_def: Command,
+    pub command_def: Arc<Command>,
     pub parameters: HashMap<String, ParameterValue>,
     pub flags: HashMap<String, Option<ParameterValue>>,
 }
 
 #[derive(Clone, Debug)]
 struct MatchedTokenState {
-    tree: Tree,
+    tree: Arc<Tree>,
     token: Token,
     match_result: TokenMatchResult,
     start_pos: usize,
@@ -43,12 +45,12 @@ struct MatchedTokenState {
 }
 
 pub fn parse_command(
-    command_tree: Tree,
+    command_tree: impl Into<Arc<Tree>>,
     prefix: String,
     input: String,
 ) -> Result<ParsedCommand, String> {
     let input: SmolStr = input.into();
-    let mut local_tree: Tree = command_tree.clone();
+    let mut local_tree = command_tree.into();
 
     // end position of all currently matched tokens
     let mut current_pos: usize = 0;
@@ -62,7 +64,7 @@ pub fn parse_command(
 
     // track the best attempt at parsing (deepest matched tokens)
     // so we can use it for error messages/suggestions even if we backtrack later
-    let mut best_attempt: Option<(Tree, Vec<MatchedTokenState>, usize)> = None;
+    let mut best_attempt: Option<(Arc<Tree>, Vec<MatchedTokenState>, usize)> = None;
 
     loop {
         let mut possible_tokens = local_tree

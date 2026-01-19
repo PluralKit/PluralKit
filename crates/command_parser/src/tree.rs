@@ -6,8 +6,8 @@ use crate::{command::Command, token::Token};
 
 #[derive(Debug, Clone)]
 pub struct TreeBranch {
-    current_command: Option<Command>,
-    branches: OrderMap<Token, TreeBranch>,
+    current_command: Option<Arc<Command>>,
+    branches: OrderMap<Token, Arc<TreeBranch>>,
 }
 
 impl Default for TreeBranch {
@@ -45,16 +45,18 @@ impl TreeBranch {
                 current_branch.register_command(new_command);
             }
             // recursively get or create a sub-branch for each token
-            current_branch = current_branch
-                .branches
-                .entry(token)
-                .or_insert_with(TreeBranch::default);
+            current_branch = Arc::make_mut(
+                current_branch
+                    .branches
+                    .entry(token)
+                    .or_insert_with(|| Arc::new(TreeBranch::default())),
+            );
         }
         // when we're out of tokens add the command to the last branch
-        current_branch.current_command = Some(command);
+        current_branch.current_command = Some(Arc::new(command));
     }
 
-    pub fn command(&self) -> Option<Command> {
+    pub fn command(&self) -> Option<Arc<Command>> {
         self.current_command.clone()
     }
 
@@ -76,7 +78,7 @@ impl TreeBranch {
         let mut commands = box_iter(std::iter::empty());
         for branch in self.branches.values() {
             if let Some(command) = branch.current_command.as_ref() {
-                commands = box_iter(commands.chain(std::iter::once(command)));
+                commands = box_iter(commands.chain(std::iter::once(command.as_ref())));
                 // we dont need to look further if we found a command
                 continue;
             }
@@ -85,11 +87,11 @@ impl TreeBranch {
         commands
     }
 
-    pub fn get_branch(&self, token: &Token) -> Option<&Self> {
+    pub fn get_branch(&self, token: &Token) -> Option<&Arc<Self>> {
         self.branches.get(token)
     }
 
-    pub fn branches(&self) -> impl Iterator<Item = (&Token, &Self)> {
+    pub fn branches(&self) -> impl Iterator<Item = (&Token, &Arc<Self>)> {
         self.branches.iter()
     }
 }

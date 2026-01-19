@@ -1,16 +1,16 @@
-use std::{collections::HashMap, fmt::Write};
+use std::{collections::HashMap, fmt::Write, sync::Arc};
 
 use command_parser::{parameter::ParameterValue, token::TokenMatchResult, Tree};
 
 uniffi::include_scaffolding!("commands");
 
 lazy_static::lazy_static! {
-    pub static ref COMMAND_TREE: Tree = {
+    pub static ref COMMAND_TREE: Arc<Tree> = {
         let mut tree = Tree::default();
 
         command_definitions::all().into_iter().for_each(|x| tree.register_command(x));
 
-        tree
+        Arc::new(tree)
     };
 }
 
@@ -125,7 +125,7 @@ pub fn parse_command(prefix: String, input: String) -> CommandResult {
         |error| CommandResult::Err { error },
         |parsed| CommandResult::Ok {
             command: {
-                let command_ref = parsed.command_def.cb.into();
+                let command_ref = parsed.command_def.cb.clone().into();
                 let mut flags = HashMap::with_capacity(parsed.flags.capacity());
                 for (name, value) in parsed.flags {
                     flags.insert(name, value.map(Parameter::from));
