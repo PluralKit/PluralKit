@@ -106,9 +106,12 @@ public partial class CommandTree
     public static Command LogEnable = new Command("serverconfig log blacklist remove", "serverconfig log blacklist remove all|<channel> [channel 2] [channel 3...]", "Enables message logging in certain channels");
     public static Command LogDisable = new Command("serverconfig log blacklist add", "serverconfig log blacklist add all|<channel> [channel 2] [channel 3...]", "Disables message logging in certain channels");
     public static Command LogShow = new Command("serverconfig log blacklist", "serverconfig log blacklist", "Displays the current list of channels where logging is disabled");
-    public static Command BlacklistShow = new Command("serverconfig proxy blacklist", "serverconfig proxy blacklist", "Displays the current list of channels where message proxying is disabled");
-    public static Command BlacklistAdd = new Command("serverconfig proxy blacklist add", "serverconfig proxy blacklist add all|<channel> [channel 2] [channel 3...]", "Disables message proxying in certain channels");
-    public static Command BlacklistRemove = new Command("serverconfig proxy blacklist remove", "serverconfig proxy blacklist remove all|<channel> [channel 2] [channel 3...]", "Enables message proxying in certain channels");
+    public static Command ProxyBlacklistShow = new Command("serverconfig proxy blacklist", "serverconfig proxy blacklist", "Displays the current list of channels where message proxying is disabled");
+    public static Command ProxyBlacklistAdd = new Command("serverconfig proxy blacklist add", "serverconfig proxy blacklist add all|<channel> [channel 2] [channel 3...]", "Disables message proxying in certain channels");
+    public static Command ProxyBlacklistRemove = new Command("serverconfig proxy blacklist remove", "serverconfig proxy blacklist remove all|<channel> [channel 2] [channel 3...]", "Enables message proxying in certain channels");
+    public static Command CommandBlacklistShow = new Command("serverconfig command blacklist", "serverconfig command blacklist", "Displays the current list of channels where running text commands is disabled");
+    public static Command CommandBlacklistAdd = new Command("serverconfig command blacklist add", "serverconfig command blacklist add all|<channel> [channel 2] [channel 3...]", "Disables running text commands in certain channels");
+    public static Command CommandBlacklistRemove = new Command("serverconfig command blacklist remove", "serverconfig command blacklist remove all|<channel> [channel 2] [channel 3...]", "Enables running text commands in certain channels");
     public static Command ServerConfigLogClean = new Command("serverconfig log cleanup", "serverconfig log cleanup [on|off]", "Toggles whether to clean up other bots' log channels");
     public static Command ServerConfigInvalidCommandResponse = new Command("serverconfig invalid command error", "serverconfig invalid command error [on|off]", "Sets whether to show an error message when an unknown command is sent");
     public static Command ServerConfigRequireSystemTag = new Command("serverconfig require tag", "serverconfig require tag [on|off]", "Sets whether server users are required to have a system tag on proxied messages");
@@ -160,7 +163,8 @@ public partial class CommandTree
         ServerConfigLogClean, ServerConfigInvalidCommandResponse, ServerConfigRequireSystemTag,
         ServerConfigSuppressNotifications,
         LogChannel, LogChannelClear, LogShow, LogDisable, LogEnable,
-        BlacklistShow, BlacklistAdd, BlacklistRemove
+        ProxyBlacklistShow, ProxyBlacklistAdd, ProxyBlacklistRemove,
+        CommandBlacklistShow, CommandBlacklistAdd, CommandBlacklistRemove
     };
 
     public static Command[] AutoproxyCommands =
@@ -170,5 +174,5 @@ public partial class CommandTree
 
     public static Command[] LogCommands = { LogChannel, LogChannelClear, LogEnable, LogDisable, LogShow };
 
-    public static Command[] BlacklistCommands = { BlacklistAdd, BlacklistRemove, BlacklistShow };
+    public static Command[] ProxyBlacklistCommands = { ProxyBlacklistAdd, ProxyBlacklistRemove, ProxyBlacklistShow };
 }
