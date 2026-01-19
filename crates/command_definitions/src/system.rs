@@ -56,7 +56,7 @@ pub fn edit() -> impl Iterator<Item = Command> {
         command!(system, Optional(SystemRef), name => "system_show_name")
             .help("Shows the systems name"),
     );
-    let system_name_self = tokens!(system, name);
+    let system_name_self = tokens!(system, ("rename", [name]));
     let system_name_self_cmd = [
         command!(system_name_self, CLEAR => "system_clear_name")
             .flag(YES)
