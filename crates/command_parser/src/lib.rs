@@ -136,11 +136,7 @@ pub fn parse_command(
                     // update best attempt if we're deeper
                     if best_attempt.as_ref().map(|x| x.1.len()).unwrap_or(0) < matched_tokens.len()
                     {
-                        best_attempt = Some((
-                            next_tree.clone(),
-                            matched_tokens.clone(),
-                            *new_pos,
-                        ));
+                        best_attempt = Some((next_tree.clone(), matched_tokens.clone(), *new_pos));
                     }
 
                     filtered_tokens.clear(); // new branch, new tokens
@@ -204,7 +200,7 @@ pub fn parse_command(
                 // if we did, we might have matched a parameter "by accident" (ie. `pk;s renam` matched `s <system>`)
                 // so we also want to suggest commands from the *previous* branch
                 if let Some(state) = matched_tokens.last()
-                    && matches!(state.token, Token::Parameter(_)) 
+                    && matches!(state.token, Token::Parameter(_))
                 {
                     let mut parent_input = String::new();
                     // recreate input string up to the parameter
@@ -222,7 +218,7 @@ pub fn parse_command(
                         &input_tokens,
                     );
                     possible_commands.extend(parent_commands);
-                    
+
                     // re-deduplicate
                     possible_commands.dedup_by(|a, b| {
                         let cmd_a = a.0.original.as_deref().unwrap_or(&a.0);
@@ -230,11 +226,11 @@ pub fn parse_command(
                         cmd_a == cmd_b
                     });
                     // re-sort after extending
-                    possible_commands.sort_by(|a, b| b.2.partial_cmp(&a.2).unwrap_or(std::cmp::Ordering::Equal));
+                    possible_commands
+                        .sort_by(|a, b| b.2.partial_cmp(&a.2).unwrap_or(std::cmp::Ordering::Equal));
                 }
 
                 if possible_commands.is_empty().not() {
-
                     error.push_str(" Perhaps you meant one of the following commands:\n");
                     fmt_commands_list(&mut error, &prefix, possible_commands);
                 } else {
@@ -442,13 +438,15 @@ fn rank_possible_commands(
         .filter(|cmd| cmd.show_in_suggestions)
         .flat_map(|cmd| {
             let versions = generate_command_versions(cmd, input_tokens);
-            versions.into_iter().map(move |(display, scoring, is_alias)| {
-                let similarity = strsim::jaro_winkler(&input, &scoring);
-                // if similarity > 0.7 {
-                //     println!("DEBUG: ranking: '{}' vs '{}' = {}", input, scoring, similarity);
-                // }
-                (cmd, display, similarity, is_alias)
-            })
+            versions
+                .into_iter()
+                .map(move |(display, scoring, is_alias)| {
+                    let similarity = strsim::jaro_winkler(&input, &scoring);
+                    // if similarity > 0.7 {
+                    //     println!("DEBUG: ranking: '{}' vs '{}' = {}", input, scoring, similarity);
+                    // }
+                    (cmd, display, similarity, is_alias)
+                })
         })
         .collect();
 
@@ -484,7 +482,11 @@ fn rank_possible_commands(
     commands_to_show
 }
 
-fn fmt_commands_list(f: &mut String, prefix: &str, commands_to_show: Vec<(Command, String, f64, bool)>) {
+fn fmt_commands_list(
+    f: &mut String,
+    prefix: &str,
+    commands_to_show: Vec<(Command, String, f64, bool)>,
+) {
     for (command, version, _, is_alias) in commands_to_show {
         writeln!(
             f,
@@ -523,7 +525,11 @@ fn generate_command_versions(cmd: &Command, input_tokens: &[&str]) -> Vec<(Strin
     versions
 }
 
-fn build_command_string(cmd: &Command, alias_replacement: Option<(usize, &str)>, input_tokens: &[&str]) -> String {
+fn build_command_string(
+    cmd: &Command,
+    alias_replacement: Option<(usize, &str)>,
+    input_tokens: &[&str],
+) -> String {
     let mut result = String::new();
     for (idx, token) in cmd.tokens.iter().enumerate() {
         if idx > 0 {
@@ -542,12 +548,12 @@ fn build_command_string(cmd: &Command, alias_replacement: Option<(usize, &str)>,
             Token::Parameter(param) => {
                 // if we have an input token at this position, use it
                 // otherwise use the placeholder
-                 if let Some(input_token) = input_tokens.get(idx) {
+                if let Some(input_token) = input_tokens.get(idx) {
                     result.push_str(input_token);
                 } else {
                     write!(&mut result, "{param}").unwrap()
                 }
-            },
+            }
         }
     }
     result
