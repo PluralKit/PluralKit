@@ -167,9 +167,8 @@ public class Checks
         var failedToGetMessage =
             "Could not find a valid message to check, was not able to fetch the message, or the message was not sent by you.";
 
-        var (messageId, channelId) = ctx.GetRepliedTo();
-        if (messageReference != null)
-            (messageId, channelId) = (messageReference.MessageId, messageReference.ChannelId);
+        messageReference = ctx.GetRepliedTo();
+        var (messageId, channelId) = (messageReference?.MessageId, messageReference?.ChannelId);
         if (messageId == null || channelId == null)
             throw new PKError(failedToGetMessage);
 

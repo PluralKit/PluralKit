@@ -60,7 +60,7 @@ public class ProxiedMessage
 
     public async Task ReproxyMessage(Context ctx, Message.Reference? messageRef, PKMember target)
     {
-        var (msg, systemId) = await GetMessageToEdit(ctx, messageRef?.MessageId, ReproxyTimeout, true);
+        var (msg, systemId) = await GetMessageToEdit(ctx, messageRef?.MessageId ?? ctx.GetRepliedTo()?.MessageId, ReproxyTimeout, true);
 
         if (ctx.System.Id != systemId)
             throw new PKError("Can't reproxy a message sent by a different system.");
@@ -91,9 +91,9 @@ public class ProxiedMessage
         }
     }
 
-    public async Task EditMessage(Context ctx, Message.Reference? messageRef, string newContent, bool useRegex, bool noSpace, bool append, bool prepend, bool clearEmbeds, bool clearAttachments)
+    public async Task EditMessage(Context ctx, Message.Reference? messageRef, string? newContent, bool useRegex, bool noSpace, bool append, bool prepend, bool clearEmbeds, bool clearAttachments)
     {
-        var (msg, systemId) = await GetMessageToEdit(ctx, messageRef?.MessageId, EditTimeout, false);
+        var (msg, systemId) = await GetMessageToEdit(ctx, messageRef?.MessageId ?? ctx.GetRepliedTo()?.MessageId, EditTimeout, false);
 
         if (ctx.System.Id != systemId)
             throw new PKError("Can't edit a message sent by a different system.");

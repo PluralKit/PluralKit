@@ -6,11 +6,11 @@ namespace PluralKit.Bot;
 
 public static class ContextArgumentsExt
 {
-    public static (ulong? messageId, ulong? channelId) GetRepliedTo(this Context ctx)
+    public static Message.Reference? GetRepliedTo(this Context ctx)
     {
         if (ctx.Message.Type == Message.MessageType.Reply && ctx.Message.MessageReference?.MessageId != null)
-            return (ctx.Message.MessageReference.MessageId, ctx.Message.MessageReference.ChannelId);
-        return (null, null);
+            return ctx.Message.MessageReference;
+        return null;
     }
 
     public static (ulong? messageId, ulong? channelId) ParseMessage(this Context ctx, string maybeMessageRef, bool parseRawMessageId)

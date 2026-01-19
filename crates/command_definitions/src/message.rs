@@ -10,7 +10,7 @@ pub fn cmds() -> impl IntoIterator<Item = Command> {
     let reproxy = ("reproxy", ["rp", "crimes", "crime"]);
 
     let edit = ("edit", ["e"]);
-    let new_content_param = Remainder(("new_content", OpaqueString));
+    let new_content_param = Optional(Remainder(("new_content", OpaqueString)));
     let apply_edit = |cmd: Command| {
         cmd.flag(("append", ["a"]))
             .flag(("prepend", ["p"]))
