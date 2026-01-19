@@ -1,12 +1,12 @@
 use std::{
-    collections::HashSet,
+    collections::{HashMap, HashSet},
     fmt::{Debug, Display},
     sync::Arc,
 };
 
 use smol_str::SmolStr;
 
-use crate::{flag::Flag, token::Token};
+use crate::{flag::Flag, parameter::ParameterValue, token::Token};
 
 #[derive(Debug, Clone)]
 pub struct Command {
@@ -18,6 +18,7 @@ pub struct Command {
     pub show_in_suggestions: bool,
     pub parse_flags_before: usize,
     pub hidden_flags: HashSet<SmolStr>,
+    pub flag_values: HashMap<SmolStr, Option<ParameterValue>>,
     pub original: Option<Arc<Command>>,
 }
 
@@ -43,6 +44,7 @@ impl Command {
             parse_flags_before,
             tokens,
             hidden_flags: HashSet::new(),
+            flag_values: HashMap::new(),
             original: None,
         }
     }
@@ -71,6 +73,15 @@ impl Command {
         let flag = flag.into();
         self.hidden_flags.insert(flag.get_name().into());
         self.flags.insert(flag);
+        self
+    }
+
+    pub fn flag_value(
+        mut self,
+        flag_name: impl Into<SmolStr>,
+        value: impl Into<Option<ParameterValue>>,
+    ) -> Self {
+        self.flag_values.insert(flag_name.into(), value.into());
         self
     }
 }

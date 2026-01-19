@@ -350,6 +350,11 @@ pub fn parse_command(
                 .expect("oom");
                 return Err(error);
             }
+
+            for (name, value) in &full_cmd.flag_values {
+                flags.insert(name.to_string(), value.clone());
+            }
+
             println!("{} {flags:?} {params:?}", command.cb);
             return Ok(ParsedCommand {
                 command_def: command,
