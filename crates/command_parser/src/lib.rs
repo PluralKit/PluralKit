@@ -193,11 +193,48 @@ pub fn parse_command(
                 }
                 normalized_input.push_str(&input[current_pos..].trim_start());
 
-                let possible_commands = rank_possible_commands(
+                let input_tokens = input.split_whitespace().collect::<Vec<_>>();
+                let mut possible_commands = rank_possible_commands(
                     &normalized_input,
                     local_tree.possible_commands(usize::MAX),
+                    &input_tokens,
                 );
+
+                // checks if we matched a parameter last
+                // if we did, we might have matched a parameter "by accident" (ie. `pk;s renam` matched `s <system>`)
+                // so we also want to suggest commands from the *previous* branch
+                if let Some(state) = matched_tokens.last()
+                    && matches!(state.token, Token::Parameter(_)) 
+                {
+                    let mut parent_input = String::new();
+                    // recreate input string up to the parameter
+                    for parent_state in matched_tokens.iter().take(matched_tokens.len() - 1) {
+                        write!(&mut parent_input, "{} ", parent_state.token).unwrap();
+                    }
+                    // assume the user intended to type a command here, so we use the raw input
+                    // (eg. `s renam` -> `s renam`)
+                    parent_input.push_str(&input[state.start_pos..].trim_start());
+
+                    let input_tokens = parent_input.split_whitespace().collect::<Vec<_>>();
+                    let parent_commands = rank_possible_commands(
+                        &parent_input,
+                        state.tree.possible_commands(usize::MAX),
+                        &input_tokens,
+                    );
+                    possible_commands.extend(parent_commands);
+                    
+                    // re-deduplicate
+                    possible_commands.dedup_by(|a, b| {
+                        let cmd_a = a.0.original.as_deref().unwrap_or(&a.0);
+                        let cmd_b = b.0.original.as_deref().unwrap_or(&b.0);
+                        cmd_a == cmd_b
+                    });
+                    // re-sort after extending
+                    possible_commands.sort_by(|a, b| b.2.partial_cmp(&a.2).unwrap_or(std::cmp::Ordering::Equal));
+                }
+
                 if possible_commands.is_empty().not() {
+
                     error.push_str(" Perhaps you meant one of the following commands:\n");
                     fmt_commands_list(&mut error, &prefix, possible_commands);
                 } else {
@@ -397,16 +434,20 @@ fn next_token<'a>(
 fn rank_possible_commands(
     input: &str,
     possible_commands: impl IntoIterator<Item = &Command>,
-) -> Vec<(Command, String, bool)> {
+    input_tokens: &[&str],
+) -> Vec<(Command, String, f64, bool)> {
     let mut commands_with_scores: Vec<(&Command, String, f64, bool)> = possible_commands
         .into_iter()
         .map(|cmd| cmd.original.as_deref().unwrap_or(cmd))
         .filter(|cmd| cmd.show_in_suggestions)
         .flat_map(|cmd| {
-            let versions = generate_command_versions(cmd);
-            versions.into_iter().map(move |(version, is_alias)| {
-                let similarity = strsim::jaro_winkler(&input, &version);
-                (cmd, version, similarity, is_alias)
+            let versions = generate_command_versions(cmd, input_tokens);
+            versions.into_iter().map(move |(display, scoring, is_alias)| {
+                let similarity = strsim::jaro_winkler(&input, &scoring);
+                // if similarity > 0.7 {
+                //     println!("DEBUG: ranking: '{}' vs '{}' = {}", input, scoring, similarity);
+                // }
+                (cmd, display, similarity, is_alias)
             })
         })
         .collect();
@@ -428,24 +469,23 @@ fn rank_possible_commands(
     }
 
     // if score falls off too much, don't show
-    let mut falloff_threshold: f64 = 0.2;
+    let falloff_threshold: f64 = 0.2;
     let best_score = best_commands[0].2;
 
     let mut commands_to_show = Vec::new();
     for (command, version, score, is_alias) in best_commands.into_iter().take(MAX_SUGGESTIONS) {
         let delta = best_score - score;
-        falloff_threshold -= delta;
         if delta > falloff_threshold {
             break;
         }
-        commands_to_show.push((command.clone(), version, is_alias));
+        commands_to_show.push((command.clone(), version, score, is_alias));
     }
 
     commands_to_show
 }
 
-fn fmt_commands_list(f: &mut String, prefix: &str, commands_to_show: Vec<(Command, String, bool)>) {
-    for (command, version, is_alias) in commands_to_show {
+fn fmt_commands_list(f: &mut String, prefix: &str, commands_to_show: Vec<(Command, String, f64, bool)>) {
+    for (command, version, _, is_alias) in commands_to_show {
         writeln!(
             f,
             "- **{prefix}{version}**{alias} - *{help}*",
@@ -453,7 +493,7 @@ fn fmt_commands_list(f: &mut String, prefix: &str, commands_to_show: Vec<(Comman
             alias = is_alias
                 .then(|| format!(
                     " (alias of **{prefix}{base_version}**)",
-                    base_version = build_command_string(&command, None)
+                    base_version = build_command_string(&command, None, &[])
                 ))
                 .unwrap_or_else(String::new),
         )
@@ -461,18 +501,21 @@ fn fmt_commands_list(f: &mut String, prefix: &str, commands_to_show: Vec<(Comman
     }
 }
 
-fn generate_command_versions(cmd: &Command) -> Vec<(String, bool)> {
+fn generate_command_versions(cmd: &Command, input_tokens: &[&str]) -> Vec<(String, String, bool)> {
     let mut versions = Vec::new();
 
     // Start with base version using primary names
-    let base_version = build_command_string(cmd, None);
-    versions.push((base_version, false));
+    let base_display = build_command_string(cmd, None, &[]);
+    let base_scoring = build_command_string(cmd, None, input_tokens);
+    versions.push((base_display, base_scoring, false));
 
     // Generate versions for each alias combination
     for (idx, token) in cmd.tokens.iter().enumerate() {
         if let Token::Value { aliases, .. } = token {
             for alias in aliases {
-                versions.push((build_command_string(cmd, Some((idx, alias.as_str()))), true));
+                let display = build_command_string(cmd, Some((idx, alias.as_str())), &[]);
+                let scoring = build_command_string(cmd, Some((idx, alias.as_str())), input_tokens);
+                versions.push((display, scoring, true));
             }
         }
     }
@@ -480,7 +523,7 @@ fn generate_command_versions(cmd: &Command) -> Vec<(String, bool)> {
     versions
 }
 
-fn build_command_string(cmd: &Command, alias_replacement: Option<(usize, &str)>) -> String {
+fn build_command_string(cmd: &Command, alias_replacement: Option<(usize, &str)>, input_tokens: &[&str]) -> String {
     let mut result = String::new();
     for (idx, token) in cmd.tokens.iter().enumerate() {
         if idx > 0 {
@@ -496,7 +539,15 @@ fn build_command_string(cmd: &Command, alias_replacement: Option<(usize, &str)>)
             Token::Value { name, .. } => {
                 result.push_str(replacement.unwrap_or(name));
             }
-            Token::Parameter(param) => write!(&mut result, "{param}").unwrap(),
+            Token::Parameter(param) => {
+                // if we have an input token at this position, use it
+                // otherwise use the placeholder
+                 if let Some(input_token) = input_tokens.get(idx) {
+                    result.push_str(input_token);
+                } else {
+                    write!(&mut result, "{param}").unwrap()
+                }
+            },
         }
     }
     result
