@@ -94,8 +94,11 @@ public static class PermissionExtensions
         if ((perms & PermissionSet.ViewChannel) == 0)
             perms &= ~NeedsViewChannel;
 
-        if ((perms & PermissionSet.SendMessages) == 0 && (!isThread || (perms & PermissionSet.SendMessagesInThreads) == 0))
-            perms &= ~NeedsSendMessages;
+        if ((perms & PermissionSet.SendMessages) == 0)
+            if (channel.Type == Channel.ChannelType.GuildForum && (perms & PermissionSet.SendMessagesInThreads) != 0)
+                perms |= PermissionSet.SendMessages;
+            else if (!isThread || (perms & PermissionSet.SendMessagesInThreads) == 0)
+                perms &= ~NeedsSendMessages;
 
         return perms;
     }
