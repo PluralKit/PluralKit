@@ -5,7 +5,8 @@ mod pull;
 mod store;
 
 use anyhow::Context;
-use axum::extract::State;
+use axum::extract::{DefaultBodyLimit, Multipart, State};
+use axum::http::HeaderMap;
 use axum::routing::get;
 use axum::{
     Json, Router,
@@ -21,11 +22,17 @@ use reqwest::{Client, ClientBuilder};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use std::error::Error;
+use std::net::IpAddr;
+use std::str::FromStr;
 use std::sync::Arc;
 use std::time::Duration;
 use thiserror::Error;
 use tracing::{error, info, warn};
 use uuid::Uuid;
+
+const NORMAL_HARD_LIMIT: usize = 8 * 1024 * 1024;
+const PREMIUM_SOFT_LIMIT: usize = 30 * 1024 * 1024;
+const PREMIUM_HARD_LIMIT: usize = 50 * 1024 * 1024;
 
 #[derive(Error, Debug)]
 pub enum PKAvatarError {
@@ -82,60 +89,130 @@ pub struct PullRequest {
 }
 
 #[derive(Serialize)]
-pub struct PullResponse {
+pub struct ImageResponse {
     url: String,
     new: bool,
+}
+
+async fn gen_proxy_image(state: &AppState, data: Vec<u8>) -> Result<Option<String>, PKAvatarError> {
+    let encoded_proxy = process::process_async(data, ImageKind::Avatar).await?;
+    let store_proxy_res = crate::store::store(&state.bucket, &encoded_proxy).await?;
+    let proxy_url = format!("{}{}", state.config.cdn_url, store_proxy_res.path);
+    db::add_image_data(
+        &state.pool,
+        &ImageData {
+            hash: encoded_proxy.hash.to_string(),
+            url: proxy_url,
+            file_size: encoded_proxy.data.len() as i32,
+            width: encoded_proxy.width as i32,
+            height: encoded_proxy.height as i32,
+            content_type: encoded_proxy.format.to_mime_type().to_string(),
+            created_at: None,
+        },
+    )
+    .await?;
+    Ok(Some(encoded_proxy.hash.to_string()))
+}
+
+async fn handle_image(
+    state: &AppState,
+    data: Vec<u8>,
+    mut meta: ImageMeta,
+) -> Result<ImageResponse, PKAvatarError> {
+    let original_file_size = data.len();
+    let system_uuid = meta.system_uuid;
+
+    if meta.kind.is_premium() && original_file_size > NORMAL_HARD_LIMIT {
+        meta.proxy_image = gen_proxy_image(&state, data.clone()).await?;
+    }
+
+    let encoded = process::process_async(data, meta.kind).await?;
+    let store_res = crate::store::store(&state.bucket, &encoded).await?;
+    meta.image = store_res.id.clone();
+    let storage_url = format!("{}{}", state.config.cdn_url, store_res.path);
+
+    let res = db::add_image(
+        &state.pool,
+        Image {
+            meta: meta,
+            data: ImageData {
+                hash: store_res.id,
+                url: storage_url,
+                file_size: encoded.data.len() as i32,
+                width: encoded.width as i32,
+                height: encoded.height as i32,
+                content_type: encoded.format.to_mime_type().to_string(),
+                created_at: None,
+            },
+        },
+    )
+    .await?;
+
+    if original_file_size >= PREMIUM_SOFT_LIMIT {
+        warn!(
+            "large image {} of size {} uploaded",
+            res.uuid, original_file_size
+        )
+    }
+
+    let final_url = format!(
+        "{}images/{}/{}.{}",
+        state.config.edge_url,
+        system_uuid,
+        res.uuid,
+        encoded
+            .format
+            .extensions_str()
+            .first()
+            .expect("expected valid extension")
+    );
+
+    Ok(ImageResponse {
+        url: final_url,
+        new: res.is_new,
+    })
 }
 
 async fn pull(
     State(state): State<AppState>,
     Json(req): Json<PullRequest>,
-) -> Result<Json<PullResponse>, PKAvatarError> {
+) -> Result<Json<ImageResponse>, PKAvatarError> {
     let parsed = pull::parse_url(&req.url) // parsing beforehand to "normalize"
         .map_err(|_| PKAvatarError::InvalidCdnUrl)?;
     if !(req.force || req.url.contains("https://serve.apparyllis.com/")) {
         if let Some(existing) = db::get_by_attachment_id(&state.pool, parsed.attachment_id).await? {
             // remove any pending image cleanup
             db::remove_deletion_queue(&state.pool, parsed.attachment_id).await?;
-            return Ok(Json(PullResponse {
-                url: existing.url,
+            return Ok(Json(ImageResponse {
+                url: existing.data.url,
                 new: false,
             }));
         }
     }
-
-    let result = crate::pull::pull(state.pull_client, &parsed).await?;
-
+    let result = crate::pull::pull(&state.pull_client, &parsed, req.kind.is_premium()).await?;
     let original_file_size = result.data.len();
-    let encoded = process::process_async(result.data, req.kind).await?;
 
-    let store_res = crate::store::store(&state.bucket, &encoded).await?;
-    let final_url = format!("{}{}", state.config.cdn_url, store_res.path);
-    let is_new = db::add_image(
-        &state.pool,
-        ImageMeta {
-            id: store_res.id,
-            url: final_url.clone(),
-            content_type: encoded.format.mime_type().to_string(),
-            original_url: Some(parsed.full_url),
-            original_type: Some(result.content_type),
-            original_file_size: Some(original_file_size as i32),
-            original_attachment_id: Some(parsed.attachment_id as i64),
-            file_size: encoded.data.len() as i32,
-            width: encoded.width as i32,
-            height: encoded.height as i32,
-            kind: req.kind,
-            uploaded_at: None,
-            uploaded_by_account: req.uploaded_by.map(|x| x as i64),
-            uploaded_by_system: req.system_id,
-        },
-    )
-    .await?;
-
-    Ok(Json(PullResponse {
-        url: final_url,
-        new: is_new,
-    }))
+    Ok(Json(
+        handle_image(
+            &state,
+            result.data,
+            ImageMeta {
+                id: Uuid::default(),
+                system_uuid: req.system_id.expect("expected system id"),
+                image: "".to_string(),
+                proxy_image: None,
+                kind: req.kind,
+                original_url: Some(parsed.full_url),
+                original_file_size: Some(original_file_size as i32),
+                original_type: Some(result.content_type),
+                original_attachment_id: Some(parsed.attachment_id as i64),
+                uploaded_by_account: req.uploaded_by.map(|x| x as i64),
+                uploaded_by_ip: None,
+                uploaded_at: None,
+            },
+        )
+        .await?,
+    ))
 }
 
 async fn verify(
@@ -143,19 +220,95 @@ async fn verify(
     Json(req): Json<PullRequest>,
 ) -> Result<(), PKAvatarError> {
     let result = crate::pull::pull(
-        state.pull_client,
+        &state.pull_client,
         &ParsedUrl {
             full_url: req.url.clone(),
             channel_id: 0,
             attachment_id: 0,
             filename: "".to_string(),
         },
+        req.kind.is_premium(),
     )
     .await?;
 
     process::process_async(result.data, req.kind).await?;
 
     Ok(())
+}
+
+async fn upload(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    mut multipart: Multipart,
+) -> Result<Json<ImageResponse>, PKAvatarError> {
+    let mut data: Option<Vec<u8>> = None;
+    let mut kind: Option<ImageKind> = None;
+    let mut system_id: Option<Uuid> = None;
+    let mut upload_ip: Option<IpAddr> = None;
+
+    if let Some(val) = headers.get("x-pluralkit-systemuuid")
+        && let Ok(s) = val.to_str()
+    {
+        system_id = Uuid::parse_str(s).ok();
+    }
+    if let Some(val) = headers.get("x-pluralkit-client-ip")
+        && let Ok(s) = val.to_str()
+    {
+        upload_ip = IpAddr::from_str(s).ok();
+    }
+
+    while let Some(field) = multipart
+        .next_field()
+        .await
+        .map_err(|e| PKAvatarError::InternalError(e.into()))?
+    {
+        let name = field.name().unwrap_or("").to_string();
+
+        match name.as_str() {
+            "file" => {
+                let bytes = field
+                    .bytes()
+                    .await
+                    .map_err(|e| PKAvatarError::InternalError(e.into()))?;
+                data = Some(bytes.to_vec());
+            }
+            "kind" => {
+                let txt = field
+                    .text()
+                    .await
+                    .map_err(|e| PKAvatarError::InternalError(e.into()))?;
+                kind = ImageKind::from_string(&txt);
+            }
+            _ => {}
+        }
+    }
+
+    let data = data.ok_or(PKAvatarError::MissingHeader("file"))?;
+    let kind = kind.ok_or(PKAvatarError::MissingHeader("kind"))?;
+    let system_id = system_id.ok_or(PKAvatarError::MissingHeader("x-pluralkit-systemuuid"))?;
+    let upload_ip = upload_ip.ok_or(PKAvatarError::MissingHeader("x-pluralkit-client-ip"))?;
+
+    Ok(Json(
+        handle_image(
+            &state,
+            data,
+            ImageMeta {
+                id: Uuid::default(),
+                system_uuid: system_id,
+                image: "".to_string(),
+                proxy_image: None,
+                kind: kind,
+                original_url: None,
+                original_file_size: None,
+                original_type: None,
+                original_attachment_id: None,
+                uploaded_by_account: None,
+                uploaded_by_ip: Some(upload_ip),
+                uploaded_at: None,
+            },
+        )
+        .await?,
+    ))
 }
 
 pub async fn stats(State(state): State<AppState>) -> Result<Json<Stats>, PKAvatarError> {
@@ -221,7 +374,9 @@ async fn main() -> anyhow::Result<()> {
     let app = Router::new()
         .route("/verify", post(verify))
         .route("/pull", post(pull))
+        .route("/upload", post(upload))
         .route("/stats", get(stats))
+        .layer(DefaultBodyLimit::max(PREMIUM_HARD_LIMIT))
         .with_state(state);
 
     let host = &config.bind_addr;

@@ -13,7 +13,10 @@ pub async fn store(bucket: &s3::Bucket, res: &ProcessOutput) -> anyhow::Result<S
         "images/{}/{}.{}",
         &encoded_hash[..2],
         &encoded_hash[2..],
-        res.format.extension()
+        res.format
+            .extensions_str()
+            .first()
+            .expect("expected valid extension")
     );
 
     // todo: something better than these retries
@@ -28,7 +31,7 @@ pub async fn store(bucket: &s3::Bucket, res: &ProcessOutput) -> anyhow::Result<S
         retry_count += 1;
 
         let resp = bucket
-            .put_object_with_content_type(&path, &res.data, res.format.mime_type())
+            .put_object_with_content_type(&path, &res.data, res.format.to_mime_type())
             .await?;
         match resp.status_code() {
             200 => {

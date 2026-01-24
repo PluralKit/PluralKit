@@ -17,7 +17,7 @@ reqwest = { version = "0.12.7" , default-features = false, features = ["rustls-t
 sentry = { version = "0.36.0", default-features = false, features =  ["backtrace", "contexts", "panic", "debug-images", "reqwest", "rustls"] } # replace native-tls with rustls
 serde = { version = "1.0.196", features = ["derive"] }
 serde_json = "1.0.117"
-sqlx = { version = "0.8.2", features = ["runtime-tokio", "postgres", "time", "chrono", "macros", "uuid"] }
+sqlx = { version = "0.8.2", features = ["runtime-tokio", "postgres", "time", "chrono", "macros", "uuid", "ipnetwork"] }
 tokio = { version = "1.46.1", features = ["full"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3.20", features = ["env-filter", "json"] }

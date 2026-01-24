@@ -121,6 +121,9 @@ fn router(ctx: ApiContext) -> Router {
         .route("/private/discord/callback2", post(endpoints::private::discord_callback))
         .route("/private/discord/shard_state", get(endpoints::private::discord_state))
         .route("/private/stats", get(endpoints::private::meta))
+        
+        .route("/private/images/{system_uuid}/{image_uuid}", get(endpoints::images::image_data))
+        .route("/private/images/upload", post(endpoints::images::upload))
 
         .route("/v2/systems/{system_id}/oembed.json", get(rproxy))
         .route("/v2/members/{member_id}/oembed.json", get(rproxy))

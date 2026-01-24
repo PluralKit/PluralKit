@@ -81,9 +81,9 @@ public class Member
                 uriBuilder.Query = "";
                 img.CleanUrl = uriBuilder.Uri.AbsoluteUri;
 
-                img = await _avatarHosting.TryRehostImage(img, AvatarHostingService.RehostedImageType.Avatar, ctx.Author.Id, ctx.System);
+                img = await _avatarHosting.TryRehostImage(ctx, img, AvatarHostingService.RehostedImageType.Avatar);
 
-                await _avatarHosting.VerifyAvatarOrThrow(img.Url);
+                await _avatarHosting.VerifyAvatarOrThrow(ctx, img.Url);
                 await ctx.Repository.UpdateMember(member.Id, new MemberPatch { AvatarUrl = img.CleanUrl ?? img.Url }, conn);
 
                 dispatchData.Add("avatar_url", img.CleanUrl);

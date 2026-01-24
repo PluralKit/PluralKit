@@ -10,7 +10,7 @@ path = "src/cleanup.rs"
 [dependencies]
 libpk = { path = "../libpk" }
 anyhow = { workspace = true }
-axum = { workspace = true }
+axum = { workspace = true, features = ["multipart"]}
 futures = { workspace = true }
 reqwest = { workspace = true }
 serde = { workspace = true }

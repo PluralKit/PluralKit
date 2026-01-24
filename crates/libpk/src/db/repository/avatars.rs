@@ -1,20 +1,60 @@
 use sqlx::{PgPool, Postgres, Transaction};
+use uuid::Uuid;
 
 use crate::db::types::avatars::*;
 
-pub async fn get_by_id(pool: &PgPool, id: String) -> anyhow::Result<Option<ImageMeta>> {
-    Ok(sqlx::query_as("select * from images where id = $1")
-        .bind(id)
-        .fetch_optional(pool)
-        .await?)
+pub async fn get_by_id(
+    pool: &PgPool,
+    system_uuid: Uuid,
+    id: Uuid,
+) -> anyhow::Result<Option<Image>> {
+    Ok(sqlx::query_as(
+        "select * from images_assets a join images_hashes h ON a.image = h.hash where id = $1 and system_uuid = $2",
+    )
+    .bind(id)
+    .bind(system_uuid)
+    .fetch_optional(pool)
+    .await?)
+}
+
+pub async fn get_by_system(pool: &PgPool, system_uuid: Uuid) -> anyhow::Result<Vec<Image>> {
+    Ok(sqlx::query_as(
+        "select * from images_assets a join images_hashes h ON a.image = h.hash where system_uuid = $1",
+    )
+    .bind(system_uuid)
+    .fetch_all(pool)
+    .await?)
+}
+
+pub async fn get_full_by_hash(
+    pool: &PgPool,
+    system_uuid: Uuid,
+    image_hash: String,
+) -> anyhow::Result<Option<Image>> {
+    Ok(sqlx::query_as(
+        "select * from images_assets a join images_hashes h ON a.image = h.hash where system_uuid = $1 and h.hash = $2",
+    )
+    .bind(system_uuid)
+    .bind(image_hash)
+    .fetch_optional(pool)
+    .await?)
+}
+
+pub async fn get_by_hash(pool: &PgPool, image_hash: String) -> anyhow::Result<Option<ImageData>> {
+    Ok(
+        sqlx::query_as("select * from images_hashes where hash = $1")
+            .bind(image_hash)
+            .fetch_optional(pool)
+            .await?,
+    )
 }
 
 pub async fn get_by_original_url(
     pool: &PgPool,
     original_url: &str,
-) -> anyhow::Result<Option<ImageMeta>> {
+) -> anyhow::Result<Option<Image>> {
     Ok(
-        sqlx::query_as("select * from images where original_url = $1")
+        sqlx::query_as("select * from images_assets a join images_hashes h ON a.image = h.hash where original_url = $1")
             .bind(original_url)
             .fetch_optional(pool)
             .await?,
@@ -24,9 +64,9 @@ pub async fn get_by_original_url(
 pub async fn get_by_attachment_id(
     pool: &PgPool,
     attachment_id: u64,
-) -> anyhow::Result<Option<ImageMeta>> {
+) -> anyhow::Result<Option<Image>> {
     Ok(
-        sqlx::query_as("select * from images where original_attachment_id = $1")
+        sqlx::query_as("select * from images_assets a join images_hashes h ON a.image = h.hash where original_attachment_id = $1")
             .bind(attachment_id as i64)
             .fetch_optional(pool)
             .await?,
@@ -73,28 +113,56 @@ pub async fn get_stats(pool: &PgPool) -> anyhow::Result<Stats> {
     .await?)
 }
 
-pub async fn add_image(pool: &PgPool, meta: ImageMeta) -> anyhow::Result<bool> {
-    let kind_str = match meta.kind {
-        ImageKind::Avatar => "avatar",
-        ImageKind::Banner => "banner",
-    };
+pub async fn add_image(pool: &PgPool, image: Image) -> anyhow::Result<ImageResult> {
+    let kind_str = image.meta.kind.to_string();
 
-    let res = sqlx::query("insert into images (id, url, content_type, original_url, file_size, width, height, original_file_size, original_type, original_attachment_id, kind, uploaded_by_account, uploaded_by_system, uploaded_at) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, (now() at time zone 'utc')) on conflict (id) do nothing")
-        .bind(meta.id)
-        .bind(meta.url)
-        .bind(meta.content_type)
-        .bind(meta.original_url)
-        .bind(meta.file_size)
-        .bind(meta.width)
-        .bind(meta.height)
-        .bind(meta.original_file_size)
-        .bind(meta.original_type)
-        .bind(meta.original_attachment_id)
-        .bind(kind_str)
-        .bind(meta.uploaded_by_account)
-        .bind(meta.uploaded_by_system)
-        .execute(pool).await?;
-    Ok(res.rows_affected() > 0)
+    add_image_data(pool, &image.data).await?;
+
+    if let Some(img) = get_full_by_hash(pool, image.meta.system_uuid, image.meta.image).await? {
+        return Ok(ImageResult {
+            is_new: false,
+            uuid: img.meta.id,
+        });
+    }
+
+    let res: (uuid::Uuid,) = sqlx::query_as(
+        "insert into images_assets (system_uuid, image, proxy_image, kind, original_url, original_file_size, original_type, original_attachment_id, uploaded_by_account) 
+     values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+     returning id"
+    )
+    .bind(image.meta.system_uuid)
+    .bind(image.data.hash)
+    .bind (image.meta.proxy_image)
+    .bind(kind_str)
+    .bind(image.meta.original_url)
+    .bind(image.meta.original_file_size)
+    .bind(image.meta.original_type)
+    .bind(image.meta.original_attachment_id)
+    .bind(image.meta.uploaded_by_account)
+    .fetch_one(pool)
+    .await?;
+
+    Ok(ImageResult {
+        is_new: true,
+        uuid: res.0,
+    })
+}
+
+pub async fn add_image_data(pool: &PgPool, image_data: &ImageData) -> anyhow::Result<()> {
+    sqlx::query(
+        "insert into images_hashes (hash, url, file_size, width, height, content_type) 
+     values ($1, $2, $3, $4, $5, $6) 
+     on conflict (hash) do nothing",
+    )
+    .bind(&image_data.hash)
+    .bind(&image_data.url)
+    .bind(image_data.file_size)
+    .bind(image_data.width)
+    .bind(image_data.height)
+    .bind(&image_data.content_type)
+    .execute(pool)
+    .await?;
+    return Ok(());
 }
 
 pub async fn push_queue(

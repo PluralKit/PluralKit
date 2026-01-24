@@ -228,32 +228,44 @@ pub async fn update_discord_stats(ctx: AppCtx) -> anyhow::Result<()> {
     Ok(())
 }
 
+const IMAGE_CHECK_COLUMNS: &[(&str, &str)] = &[
+    ("systems", "avatar_url"),
+    ("systems", "banner_image"),
+    ("system_guild", "avatar_url"),
+    ("members", "avatar_url"),
+    ("members", "banner_image"),
+    ("members", "webhook_avatar_url"),
+    ("member_guild", "avatar_url"),
+    ("groups", "icon"),
+    ("groups", "banner_image"),
+];
+
 pub async fn queue_deleted_image_cleanup(ctx: AppCtx) -> anyhow::Result<()> {
     // if an image is present on no member, add it to the pending deletion queue
     // if it is still present on no member after 24h, actually delete it
-
-    let usage_query = r#"
-    and not exists (select from systems where avatar_url = images.url)
-    and not exists (select from systems where banner_image = images.url)
-    and not exists (select from system_guild where avatar_url = images.url)
-
-    and not exists (select from members where avatar_url = images.url)
-    and not exists (select from members where banner_image = images.url)
-    and not exists (select from members where webhook_avatar_url = images.url)
-    and not exists (select from member_guild where avatar_url = images.url)
-
-    and not exists (select from groups where icon = images.url)
-    and not exists (select from groups where banner_image = images.url);
-    "#;
+    let mut usage_query = String::new();
+    for (table, col) in IMAGE_CHECK_COLUMNS {
+        usage_query.push_str(&format!(
+            r#"
+            and not exists (
+                select 1 from {table} 
+                where {col} = h.url
+                or {col} like '%/' || a.system_uuid::text || '/' || a.id::text || '.%'
+            )
+            "#
+        ));
+    }
 
     ctx.data
         .execute(
             format!(
                 r#"
             insert into image_cleanup_pending_jobs
-            select id, now() from images where
-            not exists (select from image_cleanup_pending_jobs j where j.id = images.id)
-            and not exists (select from image_cleanup_jobs j where j.id = images.id)
+            select a.id, a.system_uuid, now() from images_assets a
+            join images_hashes h on a.image = h.hash where
+            a.kind not in ('premium_banner', 'premium_avatar')
+            and not exists (select from image_cleanup_pending_jobs j where j.id = a.id)
+            and not exists (select from image_cleanup_jobs j where j.id = a.id)
             {}
         "#,
                 usage_query
@@ -266,15 +278,73 @@ pub async fn queue_deleted_image_cleanup(ctx: AppCtx) -> anyhow::Result<()> {
         .execute(
             format!(
                 r#"
-            insert into image_cleanup_jobs
-            select image_cleanup_pending_jobs.id from image_cleanup_pending_jobs
-            left join images on images.id = image_cleanup_pending_jobs.id
+            insert into image_cleanup_jobs (id, system_uuid)
+            select p.id, p.system_uuid from image_cleanup_pending_jobs p
+            join images_assets a on a.id = p.id
+            join images_hashes h on a.image = h.hash
             where
-            ts < now() - '24 hours'::interval
-            and not exists (select from image_cleanup_jobs j where j.id = images.id)
+            a.kind not in ('premium_banner', 'premium_avatar')
+            and ts < now() - '24 hours'::interval
+            and not exists (select from image_cleanup_jobs j where j.id = p.id)
             {}
         "#,
                 usage_query
+            )
+            .as_str(),
+        )
+        .await?;
+
+    Ok(())
+}
+
+pub async fn queue_orphaned_hash_cleanup(ctx: AppCtx) -> anyhow::Result<()> {
+    let mut usage_checks = String::new();
+    for (table, col) in IMAGE_CHECK_COLUMNS {
+        usage_checks.push_str(&format!(
+            "and not exists (select 1 from {table} where {col} = h.url) "
+        ));
+    }
+
+    ctx.data
+        .execute(
+            format!(
+                r#"
+        insert into image_hash_cleanup_pending_jobs (hash, ts)
+        select h.hash, now()
+        from images_hashes h
+        where 
+            not exists (
+                select 1 from images_assets a 
+                where a.image = h.hash 
+                or a.proxy_image = h.hash
+            )
+            {usage_checks}
+            and not exists (select 1 from image_hash_cleanup_pending_jobs p where p.hash = h.hash)
+            and not exists (select 1 from image_hash_cleanup_jobs j where j.hash = h.hash)
+    "#
+            )
+            .as_str(),
+        )
+        .await?;
+
+    ctx.data
+        .execute(
+            format!(
+                r#"
+        insert into image_hash_cleanup_jobs (hash)
+        select p.hash
+        from image_hash_cleanup_pending_jobs p
+        join images_hashes h ON h.hash = p.hash
+        where
+            p.ts < now() - '24 hours'::interval
+            and not exists (
+                select 1 from images_assets a 
+                where a.image = h.hash 
+                or a.proxy_image = h.hash
+            )
+            {usage_checks}
+            and not exists (select 1 from image_hash_cleanup_jobs j where j.hash = p.hash)
+    "#
             )
             .as_str(),
         )

@@ -25,6 +25,9 @@ public static class AvatarUtils
         if (match.Groups["query"].Success)
             newUrl += "&" + match.Groups["query"].Value;
 
+        //if it's our cdn, add proxy=true to the end to allow for proxy image resizing
+        if (url.StartsWith("https://cdn.pluralkit.me")) newUrl += "?proxy=true";
+
         return newUrl;
     }
 

@@ -105,6 +105,12 @@ async fn main() -> anyhow::Result<()> {
         "queue deleted image cleanup job",
         queue_deleted_image_cleanup
     );
+    // on hh:15 and hh:45
+    doforever!(
+        "15,45 * * * *",
+        "queue orphaned hash cleanup job",
+        queue_orphaned_hash_cleanup
+    );
     // non-standard cron: at hh:mm:00, hh:mm:30
     doforever!("0,30 * * * * *", "stats api updater", update_stats_api);
     // every hour (could probably even be less frequent, basebackups are taken rarely)

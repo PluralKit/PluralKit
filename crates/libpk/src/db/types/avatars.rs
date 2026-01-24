@@ -1,3 +1,5 @@
+use std::net::IpAddr;
+
 use serde::{Deserialize, Serialize};
 use sqlx::{
     FromRow,
@@ -5,23 +7,52 @@ use sqlx::{
 };
 use uuid::Uuid;
 
-#[derive(FromRow)]
-pub struct ImageMeta {
-    pub id: String,
-    pub kind: ImageKind,
-    pub content_type: String,
+#[derive(FromRow, Serialize)]
+pub struct ImageData {
+    pub hash: String,
     pub url: String,
     pub file_size: i32,
     pub width: i32,
     pub height: i32,
-    pub uploaded_at: Option<DateTime<Utc>>,
+    pub content_type: String,
+    pub created_at: Option<DateTime<Utc>>,
+}
 
+#[derive(FromRow, Serialize)]
+pub struct ImageMeta {
+    pub id: Uuid,
+    #[serde(skip_serializing)]
+    pub system_uuid: Uuid,
+    #[serde(skip_serializing)]
+    pub image: String,
+    pub proxy_image: Option<String>,
+    pub kind: ImageKind,
+
+    #[serde(skip_serializing)]
     pub original_url: Option<String>,
-    pub original_attachment_id: Option<i64>,
+    #[serde(skip_serializing)]
     pub original_file_size: Option<i32>,
+    #[serde(skip_serializing)]
     pub original_type: Option<String>,
+    #[serde(skip_serializing)]
+    pub original_attachment_id: Option<i64>,
+
     pub uploaded_by_account: Option<i64>,
-    pub uploaded_by_system: Option<Uuid>,
+    pub uploaded_by_ip: Option<IpAddr>,
+    pub uploaded_at: Option<DateTime<Utc>>,
+}
+
+#[derive(FromRow, Serialize)]
+pub struct Image {
+    #[sqlx(flatten)]
+    pub meta: ImageMeta,
+    #[sqlx(flatten)]
+    pub data: ImageData,
+}
+
+pub struct ImageResult {
+    pub is_new: bool,
+    pub uuid: Uuid,
 }
 
 #[derive(FromRow, Serialize)]
@@ -36,6 +67,8 @@ pub struct Stats {
 pub enum ImageKind {
     Avatar,
     Banner,
+    PremiumAvatar,
+    PremiumBanner,
 }
 
 impl ImageKind {
@@ -43,7 +76,29 @@ impl ImageKind {
         match self {
             Self::Avatar => (512, 512),
             Self::Banner => (1024, 1024),
+            Self::PremiumAvatar => (0, 0),
+            Self::PremiumBanner => (0, 0),
         }
+    }
+    pub fn is_premium(&self) -> bool {
+        matches!(self, ImageKind::PremiumAvatar | ImageKind::PremiumBanner)
+    }
+    pub fn to_string(&self) -> &str {
+        return match self {
+            ImageKind::Avatar => "avatar",
+            ImageKind::Banner => "banner",
+            ImageKind::PremiumAvatar => "premium_avatar",
+            ImageKind::PremiumBanner => "premium_banner",
+        };
+    }
+    pub fn from_string(str: &str) -> Option<ImageKind> {
+        return match str {
+            "avatar" => Some(ImageKind::Avatar),
+            "banner" => Some(ImageKind::Banner),
+            "premium_avatar" => Some(ImageKind::PremiumAvatar),
+            "premium_banner" => Some(ImageKind::PremiumBanner),
+            _ => None,
+        };
     }
 }
 

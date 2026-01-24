@@ -55,6 +55,8 @@ pub struct ApiConfig {
     #[serde(default = "_default_api_addr")]
     pub addr: String,
 
+    pub avatars_service_url: Option<String>,
+
     #[serde(default)]
     pub ratelimit_redis_addr: Option<String>,
 
@@ -68,6 +70,7 @@ pub struct ApiConfig {
 pub struct AvatarsConfig {
     pub s3: S3Config,
     pub cdn_url: String,
+    pub edge_url: String,
 
     #[serde(default = "_default_api_addr")]
     pub bind_addr: String,
@@ -76,9 +79,9 @@ pub struct AvatarsConfig {
     pub migrate_worker_count: u32,
 
     #[serde(default)]
-    pub cloudflare_zone_id: Option<String>,
+    pub fastly_store_id: Option<String>,
     #[serde(default)]
-    pub cloudflare_token: Option<String>,
+    pub fastly_token: Option<String>,
 }
 
 #[derive(Deserialize, Clone, Debug)]

@@ -12,30 +12,8 @@ pub struct ProcessOutput {
     pub width: u32,
     pub height: u32,
     pub hash: Hash,
-    pub format: ProcessedFormat,
+    pub format: ImageFormat,
     pub data: Vec<u8>,
-}
-
-#[derive(Copy, Clone, Debug)]
-pub enum ProcessedFormat {
-    Webp,
-    Gif,
-}
-
-impl ProcessedFormat {
-    pub fn mime_type(&self) -> &'static str {
-        match self {
-            ProcessedFormat::Gif => "image/gif",
-            ProcessedFormat::Webp => "image/webp",
-        }
-    }
-
-    pub fn extension(&self) -> &'static str {
-        match self {
-            ProcessedFormat::Webp => "webp",
-            ProcessedFormat::Gif => "gif",
-        }
-    }
 }
 
 // Moving Vec<u8> in here since the thread needs ownership of it now, it's fine, don't need it after
@@ -49,13 +27,16 @@ pub async fn process_async(data: Vec<u8>, kind: ImageKind) -> Result<ProcessOutp
 pub fn process(data: &[u8], kind: ImageKind) -> Result<ProcessOutput, PKAvatarError> {
     let time_before = Instant::now();
     let reader = reader_for(data);
-    match reader.format() {
+    let format = reader.format();
+    match format {
         Some(ImageFormat::Png | ImageFormat::WebP | ImageFormat::Jpeg | ImageFormat::Tiff) => {} // ok :)
         Some(ImageFormat::Gif) => {
             // animated gifs will need to be handled totally differently
             // so split off processing here and come back if it's not applicable
             // (non-banner gifs + 1-frame animated gifs still need to be webp'd)
-            if let Some(output) = process_gif(data, kind)? {
+            if !kind.is_premium()
+                && let Some(output) = process_gif(data, kind)?
+            {
                 return Ok(output);
             }
         }
@@ -69,6 +50,18 @@ pub fn process(data: &[u8], kind: ImageKind) -> Result<ProcessOutput, PKAvatarEr
 
     // need to make a new reader??? why can't it just use the same one. reduce duplication?
     let reader = reader_for(data);
+
+    //if it's a 'premium' image, skip encoding
+    if kind.is_premium() {
+        let hash = Hash::sha256(&data);
+        return Ok(ProcessOutput {
+            width: width,
+            height: height,
+            hash: hash,
+            format: reader.format().expect("expected supported format"),
+            data: data.to_vec(),
+        });
+    }
 
     let time_after_parse = Instant::now();
 
@@ -204,7 +197,7 @@ fn process_gif_inner(
 
     Ok(Some(ProcessOutput {
         data,
-        format: ProcessedFormat::Gif,
+        format: ImageFormat::Gif,
         hash,
         width: width as u32,
         height: height as u32,
@@ -249,7 +242,7 @@ fn encode(image: DynamicImage) -> ProcessOutput {
 
     ProcessOutput {
         data: encoded_lossy,
-        format: ProcessedFormat::Webp,
+        format: ImageFormat::WebP,
         hash,
         width,
         height,

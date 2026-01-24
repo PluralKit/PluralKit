@@ -1,4 +1,5 @@
 using PluralKit.Core;
+using Serilog;
 using System.Net;
 using System.Net.Http.Json;
 
@@ -18,7 +19,7 @@ public class AvatarHostingService
         };
     }
 
-    public async Task VerifyAvatarOrThrow(string url, bool isBanner = false)
+    public async Task VerifyAvatarOrThrow(Context ctx, string url, bool isBanner = false)
     {
         if (url.Length > Limits.MaxUriLength)
             throw Errors.UrlTooLong(url);
@@ -35,6 +36,7 @@ public class AvatarHostingService
             return;
 
         var kind = isBanner ? "banner" : "avatar";
+        if (ctx.Premium) kind = "premium_" + kind;
 
         try
         {
@@ -56,11 +58,11 @@ public class AvatarHostingService
         }
     }
 
-    public async Task<ParsedImage> TryRehostImage(ParsedImage input, RehostedImageType type, ulong userId, PKSystem? system)
+    public async Task<ParsedImage> TryRehostImage(Context ctx, ParsedImage input, RehostedImageType type)
     {
         try
         {
-            var uploaded = await TryUploadAvatar(input.Url, type, userId, system);
+            var uploaded = await TryUploadAvatar(ctx, input.Url, type);
             if (uploaded != null)
             {
                 // todo: make new image type called Cdn?
@@ -78,7 +80,7 @@ public class AvatarHostingService
         }
     }
 
-    public async Task<string?> TryUploadAvatar(string? avatarUrl, RehostedImageType type, ulong userId, PKSystem? system)
+    public async Task<string?> TryUploadAvatar(Context ctx, string? avatarUrl, RehostedImageType type)
     {
         if (!AvatarUtils.IsDiscordCdnUrl(avatarUrl))
             return null;
@@ -93,8 +95,10 @@ public class AvatarHostingService
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
         };
 
+        if (ctx.Premium) kind = "premium_" + kind;
+
         var response = await _client.PostAsJsonAsync(_config.AvatarServiceUrl + "/pull",
-            new { url = avatarUrl, kind, uploaded_by = userId, system_id = system?.Uuid.ToString() });
+            new { url = avatarUrl, kind, uploaded_by = ctx.Author.Id, system_id = ctx.System.Uuid.ToString() });
         if (response.StatusCode != HttpStatusCode.OK)
         {
             var error = await response.Content.ReadFromJsonAsync<ErrorResponse>();
