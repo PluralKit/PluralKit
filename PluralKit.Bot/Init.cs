@@ -45,8 +45,15 @@ public class Init
                 opts.Dsn = services.Resolve<CoreConfig>().SentryUrl ?? "";
                 opts.Release = BuildInfoService.FullVersion;
                 opts.AutoSessionTracking = true;
-                //                opts.DisableTaskUnobservedTaskExceptionCapture();
+                opts.DisableUnobservedTaskExceptionCapture();
             });
+
+            TaskScheduler.UnobservedTaskException += (_, e) =>
+            {
+                foreach (var inner in e.Exception.Flatten().InnerExceptions)
+                    SentrySdk.CaptureException(inner);
+                e.SetObserved();
+            };
 
             var config = services.Resolve<BotConfig>();
             var coreConfig = services.Resolve<CoreConfig>();

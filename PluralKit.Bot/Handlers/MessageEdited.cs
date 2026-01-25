@@ -58,13 +58,19 @@ public class MessageEdited: IEventHandler<MessageUpdateEvent>
 
         var channel = await _cache.TryGetChannel(guildId, evt.ChannelId); // todo: is this correct for message update?
         if (channel == null)
-            throw new Exception("could not find self channel in MessageEdited event");
+        {
+            _logger.Warning("could not find self channel in MessageEdited event");
+            return;
+        }
         if (!DiscordUtils.IsValidGuildChannel(channel))
             return;
         var rootChannel = await _cache.GetRootChannel(guildId, channel.Id);
         var guild = await _cache.TryGetGuild(channel.GuildId!.Value);
         if (guild == null)
-            throw new Exception("could not find self guild in MessageEdited event");
+        {
+            _logger.Warning("could not find self guild in MessageEdited event");
+            return;
+        }
         var lastMessage = (await _lastMessageCache.GetLastMessage(evt.GuildId.HasValue ? evt.GuildId.Value ?? 0 : 0, evt.ChannelId))?.Current;
 
         // Only react to the last message in the channel

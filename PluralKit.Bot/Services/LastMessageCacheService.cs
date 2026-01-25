@@ -32,7 +32,7 @@ public class LastMessageCacheService
     public async Task<CacheEntry?> GetLastMessage(ulong guild, ulong channel)
     {
         if (_maybeHttp is HttpDiscordCache)
-            return await (_maybeHttp as HttpDiscordCache).GetLastMessage<CacheEntry>(guild, channel);
+            return await (_maybeHttp as HttpDiscordCache)!.GetLastMessage<CacheEntry>(guild, channel);
 
         return _cache.TryGetValue(channel, out var message) ? message : null;
     }

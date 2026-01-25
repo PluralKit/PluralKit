@@ -442,7 +442,7 @@ public class ProxiedMessage
                 return;
             }
 
-            await ctx.Reply(components: await _embeds.CreateAuthorMessageComponents(user, message));
+            await ctx.Reply(components: _embeds.CreateAuthorMessageComponents(user, message));
             return;
         }
 

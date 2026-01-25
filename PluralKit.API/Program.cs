@@ -2,6 +2,8 @@ using Autofac.Extensions.DependencyInjection;
 
 using PluralKit.Core;
 
+using Sentry;
+
 using Serilog;
 
 namespace PluralKit.API;
@@ -21,8 +23,15 @@ public class Program
             opts.Dsn = config.SentryUrl ?? "";
             opts.Release = BuildInfoService.FullVersion;
             opts.AutoSessionTracking = true;
-            //                opts.DisableTaskUnobservedTaskExceptionCapture();
+            opts.DisableUnobservedTaskExceptionCapture();
         });
+
+        TaskScheduler.UnobservedTaskException += (_, e) =>
+        {
+            foreach (var inner in e.Exception.Flatten().InnerExceptions)
+                SentrySdk.CaptureException(inner);
+            e.SetObserved();
+        };
 
         await host.Services.GetRequiredService<RedisService>().InitAsync(config);
         await host.RunAsync();

@@ -1004,7 +1004,7 @@ public class EmbedService
         return eb.Build();
     }
 
-    public async Task<MessageComponent[]> CreateAuthorMessageComponents(User? user, FullMessage msg)
+    public MessageComponent[] CreateAuthorMessageComponents(User? user, FullMessage msg)
     {
         MessageComponent authorInfo;
         var author = user != null
@@ -1049,16 +1049,15 @@ public class EmbedService
                 authorInfo,
             ]
         };
-        return (
-            [
-                new MessageComponent()
-                {
-                    Type = ComponentType.Text,
-                    Content = user != null ? $"{user.Mention()} ({user.Id})" : $"*(deleted user {msg.Message.Sender})*"
-                },
-                container
-            ]
-        );
+        return
+        [
+            new MessageComponent()
+            {
+                Type = ComponentType.Text,
+                Content = user != null ? $"{user.Mention()} ({user.Id})" : $"*(deleted user {msg.Message.Sender})*"
+            },
+            container
+        ];
     }
 
     public async Task<MessageComponent[]> CreateCommandMessageInfoMessageComponents(Core.CommandMessage msg, bool showContent)
