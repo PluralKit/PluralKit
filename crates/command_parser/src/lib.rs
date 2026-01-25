@@ -18,6 +18,7 @@ use std::{collections::HashMap, usize};
 
 use command::Command;
 use flag::{Flag, FlagMatchError, FlagValueMatchError};
+use log::debug;
 use parameter::ParameterValue;
 use smol_str::SmolStr;
 use string::MatchedFlag;
@@ -82,9 +83,9 @@ pub fn parse_command(
             (_, Token::Parameter(_)) => std::cmp::Ordering::Less,
             _ => std::cmp::Ordering::Equal,
         });
-        println!("possible: {:?}", possible_tokens);
+        debug!("possible: {:?}", possible_tokens);
         let next = next_token(possible_tokens.iter().cloned(), &input, current_pos);
-        println!("next: {:?}", next);
+        debug!("next: {:?}", next);
         match &next {
             Some((found_token, result, new_pos)) => {
                 match &result {
@@ -156,7 +157,7 @@ pub fn parse_command(
                     .pop()
                     .and_then(|m| matches!(m.token, Token::Parameter(_)).then_some(m))
                 {
-                    println!("redoing previous branch: {:?}", state.token);
+                    debug!("redoing previous branch: {:?}", state.token);
                     local_tree = state.tree;
                     current_pos = state.start_pos; // reset position to previous branch's start
                     filtered_tokens = state.filtered_tokens; // reset filtered tokens to the previous branch's
@@ -251,7 +252,7 @@ pub fn parse_command(
         // match flags until there are none left
         while let Some(matched_flag) = string::next_flag(&input, current_pos) {
             current_pos = matched_flag.next_pos;
-            println!("flag matched {matched_flag:?}");
+            debug!("flag matched {matched_flag:?}");
             raw_flags.push((current_token_idx, matched_flag));
         }
         // if we have a command, stop parsing and return it (only if there is no remaining input)
@@ -355,7 +356,7 @@ pub fn parse_command(
                 flags.insert(name.to_string(), value.clone());
             }
 
-            println!("{} {flags:?} {params:?}", full_cmd.cb);
+            debug!("{} {flags:?} {params:?}", full_cmd.cb);
             return Ok(ParsedCommand {
                 command_def: full_cmd.clone(),
                 flags,
@@ -371,7 +372,7 @@ fn match_flag<'a>(
 ) -> Option<Result<(SmolStr, Option<ParameterValue>), (&'a Flag, FlagMatchError)>> {
     // check for all (possible) flags, see if token matches
     for flag in possible_flags {
-        println!("matching flag {flag:?}");
+        debug!("matching flag {flag:?}");
         match flag.try_match(matched_flag.name, matched_flag.value) {
             Some(Ok(param)) => return Some(Ok((flag.get_name().into(), param))),
             Some(Err(err)) => return Some(Err((flag, err))),
@@ -397,7 +398,7 @@ fn next_token<'a>(
 ) -> Option<(Token, TokenMatchResult, usize)> {
     // get next parameter, matching quotes
     let matched = string::next_param(&input, current_pos);
-    println!("matched: {matched:?}\n---");
+    debug!("matched: {matched:?}\n---");
 
     // iterate over tokens and run try_match
     for token in possible_tokens {
@@ -421,7 +422,7 @@ fn next_token<'a>(
         };
         match token.try_match(input_to_match) {
             Some(result) => {
-                //println!("matched token: {}", token);
+                //debug!("matched token: {}", token);
                 return Some((token.clone(), result, next_pos));
             }
             None => {} // continue matching until we exhaust all tokens
@@ -448,7 +449,7 @@ fn rank_possible_commands(
                 .map(move |(display, scoring, is_alias)| {
                     let similarity = strsim::jaro_winkler(&input, &scoring);
                     // if similarity > 0.7 {
-                    //     println!("DEBUG: ranking: '{}' vs '{}' = {}", input, scoring, similarity);
+                    //     debug!("DEBUG: ranking: '{}' vs '{}' = {}", input, scoring, similarity);
                     // }
                     (cmd, display, similarity, is_alias)
                 })

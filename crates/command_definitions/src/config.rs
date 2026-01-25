@@ -16,7 +16,8 @@ pub fn cmds() -> impl IntoIterator<Item = Command> {
         command!(ap_account, Toggle => "cfg_ap_account_update")
             .help("Toggles autoproxy globally for the current account"),
         command!(ap_timeout => "cfg_ap_timeout_show").help("Shows the autoproxy timeout"),
-        command!(ap_timeout, RESET => "cfg_ap_timeout_reset").help("Resets the autoproxy timeout"),
+        command!(ap_timeout, RESET => "cfg_ap_timeout_reset")
+            .help("Resets the autoproxy timeout"),
         command!(ap_timeout, parameter::Toggle::Off => "cfg_ap_timeout_off")
             .help("Disables the autoproxy timeout"),
         command!(ap_timeout, ("timeout", OpaqueString) => "cfg_ap_timeout_update")
@@ -26,8 +27,10 @@ pub fn cmds() -> impl IntoIterator<Item = Command> {
     let timezone_tokens = tokens!(cfg, ("timezone", ["zone", "tz"]));
     let timezone = [
         command!(timezone_tokens => "cfg_timezone_show").help("Shows the system timezone"),
-        command!(timezone_tokens, RESET => "cfg_timezone_reset").help("Resets the system timezone"),
+        command!(timezone_tokens, RESET => "cfg_timezone_reset")
+            .help("Resets the system timezone"),
         command!(timezone_tokens, ("timezone", OpaqueString) => "cfg_timezone_update")
+            .flag(YES)
             .help("Changes your system's time zone"),
     ];
 
@@ -168,7 +171,8 @@ pub fn cmds() -> impl IntoIterator<Item = Command> {
     let name_format_short = tokens!(cfg, ("nameformat", ["nf"]));
     let name_formatting = [
         command!(name_format => "cfg_name_format_show").help("Shows the name format"),
-        command!(name_format, RESET => "cfg_name_format_reset").help("Resets the name format"),
+        command!(name_format, RESET => "cfg_name_format_reset")
+            .help("Resets the name format"),
         command!(name_format, ("format", OpaqueString) => "cfg_name_format_update")
             .help("Changes your system's username formatting"),
         command!(name_format_short => "cfg_name_format_show").help("Shows the name format"),

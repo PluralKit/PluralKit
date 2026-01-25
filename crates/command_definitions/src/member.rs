@@ -36,7 +36,9 @@ pub fn cmds() -> impl Iterator<Item = Command> {
     let delete = ("delete", ["del", "remove"]);
 
     let member_new_cmd = once(
-        command!(member, new, ("name", OpaqueString) => "member_new").help("Creates a new member"),
+        command!(member, new, ("name", OpaqueString) => "member_new")
+            .flag(YES)
+            .help("Creates a new member"),
     );
 
     let member_info_cmd = once(
@@ -161,6 +163,7 @@ pub fn cmds() -> impl Iterator<Item = Command> {
             command!(member_proxy => "member_proxy_show")
                 .help("Shows a member's proxy tags"),
             command!(member_proxy, ("add", ["a"]), ("tag", OpaqueString) => "member_proxy_add")
+                .flag(YES)
                 .help("Adds proxy tag to a member"),
             command!(member_proxy, ("remove", ["r", "rm"]), ("tag", OpaqueString) => "member_proxy_remove")
                 .help("Removes proxy tag from a member"),
@@ -168,6 +171,7 @@ pub fn cmds() -> impl Iterator<Item = Command> {
                 .flag(YES)
                 .help("Clears all proxy tags from a member"),
             command!(member_proxy, Remainder(("tags", OpaqueString)) => "member_proxy_set")
+                .flag(YES)
                 .help("Sets a member's proxy tags"),
         ]
     };

@@ -7,7 +7,7 @@ namespace PluralKit.Bot;
 
 public class SystemLink
 {
-    public async Task LinkSystem(Context ctx, User account)
+    public async Task LinkSystem(Context ctx, User account, bool confirmYes = false)
     {
         ctx.CheckSystem();
 
@@ -20,7 +20,7 @@ public class SystemLink
             throw Errors.AccountInOtherSystem(existingAccount, ctx.Config, ctx.DefaultPrefix);
 
         var msg = $"{account.Mention()}, please confirm the link.";
-        if (!await ctx.PromptYesNo(msg, "Confirm", account, false)) throw Errors.MemberLinkCancelled;
+        if (!await ctx.PromptYesNo(msg, "Confirm", account, true, confirmYes)) throw Errors.MemberLinkCancelled;
         await ctx.Repository.AddAccount(ctx.System.Id, account.Id);
         await ctx.Reply($"{Emojis.Success} Account linked to system.");
     }

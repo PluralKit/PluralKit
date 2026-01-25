@@ -1,4 +1,8 @@
-use std::{collections::HashMap, fmt::Write, sync::Arc};
+use std::{
+    collections::HashMap,
+    fmt::Write,
+    sync::{Arc, Once},
+};
 
 use command_parser::{parameter::ParameterValue, token::TokenMatchResult, Tree};
 
@@ -13,6 +17,8 @@ lazy_static::lazy_static! {
         Arc::new(tree)
     };
 }
+
+static LOG_INIT: Once = Once::new();
 
 #[derive(Debug)]
 pub enum CommandResult {
@@ -121,6 +127,16 @@ pub struct ParsedCommand {
 }
 
 pub fn parse_command(prefix: String, input: String) -> CommandResult {
+    LOG_INIT.call_once(|| {
+        if let Err(err) = simple_logger::SimpleLogger::new()
+            .with_level(log::LevelFilter::Info)
+            .env()
+            .init()
+        {
+            eprintln!("cant initialize logger: {err}");
+        }
+    });
+
     command_parser::parse_command(COMMAND_TREE.clone(), prefix, input).map_or_else(
         |error| CommandResult::Err { error },
         |parsed| CommandResult::Ok {

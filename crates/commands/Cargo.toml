@@ -16,6 +16,8 @@ lazy_static = { workspace = true }
 command_parser = { path = "../command_parser"}
 command_definitions = { path = "../command_definitions"}
 uniffi = { version = "0.29" }
+log = "0.4"
+simple_logger = "4.3.3"
 
 [build-dependencies]
 uniffi = { version = "0.29", features = [ "build" ] }

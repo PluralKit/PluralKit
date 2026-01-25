@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use log::debug;
 use smol_str::{SmolStr, ToSmolStr};
 
 lazy_static::lazy_static! {
@@ -79,8 +80,8 @@ pub(super) fn next_param<'a>(input: &'a str, current_pos: usize) -> Option<Match
     let leading_whitespace_count =
         input[..current_pos].len() - input[..current_pos].trim_start().len();
     let substr_to_match = &input[current_pos + leading_whitespace_count..];
-    println!("stuff: {input} {current_pos} {leading_whitespace_count}");
-    println!("to match: {substr_to_match}");
+    debug!("stuff: {input} {current_pos} {leading_whitespace_count}");
+    debug!("to match: {substr_to_match}");
 
     if let Some(end_quote_pos) = find_quotes(substr_to_match) {
         // return quoted string, without quotes
@@ -132,20 +133,27 @@ pub(super) fn next_flag<'a>(input: &'a str, mut current_pos: usize) -> Option<Ma
         return None;
     }
 
-    println!("flag input {substr_to_match}");
+    debug!("flag input {substr_to_match}");
     // strip the -
-    let Some(substr_to_match) = substr_to_match.strip_prefix('-') else {
+    let original_len = substr_to_match.len();
+    let substr_without_dashes = substr_to_match.trim_start_matches('-');
+    let dash_count = original_len - substr_without_dashes.len();
+
+    if dash_count == 0 || dash_count > 2 {
         // if it doesn't have one, then it is not a flag
+        // or if it has more dashes than 2, assume its not a flag
         return None;
-    };
-    current_pos += 1;
+    }
+
+    let substr_to_match = substr_without_dashes;
+    current_pos += dash_count;
 
     // try finding = or whitespace
     for (pos, char) in substr_to_match.char_indices() {
-        println!("flag find char {char} at {pos}");
+        debug!("flag find char {char} at {pos}");
         if char == '=' {
             let name = &substr_to_match[..pos];
-            println!("flag find {name}");
+            debug!("flag find {name}");
             // try to get the value
             let Some(param) = next_param(input, current_pos + pos + 1) else {
                 return Some(MatchedFlag {

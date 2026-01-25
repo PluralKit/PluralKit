@@ -230,15 +230,24 @@ pub fn edit() -> impl Iterator<Item = Command> {
         command!(system, Optional(SystemRef), front => "system_fronter")
             .help("Shows a system's fronter(s)"),
         make_front_history(tokens!(front, ("history", ["h"]))),
-        make_front_history(tokens!(("fronthistory", ["fh"]))),
+        make_front_history(tokens!(("fronthistory", ["fh", "history", "switches"]))),
         make_front_percent(tokens!(front, ("percent", ["p", "%"]))),
-        make_front_percent(tokens!(("frontpercent", ["fp"]))),
+        make_front_percent(tokens!((
+            "frontpercent",
+            ["fp", "front%", "frontbreakdown"]
+        ))),
     ];
 
     let search_param = Optional(Remainder(("query", OpaqueString)));
     let apply_list_opts = |cmd: Command| cmd.flags(get_list_flags());
 
-    let members_subcmd = tokens!(("members", ["l", "ls", "list"]), search_param);
+    let members_subcmd = tokens!(
+        (
+            "members",
+            ["l", "ls", "list", "find", "search", "query", "fd"]
+        ),
+        search_param
+    );
     let system_members_cmd = [
         command!(system, Optional(SystemRef), members_subcmd => "system_members")
             .help("Lists a system's members"),
@@ -265,6 +274,7 @@ pub fn edit() -> impl Iterator<Item = Command> {
 
     let system_link = [
         command!("link", ("account", UserRef) => "system_link")
+            .flag(YES)
             .help("Links another Discord account to your system"),
         command!("unlink", ("account", OpaqueString) => "system_unlink")
             .help("Unlinks a Discord account from your system")

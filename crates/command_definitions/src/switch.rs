@@ -21,14 +21,17 @@ pub fn cmds() -> impl IntoIterator<Item = Command> {
             .help("Shows help for switch commands"),
         command!(switch, out => "switch_out").help("Registers a switch with no members"),
         command!(switch, delete => "switch_delete")
+            .flag(YES)
             .help("Deletes the latest switch")
             .flag(("all", ["clear", "c"])),
         command!(switch, r#move, Remainder(OpaqueString) => "switch_move")
+            .flag(YES)
             .help("Moves the latest switch in time"), // TODO: datetime parsing
         command!(switch, edit, out => "switch_edit_out")
             .help("Turns the latest switch into a switch-out")
             .flag(YES),
         command!(switch, edit, Optional(MemberRefs) => "switch_edit")
+            .flag(YES)
             .help("Edits the members in the latest switch")
             .flags(edit_flags),
         command!(switch, copy, Optional(MemberRefs) => "switch_copy")

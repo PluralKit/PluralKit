@@ -83,7 +83,7 @@ public class GroupMember
             target.Color, opts, all);
     }
 
-    public async Task AddRemoveMembers(Context ctx, PKGroup target, List<PKMember>? _members, Groups.AddRemoveOperation op, bool all, bool confirmYes)
+    public async Task AddRemoveMembers(Context ctx, PKGroup target, List<PKMember>? _members, Groups.AddRemoveOperation op, bool all, bool confirmYes = false)
     {
         ctx.CheckOwnGroup(target);
 

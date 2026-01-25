@@ -3,7 +3,7 @@ use crate::utils::get_list_flags;
 use super::*;
 
 pub fn cmds() -> impl Iterator<Item = Command> {
-    let random = ("random", ["rand"]);
+    let random = ("random", ["rand", "r"]);
     let group = group::group();
     let member = member::member();
 

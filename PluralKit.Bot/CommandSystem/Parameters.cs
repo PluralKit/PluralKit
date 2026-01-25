@@ -48,10 +48,6 @@ public class Parameters
             _cb = command.@commandRef;
             _flags = command.@flags;
             _params = command.@params;
-            foreach (var param in _params)
-            {
-                Console.WriteLine($"{param.Key}: {param.Value}");
-            }
         }
         else
         {
