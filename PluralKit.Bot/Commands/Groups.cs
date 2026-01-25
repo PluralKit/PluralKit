@@ -174,9 +174,12 @@ public class Groups
         await ctx.Reply(embed: eb2.Build());
     }
 
-    public async Task ClearGroupDisplayName(Context ctx, PKGroup target)
+    public async Task ClearGroupDisplayName(Context ctx, PKGroup target, bool confirmYes = false)
     {
         ctx.CheckOwnGroup(target);
+
+        if (!await ctx.ConfirmClear("this group's display name", confirmYes))
+            return;
 
         var patch = new GroupPatch { DisplayName = Partial<string>.Null() };
         await ctx.Repository.UpdateGroup(target.Id, patch);
@@ -253,9 +256,12 @@ public class Groups
         await ctx.Reply(embed: eb2.Build());
     }
 
-    public async Task ClearGroupDescription(Context ctx, PKGroup target)
+    public async Task ClearGroupDescription(Context ctx, PKGroup target, bool confirmYes = false)
     {
         ctx.CheckOwnGroup(target);
+
+        if (!await ctx.ConfirmClear("this group's description", confirmYes))
+            return;
 
         var patch = new GroupPatch { Description = Partial<string>.Null() };
         await ctx.Repository.UpdateGroup(target.Id, patch);
@@ -479,9 +485,12 @@ public class Groups
         await ctx.Reply(embed: eb.Build(), files: [MiscUtils.GenerateColorPreview(target.Color)]);
     }
 
-    public async Task ClearGroupColor(Context ctx, PKGroup target)
+    public async Task ClearGroupColor(Context ctx, PKGroup target, bool confirmYes = false)
     {
         ctx.CheckOwnGroup(target);
+
+        if (!await ctx.ConfirmClear("this group's color", confirmYes))
+            return;
 
         await ctx.Repository.UpdateGroup(target.Id, new GroupPatch { Color = Partial<string>.Null() });
 

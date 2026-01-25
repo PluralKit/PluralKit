@@ -38,6 +38,7 @@ pub fn cmds() -> impl Iterator<Item = Command> {
     let group_name_cmd = [
         command!(group_name => "group_show_name").help("Shows the group's name"),
         command!(group_name, CLEAR => "group_clear_name")
+            .flag(YES)
             .help("Clears the group's name"),
         command!(group_name, Remainder(("name", OpaqueString)) => "group_rename")
             .flag(YES)
@@ -49,6 +50,7 @@ pub fn cmds() -> impl Iterator<Item = Command> {
         command!(group_display_name => "group_show_display_name")
             .help("Shows the group's display name"),
         command!(group_display_name, CLEAR => "group_clear_display_name")
+            .flag(YES)
             .help("Clears the group's display name"),
         command!(group_display_name, Remainder(("name", OpaqueString)) => "group_change_display_name")
             .help("Changes the group's display name"),
@@ -65,6 +67,7 @@ pub fn cmds() -> impl Iterator<Item = Command> {
         command!(group_description => "group_show_description")
             .help("Shows the group's description"),
         command!(group_description, CLEAR => "group_clear_description")
+            .flag(YES)
             .help("Clears the group's description"),
         command!(group_description, Remainder(("description", OpaqueString)) => "group_change_description")
             .help("Changes the group's description"),
@@ -97,6 +100,7 @@ pub fn cmds() -> impl Iterator<Item = Command> {
     let group_color_cmd = [
         command!(group_color => "group_show_color").help("Shows the group's color"),
         command!(group_color, CLEAR => "group_clear_color")
+            .flag(YES)
             .help("Clears the group's color"),
         command!(group_color, ("color", OpaqueString) => "group_change_color")
             .help("Changes a group's color"),
