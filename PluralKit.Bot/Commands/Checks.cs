@@ -36,37 +36,11 @@ public class Checks
         _cache = cache;
     }
 
-    public async Task PermCheckGuild(Context ctx)
+    public async Task PermCheckGuild(Context ctx, Guild guild)
     {
-        Guild guild;
-        GuildMemberPartial senderGuildUser = null;
-
-        if (ctx.Guild != null && !ctx.HasNext())
-        {
-            guild = ctx.Guild;
-            senderGuildUser = ctx.Member;
-        }
-        else
-        {
-            var guildIdStr = ctx.RemainderOrNull() ??
-                             throw new PKSyntaxError("You must pass a server ID or run this command in a server.");
-            if (!ulong.TryParse(guildIdStr, out var guildId))
-                throw new PKSyntaxError($"Could not parse {guildIdStr.AsCode()} as an ID.");
-
-            try
-            {
-                guild = await _rest.GetGuild(guildId);
-            }
-            catch (ForbiddenException)
-            {
-                throw Errors.GuildNotFound(guildId);
-            }
-
-            if (guild != null)
-                senderGuildUser = await _rest.GetGuildMember(guildId, ctx.Author.Id);
-            if (guild == null || senderGuildUser == null)
-                throw Errors.GuildNotFound(guildId);
-        }
+        var senderGuildUser = await _rest.GetGuildMember(guild.Id, ctx.Author.Id);
+        if (senderGuildUser == null)
+            throw Errors.GuildNotFound(guild.Id);
 
         var guildMember = await _rest.GetGuildMember(guild.Id, _botConfig.ClientId);
 
@@ -135,17 +109,13 @@ public class Checks
         await ctx.Reply(embed: eb.Build());
     }
 
-    public async Task PermCheckChannel(Context ctx)
+    public async Task PermCheckChannel(Context ctx, Channel channel)
     {
-        if (!ctx.HasNext())
-            throw new PKSyntaxError("You need to specify a channel.");
-
         var error = "Channel not found or you do not have permissions to access it.";
 
         // todo: this breaks if channel is not in cache and bot does not have View Channel permissions
         // with new cache it breaks if channel is not in current guild
-        var channel = await ctx.MatchChannel();
-        if (channel == null || channel.GuildId == null)
+        if (channel.GuildId == null)
             throw new PKError(error);
 
         var guild = await _rest.GetGuildOrNull(channel.GuildId.Value);
@@ -189,15 +159,16 @@ public class Checks
         await ctx.Reply(embed: eb.Build());
     }
 
-    public async Task MessageProxyCheck(Context ctx)
+    public async Task MessageProxyCheck(Context ctx, Message.Reference? messageReference)
     {
-        if (!ctx.HasNext() && ctx.Message.MessageReference == null)
+        if (messageReference == null && ctx.Message.MessageReference == null)
             throw new PKSyntaxError("You need to specify a message.");
 
         var failedToGetMessage =
             "Could not find a valid message to check, was not able to fetch the message, or the message was not sent by you.";
 
-        var (messageId, channelId) = ctx.MatchMessage(false);
+        messageReference = ctx.GetRepliedTo();
+        var (messageId, channelId) = (messageReference?.MessageId, messageReference?.ChannelId);
         if (messageId == null || channelId == null)
             throw new PKError(failedToGetMessage);
 

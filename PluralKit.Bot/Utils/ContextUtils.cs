@@ -16,17 +16,17 @@ namespace PluralKit.Bot;
 
 public static class ContextUtils
 {
-    public static async Task<bool> ConfirmClear(this Context ctx, string toClear)
+    public static async Task<bool> ConfirmClear(this Context ctx, string toClear, bool confirmYes)
     {
-        if (!await ctx.PromptYesNo($"{Emojis.Warn} Are you sure you want to clear {toClear}?", "Clear"))
+        if (!await ctx.PromptYesNo($"{Emojis.Warn} Are you sure you want to clear {toClear}?", "Clear", flagValue: confirmYes))
             throw Errors.GenericCancelled();
         return true;
     }
 
     public static async Task<bool> PromptYesNo(this Context ctx, string msgString, string acceptButton,
-                                               User user = null, bool matchFlag = true)
+                                               User user = null, bool matchFlag = true, bool flagValue = false)
     {
-        if (matchFlag && ctx.MatchFlag("y", "yes")) return true;
+        if (matchFlag && flagValue) return true;
 
         var prompt = new YesNoPrompt(ctx)
         {

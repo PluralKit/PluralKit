@@ -31,9 +31,9 @@ public class ImportExport
         _dmCache = dmCache;
     }
 
-    public async Task Import(Context ctx)
+    public async Task Import(Context ctx, string? inputUrl, bool confirmYes)
     {
-        var inputUrl = ctx.RemainderOrNull() ?? ctx.Message.Attachments.FirstOrDefault()?.Url;
+        inputUrl = inputUrl ?? ctx.Message.Attachments.FirstOrDefault()?.Url;
         if (inputUrl == null) throw Errors.NoImportFilePassed;
 
         if (!Core.MiscUtils.TryMatchUri(inputUrl, out var url))
@@ -77,7 +77,7 @@ public class ImportExport
             async Task ConfirmImport(string message)
             {
                 var msg = $"{message}\n\nDo you want to proceed with the import?";
-                if (!await ctx.PromptYesNo(msg, "Proceed"))
+                if (!await ctx.PromptYesNo(msg, "Proceed", flagValue: confirmYes))
                     throw Errors.ImportCancelled;
             }
 
@@ -86,7 +86,7 @@ public class ImportExport
                 && data.Value<JArray>("accounts").Contains(ctx.Author.Id.ToString()))
             {
                 var msg = $"{Emojis.Warn} You seem to importing a system profile belonging to another account. Are you sure you want to proceed?";
-                if (!await ctx.PromptYesNo(msg, "Import")) throw Errors.ImportCancelled;
+                if (!await ctx.PromptYesNo(msg, "Import", flagValue: confirmYes)) throw Errors.ImportCancelled;
             }
 
             var result = await _dataFiles.ImportSystem(ctx.Author.Id, ctx.System, data, ConfirmImport);

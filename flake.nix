@@ -11,11 +11,13 @@
     # rust
     d2n.url = "github:nix-community/dream2nix";
     d2n.inputs.nixpkgs.follows = "nixpkgs";
-    nci.url = "github:yusdacra/nix-cargo-integration";
+    nci.url = "github:90-008/nix-cargo-integration";
     nci.inputs.parts.follows = "parts";
     nci.inputs.nixpkgs.follows = "nixpkgs";
     nci.inputs.dream2nix.follows = "d2n";
     nci.inputs.treefmt.follows = "treefmt";
+    uniffi-bindgen-cs.url = "git+https://github.com/90-008/uniffi-bindgen-cs?ref=refs/heads/main&submodules=1";
+    uniffi-bindgen-cs.flake = false;
     # misc
     treefmt.url = "github:numtide/treefmt-nix";
     treefmt.inputs.nixpkgs.follows = "nixpkgs";
@@ -37,210 +39,188 @@
           self',
           pkgs,
           lib,
-          system,
           ...
         }:
         let
-          # this is used as devshell for bot, and in the process-compose processes as environment
-          mkBotEnv =
-            cmd:
-            pkgs.buildFHSEnv {
-              name = "env";
-              targetPkgs =
-                pkgs: with pkgs; [
-                  coreutils
-                  git
-                  dotnet-sdk_8
-                  gcc
-                  omnisharp-roslyn
-                  bashInteractive
-                ];
-              runScript = cmd;
-            };
+          uniffi-bindgen-cs = config.nci.lib.buildCrate {
+            src = inp.uniffi-bindgen-cs;
+            cratePath = "bindgen";
+          };
 
           rustOutputs = config.nci.outputs;
-          composeCfg = config.process-compose."dev";
+
+          sourceDotenv = ''
+            # shellcheck disable=SC1091
+            [[ -f ".env" ]] && echo "sourcing .env file..." && set -a && source .env && set +a
+          '';
         in
         {
-          # _module.args.pkgs = import inp.nixpkgs {
-          #   inherit system;
-          #   config.permittedInsecurePackages = [ "dotnet-sdk-6.0.428" ];
-          # };
-
           treefmt = {
             projectRootFile = "flake.nix";
             programs.nixfmt.enable = true;
           };
 
           nci.toolchainConfig = ./rust-toolchain.toml;
-          nci.projects."pluralkit-services" = {
+          nci.projects."pk-services" = {
             path = ./.;
             export = false;
           };
-          # nci.crates."gateway" = {
-          #   depsDrvConfig.mkDerivation = {
-          #     nativeBuildInputs = [ pkgs.protobuf ];
-          #   };
-          #   drvConfig.mkDerivation = {
-          #     nativeBuildInputs = [ pkgs.protobuf ];
-          #   };
-          # };
+          nci.crates."commands" = rec {
+            depsDrvConfig.env = {
+              # we don't really need this since the lib is just used to generate the bindings
+              doNotRemoveReferencesToVendorDir = true;
+            };
+            depsDrvConfig.mkDerivation = {
+              # also not really needed
+              dontPatchShebangs = true;
+            };
+            drvConfig = depsDrvConfig;
+          };
+
+          apps = {
+            generate-command-parser-bindings.program = pkgs.writeShellApplication {
+              name = "generate-command-parser-bindings";
+              runtimeInputs = [
+                (config.nci.toolchains.mkBuild pkgs)
+                self'.devShells.services.stdenv.cc
+                pkgs.dotnet-sdk_8
+                pkgs.csharpier
+                pkgs.coreutils
+                uniffi-bindgen-cs
+              ];
+              text = ''
+                set -x
+                commandslib="''${1:-}"
+                if [ "$commandslib" == "" ]; then
+                  cargo -Z unstable-options build --package commands --lib --release --artifact-dir obj/
+                  commandslib="obj/libcommands.so"
+                else
+                  cp -f "$commandslib" obj/
+                fi
+                uniffi-bindgen-cs "$commandslib" --library --out-dir="''${2:-./PluralKit.Bot}"
+                cargo run --package commands --bin write_cs_glue -- "''${2:-./PluralKit.Bot}"/commandtypes.cs
+              '';
+            };
+          };
 
           # TODO: expose other rust packages after it's verified they build and work properly
-          packages = lib.genAttrs ["gateway"] (name: rustOutputs.${name}.packages.release);
+          packages = lib.genAttrs [ "gateway" "commands" ] (name: rustOutputs.${name}.packages.release);
           # TODO: package the bot itself (dotnet)
 
-          devShells = {
-            services = rustOutputs."pluralkit-services".devShell;
-            bot = (mkBotEnv "bash").env;
+          devShells = rec {
+            services = rustOutputs."pk-services".devShell;
+            bot = pkgs.mkShell {
+              name = "pkbot-devshell";
+              nativeBuildInputs = with pkgs; [
+                coreutils
+                git
+                dotnet-sdk_8
+                gcc
+                omnisharp-roslyn
+                bashInteractive
+                postgresql
+              ];
+            };
+            all = (pkgs.mkShell.override { stdenv = services.stdenv; }) {
+              name = "pk-devshell";
+              nativeBuildInputs = bot.nativeBuildInputs ++ services.nativeBuildInputs;
+              shellHook = ''
+                ${sourceDotenv}
+              '';
+            };
             docs = pkgs.mkShellNoCC {
               buildInputs = with pkgs; [ nodejs yarn ];
               NODE_OPTIONS = "--openssl-legacy-provider";
             };
           };
 
-          process-compose."dev" = let
-            dataDir = ".nix-process-compose";
-            sourceDotenv = ''
-              # shellcheck disable=SC2046
-              [[ -f ".env" ]] && echo "sourcing .env file..." && export $(xargs < .env)
-            '';
-          in {
-            imports = [ inp.services.processComposeModules.default ];
+          process-compose."dev" =
+            let
+              dataDir = ".nix-process-compose";
+            in
+            {
+              imports = [ inp.services.processComposeModules.default ];
 
-            settings.log_location = "${dataDir}/log";
+              settings.log_location = "${dataDir}/log";
 
-            settings.environment = {
-              DOTNET_CLI_TELEMETRY_OPTOUT = "1";
-              NODE_OPTIONS = "--openssl-legacy-provider";
-            };
+              settings.environment = {
+                DOTNET_CLI_TELEMETRY_OPTOUT = "1";
+                NODE_OPTIONS = "--openssl-legacy-provider";
+              };
 
-            services.redis."redis" = {
-              enable = true;
-              dataDir = "${dataDir}/redis";
-            };
-            services.postgres."postgres" = {
-              enable = true;
-              dataDir = "${dataDir}/postgres";
-              initialScript.before = ''
-                CREATE DATABASE pluralkit;
-                CREATE USER postgres WITH password 'postgres';
-                GRANT ALL PRIVILEGES ON DATABASE pluralkit TO postgres;
-                ALTER DATABASE pluralkit OWNER TO postgres;
-              '';
-            };
+              services.redis."redis" = {
+                enable = true;
+                dataDir = "${dataDir}/redis";
+              };
+              services.postgres."postgres" = {
+                enable = true;
+                dataDir = "${dataDir}/postgres";
+                initialScript.before = ''
+                  CREATE DATABASE pluralkit;
+                  CREATE USER postgres WITH password 'postgres';
+                  GRANT ALL PRIVILEGES ON DATABASE pluralkit TO postgres;
+                  ALTER DATABASE pluralkit OWNER TO postgres;
+                '';
+              };
 
-            settings.processes =
-              let
-                procCfg = composeCfg.settings.processes;
-                mkServiceInitProcess =
-                  {
-                    name,
-                    inputs ? [ ],
-                    ...
-                  }:
-                  let
-                    shell = rustOutputs.${name}.devShell;
-                  in
-                  {
+              settings.processes =
+                let
+                  mkServiceProcess =
+                    name: attrs:
+                    {
+                      command = pkgs.writeShellApplication {
+                        name = "pluralkit-${name}";
+                        runtimeInputs = [ pkgs.coreutils ];
+                        text = ''
+                          ${sourceDotenv}
+                          set -x
+                          nix develop .#services -c cargo run --package ${name}
+                        '';
+                      };
+                    } // attrs;
+                in
+                {
+                  ### migrations ###
+                  pluralkit-migrate = mkServiceProcess "migrate" {
+                    depends_on.postgres.condition = "process_healthy";
+                  };
+                  ### bot ###
+                  pluralkit-bot = {
                     command = pkgs.writeShellApplication {
-                      name = "pluralkit-${name}-init";
-                      runtimeInputs =
-                        (with pkgs; [
-                          coreutils
-                          shell.stdenv.cc
-                        ])
-                        ++ shell.nativeBuildInputs
-                        ++ inputs;
+                      name = "pluralkit-bot";
+                      runtimeInputs = [ pkgs.coreutils ];
                       text = ''
                         ${sourceDotenv}
                         set -x
-                        exec cargo build --bin ${name}
+                        ${self'.apps.generate-command-parser-bindings.program}
+                        nix develop .#bot -c bash -c "dotnet build ./PluralKit.Bot/PluralKit.Bot.csproj -c Release -o obj/ && dotnet obj/PluralKit.Bot.dll"
                       '';
                     };
+                    depends_on.postgres.condition = "process_healthy";
+                    depends_on.redis.condition = "process_healthy";
+                    depends_on.pluralkit-gateway.condition = "process_log_ready";
+                    depends_on.pluralkit-migrate.condition = "process_completed_successfully";
+                    # TODO: add liveness check
+                    ready_log_line = "Connected! All is good (probably).";
+                    availability.restart = "on_failure";
+                    availability.max_restarts = 3;
                   };
-              in
-              {
-                ### bot ###
-                pluralkit-bot-init = {
-                  command = pkgs.writeShellApplication {
-                    name = "pluralkit-bot-init";
-                    runtimeInputs = [
-                      pkgs.coreutils
-                      pkgs.git
-                    ];
-                    text = ''
-                      ${sourceDotenv}
-                      set -x
-                      exec ${mkBotEnv "dotnet build -c Release -o obj/"}/bin/env
-                    '';
+                  ### gateway ###
+                  pluralkit-gateway = mkServiceProcess "gateway" {
+                    depends_on.postgres.condition = "process_healthy";
+                    depends_on.redis.condition = "process_healthy";
+                    # configure health checks
+                    # TODO: don't assume port?
+                    liveness_probe.exec.command = ''${pkgs.curl}/bin/curl -s -o /dev/null -w "%{http_code}" http://localhost:5000/stats | ${pkgs.busybox}/bin/grep "302"'';
+                    liveness_probe.period_seconds = 7;
+                    # TODO: add actual listening or running line in gateway
+                    ready_log_line = "Running ";
+                    availability.restart = "on_failure";
+                    availability.max_restarts = 3;
                   };
+                  # TODO: add the rest of the services
                 };
-                pluralkit-bot = {
-                  command = pkgs.writeShellApplication {
-                    name = "pluralkit-bot";
-                    runtimeInputs = [ pkgs.coreutils ];
-                    text = ''
-                      ${sourceDotenv}
-                      set -x
-                      exec ${mkBotEnv "dotnet obj/PluralKit.Bot.dll"}/bin/env
-                    '';
-                  };
-                  depends_on.pluralkit-bot-init.condition = "process_completed_successfully";
-                  depends_on.postgres.condition = "process_healthy";
-                  depends_on.redis.condition = "process_healthy";
-                  depends_on.pluralkit-gateway.condition = "process_healthy";
-                  # TODO: add liveness check
-                  ready_log_line = "Received Ready";
-                };
-                ### migrations ###
-                pluralkit-migrate-init = mkServiceInitProcess {
-                  name = "migrate";
-                };
-                pluralkit-migrate = {
-                  command = pkgs.writeShellApplication {
-                    name = "pluralkit-migrate";
-                    text = ''
-                      ${sourceDotenv}
-                      set -x
-                      exec target/debug/migrate
-                    '';
-                  };
-                  depends_on.postgres.condition = "process_healthy";
-                  depends_on.pluralkit-migrate-init.condition = "process_completed_successfully";
-                };
-                ### gateway ###
-                pluralkit-gateway-init = mkServiceInitProcess {
-                  name = "gateway";
-                };
-                pluralkit-gateway = {
-                  command = pkgs.writeShellApplication {
-                    name = "pluralkit-gateway";
-                    runtimeInputs = with pkgs; [
-                      coreutils
-                      curl
-                      gnugrep
-                    ];
-                    text = ''
-                      ${sourceDotenv}
-                      set -x
-                      exec target/debug/gateway
-                    '';
-                  };
-                  depends_on.postgres.condition = "process_healthy";
-                  depends_on.redis.condition = "process_healthy";
-                  depends_on.pluralkit-gateway-init.condition = "process_completed_successfully";
-                  # configure health checks
-                  # TODO: don't assume port?
-                  liveness_probe.exec.command = ''curl -s -o /dev/null -w "%{http_code}" http://localhost:5000/stats | grep "302"'';
-                  liveness_probe.period_seconds = 5;
-                  readiness_probe.exec.command = procCfg.pluralkit-gateway.liveness_probe.exec.command;
-                  readiness_probe.period_seconds = 5;
-                  readiness_probe.initial_delay_seconds = 3;
-                };
-                # TODO: add the rest of the services
-              };
-          };
+            };
         };
     };
 }

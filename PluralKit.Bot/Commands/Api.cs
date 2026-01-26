@@ -115,28 +115,32 @@ public class Api
         }
     }
 
-    public async Task SystemWebhook(Context ctx)
+    public async Task GetSystemWebhook(Context ctx)
     {
         ctx.CheckSystem().CheckDMContext();
 
-        if (!ctx.HasNext(false))
-        {
-            if (ctx.System.WebhookUrl == null)
-                await ctx.Reply($"Your system does not have a webhook URL set. Set one with `{ctx.DefaultPrefix}system webhook <url>`!");
-            else
-                await ctx.Reply($"Your system's webhook URL is <{ctx.System.WebhookUrl}>.");
+        if (ctx.System.WebhookUrl == null)
+            await ctx.Reply($"Your system does not have a webhook URL set. Set one with `{ctx.DefaultPrefix}system webhook <url>`!");
+        else
+            await ctx.Reply($"Your system's webhook URL is <{ctx.System.WebhookUrl}>.");
+    }
+
+    public async Task ClearSystemWebhook(Context ctx, bool confirmYes)
+    {
+        ctx.CheckSystem().CheckDMContext();
+
+        if (!await ctx.ConfirmClear("your system's webhook URL", confirmYes))
             return;
-        }
 
-        if (ctx.MatchClear() && await ctx.ConfirmClear("your system's webhook URL"))
-        {
-            await ctx.Repository.UpdateSystem(ctx.System.Id, new SystemPatch { WebhookUrl = null, WebhookToken = null });
+        await ctx.Repository.UpdateSystem(ctx.System.Id, new SystemPatch { WebhookUrl = null, WebhookToken = null });
 
-            await ctx.Reply($"{Emojis.Success} System webhook URL removed.");
-            return;
-        }
+        await ctx.Reply($"{Emojis.Success} System webhook URL removed.");
+    }
 
-        var newUrl = ctx.RemainderOrNull();
+    public async Task SetSystemWebhook(Context ctx, string newUrl)
+    {
+        ctx.CheckSystem().CheckDMContext();
+
         if (!await DispatchExt.ValidateUri(newUrl))
             throw new PKError($"The URL {newUrl.AsCode()} is invalid or I cannot access it. Are you sure this is a valid, publicly accessible URL?");
 

@@ -58,16 +58,14 @@ public class ProxiedMessage
         _redisService = redisService;
     }
 
-    public async Task ReproxyMessage(Context ctx)
+    public async Task ReproxyMessage(Context ctx, Message.Reference? messageRef, PKMember target)
     {
-        var (msg, systemId) = await GetMessageToEdit(ctx, ReproxyTimeout, true);
+        var (msg, systemId) = await GetMessageToEdit(ctx, messageRef?.MessageId ?? ctx.GetRepliedTo()?.MessageId, ReproxyTimeout, true);
 
         if (ctx.System.Id != systemId)
             throw new PKError("Can't reproxy a message sent by a different system.");
 
-        // Get target member ID
-        var target = await ctx.MatchMember(restrictToSystem: ctx.System.Id);
-        if (target == null)
+        if (target == null || target.System != ctx.System.Id)
             throw new PKError("Could not find a member to reproxy the message with.");
 
         // Fetch members and get the ProxyMember for `target`
@@ -93,9 +91,9 @@ public class ProxiedMessage
         }
     }
 
-    public async Task EditMessage(Context ctx, bool useRegex)
+    public async Task EditMessage(Context ctx, Message.Reference? messageRef, string? newContent, bool useRegex, bool noSpace, bool append, bool prepend, bool clearEmbeds, bool clearAttachments)
     {
-        var (msg, systemId) = await GetMessageToEdit(ctx, EditTimeout, false);
+        var (msg, systemId) = await GetMessageToEdit(ctx, messageRef?.MessageId ?? ctx.GetRepliedTo()?.MessageId, EditTimeout, false);
 
         if (ctx.System.Id != systemId)
             throw new PKError("Can't edit a message sent by a different system.");
@@ -104,21 +102,12 @@ public class ProxiedMessage
         if (originalMsg == null)
             throw new PKError("Could not edit message.");
 
-        // Regex flag
-        useRegex = useRegex || ctx.MatchFlag("regex", "x");
-
-        // Check if we should append or prepend
-        var mutateSpace = ctx.MatchFlag("nospace", "ns") ? "" : " ";
-        var append = ctx.MatchFlag("append", "a");
-        var prepend = ctx.MatchFlag("prepend", "p");
+        var mutateSpace = noSpace ? "" : " ";
 
         // Grab the original message content and new message content
         var originalContent = originalMsg.Content;
-        var newContent = ctx.RemainderOrNull()?.NormalizeLineEndSpacing();
 
         // Should we clear embeds?
-        var clearEmbeds = ctx.MatchFlag("clear-embed", "ce");
-        var clearAttachments = ctx.MatchFlag("clear-attachments", "ca");
         if ((clearEmbeds || clearAttachments) && newContent == null)
             newContent = originalMsg.Content!;
 
@@ -249,14 +238,13 @@ public class ProxiedMessage
         }
     }
 
-    private async Task<(PKMessage, SystemId)> GetMessageToEdit(Context ctx, Duration timeout, bool isReproxy)
+    private async Task<(PKMessage, SystemId)> GetMessageToEdit(Context ctx, ulong? referencedMessage, Duration timeout, bool isReproxy)
     {
         var editType = isReproxy ? "reproxy" : "edit";
         var editTypeAction = isReproxy ? "reproxied" : "edited";
 
         PKMessage? msg = null;
 
-        var (referencedMessage, _) = ctx.MatchMessage(false);
         if (referencedMessage != null)
         {
             await using var conn = await ctx.Database.Obtain();
@@ -332,22 +320,20 @@ public class ProxiedMessage
         return lastMessage;
     }
 
-    public async Task GetMessage(Context ctx)
+    public async Task GetMessage(Context ctx, Message.Reference? messageRef, ReplyFormat format, bool isDelete, bool author, bool showEmbed)
     {
-        var (messageId, _) = ctx.MatchMessage(true);
-        if (messageId == null)
+        if (ctx.Message.Type == Message.MessageType.Reply && ctx.Message.MessageReference?.MessageId != null)
+            messageRef = ctx.Message.MessageReference;
+
+        if (messageRef == null || messageRef.MessageId == null)
         {
-            if (!ctx.HasNext())
-                throw new PKSyntaxError("You must pass a message ID or link.");
-            throw new PKSyntaxError($"Could not parse {ctx.PeekArgument().AsCode()} as a message ID or link.");
+            throw new PKSyntaxError("You must pass a message ID or link.");
         }
 
-        var isDelete = ctx.Match("delete") || ctx.MatchFlag("delete");
-
-        var message = await ctx.Repository.GetFullMessage(messageId.Value);
+        var message = await ctx.Repository.GetFullMessage(messageRef.MessageId.Value);
         if (message == null)
         {
-            await GetCommandMessage(ctx, messageId.Value, isDelete);
+            await GetCommandMessage(ctx, messageRef.MessageId.Value, isDelete, showEmbed);
             return;
         }
 
@@ -359,8 +345,6 @@ public class ProxiedMessage
             showContent = false;
         else if (!await ctx.CheckPermissionsInGuildChannel(channel, PermissionSet.ViewChannel))
             showContent = false;
-
-        var format = ctx.MatchFormat();
 
         if (format != ReplyFormat.Standard)
         {
@@ -423,10 +407,10 @@ public class ProxiedMessage
             return;
         }
 
-        if (ctx.Match("author") || ctx.MatchFlag("author"))
+        if (author)
         {
             var user = await _rest.GetUser(message.Message.Sender);
-            if (ctx.MatchFlag("show-embed", "se"))
+            if (showEmbed)
             {
                 var eb = new EmbedBuilder()
                     .Author(new Embed.EmbedAuthor(
@@ -446,7 +430,7 @@ public class ProxiedMessage
             return;
         }
 
-        if (ctx.MatchFlag("show-embed", "se"))
+        if (showEmbed)
         {
             await ctx.Reply(embed: await _embeds.CreateMessageInfoEmbed(message, showContent, ctx.Config));
             return;
@@ -455,7 +439,7 @@ public class ProxiedMessage
         await ctx.Reply(components: await _embeds.CreateMessageInfoMessageComponents(message, showContent, ctx.Config));
     }
 
-    private async Task GetCommandMessage(Context ctx, ulong messageId, bool isDelete)
+    private async Task GetCommandMessage(Context ctx, ulong messageId, bool isDelete, bool showEmbed)
     {
         var msg = await _repo.GetCommandMessage(messageId);
         if (msg == null)
@@ -484,7 +468,7 @@ public class ProxiedMessage
         else if (!await ctx.CheckPermissionsInGuildChannel(channel, PermissionSet.ViewChannel))
             showContent = false;
 
-        if (ctx.MatchFlag("show-embed", "se"))
+        if (showEmbed)
         {
             await ctx.Reply(embed: await _embeds.CreateCommandMessageInfoEmbed(msg, showContent));
             return;

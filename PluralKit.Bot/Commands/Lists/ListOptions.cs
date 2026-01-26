@@ -184,6 +184,7 @@ public static class ListOptionsExt
 
         // the check for multiple *sorting* property flags is done in SortProperty setter
     }
+
 }
 
 public enum SortProperty

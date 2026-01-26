@@ -140,7 +140,40 @@ public class MessageCreated: IEventHandler<MessageCreateEvent>
             var config = system != null ? await _repo.GetSystemConfig(system.Id) : null;
             var guildConfig = guild != null ? await _repo.GetGuild(guild.Id) : null;
 
-            await _tree.ExecuteCommand(new Context(_services, shardId, guild, channel, evt, cmdStart, system, config, guildConfig, _config.Prefixes ?? BotConfig.DefaultPrefixes));
+            // parse parameters
+            Parameters parameters;
+            try
+            {
+                parameters = new Parameters(evt.Content?.Substring(0, cmdStart), evt.Content?.Substring(cmdStart));
+            }
+            catch (PKError e)
+            {
+                // don't send an "invalid command" response if the guild has those turned off
+                // TODO: only dont send command not found, not every parse error (eg. missing params, syntax error...)
+                if (!(guildConfig != null && guildConfig!.InvalidCommandResponseEnabled != true))
+                {
+                    await _rest.CreateMessage(channel.Id, new MessageRequest
+                    {
+                        Content = $"{Emojis.Error} {e.Message}",
+                    });
+                }
+                throw;
+            }
+
+            var ctx = new Context(_services, shardId, guild, channel, evt, cmdStart, system, config, guildConfig, _config.Prefixes ?? BotConfig.DefaultPrefixes, parameters);
+
+            Commands command;
+            try
+            {
+                command = await Commands.FromContext(ctx);
+            }
+            catch (PKError e)
+            {
+                await ctx.Reply($"{Emojis.Error} {e.Message}");
+                throw;
+            }
+
+            await _tree.ExecuteCommand(ctx, command);
         }
         catch (PKError)
         {

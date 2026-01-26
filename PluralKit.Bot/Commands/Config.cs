@@ -197,17 +197,16 @@ public class Config
     }
     private string EnabledDisabled(bool value) => value ? "enabled" : "disabled";
 
-    public async Task AutoproxyAccount(Context ctx)
+    public async Task ViewAutoproxyAccount(Context ctx)
     {
         var allowAutoproxy = await ctx.Repository.GetAutoproxyEnabled(ctx.Author.Id);
 
-        if (!ctx.HasNext())
-        {
-            await ctx.Reply($"Autoproxy is currently **{EnabledDisabled(allowAutoproxy)}** for account <@{ctx.Author.Id}>.");
-            return;
-        }
+        await ctx.Reply($"Autoproxy is currently **{EnabledDisabled(allowAutoproxy)}** for account <@{ctx.Author.Id}>.");
+    }
 
-        var allow = ctx.MatchToggle(true);
+    public async Task EditAutoproxyAccount(Context ctx, bool allow)
+    {
+        var allowAutoproxy = await ctx.Repository.GetAutoproxyEnabled(ctx.Author.Id);
 
         var statusString = EnabledDisabled(allow);
         if (allowAutoproxy == allow)
@@ -220,80 +219,87 @@ public class Config
         await ctx.Reply($"{Emojis.Success} Autoproxy {statusString} for account <@{ctx.Author.Id}>.");
     }
 
-
-    public async Task AutoproxyTimeout(Context ctx)
+    public async Task ViewAutoproxyTimeout(Context ctx)
     {
-        if (!ctx.HasNext())
-        {
-            var timeout = ctx.Config.LatchTimeout.HasValue
-                ? Duration.FromSeconds(ctx.Config.LatchTimeout.Value)
-                : (Duration?)null;
+        var timeout = ctx.Config.LatchTimeout.HasValue
+        ? Duration.FromSeconds(ctx.Config.LatchTimeout.Value)
+        : (Duration?)null;
 
-            if (timeout == null)
-                await ctx.Reply($"You do not have a custom autoproxy timeout duration set. The default latch timeout duration is {ProxyMatcher.DefaultLatchExpiryTime.ToTimeSpan().Humanize(4)}.");
-            else if (timeout == Duration.Zero)
-                await ctx.Reply("Latch timeout is currently **disabled** for your system. Latch mode autoproxy will never time out.");
-            else
-                await ctx.Reply($"The current latch timeout duration for your system is {timeout.Value.ToTimeSpan().Humanize(4)}.");
-            return;
-        }
-
-        Duration? newTimeout;
-        Duration overflow = Duration.Zero;
-        if (ctx.Match("off", "stop", "cancel", "no", "disable", "remove")) newTimeout = Duration.Zero;
-        else if (ctx.MatchClear()) newTimeout = null;
+        if (timeout == null)
+            await ctx.Reply($"You do not have a custom autoproxy timeout duration set. The default latch timeout duration is {ProxyMatcher.DefaultLatchExpiryTime.ToTimeSpan().Humanize(4)}.");
+        else if (timeout == Duration.Zero)
+            await ctx.Reply("Latch timeout is currently **disabled** for your system. Latch mode autoproxy will never time out.");
         else
+            await ctx.Reply($"The current latch timeout duration for your system is {timeout.Value.ToTimeSpan().Humanize(4)}.");
+    }
+
+    public async Task DisableAutoproxyTimeout(Context ctx)
+    {
+        await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { LatchTimeout = (int)Duration.Zero.TotalSeconds });
+
+        await ctx.Reply($"{Emojis.Success} Latch timeout disabled. Latch mode autoproxy will never time out.");
+    }
+
+    public async Task ResetAutoproxyTimeout(Context ctx)
+    {
+        await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { LatchTimeout = null });
+
+        await ctx.Reply($"{Emojis.Success} Latch timeout reset to default ({ProxyMatcher.DefaultLatchExpiryTime.ToTimeSpan().Humanize(4)}).");
+    }
+
+    public async Task EditAutoproxyTimeout(Context ctx, string timeout)
+    {
+        Duration newTimeout;
+        Duration overflow = Duration.Zero;
+        // todo: we should parse date in the command parser
+        var timeoutStr = timeout;
+        var timeoutPeriod = DateUtils.ParsePeriod(timeoutStr)
+            ?? throw new PKError($"Could not parse '{timeoutStr}' as a valid duration. Try using a syntax such as \"3h5m\" (i.e. 3 hours and 5 minutes).");
+        if (timeoutPeriod.TotalHours > 100000)
         {
-            var timeoutStr = ctx.RemainderOrNull();
-            var timeoutPeriod = DateUtils.ParsePeriod(timeoutStr);
-            if (timeoutPeriod == null) throw new PKError($"Could not parse '{timeoutStr}' as a valid duration. Try using a syntax such as \"3h5m\" (i.e. 3 hours and 5 minutes).");
-            if (timeoutPeriod.Value.TotalHours > 100000)
-            {
-                // sanity check to prevent seconds overflow if someone types in 999999999
-                overflow = timeoutPeriod.Value;
-                newTimeout = Duration.Zero;
-            }
-            else newTimeout = timeoutPeriod;
+            // sanity check to prevent seconds overflow if someone types in 999999999
+            overflow = timeoutPeriod;
+            newTimeout = Duration.Zero;
         }
+        else newTimeout = timeoutPeriod;
 
-        await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { LatchTimeout = (int?)newTimeout?.TotalSeconds });
+        await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { LatchTimeout = (int?)newTimeout.TotalSeconds });
 
-        if (newTimeout == null)
-            await ctx.Reply($"{Emojis.Success} Latch timeout reset to default ({ProxyMatcher.DefaultLatchExpiryTime.ToTimeSpan().Humanize(4)}).");
-        else if (newTimeout == Duration.Zero && overflow != Duration.Zero)
+        if (newTimeout == Duration.Zero && overflow != Duration.Zero)
             await ctx.Reply($"{Emojis.Success} Latch timeout disabled. Latch mode autoproxy will never time out. ({overflow.ToTimeSpan().Humanize(4)} is too long)");
         else if (newTimeout == Duration.Zero)
             await ctx.Reply($"{Emojis.Success} Latch timeout disabled. Latch mode autoproxy will never time out.");
         else
-            await ctx.Reply($"{Emojis.Success} Latch timeout set to {newTimeout.Value!.ToTimeSpan().Humanize(4)}.");
+            await ctx.Reply($"{Emojis.Success} Latch timeout set to {newTimeout.ToTimeSpan().Humanize(4)}.");
     }
 
-    public async Task SystemTimezone(Context ctx)
+    public async Task ViewSystemTimezone(Context ctx)
     {
         if (ctx.System == null) throw Errors.NoSystemError(ctx.DefaultPrefix);
 
-        if (ctx.MatchClear())
-        {
-            await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { UiTz = "UTC" });
+        await ctx.Reply(
+            $"Your current system time zone is set to **{ctx.Config.UiTz}**. It is currently **{SystemClock.Instance.GetCurrentInstant().FormatZoned(ctx.Config.Zone)}** in that time zone. To change your system time zone, type `{ctx.DefaultPrefix}config tz <zone>`.");
+    }
 
-            await ctx.Reply($"{Emojis.Success} System time zone cleared (set to UTC).");
-            return;
-        }
+    public async Task ResetSystemTimezone(Context ctx)
+    {
+        if (ctx.System == null) throw Errors.NoSystemError(ctx.DefaultPrefix);
 
-        var zoneStr = ctx.RemainderOrNull();
-        if (zoneStr == null)
-        {
-            await ctx.Reply(
-                $"Your current system time zone is set to **{ctx.Config.UiTz}**. It is currently **{SystemClock.Instance.GetCurrentInstant().FormatZoned(ctx.Config.Zone)}** in that time zone. To change your system time zone, type `{ctx.DefaultPrefix}config tz <zone>`.");
-            return;
-        }
+        await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { UiTz = "UTC" });
+
+        await ctx.Reply($"{Emojis.Success} System time zone cleared (set to UTC).");
+    }
+
+    public async Task EditSystemTimezone(Context ctx, string zoneStr, bool confirmYes = false)
+    {
+        if (ctx.System == null) throw Errors.NoSystemError(ctx.DefaultPrefix);
 
         var zone = await FindTimeZone(ctx, zoneStr);
         if (zone == null) throw Errors.InvalidTimeZone(zoneStr);
 
         var currentTime = SystemClock.Instance.GetCurrentInstant().InZone(zone);
         var msg = $"This will change the system time zone to **{zone.Id}**. The current time is **{currentTime.FormatZoned()}**. Is this correct?";
-        if (!await ctx.PromptYesNo(msg, "Change Timezone")) throw Errors.TimezoneChangeCancelled;
+        if (!await ctx.PromptYesNo(msg, "Change Timezone", flagValue: confirmYes)) throw Errors.TimezoneChangeCancelled;
 
         await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { UiTz = zone.Id });
 
@@ -360,27 +366,24 @@ public class Config
             });
     }
 
-    public async Task SystemPing(Context ctx)
+    public async Task ViewSystemPing(Context ctx)
     {
         // note: this is here because this is also used in `pk;system ping`, which does not CheckSystem
         ctx.CheckSystem();
 
-        // todo: move all the other config settings to this format
+        await ctx.Reply($"Reaction pings are currently **{EnabledDisabled(ctx.Config.PingsEnabled)}** for your system. " +
+            $"To {EnabledDisabled(!ctx.Config.PingsEnabled)[..^1]} reaction pings, type `{ctx.DefaultPrefix}config ping {EnabledDisabled(!ctx.Config.PingsEnabled)[..^1]}`.");
+    }
 
-        String Response(bool isError, bool val)
-            => $"Reaction pings are {(isError ? "already" : "currently")} **{EnabledDisabled(val)}** for your system. "
-             + $"To {EnabledDisabled(!val)[..^1]} reaction pings, type `{ctx.DefaultPrefix}config ping {EnabledDisabled(!val)[..^1]}`.";
-
-        if (!ctx.HasNext())
-        {
-            await ctx.Reply(Response(false, ctx.Config.PingsEnabled));
-            return;
-        }
-
-        var value = ctx.MatchToggle(true);
+    public async Task EditSystemPing(Context ctx, bool value)
+    {
+        ctx.CheckSystem();
 
         if (ctx.Config.PingsEnabled == value)
-            await ctx.Reply(Response(true, ctx.Config.PingsEnabled));
+        {
+            await ctx.Reply($"Reaction pings are already **{EnabledDisabled(ctx.Config.PingsEnabled)}** for your system. " +
+                $"To {EnabledDisabled(!value)[..^1]} reaction pings, type `{ctx.DefaultPrefix}config ping {EnabledDisabled(!value)[..^1]}`.");
+        }
         else
         {
             await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { PingsEnabled = value });
@@ -388,230 +391,182 @@ public class Config
         }
     }
 
-    public async Task MemberDefaultPrivacy(Context ctx)
+    public async Task ViewMemberDefaultPrivacy(Context ctx)
     {
-        if (!ctx.HasNext())
-        {
-            if (ctx.Config.MemberDefaultPrivate) { await ctx.Reply($"Newly created members will currently have their privacy settings set to private. To change this, type `{ctx.DefaultPrefix}config private member off`"); }
-            else { await ctx.Reply($"Newly created members will currently have their privacy settings set to public. To automatically set new members' privacy settings to private, type `{ctx.DefaultPrefix}config private member on`"); }
-        }
+        if (ctx.Config.MemberDefaultPrivate)
+            await ctx.Reply($"Newly created members will currently have their privacy settings set to private. To change this, type `{ctx.DefaultPrefix}config private member off`");
         else
-        {
-            if (ctx.MatchToggle(false))
-            {
-                await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { MemberDefaultPrivate = true });
-
-                await ctx.Reply("Newly created members will now have their privacy settings set to private.");
-            }
-            else
-            {
-                await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { MemberDefaultPrivate = false });
-
-                await ctx.Reply("Newly created members will now have their privacy settings set to public.");
-            }
-        }
+            await ctx.Reply($"Newly created members will currently have their privacy settings set to public. To automatically set new members' privacy settings to private, type `{ctx.DefaultPrefix}config private member on`");
     }
 
-    public async Task GroupDefaultPrivacy(Context ctx)
+    public async Task EditMemberDefaultPrivacy(Context ctx, bool value)
     {
-        if (!ctx.HasNext())
-        {
-            if (ctx.Config.GroupDefaultPrivate) { await ctx.Reply($"Newly created groups will currently have their privacy settings set to private. To change this, type `{ctx.DefaultPrefix}config private group off`"); }
-            else { await ctx.Reply($"Newly created groups will currently have their privacy settings set to public. To automatically set new groups' privacy settings to private, type `{ctx.DefaultPrefix}config private group on`"); }
-        }
+        await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { MemberDefaultPrivate = value });
+
+        if (value)
+            await ctx.Reply("Newly created members will now have their privacy settings set to private.");
         else
-        {
-            if (ctx.MatchToggle(false))
-            {
-                await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { GroupDefaultPrivate = true });
-
-                await ctx.Reply("Newly created groups will now have their privacy settings set to private.");
-            }
-            else
-            {
-                await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { GroupDefaultPrivate = false });
-
-                await ctx.Reply("Newly created groups will now have their privacy settings set to public.");
-            }
-        }
+            await ctx.Reply("Newly created members will now have their privacy settings set to public.");
     }
 
-    public async Task ShowPrivateInfo(Context ctx)
+    public async Task ViewGroupDefaultPrivacy(Context ctx)
     {
-        if (!ctx.HasNext())
-        {
-            if (ctx.Config.ShowPrivateInfo) await ctx.Reply("Private information is currently **shown** when looking up your own info. Use the `-public` flag to hide it.");
-            else await ctx.Reply("Private information is currently **hidden** when looking up your own info. Use the `-private` flag to show it.");
-            return;
-        }
+        if (ctx.Config.GroupDefaultPrivate)
+            await ctx.Reply($"Newly created groups will currently have their privacy settings set to private. To change this, type `{ctx.DefaultPrefix}config private group off`");
+        else
+            await ctx.Reply($"Newly created groups will currently have their privacy settings set to public. To automatically set new groups' privacy settings to private, type `{ctx.DefaultPrefix}config private group on`");
+    }
 
-        if (ctx.MatchToggle(true))
-        {
-            await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { ShowPrivateInfo = true });
+    public async Task EditGroupDefaultPrivacy(Context ctx, bool value)
+    {
+        await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { GroupDefaultPrivate = value });
 
+        if (value)
+            await ctx.Reply("Newly created groups will now have their privacy settings set to private.");
+        else
+            await ctx.Reply("Newly created groups will now have their privacy settings set to public.");
+    }
+
+    public async Task ViewShowPrivateInfo(Context ctx)
+    {
+        if (ctx.Config.ShowPrivateInfo)
+            await ctx.Reply("Private information is currently **shown** when looking up your own info. Use the `-public` flag to hide it.");
+        else
+            await ctx.Reply("Private information is currently **hidden** when looking up your own info. Use the `-private` flag to show it.");
+    }
+
+    public async Task EditShowPrivateInfo(Context ctx, bool value)
+    {
+        await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { ShowPrivateInfo = value });
+
+        if (value)
             await ctx.Reply("Private information will now be **shown** when looking up your own info. Use the `-public` flag to hide it.");
-        }
         else
-        {
-            await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { ShowPrivateInfo = false });
-
             await ctx.Reply("Private information will now be **hidden** when looking up your own info. Use the `-private` flag to show it.");
-        }
     }
 
-    public async Task CaseSensitiveProxyTags(Context ctx)
+    public async Task ViewCaseSensitiveProxyTags(Context ctx)
     {
-        if (!ctx.HasNext())
-        {
-            if (ctx.Config.CaseSensitiveProxyTags) { await ctx.Reply("Proxy tags are currently case **sensitive**."); }
-            else { await ctx.Reply("Proxy tags are currently case **insensitive**."); }
-            return;
-        }
+        if (ctx.Config.CaseSensitiveProxyTags)
+            await ctx.Reply("Proxy tags are currently case **sensitive**.");
+        else
+            await ctx.Reply("Proxy tags are currently case **insensitive**.");
+    }
 
-        if (ctx.MatchToggle(true))
-        {
-            await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { CaseSensitiveProxyTags = true });
+    public async Task EditCaseSensitiveProxyTags(Context ctx, bool value)
+    {
+        await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { CaseSensitiveProxyTags = value });
 
+        if (value)
             await ctx.Reply("Proxy tags are now case sensitive.");
-        }
         else
-        {
-            await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { CaseSensitiveProxyTags = false });
-
             await ctx.Reply("Proxy tags are now case insensitive.");
-        }
     }
 
-    public async Task ProxyErrorMessageEnabled(Context ctx)
+    public async Task ViewProxyErrorMessageEnabled(Context ctx)
     {
-        if (!ctx.HasNext())
-        {
-            if (ctx.Config.ProxyErrorMessageEnabled) { await ctx.Reply("Proxy error messages are currently **enabled**."); }
-            else { await ctx.Reply("Proxy error messages are currently **disabled**. Messages that fail to proxy (due to message or attachment size) will not throw an error message."); }
-            return;
-        }
-
-        if (ctx.MatchToggle(true))
-        {
-            await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { ProxyErrorMessageEnabled = true });
-
-            await ctx.Reply("Proxy error messages are now enabled.");
-        }
+        if (ctx.Config.ProxyErrorMessageEnabled)
+            await ctx.Reply("Proxy error messages are currently **enabled**.");
         else
-        {
-            await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { ProxyErrorMessageEnabled = false });
+            await ctx.Reply("Proxy error messages are currently **disabled**. Messages that fail to proxy (due to message or attachment size) will not throw an error message.");
+    }
 
+    public async Task EditProxyErrorMessageEnabled(Context ctx, bool value)
+    {
+        await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { ProxyErrorMessageEnabled = value });
+
+        if (value)
+            await ctx.Reply("Proxy error messages are now enabled.");
+        else
             await ctx.Reply("Proxy error messages are now disabled. Messages that fail to proxy (due to message or attachment size) will not throw an error message.");
-        }
     }
 
-    public async Task HidDisplaySplit(Context ctx)
+    public async Task ViewHidDisplaySplit(Context ctx)
     {
-        if (!ctx.HasNext())
-        {
-            var msg = $"Splitting of 6-character IDs with a hyphen is currently **{EnabledDisabled(ctx.Config.HidDisplaySplit)}**.";
-            await ctx.Reply(msg);
-            return;
-        }
-
-        var newVal = ctx.MatchToggle(false);
-        await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { HidDisplaySplit = newVal });
-        await ctx.Reply($"Splitting of 6-character IDs with a hyphen is now {EnabledDisabled(newVal)}.");
+        await ctx.Reply($"Splitting of 6-character IDs with a hyphen is currently **{EnabledDisabled(ctx.Config.HidDisplaySplit)}**.");
     }
 
-    public async Task HidDisplayCaps(Context ctx)
+    public async Task EditHidDisplaySplit(Context ctx, bool value)
     {
-        if (!ctx.HasNext())
-        {
-            var msg = $"Displaying IDs as capital letters is currently **{EnabledDisabled(ctx.Config.HidDisplayCaps)}**.";
-            await ctx.Reply(msg);
-            return;
-        }
-
-        var newVal = ctx.MatchToggle(false);
-        await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { HidDisplayCaps = newVal });
-        await ctx.Reply($"Displaying IDs as capital letters is now {EnabledDisabled(newVal)}.");
+        await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { HidDisplaySplit = value });
+        await ctx.Reply($"Splitting of 6-character IDs with a hyphen is now {EnabledDisabled(value)}.");
     }
 
-    public async Task HidListPadding(Context ctx)
+    public async Task ViewHidDisplayCaps(Context ctx)
     {
-        if (!ctx.HasNext())
-        {
-            string message;
-            switch (ctx.Config.HidListPadding)
-            {
-                case SystemConfig.HidPadFormat.None: message = "Padding 5-character IDs in lists is currently disabled."; break;
-                case SystemConfig.HidPadFormat.Left: message = "5-character IDs displayed in lists will have a padding space added to the beginning."; break;
-                case SystemConfig.HidPadFormat.Right: message = "5-character IDs displayed in lists will have a padding space added to the end."; break;
-                default: throw new Exception("unreachable");
-            }
-            await ctx.Reply(message);
-            return;
-        }
+        await ctx.Reply($"Displaying IDs as capital letters is currently **{EnabledDisabled(ctx.Config.HidDisplayCaps)}**.");
+    }
 
+    public async Task EditHidDisplayCaps(Context ctx, bool value)
+    {
+        await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { HidDisplayCaps = value });
+        await ctx.Reply($"Displaying IDs as capital letters is now {EnabledDisabled(value)}.");
+    }
+
+    public async Task ViewHidListPadding(Context ctx)
+    {
+        string message = ctx.Config.HidListPadding switch
+        {
+            SystemConfig.HidPadFormat.None => "Padding 5-character IDs in lists is currently disabled.",
+            SystemConfig.HidPadFormat.Left => "5-character IDs displayed in lists will have a padding space added to the beginning.",
+            SystemConfig.HidPadFormat.Right => "5-character IDs displayed in lists will have a padding space added to the end.",
+            _ => throw new Exception("unreachable")
+        };
+        await ctx.Reply(message);
+    }
+
+    public async Task EditHidListPadding(Context ctx, string padding)
+    {
         var badInputError = "Valid padding settings are `left`, `right`, or `off`.";
 
-        var toggleOff = ctx.MatchToggleOrNull(false);
-
-        switch (toggleOff)
+        if (padding.Equals("off", StringComparison.InvariantCultureIgnoreCase))
         {
-            case true: throw new PKError(badInputError);
-            case false:
-                {
-                    await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { HidListPadding = SystemConfig.HidPadFormat.None });
-                    await ctx.Reply("Padding 5-character IDs in lists has been disabled.");
-                    return;
-                }
+            await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { HidListPadding = SystemConfig.HidPadFormat.None });
+            await ctx.Reply("Padding 5-character IDs in lists has been disabled.");
         }
-
-        if (ctx.Match("left", "l"))
+        else if (padding.Equals("left", StringComparison.InvariantCultureIgnoreCase) || padding.Equals("l", StringComparison.InvariantCultureIgnoreCase))
         {
             await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { HidListPadding = SystemConfig.HidPadFormat.Left });
             await ctx.Reply("5-character IDs displayed in lists will now have a padding space added to the beginning.");
         }
-        else if (ctx.Match("right", "r"))
+        else if (padding.Equals("right", StringComparison.InvariantCultureIgnoreCase) || padding.Equals("r", StringComparison.InvariantCultureIgnoreCase))
         {
             await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { HidListPadding = SystemConfig.HidPadFormat.Right });
             await ctx.Reply("5-character IDs displayed in lists will now have a padding space added to the end.");
         }
-        else throw new PKError(badInputError);
+        else
+        {
+            throw new PKError(badInputError);
+        }
     }
 
-    public async Task CardShowColorHex(Context ctx)
+    public async Task ViewCardShowColorHex(Context ctx)
     {
-        if (!ctx.HasNext())
-        {
-            var msg = $"Showing color codes on system/member/group cards is currently **{EnabledDisabled(ctx.Config.CardShowColorHex)}**.";
-            await ctx.Reply(msg);
-            return;
-        }
-
-        var newVal = ctx.MatchToggle(false);
-        await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { CardShowColorHex = newVal });
-        await ctx.Reply($"Showing color codes on system/member/group cards is now {EnabledDisabled(newVal)}.");
+        await ctx.Reply($"Showing color codes on system/member/group cards is currently **{EnabledDisabled(ctx.Config.CardShowColorHex)}**.");
     }
 
-    public async Task ProxySwitch(Context ctx)
+    public async Task EditCardShowColorHex(Context ctx, bool value)
     {
-        if (!ctx.HasNext())
+        await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { CardShowColorHex = value });
+        await ctx.Reply($"Showing color codes on system/member/group cards is now {EnabledDisabled(value)}.");
+    }
+
+    public async Task ViewProxySwitch(Context ctx)
+    {
+        string msg = ctx.Config.ProxySwitch switch
         {
-            string msg = ctx.Config.ProxySwitch switch
-            {
-                SystemConfig.ProxySwitchAction.Off => "Currently, when you proxy as a member, no switches are logged or changed.",
-                SystemConfig.ProxySwitchAction.New => "When you proxy as a member, currently it makes a new switch.",
-                SystemConfig.ProxySwitchAction.Add => "When you proxy as a member, currently it adds them to the current switch.",
-                _ => throw new Exception("unreachable"),
-            };
-            await ctx.Reply(msg);
-            return;
-        }
+            SystemConfig.ProxySwitchAction.Off => "Currently, when you proxy as a member, no switches are logged or changed.",
+            SystemConfig.ProxySwitchAction.New => "When you proxy as a member, currently it makes a new switch.",
+            SystemConfig.ProxySwitchAction.Add => "When you proxy as a member, currently it adds them to the current switch.",
+            _ => throw new Exception("unreachable"),
+        };
+        await ctx.Reply(msg);
+    }
 
-        // toggle = false means off, toggle = true means new, otherwise if they said add that means add or if they said new they mean new. If none of those, error
-        var toggle = ctx.MatchToggleOrNull(false);
-        var newVal = toggle == false ? SystemConfig.ProxySwitchAction.Off : toggle == true ? SystemConfig.ProxySwitchAction.New : ctx.Match("add", "a") ? SystemConfig.ProxySwitchAction.Add : ctx.Match("new", "n") ? SystemConfig.ProxySwitchAction.New : throw new PKError("You must pass either \"new\", \"add\", or \"off\" to this command.");
-
-        await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { ProxySwitch = newVal });
-        switch (newVal)
+    public async Task EditProxySwitch(Context ctx, SystemConfig.ProxySwitchAction action)
+    {
+        await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { ProxySwitch = action });
+        switch (action)
         {
             case SystemConfig.ProxySwitchAction.Off: await ctx.Reply("Now when you proxy as a member, no switches are logged or changed."); break;
             case SystemConfig.ProxySwitchAction.New: await ctx.Reply("When you proxy as a member, it now makes a new switch."); break;
@@ -620,65 +575,61 @@ public class Config
         }
     }
 
-    public async Task NameFormat(Context ctx)
+    public async Task ViewNameFormat(Context ctx)
     {
-        var clearFlag = ctx.MatchClear();
-        if (!ctx.HasNext() && !clearFlag)
-        {
-            await ctx.Reply($"Member names are currently formatted as `{ctx.Config.NameFormat ?? ProxyMember.DefaultFormat}`");
-            return;
-        }
+        await ctx.Reply($"Member names are currently formatted as `{ctx.Config.NameFormat ?? ProxyMember.DefaultFormat}`");
+    }
 
-        string formatString;
-        if (clearFlag)
-            formatString = ProxyMember.DefaultFormat;
-        else
-            formatString = ctx.RemainderOrNull();
+    public async Task ResetNameFormat(Context ctx)
+    {
+        await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { NameFormat = ProxyMember.DefaultFormat });
+        await ctx.Reply($"Member names are now formatted as `{ProxyMember.DefaultFormat}`");
+    }
 
+    public async Task EditNameFormat(Context ctx, string formatString)
+    {
         await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { NameFormat = formatString });
         await ctx.Reply($"Member names are now formatted as `{formatString}`");
     }
 
-    public async Task ServerNameFormat(Context ctx)
+    public async Task ViewServerNameFormat(Context ctx, ReplyFormat format)
     {
         ctx.CheckGuildContext();
-        var clearFlag = ctx.MatchClear();
-        var format = ctx.MatchFormat();
 
         var guildCfg = await ctx.Repository.GetSystemGuild(ctx.Guild.Id, ctx.System.Id);
-        // if there's nothing next or what's next is raw/plaintext and we're not clearing, it's a query
-        if ((!ctx.HasNext() || format != ReplyFormat.Standard) && !clearFlag)
-        {
-            if (guildCfg.NameFormat == null)
-                await ctx.Reply("You do not have a specific name format set for this server and member names are formatted with your global name format.");
-            else
-                switch (format)
-                {
-                    case ReplyFormat.Raw:
-                        await ctx.Reply($"`{guildCfg.NameFormat}`");
-                        break;
-                    case ReplyFormat.Plaintext:
-                        var eb = new EmbedBuilder()
-                            .Description($"Showing guild Name Format for system {ctx.System.DisplayHid(ctx.Config)}");
-                        await ctx.Reply(guildCfg.NameFormat, eb.Build());
-                        break;
-                    default:
-                        await ctx.Reply($"Your member names in this server are currently formatted as `{guildCfg.NameFormat}`");
-                        break;
-                }
-            return;
-        }
-
-        string? formatString = null;
-        if (!clearFlag)
-        {
-            formatString = ctx.RemainderOrNull();
-        }
-        await ctx.Repository.UpdateSystemGuild(ctx.System.Id, ctx.Guild.Id, new() { NameFormat = formatString });
-        if (formatString == null)
-            await ctx.Reply($"Member names are now formatted with your global name format in this server.");
+        if (guildCfg.NameFormat == null)
+            await ctx.Reply("You do not have a specific name format set for this server and member names are formatted with your global name format.");
         else
-            await ctx.Reply($"Member names are now formatted as `{formatString}` in this server.");
+            switch (format)
+            {
+                case ReplyFormat.Raw:
+                    await ctx.Reply($"`{guildCfg.NameFormat}`");
+                    break;
+                case ReplyFormat.Plaintext:
+                    var eb = new EmbedBuilder()
+                        .Description($"Showing guild Name Format for system {ctx.System.DisplayHid(ctx.Config)}");
+                    await ctx.Reply(guildCfg.NameFormat, eb.Build());
+                    break;
+                default:
+                    await ctx.Reply($"Your member names in this server are currently formatted as `{guildCfg.NameFormat}`");
+                    break;
+            }
+    }
+
+    public async Task ResetServerNameFormat(Context ctx)
+    {
+        ctx.CheckGuildContext();
+
+        await ctx.Repository.UpdateSystemGuild(ctx.System.Id, ctx.Guild.Id, new() { NameFormat = null });
+        await ctx.Reply($"Member names are now formatted with your global name format in this server.");
+    }
+
+    public async Task EditServerNameFormat(Context ctx, string formatString)
+    {
+        ctx.CheckGuildContext();
+
+        await ctx.Repository.UpdateSystemGuild(ctx.System.Id, ctx.Guild.Id, new() { NameFormat = formatString });
+        await ctx.Reply($"Member names are now formatted as `{formatString}` in this server.");
     }
 
     public Task LimitUpdate(Context ctx)
