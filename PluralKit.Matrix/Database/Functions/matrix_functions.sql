@@ -63,7 +63,7 @@ as $$
         system_last_switch.members                   as last_switch_members,
         system_last_switch.timestamp                 as last_switch_timestamp,
 
-        -- Room info (log_channel is bigint for compat with MessageContext; handled separately)
+        -- log_channel is null here; Matrix rooms use log_room TEXT in matrix_rooms (not part of MessageContext)
         null::bigint                                 as log_channel,
         coalesce(matrix_rooms.blacklisted, false)    as in_blacklist,
         false                                        as in_log_blacklist,
@@ -82,9 +82,8 @@ as $$
 $$ language sql stable rows 1;
 
 
--- Matrix equivalent of proxy_members()
--- Uses TEXT param (Matrix MXID) instead of bigint (Discord account ID)
--- No guild-specific overrides (server_name, server_avatar, server_keep_proxy)
+-- Matrix equivalent of proxy_members(). Takes only sender MXID (TEXT) --
+-- no guild parameter since Matrix has no guild-specific member overrides
 create function matrix_proxy_members(sender_mxid text)
     returns table (
         id int,

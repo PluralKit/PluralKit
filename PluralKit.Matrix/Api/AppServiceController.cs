@@ -1,3 +1,6 @@
+using System.Security.Cryptography;
+using System.Text;
+
 using Microsoft.AspNetCore.Mvc;
 
 using Newtonsoft.Json.Linq;
@@ -32,10 +35,24 @@ public class AppServiceController : ControllerBase
             if (auth?.StartsWith("Bearer ") == true)
                 token = auth.Substring(7);
         }
-        return token == _config.HsToken;
+
+        if (token == null)
+        {
+            _logger.Warning("Rejected request with no hs_token from {RemoteIp}", Request.HttpContext.Connection.RemoteIpAddress);
+            return false;
+        }
+
+        var valid = CryptographicOperations.FixedTimeEquals(
+            Encoding.UTF8.GetBytes(token),
+            Encoding.UTF8.GetBytes(_config.HsToken));
+
+        if (!valid)
+            _logger.Warning("Rejected request with invalid hs_token from {RemoteIp}", Request.HttpContext.Connection.RemoteIpAddress);
+
+        return valid;
     }
 
-    /// <summary>Synapse pushes events here.</summary>
+    /// <summary>The homeserver pushes events here (Application Service Transactions API).</summary>
     [HttpPut("/_matrix/app/v1/transactions/{txnId}")]
     public async Task<IActionResult> HandleTransaction(string txnId, [FromBody] JObject body)
     {
@@ -51,15 +68,18 @@ public class AppServiceController : ControllerBase
             return Ok(new { });
         }
 
-        // Mark transaction as processed before handling events
-        await _repo.StoreTransaction(txnId);
-
         // Process each event in the transaction
         var events = body["events"]?.ToObject<JArray>() ?? new JArray();
         foreach (var evt in events)
         {
             try
             {
+                var matrixEvent = MatrixEvent.FromJson((JObject)evt);
+                if (!matrixEvent.IsValid)
+                {
+                    _logger.Warning("Skipping malformed event in transaction {TxnId}: missing required fields", txnId);
+                    continue;
+                }
                 await _eventHandler.HandleEvent((JObject)evt);
             }
             catch (Exception ex)
@@ -69,17 +89,19 @@ public class AppServiceController : ControllerBase
             }
         }
 
+        // Mark transaction as processed after all events are handled (at-least-once semantics)
+        await _repo.StoreTransaction(txnId);
+
         return Ok(new { });
     }
 
-    /// <summary>Synapse queries if we manage this user.</summary>
+    /// <summary>The homeserver queries if we manage this user.</summary>
     [HttpGet("/_matrix/app/v1/users/{userId}")]
     public IActionResult QueryUser(string userId)
     {
         if (!ValidateHsToken())
             return Unauthorized(new { errcode = "M_UNKNOWN_TOKEN", error = "Invalid hs_token" });
 
-        // Claim any user matching our namespace (@_pk_*)
         if (userId.StartsWith("@_pk_") && userId.Contains(':'))
         {
             _logger.Debug("Claiming user {UserId}", userId);
@@ -89,14 +111,13 @@ public class AppServiceController : ControllerBase
         return NotFound(new { errcode = "M_NOT_FOUND", error = "User not managed by this appservice" });
     }
 
-    /// <summary>Synapse queries if we manage this room alias.</summary>
+    /// <summary>The homeserver queries if we manage this room alias.</summary>
     [HttpGet("/_matrix/app/v1/rooms/{roomAlias}")]
     public IActionResult QueryRoom(string roomAlias)
     {
         if (!ValidateHsToken())
             return Unauthorized(new { errcode = "M_UNKNOWN_TOKEN", error = "Invalid hs_token" });
 
-        // We don't manage any room aliases
         return NotFound(new { errcode = "M_NOT_FOUND", error = "Room not managed by this appservice" });
     }
 }

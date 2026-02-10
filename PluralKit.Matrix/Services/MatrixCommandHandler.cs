@@ -35,7 +35,7 @@ public class MatrixCommandHandler
                 "link" => await HandleLink(evt, parts),
                 "unlink" => await HandleUnlink(evt),
                 "system" or "s" => await HandleSystem(evt),
-                "member" or "m" => await HandleMember(parts),
+                "member" or "m" => await HandleMember(evt, parts),
                 "autoproxy" or "ap" => await HandleAutoproxy(evt, parts),
                 "blacklist" => await HandleBlacklist(evt, parts),
                 "help" or "?" => GetHelpText(),
@@ -51,20 +51,39 @@ public class MatrixCommandHandler
         catch (Exception ex)
         {
             _logger.Error(ex, "Error handling command '{Command}' from {Sender}", command, evt.Sender);
-            var txnId = $"pk_err_{evt.EventId}_{Guid.NewGuid():N}";
-            await _api.SendMessage(evt.RoomId, botMxid, "An error occurred while processing your command.", null, txnId);
+            try
+            {
+                var txnId = $"pk_err_{evt.EventId}_{Guid.NewGuid():N}";
+                await _api.SendMessage(evt.RoomId, botMxid,
+                    $"An error occurred while processing `{command}`.", null, txnId);
+            }
+            catch (Exception sendEx)
+            {
+                _logger.Warning(sendEx, "Failed to send error response for command '{Command}'", command);
+            }
         }
     }
 
     private async Task<string> HandleLink(MatrixEvent evt, string[] parts)
     {
-        if (parts.Length < 2)
-            return $"Usage: `{_config.Prefix} link <system_id>`\nLinks your Matrix account to an existing PluralKit system.";
+        if (parts.Length < 3)
+            return $"Usage: `{_config.Prefix} link <system_id> <token>`\n" +
+                   "Links your Matrix account to a PluralKit system. " +
+                   "Get your token from the PluralKit bot on Discord with `pk;token`.";
 
         var systemHid = parts[1];
+        var token = parts[2];
+
         var system = await _coreRepo.GetSystemByHid(systemHid);
         if (system == null)
             return $"System `{systemHid}` not found.";
+
+        var systemToken = system.Token;
+        if (systemToken == null)
+            return "That system has no API token set. Generate one on Discord with `pk;token`.";
+
+        if (token != systemToken)
+            return "Invalid token. Make sure you're using the correct system token.";
 
         var existing = await _repo.GetAccountSystem(evt.Sender);
         if (existing != null)
@@ -88,7 +107,7 @@ public class MatrixCommandHandler
     {
         var systemId = await _repo.GetAccountSystem(evt.Sender);
         if (systemId == null)
-            return $"You don't have a system linked. Use `{_config.Prefix} link <system_id>` to link one.";
+            return $"You don't have a system linked. Use `{_config.Prefix} link <system_id> <token>` to link one.";
 
         var system = await _coreRepo.GetSystem(systemId.Value);
         if (system == null)
@@ -101,7 +120,7 @@ public class MatrixCommandHandler
                $"**Tag**: {system.Tag ?? "(none)"}";
     }
 
-    private async Task<string> HandleMember(string[] parts)
+    private async Task<string> HandleMember(MatrixEvent evt, string[] parts)
     {
         if (parts.Length < 2)
             return $"Usage: `{_config.Prefix} member <member_id>`";
@@ -111,8 +130,18 @@ public class MatrixCommandHandler
         if (member == null)
             return $"Member `{memberHid}` not found.";
 
+        // Only show member info if the requester owns the system or the member is public
+        var requestorSystem = await _repo.GetAccountSystem(evt.Sender);
+        if (member.MemberVisibility != PrivacyLevel.Public
+            && (requestorSystem == null || requestorSystem.Value != member.System))
+            return $"Member `{memberHid}` not found.";
+
+        var name = member.NamePrivacy == PrivacyLevel.Public || (requestorSystem != null && requestorSystem.Value == member.System)
+            ? member.DisplayName ?? member.Name
+            : member.DisplayName ?? member.Name; // name is always visible; display_name may be private
+
         var tags = string.Join(", ", member.ProxyTags.Select(t => $"`{t.ProxyString}`"));
-        return $"**Member**: {member.DisplayName ?? member.Name}\n" +
+        return $"**Member**: {name}\n" +
                $"**ID**: `{member.Hid}`\n" +
                $"**Proxy tags**: {(tags.Length > 0 ? tags : "(none)")}";
     }
@@ -121,7 +150,7 @@ public class MatrixCommandHandler
     {
         var systemId = await _repo.GetAccountSystem(evt.Sender);
         if (systemId == null)
-            return $"You don't have a system linked. Use `{_config.Prefix} link <system_id>` to link one.";
+            return $"You don't have a system linked. Use `{_config.Prefix} link <system_id> <token>` to link one.";
 
         if (parts.Length < 2)
         {
@@ -167,6 +196,11 @@ public class MatrixCommandHandler
 
     private async Task<string> HandleBlacklist(MatrixEvent evt, string[] parts)
     {
+        // Only system-linked users can manage blacklists
+        var systemId = await _repo.GetAccountSystem(evt.Sender);
+        if (systemId == null)
+            return $"You must have a linked system to manage room settings. Use `{_config.Prefix} link` first.";
+
         if (parts.Length < 2)
             return $"Usage: `{_config.Prefix} blacklist <on|off>`\nDisables/enables proxying in the current room.";
 
@@ -190,7 +224,7 @@ public class MatrixCommandHandler
     {
         var p = _config.Prefix;
         return $"**PluralKit Matrix** \u2014 Commands:\n" +
-               $"- `{p} link <system_id>` \u2014 Link your Matrix account to a PK system\n" +
+               $"- `{p} link <system_id> <token>` \u2014 Link your Matrix account to a PK system\n" +
                $"- `{p} unlink` \u2014 Unlink your Matrix account\n" +
                $"- `{p} system` \u2014 View your system info\n" +
                $"- `{p} member <id>` \u2014 View member info\n" +

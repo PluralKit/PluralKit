@@ -6,7 +6,7 @@ namespace PluralKit.Matrix;
 
 public class MatrixVirtualUser
 {
-    public int MemberId { get; set; }
+    public MemberId MemberId { get; set; }
     public string Mxid { get; set; } = "";
     public string? DisplayName { get; set; }
     public string? AvatarMxc { get; set; }

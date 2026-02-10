@@ -45,6 +45,7 @@ public class Program
         logger.Information("Matrix database migrations complete");
 
         var matrixConfig = host.Services.GetRequiredService<MatrixConfig>();
+        matrixConfig.Validate();
         logger.Information("Starting PluralKit Matrix appservice on port {Port}", matrixConfig.Port);
 
         await host.RunAsync();
@@ -94,7 +95,7 @@ rate_limited: false
         Console.WriteLine($"  PluralKit__Matrix__AsToken={asToken}");
         Console.WriteLine($"  PluralKit__Matrix__HsToken={hsToken}");
         Console.WriteLine();
-        Console.WriteLine("Register this file with your Synapse homeserver in homeserver.yaml:");
+        Console.WriteLine("Register this file with your Matrix homeserver (e.g., in Synapse's homeserver.yaml):");
         Console.WriteLine("  app_service_config_files:");
         Console.WriteLine($"    - /path/to/{outputPath}");
     }

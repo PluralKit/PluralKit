@@ -52,9 +52,13 @@ public class VirtualUserService
                     avatarMxc = await _api.UploadMedia(data, contentType, "avatar.png");
                     await _api.SetAvatarUrl(mxid, avatarMxc);
                 }
-                catch (Exception ex)
+                catch (HttpRequestException ex)
                 {
-                    _logger.Warning(ex, "Failed to upload avatar for member {MemberId}", member.Id);
+                    _logger.Error(ex, "Failed to upload avatar for member {MemberId} from {Url}", member.Id, avatarUrl);
+                }
+                catch (ArgumentException ex)
+                {
+                    _logger.Warning(ex, "Invalid avatar URL for member {MemberId}: {Url}", member.Id, avatarUrl);
                 }
             }
 
@@ -85,9 +89,13 @@ public class VirtualUserService
                     await _api.SetAvatarUrl(mxid, avatarMxc);
                     await _repo.UpdateVirtualUserAvatar(member.Id, avatarMxc);
                 }
-                catch (Exception ex)
+                catch (HttpRequestException ex)
                 {
-                    _logger.Warning(ex, "Failed to update avatar for member {MemberId}", member.Id);
+                    _logger.Error(ex, "Failed to update avatar for member {MemberId} from {Url}", member.Id, currentAvatar);
+                }
+                catch (ArgumentException ex)
+                {
+                    _logger.Warning(ex, "Invalid avatar URL for member {MemberId}: {Url}", member.Id, currentAvatar);
                 }
             }
 

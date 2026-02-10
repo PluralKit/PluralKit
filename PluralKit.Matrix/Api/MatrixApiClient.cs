@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
 
@@ -10,6 +11,8 @@ namespace PluralKit.Matrix;
 
 public class MatrixApiClient
 {
+    private const int MaxAvatarBytes = 10 * 1024 * 1024; // 10 MB
+
     private readonly HttpClient _client;
     private readonly MatrixConfig _config;
     private readonly ILogger _logger;
@@ -54,12 +57,21 @@ public class MatrixApiClient
 
         if (!response.IsSuccessStatusCode)
         {
-            _logger.Warning("Matrix API error: {StatusCode} {Method} {Path}: {Body}",
-                (int)response.StatusCode, method.Method, path, responseBody);
+            _logger.Warning("Matrix API error: {StatusCode} {Method} {Path} (user: {UserId}): {Body}",
+                (int)response.StatusCode, method.Method, path, impersonateUserId ?? "bot", responseBody);
         }
 
         response.EnsureSuccessStatusCode();
-        return JObject.Parse(responseBody);
+
+        try
+        {
+            return JObject.Parse(responseBody);
+        }
+        catch (JsonReaderException ex)
+        {
+            _logger.Error(ex, "Malformed JSON response from {Method} {Path}: {Body}", method.Method, path, responseBody);
+            throw;
+        }
     }
 
     /// <summary>Register a virtual user with the homeserver.</summary>
@@ -74,10 +86,10 @@ public class MatrixApiClient
             });
             _logger.Information("Registered virtual user @{Localpart}:{Server}", localpart, _config.ServerName);
         }
-        catch (HttpRequestException)
+        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.BadRequest)
         {
-            // User may already be registered — that's fine
-            _logger.Debug("Virtual user @{Localpart}:{Server} may already be registered", localpart, _config.ServerName);
+            // M_USER_IN_USE — user already registered, that's fine
+            _logger.Debug("Virtual user @{Localpart}:{Server} already registered", localpart, _config.ServerName);
         }
     }
 
@@ -110,7 +122,8 @@ public class MatrixApiClient
             content,
             impersonateUserId: virtualMxid);
 
-        return result["event_id"]!.Value<string>()!;
+        return result["event_id"]?.Value<string>()
+            ?? throw new InvalidOperationException($"SendMessage response missing event_id for room {roomId}");
     }
 
     /// <summary>Send an edit as a virtual user. Returns the event ID.</summary>
@@ -150,7 +163,8 @@ public class MatrixApiClient
             content,
             impersonateUserId: virtualMxid);
 
-        return result["event_id"]!.Value<string>()!;
+        return result["event_id"]?.Value<string>()
+            ?? throw new InvalidOperationException($"SendEdit response missing event_id for room {roomId}");
     }
 
     /// <summary>Redact an event. Returns true if successful, false if permission denied.</summary>
@@ -164,7 +178,7 @@ public class MatrixApiClient
                 body);
             return true;
         }
-        catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.Forbidden)
+        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.Forbidden)
         {
             _logger.Warning("No permission to redact event {EventId} in room {RoomId}", eventId, roomId);
             return false;
@@ -198,19 +212,43 @@ public class MatrixApiClient
         request.Content.Headers.ContentType = new MediaTypeHeaderValue(contentType);
 
         var response = await _client.SendAsync(request);
+        var responseBody = await response.Content.ReadAsStringAsync();
+
+        if (!response.IsSuccessStatusCode)
+            _logger.Warning("Media upload failed: {StatusCode}: {Body}", (int)response.StatusCode, responseBody);
+
         response.EnsureSuccessStatusCode();
 
-        var responseBody = await response.Content.ReadAsStringAsync();
         var result = JObject.Parse(responseBody);
-        return result["content_uri"]!.Value<string>()!;
+        return result["content_uri"]?.Value<string>()
+            ?? throw new InvalidOperationException("Upload response missing content_uri");
     }
 
-    /// <summary>Download media from a URL (for re-uploading avatars).</summary>
+    /// <summary>Download media from a URL (for re-uploading avatars). Validates URL and enforces size limit.</summary>
     public async Task<(byte[] data, string contentType)> DownloadMedia(string url)
     {
-        var response = await _client.GetAsync(url);
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
+            throw new ArgumentException($"Invalid media URL: {url}");
+
+        if (uri.Scheme != "https" && uri.Scheme != "http")
+            throw new ArgumentException($"Unsupported URL scheme: {uri.Scheme}");
+
+        if (uri.Host == "localhost" || uri.Host == "127.0.0.1" || uri.Host == "::1"
+            || uri.Host.StartsWith("10.") || uri.Host.StartsWith("172.") || uri.Host.StartsWith("192.168.")
+            || uri.Host == "169.254.169.254")
+            throw new ArgumentException($"Blocked internal URL: {url}");
+
+        var response = await _client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
         response.EnsureSuccessStatusCode();
+
+        var contentLength = response.Content.Headers.ContentLength;
+        if (contentLength > MaxAvatarBytes)
+            throw new InvalidOperationException($"Media too large: {contentLength} bytes (max {MaxAvatarBytes})");
+
         var data = await response.Content.ReadAsByteArrayAsync();
+        if (data.Length > MaxAvatarBytes)
+            throw new InvalidOperationException($"Media too large: {data.Length} bytes (max {MaxAvatarBytes})");
+
         var ct = response.Content.Headers.ContentType?.MediaType ?? "application/octet-stream";
         return (data, ct);
     }

@@ -4,13 +4,14 @@ namespace PluralKit.Matrix;
 
 public class MatrixEvent
 {
-    public string Type { get; set; } = "";
-    public string EventId { get; set; } = "";
-    public string RoomId { get; set; } = "";
-    public string Sender { get; set; } = "";
-    public long OriginServerTs { get; set; }
-    public JObject Content { get; set; } = new();
-    public JObject? Unsigned { get; set; }
+    public string Type { get; private set; } = "";
+    public string EventId { get; private set; } = "";
+    public string RoomId { get; private set; } = "";
+    public string Sender { get; private set; } = "";
+    public long OriginServerTs { get; private set; }
+    public JObject Content { get; private set; } = new();
+    public JObject? Unsigned { get; private set; }
+    public string? TopLevelRedacts { get; private set; }
 
     // Message helpers
     public string? MessageType => Content["msgtype"]?.Value<string>();
@@ -22,12 +23,15 @@ public class MatrixEvent
     public string? EditedEventId => Content["m.relates_to"]?["event_id"]?.Value<string>();
     public JObject? NewContent => Content["m.new_content"] as JObject;
 
-    // Redaction (the event being redacted is in content.redacts or top-level redacts)
-    public string? RedactedEventId => Content["redacts"]?.Value<string>();
+    // Redaction (top-level for room versions <11, content.redacts for v11+)
+    public string? RedactedEventId => TopLevelRedacts ?? Content["redacts"]?.Value<string>();
 
     // Reaction
     public string? ReactionKey => Content["m.relates_to"]?["key"]?.Value<string>();
     public string? ReactionTargetEventId => Content["m.relates_to"]?["event_id"]?.Value<string>();
+
+    public bool IsValid => !string.IsNullOrEmpty(Type) && !string.IsNullOrEmpty(EventId)
+        && !string.IsNullOrEmpty(RoomId) && !string.IsNullOrEmpty(Sender);
 
     public static MatrixEvent FromJson(JObject json)
     {
@@ -40,6 +44,7 @@ public class MatrixEvent
             OriginServerTs = json["origin_server_ts"]?.Value<long>() ?? 0,
             Content = json["content"] as JObject ?? new JObject(),
             Unsigned = json["unsigned"] as JObject,
+            TopLevelRedacts = json["redacts"]?.Value<string>(),
         };
     }
 }
