@@ -15,6 +15,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Myriad", "Myriad\Myriad.csp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Serilog", "Serilog\src\Serilog\Serilog.csproj", "{4CF74FA7-1417-27D7-76DE-2467733F7E8B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PluralKit.Matrix", "PluralKit.Matrix\PluralKit.Matrix.csproj", "{B1A2C5E8-7F3D-4A9E-8D6C-1E2F3A4B5C6D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,6 +47,10 @@ Global
 		{4CF74FA7-1417-27D7-76DE-2467733F7E8B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4CF74FA7-1417-27D7-76DE-2467733F7E8B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4CF74FA7-1417-27D7-76DE-2467733F7E8B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B1A2C5E8-7F3D-4A9E-8D6C-1E2F3A4B5C6D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B1A2C5E8-7F3D-4A9E-8D6C-1E2F3A4B5C6D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B1A2C5E8-7F3D-4A9E-8D6C-1E2F3A4B5C6D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B1A2C5E8-7F3D-4A9E-8D6C-1E2F3A4B5C6D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

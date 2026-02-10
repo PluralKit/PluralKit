@@ -54,6 +54,26 @@ services:
       - redis
     restart: unless-stopped
 
+  matrix:
+    build:
+      context: .
+      dockerfile: ci/Dockerfile.dotnet
+    command: ["bin/PluralKit.Matrix.dll"]
+    environment:
+      - "PluralKit__Database=Host=db;Username=postgres;Password=postgres;Database=postgres"
+      - "PluralKit__RedisAddr=redis"
+      - "PluralKit__Matrix__HomeserverUrl=http://synapse:8008"
+      - "PluralKit__Matrix__ServerName=${MATRIX_SERVER_NAME:-localhost}"
+      - "PluralKit__Matrix__AsToken=${MATRIX_AS_TOKEN}"
+      - "PluralKit__Matrix__HsToken=${MATRIX_HS_TOKEN}"
+      - "PluralKit__Matrix__Port=5050"
+    ports:
+      - "5050:5050"
+    restart: unless-stopped
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
   db:
     image: postgres:17-alpine
     volumes:
