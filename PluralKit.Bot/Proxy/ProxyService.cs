@@ -242,7 +242,15 @@ public class ProxyService
         var tts = match.Member.Tts && senderPermissions.HasFlag(PermissionSet.SendTtsMessages);
 
         Message.MessageFlags flags = 0;
-        if (ctx.SuppressNotifications)
+        // If the guild suppress notifications condition is set to Always
+        if (ctx.SuppressNotifications == GuildConfig.SuppressCondition.Always ||
+            // OR if it is set to Match and the trigger message was silent
+            (ctx.SuppressNotifications == GuildConfig.SuppressCondition.Match &&
+                trigger.Flags.HasFlag(Message.MessageFlags.SuppressNotifications)) ||
+            // OR if it is set to Invert and the trigger message wasn't silent
+            (ctx.SuppressNotifications == GuildConfig.SuppressCondition.Invert &&
+                !trigger.Flags.HasFlag(Message.MessageFlags.SuppressNotifications)))
+            // Make the proxied message silent
             flags |= Message.MessageFlags.SuppressNotifications;
         if (trigger.Flags.HasFlag(Message.MessageFlags.VoiceMessage))
             flags |= Message.MessageFlags.VoiceMessage;
