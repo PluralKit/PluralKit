@@ -61,8 +61,8 @@ public class AppServiceController : ControllerBase
 
         _logger.Debug("Received transaction {TxnId}", txnId);
 
-        // Idempotency check
-        if (await _repo.CheckTransaction(txnId))
+        // Atomic idempotency: reserve txnId or skip if already processed
+        if (!await _repo.TryReserveTransaction(txnId))
         {
             _logger.Debug("Transaction {TxnId} already processed, skipping", txnId);
             return Ok(new { });
@@ -88,9 +88,6 @@ public class AppServiceController : ControllerBase
                     txnId, evt["type"]?.Value<string>());
             }
         }
-
-        // Mark transaction as processed after all events are handled (at-least-once semantics)
-        await _repo.StoreTransaction(txnId);
 
         return Ok(new { });
     }

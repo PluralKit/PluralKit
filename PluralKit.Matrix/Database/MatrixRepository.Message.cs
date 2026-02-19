@@ -49,19 +49,12 @@ public partial class MatrixRepository
             new { id = proxiedEventId });
     }
 
-    public async Task<bool> CheckTransaction(string txnId)
+    public async Task<bool> TryReserveTransaction(string txnId)
     {
         await using var conn = await _db.Obtain();
-        return await conn.QueryFirstOrDefaultAsync<bool>(
-            "select exists(select 1 from matrix_transactions where txn_id = @txnId)",
-            new { txnId });
-    }
-
-    public async Task StoreTransaction(string txnId)
-    {
-        await using var conn = await _db.Obtain();
-        await conn.ExecuteAsync(
+        var rows = await conn.ExecuteAsync(
             "insert into matrix_transactions (txn_id) values (@txnId) on conflict do nothing",
             new { txnId });
+        return rows > 0;
     }
 }

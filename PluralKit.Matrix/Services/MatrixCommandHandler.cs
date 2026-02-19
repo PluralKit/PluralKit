@@ -136,14 +136,22 @@ public class MatrixCommandHandler
             && (requestorSystem == null || requestorSystem.Value != member.System))
             return $"Member `{memberHid}` not found.";
 
-        var name = member.NamePrivacy == PrivacyLevel.Public || (requestorSystem != null && requestorSystem.Value == member.System)
-            ? member.DisplayName ?? member.Name
-            : member.DisplayName ?? member.Name; // name is always visible; display_name may be private
+        var isOwner = requestorSystem != null && requestorSystem.Value == member.System;
 
-        var tags = string.Join(", ", member.ProxyTags.Select(t => $"`{t.ProxyString}`"));
-        return $"**Member**: {name}\n" +
-               $"**ID**: `{member.Hid}`\n" +
-               $"**Proxy tags**: {(tags.Length > 0 ? tags : "(none)")}";
+        var name = (member.NamePrivacy == PrivacyLevel.Public || isOwner)
+            ? member.DisplayName ?? member.Name
+            : member.Name;
+
+        var response = $"**Member**: {name}\n" +
+                       $"**ID**: `{member.Hid}`\n";
+
+        if (member.ProxyPrivacy == PrivacyLevel.Public || isOwner)
+        {
+            var tags = string.Join(", ", member.ProxyTags.Select(t => $"`{t.ProxyString}`"));
+            response += $"**Proxy tags**: {(tags.Length > 0 ? tags : "(none)")}";
+        }
+
+        return response;
     }
 
     private async Task<string> HandleAutoproxy(MatrixEvent evt, string[] parts)
@@ -180,6 +188,8 @@ public class MatrixCommandHandler
             var member = await _coreRepo.GetMemberByHid(parts[2]);
             if (member == null)
                 return $"Member `{parts[2]}` not found.";
+            if (member.System != systemId.Value)
+                return $"Member `{parts[2]}` does not belong to your system.";
             memberId = member.Id;
         }
 

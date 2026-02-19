@@ -245,9 +245,18 @@ public class MatrixApiClient
         if (contentLength > MaxAvatarBytes)
             throw new InvalidOperationException($"Media too large: {contentLength} bytes (max {MaxAvatarBytes})");
 
-        var data = await response.Content.ReadAsByteArrayAsync();
-        if (data.Length > MaxAvatarBytes)
-            throw new InvalidOperationException($"Media too large: {data.Length} bytes (max {MaxAvatarBytes})");
+        await using var stream = await response.Content.ReadAsStreamAsync();
+        using var ms = new MemoryStream();
+        var buffer = new byte[8192];
+        int totalRead = 0, bytesRead;
+        while ((bytesRead = await stream.ReadAsync(buffer)) > 0)
+        {
+            totalRead += bytesRead;
+            if (totalRead > MaxAvatarBytes)
+                throw new InvalidOperationException($"Media too large: exceeded {MaxAvatarBytes} bytes");
+            ms.Write(buffer, 0, bytesRead);
+        }
+        var data = ms.ToArray();
 
         var ct = response.Content.Headers.ContentType?.MediaType ?? "application/octet-stream";
         return (data, ct);
