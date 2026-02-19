@@ -8,6 +8,7 @@ on:
     - 'PluralKit.API/**'
     - 'PluralKit.Bot/**'
     - 'PluralKit.Core/**'
+    - 'PluralKit.Matrix/**'
   pull_request:
     paths:
     - .github/workflows/dotnet.yml
@@ -15,6 +16,7 @@ on:
     - 'PluralKit.API/**'
     - 'PluralKit.Bot/**'
     - 'PluralKit.Core/**'
+    - 'PluralKit.Matrix/**'
 
 jobs:
   test:

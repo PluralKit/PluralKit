@@ -69,7 +69,11 @@ public class MatrixCommandHandler
         if (parts.Length < 3)
             return $"Usage: `{_config.Prefix} link <system_id> <token>`\n" +
                    "Links your Matrix account to a PluralKit system. " +
-                   "Get your token from the PluralKit bot on Discord with `pk;token`.";
+                   "Get your token from the PluralKit bot on Discord with `pk;token`.\n" +
+                   "\u26a0\ufe0f **Your message containing the token will be automatically redacted for security.**";
+
+        // Token was provided in the message — always redact regardless of outcome
+        await TryRedactTokenMessage(evt);
 
         var systemHid = parts[1];
         var token = parts[2];
@@ -91,6 +95,21 @@ public class MatrixCommandHandler
 
         await _repo.LinkAccount(evt.Sender, system.Id);
         return $"Linked your Matrix account to system **{system.Name ?? systemHid}** (`{system.Hid}`).";
+    }
+
+    private async Task TryRedactTokenMessage(MatrixEvent evt)
+    {
+        try
+        {
+            var txnId = $"pk_redact_token_{evt.EventId}_{Guid.NewGuid():N}";
+            var botMxid = $"@{_config.BotLocalpart}:{_config.ServerName}";
+            await _api.RedactEvent(evt.RoomId, evt.EventId, "Contained sensitive token", txnId);
+        }
+        catch (Exception ex)
+        {
+            _logger.Warning(ex, "Failed to redact token-containing message {EventId} in {RoomId}",
+                evt.EventId, evt.RoomId);
+        }
     }
 
     private async Task<string> HandleUnlink(MatrixEvent evt)
@@ -234,7 +253,7 @@ public class MatrixCommandHandler
     {
         var p = _config.Prefix;
         return $"**PluralKit Matrix** \u2014 Commands:\n" +
-               $"- `{p} link <system_id> <token>` \u2014 Link your Matrix account to a PK system\n" +
+               $"- `{p} link <system_id> <token>` \u2014 Link your Matrix account (message auto-redacted)\n" +
                $"- `{p} unlink` \u2014 Unlink your Matrix account\n" +
                $"- `{p} system` \u2014 View your system info\n" +
                $"- `{p} member <id>` \u2014 View member info\n" +
