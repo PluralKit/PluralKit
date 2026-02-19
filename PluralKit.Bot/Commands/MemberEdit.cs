@@ -21,37 +21,32 @@ public class MemberEdit
         _avatarHosting = avatarHosting;
     }
 
-    public async Task Name(Context ctx, PKMember target)
+    public async Task ShowName(Context ctx, PKMember target, ReplyFormat format)
     {
-        var format = ctx.MatchFormat();
-
-        if (!ctx.HasNext() || format != ReplyFormat.Standard)
+        var lctx = ctx.DirectLookupContextFor(target.System);
+        switch (format)
         {
-            var lctx = ctx.DirectLookupContextFor(target.System);
-            switch (format)
-            {
-                case ReplyFormat.Raw:
-                    await ctx.Reply($"```{target.NameFor(lctx)}```");
-                    break;
-                case ReplyFormat.Plaintext:
-                    var eb = new EmbedBuilder()
-                        .Description($"Showing name for member {target.NameFor(ctx)} (`{target.DisplayHid(ctx.Config)}`)");
-                    await ctx.Reply(target.NameFor(lctx), embed: eb.Build());
-                    break;
-                default:
-                    var replyStrQ = $"Name for member {target.DisplayHid(ctx.Config)} is **{target.NameFor(lctx)}**.";
-                    if (target.System == ctx.System?.Id)
-                        replyStrQ += $"\nTo rename {target.DisplayHid(ctx.Config)} type `{ctx.DefaultPrefix}member {target.NameFor(ctx)} rename <new name>`."
-                        + $" Using {target.NameFor(lctx).Length}/{Limits.MaxMemberNameLength} characters.";
-                    await ctx.Reply(replyStrQ);
-                    break;
-            }
-            return;
+            case ReplyFormat.Raw:
+                await ctx.Reply($"```{target.NameFor(lctx)}```");
+                break;
+            case ReplyFormat.Plaintext:
+                var eb = new EmbedBuilder()
+                    .Description($"Showing name for member {target.NameFor(ctx)} (`{target.DisplayHid(ctx.Config)}`)");
+                await ctx.Reply(target.NameFor(lctx), embed: eb.Build());
+                break;
+            default:
+                var replyStrQ = $"Name for member {target.DisplayHid(ctx.Config)} is **{target.NameFor(lctx)}**.";
+                if (target.System == ctx.System?.Id)
+                    replyStrQ += $"\nTo rename {target.DisplayHid(ctx.Config)} type `{ctx.DefaultPrefix}member {target.NameFor(ctx)} rename <new name>`."
+                    + $" Using {target.NameFor(lctx).Length}/{Limits.MaxMemberNameLength} characters.";
+                await ctx.Reply(replyStrQ);
+                break;
         }
+    }
 
+    public async Task ChangeName(Context ctx, PKMember target, string newName, bool confirmYes)
+    {
         ctx.CheckSystem().CheckOwnMember(target);
-
-        var newName = ctx.RemainderOrNull() ?? throw new PKSyntaxError("You must pass a new name for the member.");
 
         // Hard name length cap
         if (newName.Length > Limits.MaxMemberNameLength)
@@ -63,7 +58,7 @@ public class MemberEdit
         {
             var msg =
                 $"{Emojis.Warn} You already have a member in your system with the name \"{existingMember.NameFor(ctx)}\" (`{existingMember.DisplayHid(ctx.Config)}`). Do you want to rename this member to that name too?";
-            if (!await ctx.PromptYesNo(msg, "Rename")) throw new PKError("Member renaming cancelled.");
+            if (!await ctx.PromptYesNo(msg, "Rename", flagValue: confirmYes)) throw new PKError("Member renaming cancelled.");
         }
 
         // Rename the member
@@ -85,7 +80,7 @@ public class MemberEdit
         await ctx.Reply(replyStr);
     }
 
-    public async Task Description(Context ctx, PKMember target)
+    public async Task ShowDescription(Context ctx, PKMember target, ReplyFormat format)
     {
         ctx.CheckSystemPrivacy(target.System, target.DescriptionPrivacy);
 
@@ -94,10 +89,8 @@ public class MemberEdit
             noDescriptionSetMessage +=
                 $" To set one, type `{ctx.DefaultPrefix}member {target.Reference(ctx)} description <description>`.";
 
-        var format = ctx.MatchFormat();
-
         // if there's nothing next or what's next is "raw"/"plaintext" we're doing a query, so check for null
-        if (!ctx.HasNext(false) || format != ReplyFormat.Standard)
+        if (format != ReplyFormat.Standard)
             if (target.Description == null)
             {
                 await ctx.Reply(noDescriptionSetMessage);
@@ -117,59 +110,60 @@ public class MemberEdit
             return;
         }
 
-        if (!ctx.HasNext(false))
-        {
-            await ctx.Reply(embed: new EmbedBuilder()
-                .Title("Member description")
-                .Description(target.Description)
-                .Field(new Embed.Field("\u200B",
-                    $"To print the description with formatting, type `{ctx.DefaultPrefix}member {target.Reference(ctx)} description -raw`."
-                    + (ctx.System?.Id == target.System
-                        ? $" To clear it, type `{ctx.DefaultPrefix}member {target.Reference(ctx)} description -clear`."
-                        + $" Using {target.Description.Length}/{Limits.MaxDescriptionLength} characters."
-                        : "")))
-                .Build());
-            return;
-        }
+        await ctx.Reply(embed: new EmbedBuilder()
+            .Title("Member description")
+            .Description(target.Description)
+            .Field(new Embed.Field("\u200B",
+                $"To print the description with formatting, type `{ctx.DefaultPrefix}member {target.Reference(ctx)} description -raw`."
+                + (ctx.System?.Id == target.System
+                    ? $" To clear it, type `{ctx.DefaultPrefix}member {target.Reference(ctx)} description -clear`."
+                    + $" Using {target.Description.Length}/{Limits.MaxDescriptionLength} characters."
+                    : "")))
+            .Build());
+    }
 
+    public async Task ClearDescription(Context ctx, PKMember target, bool confirmYes)
+    {
+        ctx.CheckSystemPrivacy(target.System, target.DescriptionPrivacy);
         ctx.CheckOwnMember(target);
 
-        if (ctx.MatchClear() && await ctx.ConfirmClear("this member's description"))
+        if (await ctx.ConfirmClear("this member's description", confirmYes))
         {
             var patch = new MemberPatch { Description = Partial<string>.Null() };
             await ctx.Repository.UpdateMember(target.Id, patch);
             await ctx.Reply($"{Emojis.Success} Member description cleared.");
         }
-        else
-        {
-            var description = ctx.RemainderOrNull(false).NormalizeLineEndSpacing();
-            if (description.IsLongerThan(Limits.MaxDescriptionLength))
-                throw Errors.StringTooLongError("Description", description.Length, Limits.MaxDescriptionLength);
-
-            var patch = new MemberPatch { Description = Partial<string>.Present(description) };
-            await ctx.Repository.UpdateMember(target.Id, patch);
-
-            await ctx.Reply($"{Emojis.Success} Member description changed (using {description.Length}/{Limits.MaxDescriptionLength} characters).");
-        }
     }
 
-    public async Task Pronouns(Context ctx, PKMember target)
+    public async Task ChangeDescription(Context ctx, PKMember target, string _description)
     {
+        ctx.CheckSystemPrivacy(target.System, target.DescriptionPrivacy);
+        ctx.CheckOwnMember(target);
+
+        var description = _description.NormalizeLineEndSpacing();
+        if (description.IsLongerThan(Limits.MaxDescriptionLength))
+            throw Errors.StringTooLongError("Description", description.Length, Limits.MaxDescriptionLength);
+
+        var patch = new MemberPatch { Description = Partial<string>.Present(description) };
+        await ctx.Repository.UpdateMember(target.Id, patch);
+
+        await ctx.Reply($"{Emojis.Success} Member description changed (using {description.Length}/{Limits.MaxDescriptionLength} characters).");
+    }
+
+    public async Task ShowPronouns(Context ctx, PKMember target, ReplyFormat format)
+    {
+        ctx.CheckSystemPrivacy(target.System, target.PronounPrivacy);
+
         var noPronounsSetMessage = "This member does not have pronouns set.";
         if (ctx.System?.Id == target.System)
             noPronounsSetMessage += $" To set some, type `{ctx.DefaultPrefix}member {target.Reference(ctx)} pronouns <pronouns>`.";
 
-        ctx.CheckSystemPrivacy(target.System, target.PronounPrivacy);
-
-        var format = ctx.MatchFormat();
-
-        // if there's nothing next or what's next is "raw"/"plaintext" we're doing a query, so check for null
-        if (!ctx.HasNext(false) || format != ReplyFormat.Standard)
-            if (target.Pronouns == null)
-            {
-                await ctx.Reply(noPronounsSetMessage);
-                return;
-            }
+        // check for null since we are doing a query
+        if (target.Pronouns == null)
+        {
+            await ctx.Reply(noPronounsSetMessage);
+            return;
+        }
 
         if (format == ReplyFormat.Raw)
         {
@@ -184,210 +178,240 @@ public class MemberEdit
             return;
         }
 
-        if (!ctx.HasNext(false))
-        {
-            await ctx.Reply(
-                $"**{target.NameFor(ctx)}**'s pronouns are **{target.Pronouns}**.\nTo print the pronouns with formatting, type `{ctx.DefaultPrefix}member {target.Reference(ctx)} pronouns -raw`."
-                + (ctx.System?.Id == target.System
-                    ? $" To clear them, type `{ctx.DefaultPrefix}member {target.Reference(ctx)} pronouns -clear`."
-                    + $" Using {target.Pronouns.Length}/{Limits.MaxPronounsLength} characters."
-                    : ""));
-            return;
-        }
+        await ctx.Reply(
+            $"**{target.NameFor(ctx)}**'s pronouns are **{target.Pronouns}**.\nTo print the pronouns with formatting, type `{ctx.DefaultPrefix}member {target.Reference(ctx)} pronouns -raw`."
+            + (ctx.System?.Id == target.System
+                ? $" To clear them, type `{ctx.DefaultPrefix}member {target.Reference(ctx)} pronouns -clear`."
+                + $" Using {target.Pronouns.Length}/{Limits.MaxPronounsLength} characters."
+                : ""));
+    }
 
+    public async Task ClearPronouns(Context ctx, PKMember target, bool confirmYes)
+    {
         ctx.CheckOwnMember(target);
 
-        if (ctx.MatchClear() && await ctx.ConfirmClear("this member's pronouns"))
+        if (await ctx.ConfirmClear("this member's pronouns", confirmYes))
         {
             var patch = new MemberPatch { Pronouns = Partial<string>.Null() };
             await ctx.Repository.UpdateMember(target.Id, patch);
             await ctx.Reply($"{Emojis.Success} Member pronouns cleared.");
         }
-        else
-        {
-            var pronouns = ctx.RemainderOrNull(false).NormalizeLineEndSpacing();
-            if (pronouns.IsLongerThan(Limits.MaxPronounsLength))
-                throw Errors.StringTooLongError("Pronouns", pronouns.Length, Limits.MaxPronounsLength);
-
-            var patch = new MemberPatch { Pronouns = Partial<string>.Present(pronouns) };
-            await ctx.Repository.UpdateMember(target.Id, patch);
-
-            await ctx.Reply($"{Emojis.Success} Member pronouns changed (using {pronouns.Length}/{Limits.MaxPronounsLength} characters).");
-        }
     }
 
-    public async Task BannerImage(Context ctx, PKMember target)
+    public async Task ChangePronouns(Context ctx, PKMember target, string pronouns)
     {
-        async Task ClearBannerImage()
-        {
-            ctx.CheckOwnMember(target);
-            await ctx.ConfirmClear("this member's banner image");
+        ctx.CheckOwnMember(target);
 
-            await ctx.Repository.UpdateMember(target.Id, new MemberPatch { BannerImage = null });
-            await ctx.Reply($"{Emojis.Success} Member banner image cleared.");
-        }
+        pronouns = pronouns.NormalizeLineEndSpacing();
+        if (pronouns.IsLongerThan(Limits.MaxPronounsLength))
+            throw Errors.StringTooLongError("Pronouns", pronouns.Length, Limits.MaxPronounsLength);
 
-        async Task SetBannerImage(ParsedImage img)
-        {
-            ctx.CheckOwnMember(target);
-            img = await _avatarHosting.TryRehostImage(img, AvatarHostingService.RehostedImageType.Banner, ctx.Author.Id, ctx.System);
-            await _avatarHosting.VerifyAvatarOrThrow(img.Url, true);
+        var patch = new MemberPatch { Pronouns = Partial<string>.Present(pronouns) };
+        await ctx.Repository.UpdateMember(target.Id, patch);
 
-            await ctx.Repository.UpdateMember(target.Id, new MemberPatch { BannerImage = img.CleanUrl ?? img.Url });
+        await ctx.Reply($"{Emojis.Success} Member pronouns changed (using {pronouns.Length}/{Limits.MaxPronounsLength} characters).");
+    }
 
-            var msg = img.Source switch
+    public async Task ShowBannerImage(Context ctx, PKMember target, ReplyFormat format)
+    {
+        ctx.CheckSystemPrivacy(target.System, target.BannerPrivacy);
+
+        var noBannerSetMessage = "This member does not have a banner image set.";
+        if (ctx.System?.Id == target.System)
+            noBannerSetMessage += $" To set one, type `{ctx.DefaultPrefix}member {target.Reference(ctx)} banner <url>` or attach an image.";
+
+        if (format != ReplyFormat.Standard)
+            if (string.IsNullOrWhiteSpace(target.BannerImage))
             {
-                AvatarSource.Url => $"{Emojis.Success} Member banner image changed to the image at the given URL.",
-                AvatarSource.HostedCdn => $"{Emojis.Success} Member banner image changed to attached image.",
-                AvatarSource.Attachment =>
-                    $"{Emojis.Success} Member banner image changed to attached image.\n{Emojis.Warn} If you delete the message containing the attachment, the banner image will stop working.",
-                AvatarSource.User => throw new PKError("Cannot set a banner image to an user's avatar."),
-                _ => throw new ArgumentOutOfRangeException()
-            };
+                await ctx.Reply(noBannerSetMessage);
+                return;
+            }
 
-            // The attachment's already right there, no need to preview it.
-            var hasEmbed = img.Source != AvatarSource.Attachment && img.Source != AvatarSource.HostedCdn;
-            await (hasEmbed
-                ? ctx.Reply(msg, new EmbedBuilder().Image(new Embed.EmbedImage(img.Url)).Build())
-                : ctx.Reply(msg));
-        }
-
-        async Task ShowBannerImage()
+        if (format == ReplyFormat.Raw)
         {
-            ctx.CheckSystemPrivacy(target.System, target.BannerPrivacy);
-
-            if ((target.BannerImage?.Trim() ?? "").Length > 0)
-                switch (ctx.MatchFormat())
-                {
-                    case ReplyFormat.Raw:
-                        await ctx.Reply($"`{target.BannerImage.TryGetCleanCdnUrl()}`");
-                        break;
-                    case ReplyFormat.Plaintext:
-                        var ebP = new EmbedBuilder()
-                            .Description($"Showing banner for member {target.NameFor(ctx)} (`{target.DisplayHid(ctx.Config)}`)");
-                        await ctx.Reply(text: $"<{target.BannerImage.TryGetCleanCdnUrl()}>", embed: ebP.Build());
-                        break;
-                    default:
-                        var ebS = new EmbedBuilder()
-                            .Title($"{target.NameFor(ctx)}'s banner image")
-                            .Image(new Embed.EmbedImage(target.BannerImage.TryGetCleanCdnUrl()));
-                        if (target.System == ctx.System?.Id)
-                            ebS.Description($"To clear, use `{ctx.DefaultPrefix}member {target.Reference(ctx)} banner clear`.");
-                        await ctx.Reply(embed: ebS.Build());
-                        break;
-                }
-            else
-                throw new PKSyntaxError(
-                    "This member does not have a banner image set." + ((target.System == ctx.System?.Id) ? " Set one by attaching an image to this command, or by passing an image URL." : ""));
+            await ctx.Reply($"```\n{target.BannerImage.TryGetCleanCdnUrl()}\n```");
+            return;
         }
-
-        if (ctx.MatchClear())
-            await ClearBannerImage();
-        else if (await ctx.MatchImage() is { } img)
-            await SetBannerImage(img);
-        else
-            await ShowBannerImage();
-    }
-
-    public async Task Color(Context ctx, PKMember target)
-    {
-        var isOwnSystem = ctx.System?.Id == target.System;
-        var matchedFormat = ctx.MatchFormat();
-        var matchedClear = ctx.MatchClear();
-
-        if (!isOwnSystem || !(ctx.HasNext() || matchedClear))
+        if (format == ReplyFormat.Plaintext)
         {
-            if (target.Color == null)
-                await ctx.Reply(
-                    "This member does not have a color set." + (isOwnSystem ? $" To set one, type `{ctx.DefaultPrefix}member {target.Reference(ctx)} color <color>`." : ""));
-            else if (matchedFormat == ReplyFormat.Raw)
-                await ctx.Reply("```\n#" + target.Color + "\n```");
-            else if (matchedFormat == ReplyFormat.Plaintext)
-                await ctx.Reply(target.Color);
-            else
-                await ctx.Reply(embed: new EmbedBuilder()
-                    .Title("Member color")
-                    .Color(target.Color.ToDiscordColor())
-                    .Thumbnail(new Embed.EmbedThumbnail($"attachment://color.gif"))
-                    .Description($"This member's color is **#{target.Color}**."
-                        + (isOwnSystem ? $" To clear it, type `{ctx.DefaultPrefix}member {target.Reference(ctx)} color -clear`." : ""))
-                    .Build(),
-                    files: [MiscUtils.GenerateColorPreview(target.Color)]);
+            var eb = new EmbedBuilder()
+                .Description($"Showing banner for member {target.NameFor(ctx)} (`{target.DisplayHid(ctx.Config)}`)");
+            await ctx.Reply(text: $"<{target.BannerImage.TryGetCleanCdnUrl()}>", embed: eb.Build());
             return;
         }
 
-        ctx.CheckSystem().CheckOwnMember(target);
+        var embed = new EmbedBuilder()
+            .Title($"{target.NameFor(ctx)}'s banner image")
+            .Image(new Embed.EmbedImage(target.BannerImage.TryGetCleanCdnUrl()));
+        if (target.System == ctx.System?.Id)
+            embed.Description($"To clear, type `{ctx.DefaultPrefix}member {target.Reference(ctx)} banner -clear`.");
+        await ctx.Reply(embed: embed.Build());
+    }
 
-        if (matchedClear)
+    public async Task ClearBannerImage(Context ctx, PKMember target, bool confirmYes)
+    {
+        ctx.CheckOwnMember(target);
+
+        if (await ctx.ConfirmClear("this member's banner image", confirmYes))
         {
-            await ctx.Repository.UpdateMember(target.Id, new() { Color = Partial<string>.Null() });
-
-            await ctx.Reply($"{Emojis.Success} Member color cleared.");
-        }
-        else
-        {
-            var color = ctx.RemainderOrNull();
-
-            if (color.StartsWith("#")) color = color.Substring(1);
-            if (!Regex.IsMatch(color, "^[0-9a-fA-F]{6}$")) throw Errors.InvalidColorError(color);
-
-            var patch = new MemberPatch { Color = Partial<string>.Present(color.ToLowerInvariant()) };
-            await ctx.Repository.UpdateMember(target.Id, patch);
-
-            await ctx.Reply(embed: new EmbedBuilder()
-                .Title($"{Emojis.Success} Member color changed.")
-                .Color(color.ToDiscordColor())
-                .Thumbnail(new Embed.EmbedThumbnail($"attachment://color.gif"))
-                .Build(),
-                files: [MiscUtils.GenerateColorPreview(color)]);
+            await ctx.Repository.UpdateMember(target.Id, new MemberPatch { BannerImage = null });
+            await ctx.Reply($"{Emojis.Success} Member banner image cleared.");
         }
     }
 
-    public async Task Birthday(Context ctx, PKMember target)
+    public async Task ChangeBannerImage(Context ctx, PKMember target, ParsedImage img)
     {
-        if (ctx.MatchClear() && await ctx.ConfirmClear("this member's birthday"))
-        {
-            ctx.CheckOwnMember(target);
+        ctx.CheckOwnMember(target);
 
+        img = await _avatarHosting.TryRehostImage(img, AvatarHostingService.RehostedImageType.Banner, ctx.Author.Id, ctx.System);
+        await _avatarHosting.VerifyAvatarOrThrow(img.Url, true);
+
+        await ctx.Repository.UpdateMember(target.Id, new MemberPatch { BannerImage = img.CleanUrl ?? img.Url });
+
+        var msg = img.Source switch
+        {
+            AvatarSource.Url => $"{Emojis.Success} Member banner image changed to the image at the given URL.",
+            AvatarSource.HostedCdn => $"{Emojis.Success} Member banner image changed to attached image.",
+            AvatarSource.Attachment =>
+                $"{Emojis.Success} Member banner image changed to attached image.\n{Emojis.Warn} If you delete the message containing the attachment, the banner image will stop working.",
+            AvatarSource.User => throw new PKError("Cannot set a banner image to an user's avatar."),
+            _ => throw new ArgumentOutOfRangeException()
+        };
+
+        // The attachment's already right there, no need to preview it.
+        var hasEmbed = img.Source != AvatarSource.Attachment && img.Source != AvatarSource.HostedCdn;
+        await (hasEmbed
+            ? ctx.Reply(msg, new EmbedBuilder().Image(new Embed.EmbedImage(img.Url)).Build())
+            : ctx.Reply(msg));
+    }
+
+    public async Task ShowColor(Context ctx, PKMember target, ReplyFormat format)
+    {
+        if (target.Color == null)
+        {
+            await ctx.Reply(
+                "This member does not have a color set." + (ctx.System?.Id == target.System ? $" To set one, type `{ctx.DefaultPrefix}member {target.Reference(ctx)} color <color>`." : ""));
+            return;
+        }
+
+        if (format == ReplyFormat.Raw)
+        {
+            await ctx.Reply("```\n#" + target.Color + "\n```");
+            return;
+        }
+
+        if (format == ReplyFormat.Plaintext)
+        {
+            await ctx.Reply(target.Color);
+            return;
+        }
+
+        await ctx.Reply(embed: new EmbedBuilder()
+            .Title("Member color")
+            .Color(target.Color.ToDiscordColor())
+            .Thumbnail(new Embed.EmbedThumbnail($"attachment://color.gif"))
+            .Description($"This member's color is **#{target.Color}**."
+                + (ctx.System?.Id == target.System ? $" To clear it, type `{ctx.DefaultPrefix}member {target.Reference(ctx)} color -clear`." : ""))
+            .Build(),
+            files: [MiscUtils.GenerateColorPreview(target.Color)]);
+    }
+
+    public async Task ClearColor(Context ctx, PKMember target, bool confirmYes)
+    {
+        ctx.CheckSystem().CheckOwnMember(target);
+
+        if (await ctx.ConfirmClear("this member's color", confirmYes))
+        {
+            await ctx.Repository.UpdateMember(target.Id, new() { Color = Partial<string>.Null() });
+            await ctx.Reply($"{Emojis.Success} Member color cleared.");
+        }
+    }
+
+    public async Task ChangeColor(Context ctx, PKMember target, string color)
+    {
+        ctx.CheckSystem().CheckOwnMember(target);
+
+        if (color.StartsWith("#"))
+            color = color.Substring(1);
+
+        if (!Regex.IsMatch(color, "^[0-9a-fA-F]{6}$"))
+            throw Errors.InvalidColorError(color);
+
+        var patch = new MemberPatch { Color = Partial<string>.Present(color.ToLowerInvariant()) };
+        await ctx.Repository.UpdateMember(target.Id, patch);
+
+        await ctx.Reply(embed: new EmbedBuilder()
+            .Title($"{Emojis.Success} Member color changed.")
+            .Color(color.ToDiscordColor())
+            .Thumbnail(new Embed.EmbedThumbnail($"attachment://color.gif"))
+            .Build(),
+            files: [MiscUtils.GenerateColorPreview(color)]);
+    }
+
+    public async Task ShowBirthday(Context ctx, PKMember target, ReplyFormat format)
+    {
+        ctx.CheckSystemPrivacy(target.System, target.BirthdayPrivacy);
+
+        var noBirthdaySetMessage = "This member does not have a birthdate set.";
+        if (ctx.System?.Id == target.System)
+            noBirthdaySetMessage += $" To set one, type `{ctx.DefaultPrefix}member {target.Reference(ctx)} birthday <birthdate>`.";
+
+        // if what's next is "raw"/"plaintext" we need to check for null
+        if (format != ReplyFormat.Standard)
+            if (target.Birthday == null)
+            {
+                await ctx.Reply(noBirthdaySetMessage);
+                return;
+            }
+
+        if (format == ReplyFormat.Raw)
+        {
+            await ctx.Reply($"```\n{target.Birthday}\n```");
+            return;
+        }
+        if (format == ReplyFormat.Plaintext)
+        {
+            var eb = new EmbedBuilder()
+                .Description($"Showing birthday for member {target.NameFor(ctx)} (`{target.DisplayHid(ctx.Config)}`)");
+            await ctx.Reply(target.BirthdayString, embed: eb.Build());
+            return;
+        }
+
+        await ctx.Reply($"This member's birthdate is **{target.BirthdayString}**."
+            + (ctx.System?.Id == target.System
+                ? $" To clear it, type `{ctx.DefaultPrefix}member {target.Reference(ctx)} birthday -clear`."
+                : ""));
+    }
+
+    public async Task ClearBirthday(Context ctx, PKMember target, bool confirmYes)
+    {
+        ctx.CheckOwnMember(target);
+
+        if (await ctx.ConfirmClear("this member's birthday", confirmYes))
+        {
             var patch = new MemberPatch { Birthday = Partial<LocalDate?>.Null() };
             await ctx.Repository.UpdateMember(target.Id, patch);
-
             await ctx.Reply($"{Emojis.Success} Member birthdate cleared.");
         }
-        else if (!ctx.HasNext())
-        {
-            ctx.CheckSystemPrivacy(target.System, target.BirthdayPrivacy);
+    }
 
-            if (target.Birthday == null)
-                await ctx.Reply("This member does not have a birthdate set."
-                                + (ctx.System?.Id == target.System
-                                    ? $" To set one, type `{ctx.DefaultPrefix}member {target.Reference(ctx)} birthdate <birthdate>`."
-                                    : ""));
-            else
-                await ctx.Reply($"This member's birthdate is **{target.BirthdayString}**."
-                                + (ctx.System?.Id == target.System
-                                    ? $" To clear it, type `{ctx.DefaultPrefix}member {target.Reference(ctx)} birthdate -clear`."
-                                    : ""));
-        }
+    public async Task ChangeBirthday(Context ctx, PKMember target, string birthdayStr)
+    {
+        ctx.CheckOwnMember(target);
+
+        LocalDate? birthday;
+        if (birthdayStr == "today" || birthdayStr == "now")
+            birthday = SystemClock.Instance.InZone(ctx.Zone).GetCurrentDate();
         else
-        {
-            ctx.CheckOwnMember(target);
+            birthday = DateUtils.ParseDate(birthdayStr, true);
 
-            var birthdayStr = ctx.RemainderOrNull();
+        if (birthday == null)
+            throw Errors.BirthdayParseError(birthdayStr);
 
-            LocalDate? birthday;
-            if (birthdayStr == "today" || birthdayStr == "now")
-                birthday = SystemClock.Instance.InZone(ctx.Zone).GetCurrentDate();
-            else
-                birthday = DateUtils.ParseDate(birthdayStr, true);
+        var patch = new MemberPatch { Birthday = Partial<LocalDate?>.Present(birthday) };
+        await ctx.Repository.UpdateMember(target.Id, patch);
 
-            if (birthday == null) throw Errors.BirthdayParseError(birthdayStr);
-
-            var patch = new MemberPatch { Birthday = Partial<LocalDate?>.Present(birthday) };
-            await ctx.Repository.UpdateMember(target.Id, patch);
-
-            await ctx.Reply($"{Emojis.Success} Member birthdate changed.");
-        }
+        await ctx.Reply($"{Emojis.Success} Member birthdate changed.");
     }
 
     private string boldIf(string str, bool condition) => condition ? $"**{str}**" : str;
@@ -429,11 +453,54 @@ public class MemberEdit
         return eb;
     }
 
-    public async Task DisplayName(Context ctx, PKMember target)
+    public async Task ShowDisplayName(Context ctx, PKMember target, ReplyFormat format)
     {
-        async Task PrintSuccess(string text)
+        var isOwner = ctx.System?.Id == target.System;
+        var noDisplayNameSetMessage = $"This member does not have a display name set{(isOwner ? "" : " or name is private")}."
+            + (isOwner ? $" To set one, type `{ctx.DefaultPrefix}member {target.Reference(ctx)} displayname <display name>`." : "");
+
+        // Whether displayname is shown or not should depend on if member name privacy is set.
+        // If name privacy is on then displayname should look like name.
+        if (target.DisplayName == null || !target.NamePrivacy.CanAccess(ctx.DirectLookupContextFor(target.System)))
         {
-            var successStr = text;
+            await ctx.Reply(noDisplayNameSetMessage);
+            return;
+        }
+
+        if (format == ReplyFormat.Raw)
+        {
+            await ctx.Reply($"```\n{target.DisplayName}\n```");
+            return;
+        }
+        if (format == ReplyFormat.Plaintext)
+        {
+            var _eb = new EmbedBuilder()
+                .Description($"Showing displayname for member {target.NameFor(ctx)} (`{target.DisplayHid(ctx.Config)}`)");
+            await ctx.Reply(target.DisplayName, embed: _eb.Build());
+            return;
+        }
+
+        var eb = await CreateMemberNameInfoEmbed(ctx, target);
+        var reference = target.Reference(ctx);
+        if (ctx.System?.Id == target.System)
+            eb.Description(
+                $"To change display name, type `{ctx.DefaultPrefix}member {reference} displayname <display name>`.\n"
+                + $"To clear it, type `{ctx.DefaultPrefix}member {reference} displayname -clear`.\n"
+                + $"To print the raw display name, type `{ctx.DefaultPrefix}member {reference} displayname -raw`.");
+        await ctx.Reply(embed: eb.Build());
+    }
+
+    public async Task ClearDisplayName(Context ctx, PKMember target, bool confirmYes)
+    {
+        ctx.CheckOwnMember(target);
+
+        if (await ctx.ConfirmClear("this member's display name", confirmYes))
+        {
+            var patch = new MemberPatch { DisplayName = Partial<string>.Null() };
+            await ctx.Repository.UpdateMember(target.Id, patch);
+
+            var successStr = $"{Emojis.Success} Member display name cleared. This member will now be proxied using their member name \"{target.Name}\".";
+
             if (ctx.Guild != null)
             {
                 var memberGuildConfig = await ctx.Repository.GetMemberGuild(ctx.Guild.Id, target.Id);
@@ -443,80 +510,37 @@ public class MemberEdit
             }
 
             await ctx.Reply(successStr);
-        }
-
-        var isOwner = ctx.System?.Id == target.System;
-        var noDisplayNameSetMessage = $"This member does not have a display name set{(isOwner ? "" : " or name is private")}."
-            + (isOwner ? $" To set one, type `{ctx.DefaultPrefix}member {target.Reference(ctx)} displayname <display name>`." : "");
-
-        // Whether displayname is shown or not should depend on if member name privacy is set.
-        // If name privacy is on then displayname should look like name.
-
-        var format = ctx.MatchFormat();
-
-        // if what's next is "raw"/"plaintext" we need to check for null
-        if (format != ReplyFormat.Standard)
-            if (target.DisplayName == null || !target.NamePrivacy.CanAccess(ctx.DirectLookupContextFor(target.System)))
-            {
-                await ctx.Reply(noDisplayNameSetMessage);
-                return;
-            }
-
-        if (format == ReplyFormat.Raw)
-        {
-            await ctx.Reply($"```\n{target.DisplayName}\n```");
-            return;
-        }
-        if (format == ReplyFormat.Plaintext)
-        {
-            var eb = new EmbedBuilder()
-                .Description($"Showing displayname for member {target.NameFor(ctx)} (`{target.DisplayHid(ctx.Config)}`)");
-            await ctx.Reply(target.DisplayName, embed: eb.Build());
-            return;
-        }
-
-        if (!ctx.HasNext(false))
-        {
-            var eb = await CreateMemberNameInfoEmbed(ctx, target);
-            var reference = target.Reference(ctx);
-            if (ctx.System?.Id == target.System)
-                eb.Description(
-                    $"To change display name, type `{ctx.DefaultPrefix}member {reference} displayname <display name>`.\n"
-                    + $"To clear it, type `{ctx.DefaultPrefix}member {reference} displayname -clear`.\n"
-                    + $"To print the raw display name, type `{ctx.DefaultPrefix}member {reference} displayname -raw`.");
-            await ctx.Reply(embed: eb.Build());
-            return;
-        }
-
-        ctx.CheckOwnMember(target);
-
-        if (ctx.MatchClear() && await ctx.ConfirmClear("this member's display name"))
-        {
-            var patch = new MemberPatch { DisplayName = Partial<string>.Null() };
-            await ctx.Repository.UpdateMember(target.Id, patch);
-
-            await PrintSuccess(
-                $"{Emojis.Success} Member display name cleared. This member will now be proxied using their member name \"{target.Name}\".");
 
             if (target.NamePrivacy == PrivacyLevel.Private)
                 await ctx.Reply($"{Emojis.Warn} Since this member no longer has a display name set, their name privacy **can no longer take effect**.");
         }
-        else
-        {
-            var newDisplayName = ctx.RemainderOrNull(false).NormalizeLineEndSpacing();
-
-            if (newDisplayName.Length > Limits.MaxMemberNameLength)
-                throw Errors.StringTooLongError("Member display name", newDisplayName.Length, Limits.MaxMemberNameLength);
-
-            var patch = new MemberPatch { DisplayName = Partial<string>.Present(newDisplayName) };
-            await ctx.Repository.UpdateMember(target.Id, patch);
-
-            await PrintSuccess(
-                $"{Emojis.Success} Member display name changed (using {newDisplayName.Length}/{Limits.MaxMemberNameLength} characters). This member will now be proxied using the name \"{newDisplayName}\".");
-        }
     }
 
-    public async Task ServerName(Context ctx, PKMember target)
+    public async Task ChangeDisplayName(Context ctx, PKMember target, string newDisplayName)
+    {
+        ctx.CheckOwnMember(target);
+
+        newDisplayName = newDisplayName.NormalizeLineEndSpacing();
+        if (newDisplayName.Length > Limits.MaxMemberNameLength)
+            throw Errors.StringTooLongError("Member display name", newDisplayName.Length, Limits.MaxMemberNameLength);
+
+        var patch = new MemberPatch { DisplayName = Partial<string>.Present(newDisplayName) };
+        await ctx.Repository.UpdateMember(target.Id, patch);
+
+        var successStr = $"{Emojis.Success} Member display name changed (using {newDisplayName.Length}/{Limits.MaxMemberNameLength} characters). This member will now be proxied using the name \"{newDisplayName}\".";
+
+        if (ctx.Guild != null)
+        {
+            var memberGuildConfig = await ctx.Repository.GetMemberGuild(ctx.Guild.Id, target.Id);
+            if (memberGuildConfig.DisplayName != null)
+                successStr +=
+                    $" However, this member has a server name set in this server ({ctx.Guild.Name}), and will be proxied using that name, \"{memberGuildConfig.DisplayName}\", here.";
+        }
+
+        await ctx.Reply(successStr);
+    }
+
+    public async Task ShowServerName(Context ctx, PKMember target, ReplyFormat format)
     {
         ctx.CheckGuildContext();
 
@@ -525,12 +549,8 @@ public class MemberEdit
             noServerNameSetMessage +=
                 $" To set one, type `{ctx.DefaultPrefix}member {target.Reference(ctx)} servername <server name>`.";
 
-        // No perms check, display name isn't covered by member privacy
         var memberGuildConfig = await ctx.Repository.GetMemberGuild(ctx.Guild.Id, target.Id);
 
-        var format = ctx.MatchFormat();
-
-        // if what's next is "raw"/"plaintext" we need to check for null
         if (format != ReplyFormat.Standard)
             if (memberGuildConfig.DisplayName == null)
             {
@@ -545,26 +565,26 @@ public class MemberEdit
         }
         if (format == ReplyFormat.Plaintext)
         {
-            var eb = new EmbedBuilder()
+            var _eb = new EmbedBuilder()
                 .Description($"Showing servername for member {target.NameFor(ctx)} (`{target.DisplayHid(ctx.Config)}`)");
-            await ctx.Reply(memberGuildConfig.DisplayName, embed: eb.Build());
+            await ctx.Reply(memberGuildConfig.DisplayName, embed: _eb.Build());
             return;
         }
 
-        if (!ctx.HasNext(false))
-        {
-            var eb = await CreateMemberNameInfoEmbed(ctx, target);
-            var reference = target.Reference(ctx);
-            if (ctx.System?.Id == target.System)
-                eb.Description(
-                    $"To change server name, type `{ctx.DefaultPrefix}member {reference} servername <server name>`.\nTo clear it, type `{ctx.DefaultPrefix}member {reference} servername -clear`.\nTo print the raw server name, type `{ctx.DefaultPrefix}member {reference} servername -raw`.");
-            await ctx.Reply(embed: eb.Build());
-            return;
-        }
+        var eb = await CreateMemberNameInfoEmbed(ctx, target);
+        var reference = target.Reference(ctx);
+        if (ctx.System?.Id == target.System)
+            eb.Description(
+                $"To change server name, type `{ctx.DefaultPrefix}member {reference} servername <server name>`.\nTo clear it, type `{ctx.DefaultPrefix}member {reference} servername -clear`.\nTo print the raw server name, type `{ctx.DefaultPrefix}member {reference} servername -raw`.");
+        await ctx.Reply(embed: eb.Build());
+    }
 
+    public async Task ClearServerName(Context ctx, PKMember target, bool confirmYes)
+    {
+        ctx.CheckGuildContext();
         ctx.CheckOwnMember(target);
 
-        if (ctx.MatchClear() && await ctx.ConfirmClear("this member's server name"))
+        if (await ctx.ConfirmClear("this member's server name", confirmYes))
         {
             await ctx.Repository.UpdateMemberGuild(target.Id, ctx.Guild.Id, new MemberGuildPatch { DisplayName = null });
 
@@ -575,59 +595,52 @@ public class MemberEdit
                 await ctx.Reply(
                     $"{Emojis.Success} Member server name cleared. This member will now be proxied using their member name \"{target.NameFor(ctx)}\" in this server ({ctx.Guild.Name}).");
         }
-        else
-        {
-            var newServerName = ctx.RemainderOrNull(false).NormalizeLineEndSpacing();
-
-            await ctx.Repository.UpdateMemberGuild(target.Id, ctx.Guild.Id,
-                new MemberGuildPatch { DisplayName = newServerName });
-
-            await ctx.Reply(
-                $"{Emojis.Success} Member server name changed (using {newServerName.Length}/{Limits.MaxMemberNameLength} characters). This member will now be proxied using the name \"{newServerName}\" in this server ({ctx.Guild.Name}).");
-        }
     }
 
-    public async Task KeepProxy(Context ctx, PKMember target)
+    public async Task ChangeServerName(Context ctx, PKMember target, string newServerName)
     {
-        ctx.CheckSystem().CheckOwnMember(target);
-        MemberGuildSettings? memberGuildConfig = null;
+        ctx.CheckGuildContext();
+        ctx.CheckOwnMember(target);
+
+        newServerName = newServerName.NormalizeLineEndSpacing();
+        if (newServerName.Length > Limits.MaxMemberNameLength)
+            throw Errors.StringTooLongError("Server name", newServerName.Length, Limits.MaxMemberNameLength);
+
+        await ctx.Repository.UpdateMemberGuild(target.Id, ctx.Guild.Id,
+            new MemberGuildPatch { DisplayName = newServerName });
+
+        await ctx.Reply(
+            $"{Emojis.Success} Member server name changed (using {newServerName.Length}/{Limits.MaxMemberNameLength} characters). This member will now be proxied using the name \"{newServerName}\" in this server ({ctx.Guild.Name}).");
+    }
+
+    public async Task ShowKeepProxy(Context ctx, PKMember target)
+    {
+        string keepProxyStatusMessage = "";
+
+        if (target.KeepProxy)
+            keepProxyStatusMessage += "This member has keepproxy **enabled**. Proxy tags will be **included** in the resulting message when proxying.";
+        else
+            keepProxyStatusMessage += "This member has keepproxy **disabled**. Proxy tags will **not** be included in the resulting message when proxying.";
+
         if (ctx.Guild != null)
         {
-            memberGuildConfig = await ctx.Repository.GetMemberGuild(ctx.Guild.Id, target.Id);
+            var memberGuildConfig = await ctx.Repository.GetMemberGuild(ctx.Guild.Id, target.Id);
+
+            if (memberGuildConfig?.KeepProxy.HasValue == true)
+            {
+                if (memberGuildConfig.KeepProxy.Value)
+                    keepProxyStatusMessage += $"\n{Emojis.Warn} This member has keepproxy **enabled in this server**, which means proxy tags will **always** be included when proxying in this server, regardless of the global keepproxy. To clear this setting in this server, type `{ctx.DefaultPrefix}m <member> serverkeepproxy clear`.";
+                else
+                    keepProxyStatusMessage += $"\n{Emojis.Warn} This member has keepproxy **disabled in this server**, which means proxy tags will **never** be included when proxying in this server, regardless of the global keepproxy. To clear this setting in this server, type `{ctx.DefaultPrefix}m <member> serverkeepproxy clear`.";
+            }
         }
 
-        bool newValue;
-        if (ctx.Match("on", "enabled", "true", "yes"))
-        {
-            newValue = true;
-        }
-        else if (ctx.Match("off", "disabled", "false", "no"))
-        {
-            newValue = false;
-        }
-        else if (ctx.HasNext())
-        {
-            throw new PKSyntaxError("You must pass either \"on\" or \"off\".");
-        }
-        else
-        {
-            string keepProxyStatusMessage = "";
+        await ctx.Reply(keepProxyStatusMessage);
+    }
 
-            if (target.KeepProxy)
-                keepProxyStatusMessage += "This member has keepproxy **enabled**. Proxy tags will be **included** in the resulting message when proxying.";
-            else
-                keepProxyStatusMessage += "This member has keepproxy **disabled**. Proxy tags will **not** be included in the resulting message when proxying.";
-
-            if (memberGuildConfig != null && memberGuildConfig.KeepProxy.HasValue && memberGuildConfig.KeepProxy.Value)
-                keepProxyStatusMessage += $"\n{Emojis.Warn} This member has keepproxy **enabled in this server**, which means proxy tags will **always** be included when proxying in this server, regardless of the global keepproxy. To clear this setting in this server, type `{ctx.DefaultPrefix}m <member> serverkeepproxy clear`.";
-            else if (memberGuildConfig != null && memberGuildConfig.KeepProxy.HasValue && !memberGuildConfig.KeepProxy.Value)
-                keepProxyStatusMessage += $"\n{Emojis.Warn} This member has keepproxy **disabled in this server**, which means proxy tags will **never** be included when proxying in this server, regardless of the global keepproxy. To clear this setting in this server, type `{ctx.DefaultPrefix}m <member> serverkeepproxy clear`.";
-
-            await ctx.Reply(keepProxyStatusMessage);
-            return;
-        }
-
-        ;
+    public async Task ChangeKeepProxy(Context ctx, PKMember target, bool newValue)
+    {
+        ctx.CheckSystem().CheckOwnMember(target);
 
         var patch = new MemberPatch { KeepProxy = Partial<bool>.Present(newValue) };
         await ctx.Repository.UpdateMember(target.Id, patch);
@@ -639,74 +652,58 @@ public class MemberEdit
         else
             keepProxyUpdateMessage += $"{Emojis.Success} this member now has keepproxy **disabled**. Member proxy tags will **not** be included in the resulting message when proxying.";
 
-        if (memberGuildConfig != null && memberGuildConfig.KeepProxy.HasValue && memberGuildConfig.KeepProxy.Value)
-            keepProxyUpdateMessage += $"\n{Emojis.Warn} This member has keepproxy **enabled in this server**, which means proxy tags will **always** be included when proxying in this server, regardless of the global keepproxy. To clear this setting in this server, type `{ctx.DefaultPrefix}m <member> serverkeepproxy clear`.";
-        else if (memberGuildConfig != null && memberGuildConfig.KeepProxy.HasValue && !memberGuildConfig.KeepProxy.Value)
-            keepProxyUpdateMessage += $"\n{Emojis.Warn} This member has keepproxy **disabled in this server**, which means proxy tags will **never** be included when proxying in this server, regardless of the global keepproxy. To clear this setting in this server, type `{ctx.DefaultPrefix}m <member> serverkeepproxy clear`.";
+        if (ctx.Guild != null)
+        {
+            var memberGuildConfig = await ctx.Repository.GetMemberGuild(ctx.Guild.Id, target.Id);
+
+            if (memberGuildConfig?.KeepProxy.HasValue == true)
+            {
+                if (memberGuildConfig.KeepProxy.Value)
+                    keepProxyUpdateMessage += $"\n{Emojis.Warn} This member has keepproxy **enabled in this server**, which means proxy tags will **always** be included when proxying in this server, regardless of the global keepproxy. To clear this setting in this server, type `{ctx.DefaultPrefix}m <member> serverkeepproxy clear`.";
+                else
+                    keepProxyUpdateMessage += $"\n{Emojis.Warn} This member has keepproxy **disabled in this server**, which means proxy tags will **never** be included when proxying in this server, regardless of the global keepproxy. To clear this setting in this server, type `{ctx.DefaultPrefix}m <member> serverkeepproxy clear`.";
+            }
+        }
 
         await ctx.Reply(keepProxyUpdateMessage);
     }
 
-    public async Task ServerKeepProxy(Context ctx, PKMember target)
+    public async Task ShowServerKeepProxy(Context ctx, PKMember target)
+    {
+        ctx.CheckGuildContext();
+
+        var memberGuildConfig = await ctx.Repository.GetMemberGuild(ctx.Guild.Id, target.Id);
+
+        if (memberGuildConfig.KeepProxy.HasValue)
+        {
+            if (memberGuildConfig.KeepProxy.Value)
+                await ctx.Reply($"This member has keepproxy **enabled** in the current server, which means proxy tags will be **included** in the resulting message when proxying. To clear this setting in this server, type `{ctx.DefaultPrefix}m <member> serverkeepproxy clear`.");
+            else
+                await ctx.Reply($"This member has keepproxy **disabled** in the current server, which means proxy tags will **not** be included in the resulting message when proxying. To clear this setting in this server, type `{ctx.DefaultPrefix}m <member> serverkeepproxy clear`.");
+        }
+        else
+        {
+            var noServerKeepProxySetMessage = "This member does not have a server keepproxy override set.";
+            if (target.KeepProxy)
+                noServerKeepProxySetMessage += " The global keepproxy is **enabled**, which means proxy tags will be **included** when proxying.";
+            else
+                noServerKeepProxySetMessage += " The global keepproxy is **disabled**, which means proxy tags will **not** be included when proxying.";
+
+            await ctx.Reply(noServerKeepProxySetMessage);
+        }
+    }
+
+    public async Task ClearServerKeepProxy(Context ctx, PKMember target, bool confirmYes)
     {
         ctx.CheckGuildContext();
         ctx.CheckSystem().CheckOwnMember(target);
 
-        var memberGuildConfig = await ctx.Repository.GetMemberGuild(ctx.Guild.Id, target.Id);
+        if (await ctx.ConfirmClear("this member's server keepproxy setting", confirmYes))
+        {
+            var patch = new MemberGuildPatch { KeepProxy = Partial<bool?>.Present(null) };
+            await ctx.Repository.UpdateMemberGuild(target.Id, ctx.Guild.Id, patch);
 
-        bool? newValue;
-        if (ctx.Match("on", "enabled", "true", "yes"))
-        {
-            newValue = true;
-        }
-        else if (ctx.Match("off", "disabled", "false", "no"))
-        {
-            newValue = false;
-        }
-        else if (ctx.MatchClear())
-        {
-            newValue = null;
-        }
-        else if (ctx.HasNext())
-        {
-            throw new PKSyntaxError("You must pass either \"on\", \"off\" or \"clear\".");
-        }
-        else
-        {
-            if (memberGuildConfig.KeepProxy.HasValue)
-                if (memberGuildConfig.KeepProxy.Value)
-                    await ctx.Reply(
-                        $"This member has keepproxy **enabled** in the current server, which means proxy tags will be **included** in the resulting message when proxying. To clear this setting in this server, type `{ctx.DefaultPrefix}m <member> serverkeepproxy clear`.");
-                else
-                    await ctx.Reply(
-                        $"This member has keepproxy **disabled** in the current server, which means proxy tags will **not** be included in the resulting message when proxying. To clear this setting in this server, type `{ctx.DefaultPrefix}m <member> serverkeepproxy clear`.");
-            else
-            {
-                var noServerKeepProxySetMessage = "This member does not have a server keepproxy override set.";
-                if (target.KeepProxy)
-                    noServerKeepProxySetMessage += " The global keepproxy is **enabled**, which means proxy tags will be **included** when proxying.";
-                else
-                    noServerKeepProxySetMessage += " The global keepproxy is **disabled**, which means proxy tags will **not** be included when proxying.";
-
-                await ctx.Reply(noServerKeepProxySetMessage);
-            }
-            return;
-        }
-
-        var patch = new MemberGuildPatch { KeepProxy = Partial<bool?>.Present(newValue) };
-        await ctx.Repository.UpdateMemberGuild(target.Id, ctx.Guild.Id, patch);
-
-        if (newValue.HasValue)
-            if (newValue.Value)
-                await ctx.Reply(
-                    $"{Emojis.Success} Member proxy tags will now be **included** in the resulting message when proxying **in the current server**. To clear this setting in this server, type `{ctx.DefaultPrefix}m <member> serverkeepproxy clear`.");
-            else
-                await ctx.Reply(
-                    $"{Emojis.Success} Member proxy tags will now **not** be included in the resulting message when proxying **in the current server**. To clear this setting in this server, type `{ctx.DefaultPrefix}m <member> serverkeepproxy clear`.");
-        else
-        {
             var serverKeepProxyClearedMessage = $"{Emojis.Success} Cleared server keepproxy settings for this member.";
-
             if (target.KeepProxy)
                 serverKeepProxyClearedMessage += " Member proxy tags will now be **included** in the resulting message when proxying.";
             else
@@ -716,35 +713,33 @@ public class MemberEdit
         }
     }
 
-    public async Task Tts(Context ctx, PKMember target)
+    public async Task ChangeServerKeepProxy(Context ctx, PKMember target, bool newValue)
     {
+        ctx.CheckGuildContext();
         ctx.CheckSystem().CheckOwnMember(target);
 
-        bool newValue;
-        if (ctx.Match("on", "enabled", "true", "yes"))
-        {
-            newValue = true;
-        }
-        else if (ctx.Match("off", "disabled", "false", "no"))
-        {
-            newValue = false;
-        }
-        else if (ctx.HasNext())
-        {
-            throw new PKSyntaxError("You must pass either \"on\" or \"off\".");
-        }
-        else
-        {
-            if (target.Tts)
-                await ctx.Reply(
-                    "This member has text-to-speech **enabled**, which means their messages **will be** sent as text-to-speech messages.");
-            else
-                await ctx.Reply(
-                    "This member has text-to-speech **disabled**, which means their messages **will not** be sent as text-to-speech messages.");
-            return;
-        }
+        var patch = new MemberGuildPatch { KeepProxy = Partial<bool?>.Present(newValue) };
+        await ctx.Repository.UpdateMemberGuild(target.Id, ctx.Guild.Id, patch);
 
-        ;
+        if (newValue)
+            await ctx.Reply($"{Emojis.Success} Member proxy tags will now be **included** in the resulting message when proxying **in the current server**. To clear this setting in this server, type `{ctx.DefaultPrefix}m <member> serverkeepproxy clear`.");
+        else
+            await ctx.Reply($"{Emojis.Success} Member proxy tags will now **not** be included in the resulting message when proxying **in the current server**. To clear this setting in this server, type `{ctx.DefaultPrefix}m <member> serverkeepproxy clear`.");
+    }
+
+    public async Task ShowTts(Context ctx, PKMember target)
+    {
+        if (target.Tts)
+            await ctx.Reply(
+                "This member has text-to-speech **enabled**, which means their messages **will be** sent as text-to-speech messages.");
+        else
+            await ctx.Reply(
+                "This member has text-to-speech **disabled**, which means their messages **will not** be sent as text-to-speech messages.");
+    }
+
+    public async Task ChangeTts(Context ctx, PKMember target, bool newValue)
+    {
+        ctx.CheckSystem().CheckOwnMember(target);
 
         var patch = new MemberPatch { Tts = Partial<bool>.Present(newValue) };
         await ctx.Repository.UpdateMember(target.Id, patch);
@@ -757,23 +752,19 @@ public class MemberEdit
                 $"{Emojis.Success} Member messages will no longer be sent as text-to-speech messages.");
     }
 
-    public async Task MemberAutoproxy(Context ctx, PKMember target)
+    public async Task ShowAutoproxy(Context ctx, PKMember target)
     {
-        if (ctx.System == null) throw Errors.NoSystemError(ctx.DefaultPrefix);
-        if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
+        if (target.AllowAutoproxy)
+            await ctx.Reply(
+                "Latch/front autoproxy are **enabled** for this member. This member will be automatically proxied when autoproxy is set to latch or front mode.");
+        else
+            await ctx.Reply(
+                "Latch/front autoproxy are **disabled** for this member. This member will not be automatically proxied when autoproxy is set to latch or front mode.");
+    }
 
-        if (!ctx.HasNext())
-        {
-            if (target.AllowAutoproxy)
-                await ctx.Reply(
-                    "Latch/front autoproxy are **enabled** for this member. This member will be automatically proxied when autoproxy is set to latch or front mode.");
-            else
-                await ctx.Reply(
-                    "Latch/front autoproxy are **disabled** for this member. This member will not be automatically proxied when autoproxy is set to latch or front mode.");
-            return;
-        }
-
-        var newValue = ctx.MatchToggle();
+    public async Task ChangeAutoproxy(Context ctx, PKMember target, bool newValue)
+    {
+        ctx.CheckSystem().CheckOwnMember(target);
 
         var patch = new MemberPatch { AllowAutoproxy = Partial<bool>.Present(newValue) };
         await ctx.Repository.UpdateMember(target.Id, patch);
@@ -784,128 +775,118 @@ public class MemberEdit
             await ctx.Reply($"{Emojis.Success} Latch / front autoproxy have been **disabled** for this member.");
     }
 
-    public async Task Privacy(Context ctx, PKMember target, PrivacyLevel? newValueFromCommand)
+    public async Task ShowPrivacy(Context ctx, PKMember target)
+    {
+        await ctx.Reply(embed: new EmbedBuilder()
+            .Title($"Current privacy settings for {target.NameFor(ctx)}")
+            .Field(new Embed.Field("Name (replaces name with display name if member has one)",
+                target.NamePrivacy.Explanation()))
+            .Field(new Embed.Field("Description", target.DescriptionPrivacy.Explanation()))
+            .Field(new Embed.Field("Banner", target.BannerPrivacy.Explanation()))
+            .Field(new Embed.Field("Avatar", target.AvatarPrivacy.Explanation()))
+            .Field(new Embed.Field("Birthday", target.BirthdayPrivacy.Explanation()))
+            .Field(new Embed.Field("Pronouns", target.PronounPrivacy.Explanation()))
+            .Field(new Embed.Field("Proxy Tags", target.ProxyPrivacy.Explanation()))
+            .Field(new Embed.Field("Meta (creation date, message count, last front, last message)",
+                target.MetadataPrivacy.Explanation()))
+            .Field(new Embed.Field("Visibility", target.MemberVisibility.Explanation()))
+            .Description(
+                $"To edit privacy settings, use the command:\n`{ctx.DefaultPrefix}member <member> privacy <subject> <level>`\n\n- `subject` is one of `name`, `description`, `banner`, `avatar`, `birthday`, `pronouns`, `proxies`, `metadata`, `visibility`, or `all`\n- `level` is either `public` or `private`.")
+            .Build());
+    }
+
+    public async Task ChangeAllPrivacy(Context ctx, PKMember target, PrivacyLevel level)
     {
         ctx.CheckSystem().CheckOwnMember(target);
 
-        // Display privacy settings
-        if (!ctx.HasNext() && newValueFromCommand == null)
-        {
-            await ctx.Reply(embed: new EmbedBuilder()
-                .Title($"Current privacy settings for {target.NameFor(ctx)}")
-                .Field(new Embed.Field("Name (replaces name with display name if member has one)",
-                    target.NamePrivacy.Explanation()))
-                .Field(new Embed.Field("Description", target.DescriptionPrivacy.Explanation()))
-                .Field(new Embed.Field("Banner", target.BannerPrivacy.Explanation()))
-                .Field(new Embed.Field("Avatar", target.AvatarPrivacy.Explanation()))
-                .Field(new Embed.Field("Birthday", target.BirthdayPrivacy.Explanation()))
-                .Field(new Embed.Field("Pronouns", target.PronounPrivacy.Explanation()))
-                .Field(new Embed.Field("Proxy Tags", target.ProxyPrivacy.Explanation()))
-                .Field(new Embed.Field("Meta (creation date, message count, last front, last message)",
-                    target.MetadataPrivacy.Explanation()))
-                .Field(new Embed.Field("Visibility", target.MemberVisibility.Explanation()))
-                .Description(
-                    $"To edit privacy settings, use the command:\n`{ctx.DefaultPrefix}member <member> privacy <subject> <level>`\n\n- `subject` is one of `name`, `description`, `banner`, `avatar`, `birthday`, `pronouns`, `proxies`, `metadata`, `visibility`, or `all`\n- `level` is either `public` or `private`.")
-                .Build());
-            return;
-        }
+        await ctx.Repository.UpdateMember(target.Id, new MemberPatch().WithAllPrivacy(level));
 
-        // Get guild settings (mostly for warnings and such)
-        MemberGuildSettings guildSettings = null;
-        if (ctx.Guild != null)
-            guildSettings = await ctx.Repository.GetMemberGuild(ctx.Guild.Id, target.Id);
-
-        async Task SetAll(PrivacyLevel level)
-        {
-            await ctx.Repository.UpdateMember(target.Id, new MemberPatch().WithAllPrivacy(level));
-
-            if (level == PrivacyLevel.Private)
-                await ctx.Reply(
-                    $"{Emojis.Success} All {target.NameFor(ctx)}'s privacy settings have been set to **{level.LevelName()}**. Other accounts will now see nothing on the member card.");
-            else
-                await ctx.Reply(
-                    $"{Emojis.Success} All {target.NameFor(ctx)}'s privacy settings have been set to **{level.LevelName()}**. Other accounts will now see everything on the member card.");
-        }
-
-        async Task SetLevel(MemberPrivacySubject subject, PrivacyLevel level)
-        {
-            await ctx.Repository.UpdateMember(target.Id, new MemberPatch().WithPrivacy(subject, level));
-
-            var subjectName = subject switch
-            {
-                MemberPrivacySubject.Name => "name privacy",
-                MemberPrivacySubject.Description => "description privacy",
-                MemberPrivacySubject.Banner => "banner privacy",
-                MemberPrivacySubject.Avatar => "avatar privacy",
-                MemberPrivacySubject.Pronouns => "pronoun privacy",
-                MemberPrivacySubject.Birthday => "birthday privacy",
-                MemberPrivacySubject.Proxy => "proxy tag privacy",
-                MemberPrivacySubject.Metadata => "metadata privacy",
-                MemberPrivacySubject.Visibility => "visibility",
-                _ => throw new ArgumentOutOfRangeException($"Unknown privacy subject {subject}")
-            };
-
-            var explanation = (subject, level) switch
-            {
-                (MemberPrivacySubject.Name, PrivacyLevel.Private) =>
-                    "This member's name is now hidden from other systems, and will be replaced by the member's display name.",
-                (MemberPrivacySubject.Description, PrivacyLevel.Private) =>
-                    "This member's description is now hidden from other systems.",
-                (MemberPrivacySubject.Banner, PrivacyLevel.Private) =>
-                    "This member's banner is now hidden from other systems.",
-                (MemberPrivacySubject.Avatar, PrivacyLevel.Private) =>
-                    "This member's avatar is now hidden from other systems.",
-                (MemberPrivacySubject.Birthday, PrivacyLevel.Private) =>
-                    "This member's birthday is now hidden from other systems.",
-                (MemberPrivacySubject.Pronouns, PrivacyLevel.Private) =>
-                    "This member's pronouns are now hidden from other systems.",
-                (MemberPrivacySubject.Proxy, PrivacyLevel.Private) =>
-                    "This member's proxy tags are now hidden from other systems.",
-                (MemberPrivacySubject.Metadata, PrivacyLevel.Private) =>
-                    "This member's metadata (eg. created timestamp, message count, etc) is now hidden from other systems.",
-                (MemberPrivacySubject.Visibility, PrivacyLevel.Private) =>
-                    "This member is now hidden from member lists.",
-
-                (MemberPrivacySubject.Name, PrivacyLevel.Public) =>
-                    "This member's name is no longer hidden from other systems.",
-                (MemberPrivacySubject.Description, PrivacyLevel.Public) =>
-                    "This member's description is no longer hidden from other systems.",
-                (MemberPrivacySubject.Banner, PrivacyLevel.Public) =>
-                    "This member's banner is no longer hidden from other systems.",
-                (MemberPrivacySubject.Avatar, PrivacyLevel.Public) =>
-                    "This member's avatar is no longer hidden from other systems.",
-                (MemberPrivacySubject.Birthday, PrivacyLevel.Public) =>
-                    "This member's birthday is no longer hidden from other systems.",
-                (MemberPrivacySubject.Pronouns, PrivacyLevel.Public) =>
-                    "This member's pronouns are no longer hidden from other systems.",
-                (MemberPrivacySubject.Proxy, PrivacyLevel.Public) =>
-                    "This member's proxy tags are no longer hidden from other systems.",
-                (MemberPrivacySubject.Metadata, PrivacyLevel.Public) =>
-                    "This member's metadata (eg. created timestamp, message count, etc) is no longer hidden from other systems.",
-                (MemberPrivacySubject.Visibility, PrivacyLevel.Public) =>
-                    "This member is no longer hidden from member lists.",
-
-                _ => throw new InvalidOperationException($"Invalid subject/level tuple ({subject}, {level})")
-            };
-
-            var replyStr = $"{Emojis.Success} {target.NameFor(ctx)}'s **{subjectName}** has been set to **{level.LevelName()}**. {explanation}";
-
-            // Name privacy only works given a display name
-            if (subject == MemberPrivacySubject.Name && level == PrivacyLevel.Private && target.DisplayName == null)
-                replyStr += $"\n{Emojis.Warn} This member does not have a display name set, and name privacy **will not take effect**.";
-
-            // Avatar privacy doesn't apply when proxying if no server avatar is set
-            if (subject == MemberPrivacySubject.Avatar && level == PrivacyLevel.Private &&
-                guildSettings?.AvatarUrl == null)
-                replyStr += $"\n{Emojis.Warn} This member does not have a server avatar set, so *proxying* will **still show the member avatar**. If you want to hide your avatar when proxying here, set a server avatar: `{ctx.DefaultPrefix}member {target.Reference(ctx)} serveravatar`";
-
-            await ctx.Reply(replyStr);
-        }
-
-        if (ctx.Match("all") || newValueFromCommand != null)
-            await SetAll(newValueFromCommand ?? ctx.PopPrivacyLevel());
+        if (level == PrivacyLevel.Private)
+            await ctx.Reply(
+                $"{Emojis.Success} All {target.NameFor(ctx)}'s privacy settings have been set to **{level.LevelName()}**. Other accounts will now see nothing on the member card.");
         else
-            await SetLevel(ctx.PopMemberPrivacySubject(), ctx.PopPrivacyLevel());
+            await ctx.Reply(
+                $"{Emojis.Success} All {target.NameFor(ctx)}'s privacy settings have been set to **{level.LevelName()}**. Other accounts will now see everything on the member card.");
+    }
+
+    public async Task ChangePrivacy(Context ctx, PKMember target, MemberPrivacySubject subject, PrivacyLevel level)
+    {
+        ctx.CheckSystem().CheckOwnMember(target);
+
+        await ctx.Repository.UpdateMember(target.Id, new MemberPatch().WithPrivacy(subject, level));
+
+        var subjectName = subject switch
+        {
+            MemberPrivacySubject.Name => "name privacy",
+            MemberPrivacySubject.Description => "description privacy",
+            MemberPrivacySubject.Banner => "banner privacy",
+            MemberPrivacySubject.Avatar => "avatar privacy",
+            MemberPrivacySubject.Pronouns => "pronoun privacy",
+            MemberPrivacySubject.Birthday => "birthday privacy",
+            MemberPrivacySubject.Proxy => "proxy tag privacy",
+            MemberPrivacySubject.Metadata => "metadata privacy",
+            MemberPrivacySubject.Visibility => "visibility",
+            _ => throw new ArgumentOutOfRangeException($"Unknown privacy subject {subject}")
+        };
+
+        var explanation = (subject, level) switch
+        {
+            (MemberPrivacySubject.Name, PrivacyLevel.Private) =>
+                "This member's name is now hidden from other systems, and will be replaced by the member's display name.",
+            (MemberPrivacySubject.Description, PrivacyLevel.Private) =>
+                "This member's description is now hidden from other systems.",
+            (MemberPrivacySubject.Banner, PrivacyLevel.Private) =>
+                "This member's banner is now hidden from other systems.",
+            (MemberPrivacySubject.Avatar, PrivacyLevel.Private) =>
+                "This member's avatar is now hidden from other systems.",
+            (MemberPrivacySubject.Birthday, PrivacyLevel.Private) =>
+                "This member's birthday is now hidden from other systems.",
+            (MemberPrivacySubject.Pronouns, PrivacyLevel.Private) =>
+                "This member's pronouns are now hidden from other systems.",
+            (MemberPrivacySubject.Proxy, PrivacyLevel.Private) =>
+                "This member's proxy tags are now hidden from other systems.",
+            (MemberPrivacySubject.Metadata, PrivacyLevel.Private) =>
+                "This member's metadata (eg. created timestamp, message count, etc) is now hidden from other systems.",
+            (MemberPrivacySubject.Visibility, PrivacyLevel.Private) =>
+                "This member is now hidden from member lists.",
+
+            (MemberPrivacySubject.Name, PrivacyLevel.Public) =>
+                "This member's name is no longer hidden from other systems.",
+            (MemberPrivacySubject.Description, PrivacyLevel.Public) =>
+                "This member's description is no longer hidden from other systems.",
+            (MemberPrivacySubject.Banner, PrivacyLevel.Public) =>
+                "This member's banner is no longer hidden from other systems.",
+            (MemberPrivacySubject.Avatar, PrivacyLevel.Public) =>
+                "This member's avatar is no longer hidden from other systems.",
+            (MemberPrivacySubject.Birthday, PrivacyLevel.Public) =>
+                "This member's birthday is no longer hidden from other systems.",
+            (MemberPrivacySubject.Pronouns, PrivacyLevel.Public) =>
+                "This member's pronouns are no longer hidden from other systems.",
+            (MemberPrivacySubject.Proxy, PrivacyLevel.Public) =>
+                "This member's proxy tags are no longer hidden from other systems.",
+            (MemberPrivacySubject.Metadata, PrivacyLevel.Public) =>
+                "This member's metadata (eg. created timestamp, message count, etc) is no longer hidden from other systems.",
+            (MemberPrivacySubject.Visibility, PrivacyLevel.Public) =>
+                "This member is no longer hidden from member lists.",
+
+            _ => throw new InvalidOperationException($"Invalid subject/level tuple ({subject}, {level})")
+        };
+
+        var replyStr = $"{Emojis.Success} {target.NameFor(ctx)}'s **{subjectName}** has been set to **{level.LevelName()}**. {explanation}";
+
+        // Name privacy only works given a display name
+        if (subject == MemberPrivacySubject.Name && level == PrivacyLevel.Private && target.DisplayName == null)
+            replyStr += $"\n{Emojis.Warn} This member does not have a display name set, and name privacy **will not take effect**.";
+
+        // Avatar privacy doesn't apply when proxying if no server avatar is set
+        if (subject == MemberPrivacySubject.Avatar && level == PrivacyLevel.Private)
+        {
+            var guildSettings = ctx.Guild != null ? await ctx.Repository.GetMemberGuild(ctx.Guild.Id, target.Id) : null;
+            if (guildSettings?.AvatarUrl == null)
+                replyStr += $"\n{Emojis.Warn} This member does not have a server avatar set, so *proxying* will **still show the member avatar**. If you want to hide your avatar when proxying here, set a server avatar: `{ctx.DefaultPrefix}member {target.Reference(ctx)} serveravatar`";
+        }
+
+        await ctx.Reply(replyStr);
     }
 
     public async Task Delete(Context ctx, PKMember target)
