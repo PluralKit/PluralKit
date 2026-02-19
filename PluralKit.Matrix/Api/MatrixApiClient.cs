@@ -12,6 +12,7 @@ namespace PluralKit.Matrix;
 public class MatrixApiClient
 {
     private const int MaxAvatarBytes = 10 * 1024 * 1024; // 10 MB
+    private const int MaxMediaBytes = 50 * 1024 * 1024; // 50 MB
 
     private readonly HttpClient _client;
     private readonly MatrixConfig _config;
@@ -93,14 +94,24 @@ public class MatrixApiClient
         }
     }
 
-    /// <summary>Join a room as a virtual user.</summary>
-    public async Task JoinRoom(string roomId, string virtualMxid)
+    /// <summary>Join a room as a virtual user. Returns false if the join was rejected.</summary>
+    public async Task<bool> JoinRoom(string roomId, string virtualMxid)
     {
-        await SendJsonRequest(HttpMethod.Post,
-            $"/_matrix/client/v3/join/{Uri.EscapeDataString(roomId)}",
-            new { },
-            impersonateUserId: virtualMxid);
-        _logger.Debug("Virtual user {Mxid} joined room {RoomId}", virtualMxid, roomId);
+        try
+        {
+            await SendJsonRequest(HttpMethod.Post,
+                $"/_matrix/client/v3/join/{Uri.EscapeDataString(roomId)}",
+                new { },
+                impersonateUserId: virtualMxid);
+            _logger.Debug("Virtual user {Mxid} joined room {RoomId}", virtualMxid, roomId);
+            return true;
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.Forbidden
+            or HttpStatusCode.NotFound or HttpStatusCode.TooManyRequests)
+        {
+            _logger.Warning("Virtual user {Mxid} cannot join {Room}: {Status}", virtualMxid, roomId, ex.StatusCode);
+            return false;
+        }
     }
 
     /// <summary>Send a message as a virtual user. Returns the event ID.</summary>
@@ -260,5 +271,97 @@ public class MatrixApiClient
 
         var ct = response.Content.Headers.ContentType?.MediaType ?? "application/octet-stream";
         return (data, ct);
+    }
+
+    /// <summary>Download media from an mxc:// URL via the homeserver's media API.</summary>
+    public async Task<(byte[] data, string contentType)> DownloadMxcMedia(string mxcUrl)
+    {
+        // Parse mxc://server/mediaId
+        if (!mxcUrl.StartsWith("mxc://"))
+            throw new ArgumentException($"Invalid mxc URL: {mxcUrl}");
+
+        var parts = mxcUrl.Substring("mxc://".Length).Split('/', 2);
+        if (parts.Length != 2)
+            throw new ArgumentException($"Invalid mxc URL format: {mxcUrl}");
+
+        var server = parts[0];
+        var mediaId = parts[1];
+
+        var request = CreateRequest(HttpMethod.Get,
+            $"/_matrix/media/v3/download/{Uri.EscapeDataString(server)}/{Uri.EscapeDataString(mediaId)}");
+
+        var response = await _client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+        response.EnsureSuccessStatusCode();
+
+        var contentLength = response.Content.Headers.ContentLength;
+        if (contentLength > MaxMediaBytes)
+            throw new InvalidOperationException($"Media too large: {contentLength} bytes (max {MaxMediaBytes})");
+
+        await using var stream = await response.Content.ReadAsStreamAsync();
+        using var ms = new MemoryStream();
+        var buffer = new byte[8192];
+        int totalRead = 0, bytesRead;
+        while ((bytesRead = await stream.ReadAsync(buffer)) > 0)
+        {
+            totalRead += bytesRead;
+            if (totalRead > MaxMediaBytes)
+                throw new InvalidOperationException($"Media too large: exceeded {MaxMediaBytes} bytes");
+            ms.Write(buffer, 0, bytesRead);
+        }
+
+        var ct = response.Content.Headers.ContentType?.MediaType ?? "application/octet-stream";
+        return (ms.ToArray(), ct);
+    }
+
+    /// <summary>Send a media message (m.image, m.file, m.video, m.audio) as a virtual user. Returns the event ID.</summary>
+    public async Task<string> SendMediaMessage(string roomId, string virtualMxid, string msgtype,
+        string mxcUrl, string body, JObject? info, string txnId)
+    {
+        var content = new JObject
+        {
+            ["msgtype"] = msgtype,
+            ["url"] = mxcUrl,
+            ["body"] = body,
+        };
+        if (info != null)
+            content["info"] = info;
+
+        var result = await SendJsonRequest(HttpMethod.Put,
+            $"/_matrix/client/v3/rooms/{Uri.EscapeDataString(roomId)}/send/m.room.message/{Uri.EscapeDataString(txnId)}",
+            content,
+            impersonateUserId: virtualMxid);
+
+        return result["event_id"]?.Value<string>()
+            ?? throw new InvalidOperationException($"SendMediaMessage response missing event_id for room {roomId}");
+    }
+
+    /// <summary>Set room-level display name for a virtual user via member state event.</summary>
+    public async Task SetRoomDisplayName(string roomId, string virtualMxid, string displayName)
+    {
+        await SendJsonRequest(HttpMethod.Put,
+            $"/_matrix/client/v3/rooms/{Uri.EscapeDataString(roomId)}/state/m.room.member/{Uri.EscapeDataString(virtualMxid)}",
+            new { membership = "join", displayname = displayName },
+            impersonateUserId: virtualMxid);
+    }
+
+    /// <summary>Get a user's power level in a room. Returns -1 if unable to determine.</summary>
+    public async Task<int> GetUserPowerLevel(string roomId, string userId)
+    {
+        try
+        {
+            var result = await SendJsonRequest(HttpMethod.Get,
+                $"/_matrix/client/v3/rooms/{Uri.EscapeDataString(roomId)}/state/m.room.power_levels");
+
+            var users = result["users"] as JObject;
+            if (users?[userId] != null)
+                return users[userId]!.Value<int>();
+
+            return result["users_default"]?.Value<int>() ?? 0;
+        }
+        catch (Exception ex)
+        {
+            _logger.Warning(ex, "Failed to get power levels for room {RoomId}", roomId);
+            return -1;
+        }
     }
 }

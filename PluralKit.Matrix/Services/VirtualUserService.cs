@@ -106,27 +106,30 @@ public class VirtualUserService
     /// <summary>
     /// Ensure the virtual user has joined the specified room.
     /// Uses a cache to avoid redundant join requests.
+    /// Returns false if the join was rejected.
     /// </summary>
-    public async Task EnsureJoined(string virtualMxid, string roomId)
+    public async Task<bool> EnsureJoined(string virtualMxid, string roomId)
     {
         // Check in-memory cache first
         if (_cache.IsJoined(virtualMxid, roomId))
-            return;
+            return true;
 
         // Check database
         if (await _repo.CheckRoomJoined(virtualMxid, roomId))
         {
             _cache.MarkJoined(virtualMxid, roomId);
-            return;
+            return true;
         }
 
         // Join the room via the Matrix API
-        await _api.JoinRoom(roomId, virtualMxid);
+        if (!await _api.JoinRoom(roomId, virtualMxid))
+            return false;
 
         // Store and cache the join
         await _repo.StoreRoomJoin(virtualMxid, roomId);
         _cache.MarkJoined(virtualMxid, roomId);
 
         _logger.Debug("Virtual user {Mxid} joined room {RoomId}", virtualMxid, roomId);
+        return true;
     }
 }

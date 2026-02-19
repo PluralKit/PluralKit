@@ -38,6 +38,7 @@ public class MatrixCommandHandler
                 "member" or "m" => await HandleMember(evt, parts),
                 "autoproxy" or "ap" => await HandleAutoproxy(evt, parts),
                 "blacklist" => await HandleBlacklist(evt, parts),
+                "log" => await HandleLog(evt, parts),
                 "help" or "?" => GetHelpText(),
                 _ => $"Unknown command: {command}. Type `{_config.Prefix} help` for a list of commands."
             };
@@ -230,6 +231,11 @@ public class MatrixCommandHandler
         if (systemId == null)
             return $"You must have a linked system to manage room settings. Use `{_config.Prefix} link` first.";
 
+        // Require moderator power level (50+)
+        var powerLevel = await _api.GetUserPowerLevel(evt.RoomId, evt.Sender);
+        if (powerLevel < 50)
+            return "You need moderator permissions (power level 50+) to manage room blacklist settings.";
+
         if (parts.Length < 2)
             return $"Usage: `{_config.Prefix} blacklist <on|off>`\nDisables/enables proxying in the current room.";
 
@@ -249,6 +255,39 @@ public class MatrixCommandHandler
             : "Proxying is now **enabled** in this room.";
     }
 
+    private async Task<string> HandleLog(MatrixEvent evt, string[] parts)
+    {
+        var systemId = await _repo.GetAccountSystem(evt.Sender);
+        if (systemId == null)
+            return $"You must have a linked system to manage room settings. Use `{_config.Prefix} link` first.";
+
+        var powerLevel = await _api.GetUserPowerLevel(evt.RoomId, evt.Sender);
+        if (powerLevel < 50)
+            return "You need moderator permissions (power level 50+) to manage log settings.";
+
+        if (parts.Length < 2)
+        {
+            var current = await _repo.GetLogRoom(evt.RoomId);
+            return current != null
+                ? $"Log room for this room: `{current}`\nUsage: `{_config.Prefix} log <room_id>` or `{_config.Prefix} log off`"
+                : $"No log room set.\nUsage: `{_config.Prefix} log <room_id>` or `{_config.Prefix} log off`";
+        }
+
+        var target = parts[1].ToLower();
+        if (target is "off" or "disable" or "none")
+        {
+            await _repo.SetLogRoom(evt.RoomId, null);
+            return "Proxy logging disabled for this room.";
+        }
+
+        // Validate room ID format
+        if (!parts[1].StartsWith("!"))
+            return "Invalid room ID. Room IDs start with `!`. Example: `!abc123:server.org`";
+
+        await _repo.SetLogRoom(evt.RoomId, parts[1]);
+        return $"Proxy log room set to `{parts[1]}` for this room.";
+    }
+
     private string GetHelpText()
     {
         var p = _config.Prefix;
@@ -258,7 +297,10 @@ public class MatrixCommandHandler
                $"- `{p} system` \u2014 View your system info\n" +
                $"- `{p} member <id>` \u2014 View member info\n" +
                $"- `{p} autoproxy <mode> [member]` \u2014 Set autoproxy (off/front/latch/member)\n" +
-               $"- `{p} blacklist <on|off>` \u2014 Disable/enable proxying in this room\n" +
-               $"- `{p} help` \u2014 Show this help message";
+               $"- `{p} blacklist <on|off>` \u2014 Disable/enable proxying in this room (mod only)\n" +
+               $"- `{p} log <room_id|off>` \u2014 Set/disable proxy log room (mod only)\n" +
+               $"- `{p} help` \u2014 Show this help message\n\n" +
+               "**Note:** E2EE (encrypted) rooms are not currently supported. " +
+               "PluralKit can only proxy in rooms with encryption disabled.";
     }
 }

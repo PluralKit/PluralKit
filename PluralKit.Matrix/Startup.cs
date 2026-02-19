@@ -12,6 +12,7 @@ public class Startup
     {
         services.AddControllers()
             .AddNewtonsoftJson();
+        services.AddHostedService<TransactionCleanupService>();
     }
 
     public void ConfigureContainer(ContainerBuilder builder)

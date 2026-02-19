@@ -21,6 +21,7 @@ public class MatrixModule : Module
         builder.RegisterType<MatrixEventHandler>().AsSelf().SingleInstance();
         builder.RegisterType<MatrixProxyService>().AsSelf().SingleInstance();
         builder.RegisterType<MatrixCommandHandler>().AsSelf().SingleInstance();
+        builder.RegisterType<MatrixLogService>().AsSelf().SingleInstance();
 
         // Proxy
         builder.RegisterType<ProxyMatcher>().AsSelf().SingleInstance();

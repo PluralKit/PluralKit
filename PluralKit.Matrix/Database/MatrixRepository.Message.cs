@@ -49,6 +49,20 @@ public partial class MatrixRepository
             new { id = proxiedEventId });
     }
 
+    public async Task<(MemberId Member, string? DisplayName)?> GetLastProxiedInRoom(string roomId)
+    {
+        await using var conn = await _db.Obtain();
+        var result = await conn.QueryFirstOrDefaultAsync<(int Member, string? DisplayName)?>(
+            @"select mm.member, mvu.display_name
+              from matrix_messages mm
+              left join matrix_virtual_users mvu on mm.member = mvu.member_id
+              where mm.room_id = @roomId and mm.member is not null
+              order by mm.created_at desc limit 1",
+            new { roomId });
+        if (result == null) return null;
+        return (new MemberId(result.Value.Member), result.Value.DisplayName);
+    }
+
     public async Task<bool> TryReserveTransaction(string txnId)
     {
         await using var conn = await _db.Obtain();

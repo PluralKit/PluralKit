@@ -74,6 +74,17 @@ services:
       migrate:
         condition: service_completed_successfully
 
+  # Pantalaimon E2EE proxy (reference only — see PluralKit.Matrix/pantalaimon.conf)
+  # NOTE: Only works with /sync-based bot mode, not appservice transaction push.
+  # Included for reference if the architecture changes to sync-based in the future.
+  # pantalaimon:
+  #   image: matrixdotorg/pantalaimon:latest
+  #   volumes:
+  #     - "./PluralKit.Matrix/pantalaimon.conf:/etc/pantalaimon/pantalaimon.conf:ro"
+  #     - "pantalaimon_data:/data"
+  #   depends_on:
+  #     - db
+
   db:
     image: postgres:17-alpine
     volumes:

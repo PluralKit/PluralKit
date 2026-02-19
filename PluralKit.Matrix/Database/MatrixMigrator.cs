@@ -11,7 +11,7 @@ namespace PluralKit.Matrix;
 public class MatrixMigrator
 {
     private const string RootPath = "PluralKit.Matrix.Database";
-    private const int TargetSchemaVersion = 0;
+    private const int TargetSchemaVersion = 1;
     private readonly ILogger _logger;
 
     public MatrixMigrator(ILogger logger)

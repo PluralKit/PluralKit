@@ -30,6 +30,12 @@ public class MatrixEvent
     public string? ReactionKey => Content["m.relates_to"]?["key"]?.Value<string>();
     public string? ReactionTargetEventId => Content["m.relates_to"]?["event_id"]?.Value<string>();
 
+    // Media helpers
+    public string? MediaUrl => Content["url"]?.Value<string>();
+    public string? MediaFilename => Content["filename"]?.Value<string>() ?? Content["body"]?.Value<string>();
+    public JObject? MediaInfo => Content["info"] as JObject;
+    public bool IsMedia => MediaUrl != null && MessageType is "m.image" or "m.file" or "m.video" or "m.audio";
+
     public bool IsValid => !string.IsNullOrEmpty(Type) && !string.IsNullOrEmpty(EventId)
         && !string.IsNullOrEmpty(RoomId) && !string.IsNullOrEmpty(Sender);
 

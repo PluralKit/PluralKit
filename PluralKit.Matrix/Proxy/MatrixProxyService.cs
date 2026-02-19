@@ -13,12 +13,13 @@ public class MatrixProxyService
     private readonly VirtualUserService _virtualUsers;
     private readonly ProxyMatcher _matcher;
     private readonly ModelRepository _coreRepo;
+    private readonly MatrixLogService _logService;
     private readonly MatrixConfig _config;
     private readonly IClock _clock;
     private readonly ILogger _logger;
 
     public MatrixProxyService(MatrixApiClient api, MatrixRepository repo, VirtualUserService virtualUsers,
-        ProxyMatcher matcher, ModelRepository coreRepo, MatrixConfig config,
+        ProxyMatcher matcher, ModelRepository coreRepo, MatrixLogService logService, MatrixConfig config,
         IClock clock, ILogger logger)
     {
         _api = api;
@@ -26,6 +27,7 @@ public class MatrixProxyService
         _virtualUsers = virtualUsers;
         _matcher = matcher;
         _coreRepo = coreRepo;
+        _logService = logService;
         _config = config;
         _clock = clock;
         _logger = logger.ForContext<MatrixProxyService>();
@@ -48,23 +50,26 @@ public class MatrixProxyService
 
         var autoproxySettings = await _repo.GetAutoproxySettings(ctx.SystemId.Value, roomId);
 
-        // Check disable autoproxy (\\\) first — more specific, must be before unlatch (\\)
-        if (IsDisableAutoproxy(messageContent))
+        // Escape/unlatch only applies to text messages — media filenames could accidentally trigger these
+        if (evt.MessageType == "m.text")
         {
-            await _repo.UpdateAutoproxy(ctx.SystemId.Value, roomId, new AutoproxyPatch
+            if (IsDisableAutoproxy(messageContent))
             {
-                AutoproxyMode = AutoproxyMode.Off
-            });
-            return false;
-        }
+                await _repo.UpdateAutoproxy(ctx.SystemId.Value, roomId, new AutoproxyPatch
+                {
+                    AutoproxyMode = AutoproxyMode.Off
+                });
+                return false;
+            }
 
-        if (autoproxySettings.AutoproxyMode == AutoproxyMode.Latch && IsUnlatch(messageContent))
-        {
-            await _repo.UpdateAutoproxy(ctx.SystemId.Value, roomId, new AutoproxyPatch
+            if (autoproxySettings.AutoproxyMode == AutoproxyMode.Latch && IsUnlatch(messageContent))
             {
-                AutoproxyMember = null
-            });
-            return false;
+                await _repo.UpdateAutoproxy(ctx.SystemId.Value, roomId, new AutoproxyPatch
+                {
+                    AutoproxyMember = null
+                });
+                return false;
+            }
         }
 
         var members = (await _repo.GetProxyMembers(senderMxid)).ToList();
@@ -102,12 +107,55 @@ public class MatrixProxyService
         var roomId = trigger.RoomId;
 
         await _virtualUsers.EnsureRegistered(match.Member, memberHid, ctx);
-        await _virtualUsers.EnsureJoined(virtualMxid, roomId);
+        if (!await _virtualUsers.EnsureJoined(virtualMxid, roomId))
+        {
+            _logger.Warning("Cannot proxy: virtual user {Mxid} failed to join {Room}", virtualMxid, roomId);
+            return;
+        }
 
-        var content = match.ProxyContent ?? match.Content ?? "";
+        // Display name deduplication: if a different member has the same name, add invisible suffix
+        var displayName = match.Member.ProxyName(ctx);
+        var lastProxied = await _repo.GetLastProxiedInRoom(roomId);
+        if (lastProxied != null
+            && lastProxied.Value.Member != match.Member.Id
+            && lastProxied.Value.DisplayName == displayName)
+        {
+            // Append hair space + Khmer vowel sign as invisible disambiguator (same as Discord logic)
+            var suffixedName = displayName + "\u200a\u17b5";
+            try { await _api.SetRoomDisplayName(roomId, virtualMxid, suffixedName); }
+            catch (Exception ex) { _logger.Warning(ex, "Failed to set room display name suffix for {Mxid}", virtualMxid); }
+        }
+
         var txnId = $"pk_{trigger.EventId}_{Guid.NewGuid():N}";
 
-        var proxyEventId = await _api.SendMessage(roomId, virtualMxid, content, null, txnId);
+        string proxyEventId;
+        if (trigger.IsMedia)
+        {
+            var mxcUrl = trigger.MediaUrl;
+            if (mxcUrl == null)
+            {
+                _logger.Warning("Media message {EventId} missing mxc URL", trigger.EventId);
+                return;
+            }
+
+            try
+            {
+                var (data, ct) = await _api.DownloadMxcMedia(mxcUrl);
+                var newMxc = await _api.UploadMedia(data, ct, trigger.MediaFilename ?? "file");
+                proxyEventId = await _api.SendMediaMessage(roomId, virtualMxid, trigger.MessageType!,
+                    newMxc, trigger.MediaFilename ?? "file", trigger.MediaInfo, txnId);
+            }
+            catch (Exception ex)
+            {
+                _logger.Warning(ex, "Failed to proxy media message {EventId} in {Room}", trigger.EventId, roomId);
+                return;
+            }
+        }
+        else
+        {
+            var content = match.ProxyContent ?? match.Content ?? "";
+            proxyEventId = await _api.SendMessage(roomId, virtualMxid, content, null, txnId);
+        }
 
         // Redact original — graceful failure if no permission or transient error
         try
@@ -136,6 +184,14 @@ public class MatrixProxyService
         {
             _logger.Error(ex, "Failed to store proxied message record for {EventId} in {Room}", proxyEventId, roomId);
         }
+
+        // Update member stats (last message timestamp, message count)
+        try { await _coreRepo.UpdateMemberForSentMessage(match.Member.Id); }
+        catch (Exception ex) { _logger.Warning(ex, "Failed to update member stats for {MemberId}", match.Member.Id); }
+
+        // Log proxy to configured log room
+        try { await _logService.LogProxy(roomId, match.Member.ProxyName(ctx), proxyEventId); }
+        catch (Exception ex) { _logger.Warning(ex, "Failed to log proxy event"); }
 
         if (autoproxySettings.AutoproxyMode == AutoproxyMode.Latch)
         {
@@ -175,7 +231,11 @@ public class MatrixProxyService
 
         var virtualMxid = $"@_pk_{member.Hid}:{_config.ServerName}";
 
-        await _virtualUsers.EnsureJoined(virtualMxid, evt.RoomId);
+        if (!await _virtualUsers.EnsureJoined(virtualMxid, evt.RoomId))
+        {
+            _logger.Warning("Cannot proxy edit: virtual user {Mxid} failed to join {Room}", virtualMxid, evt.RoomId);
+            return;
+        }
 
         var newBody = (string?)evt.NewContent?["body"] ?? evt.Body ?? "";
         var newFormattedBody = (string?)evt.NewContent?["formatted_body"];

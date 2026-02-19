@@ -77,6 +77,13 @@ public partial class MatrixRepository
             new { roomId, blacklisted });
     }
 
+    public async Task<string?> GetLogRoom(string roomId)
+    {
+        await using var conn = await _db.Obtain();
+        return await conn.QueryFirstOrDefaultAsync<string?>(
+            "select log_room from matrix_rooms where room_id = @roomId", new { roomId });
+    }
+
     public async Task SetLogRoom(string roomId, string? logRoom)
     {
         await using var conn = await _db.Obtain();
