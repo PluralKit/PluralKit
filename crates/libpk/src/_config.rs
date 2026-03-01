@@ -33,6 +33,9 @@ pub struct DiscordConfig {
 
     #[serde(default)]
     pub gateway_target: Option<String>,
+
+    #[serde(default)]
+    pub gateway_proxy_url: Option<String>,
 }
 
 #[derive(Deserialize, Debug)]

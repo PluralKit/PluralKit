@@ -63,13 +63,18 @@ pub fn create_shards(redis: fred::clients::RedisPool) -> anyhow::Result<Vec<Shar
 
     let prefix = libpk::config.discord().bot_prefix_for_gateway.clone();
 
+    let mut config = ConfigBuilder::new(libpk::config.discord().bot_token.to_owned(), intents)
+        .presence(presence(format!("{prefix}help").as_str(), false))
+        .queue(queue.clone());
+
+    if let Some(proxy) = libpk::config.discord().gateway_proxy_url.to_owned() {
+        config = config.proxy_url(proxy.clone());
+    };
+
     let shards = create_iterator(
         start_shard..end_shard + 1,
         cluster_settings.total_shards,
-        ConfigBuilder::new(libpk::config.discord().bot_token.to_owned(), intents)
-            .presence(presence(format!("{prefix}help").as_str(), false))
-            .queue(queue.clone())
-            .build(),
+        config.build(),
         |_, builder| builder.build(),
     );
 
