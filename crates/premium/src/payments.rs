@@ -11,6 +11,7 @@ use axum::{
 use pk_macros::api_endpoint;
 use serde::{Deserialize, Serialize};
 use sqlx::postgres::Postgres;
+use subtle::ConstantTimeEq;
 use tracing::{error, info, warn};
 
 use crate::fail;
@@ -156,6 +157,14 @@ impl SubscriptionInfo {
         }
         "not linked".to_string()
         // todo(premium): support linking/unlinking
+    }
+
+    pub fn is_lifetime(&self) -> bool {
+        if let Some(db) = &self.db {
+            db.provider == "lifetime"
+        } else {
+            false
+        }
     }
 
     pub fn is_cancellable(&self) -> bool {
@@ -754,4 +763,92 @@ pub async fn cancel_page(
         .unwrap(),
     )
     .into_response()
+}
+
+#[derive(Debug, Deserialize)]
+pub struct GrantLifetimeRequest {
+    pub email: String,
+    pub system_id: i32,
+}
+
+pub async fn create_lifetime_subscription(
+    ctx: &ApiContext,
+    email: &str,
+    system_id: i32,
+) -> anyhow::Result<()> {
+    let row = sqlx::query_as::<Postgres, (i32,)>(
+        r#"
+        insert into premium_subscriptions (provider, provider_id, email, system_id, status, next_renewal_at)
+        values ('lifetime', $1, $1, $2, 'lifetime', null)
+        returning id
+        "#,
+    )
+    .bind(email)
+    .bind(system_id)
+    .fetch_one(&ctx.db)
+    .await?;
+
+    // todo(premium): cronjob to update allowances for lifetime premium
+    sqlx::query::<Postgres>(
+        r#"
+        insert into premium_allowances (subscription_id, system_id, id_changes_remaining)
+        values ($1, $2, $3)
+        on conflict (subscription_id) do update set
+            system_id = excluded.system_id,
+            id_changes_remaining = greatest(premium_allowances.id_changes_remaining, excluded.id_changes_remaining)
+        "#,
+    )
+    .bind(row.0)
+    .bind(system_id)
+    .bind(MONTHLY_ID_CHANGES)
+    .execute(&ctx.db)
+    .await?;
+
+    info!(
+        "granted lifetime premium to system {} (email {})",
+        system_id, email
+    );
+    Ok(())
+}
+
+#[api_endpoint]
+pub async fn grant_lifetime(
+    State(ctx): State<ApiContext>,
+    headers: HeaderMap,
+    Json(req): Json<GrantLifetimeRequest>,
+) -> Response {
+    let Some(internal_auth) = libpk::config
+        .internal_auth
+        .as_deref()
+        .filter(|s| !s.is_empty())
+    else {
+        return Ok(StatusCode::NOT_FOUND.into_response());
+    };
+
+    let authorized = headers
+        .get("x-pluralkit-internalauth")
+        .and_then(|h| h.to_str().ok())
+        .map(|h| h.as_bytes().ct_eq(internal_auth.as_bytes()).into())
+        .unwrap_or(false);
+
+    if !authorized {
+        return Ok(StatusCode::UNAUTHORIZED.into_response());
+    }
+
+    match create_lifetime_subscription(&ctx, &req.email, req.system_id).await {
+        Ok(_) => Ok(Json(serde_json::json!({
+            "ok": true,
+            "system_id": req.system_id,
+            "email": req.email,
+        }))
+        .into_response()),
+        Err(err) => {
+            error!(?err, "failed to grant lifetime premium");
+            Ok((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "failed to grant lifetime premium",
+            )
+                .into_response())
+        }
+    }
 }

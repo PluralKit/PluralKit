@@ -49,7 +49,7 @@ public class Context
         _provider = provider;
         _commandMessageService = provider.Resolve<CommandMessageService>();
         _botConfig = provider.Resolve<BotConfig>();
-        PremiumAllowances = premium;
+        Premium = premium;
         CommandPrefix = message.Content?.Substring(0, commandParseOffset);
         DefaultPrefix = prefixes[0];
         Parameters = new Parameters(message.Content?.Substring(commandParseOffset));
@@ -76,13 +76,10 @@ public class Context
 
     public readonly PKSystem System;
     public readonly SystemConfig Config;
-    public readonly PremiumAllowances? PremiumAllowances;
     public DateTimeZone Zone => Config?.Zone ?? DateTimeZone.Utc;
 
-    // todo(premium): lifetime
-    public bool Premium => (false) || (PremiumAllowances?.IsActive ?? false);
-
-    public string PremiumEmoji => (false)
+    public readonly PremiumAllowances? Premium;
+    public string PremiumEmoji => (Premium?.Lifetime ?? false)
         ? ($"<:lifetime_premium:{_botConfig.PremiumLifetimeEmoji}>" ?? "\u2729")
         : Premium
             ? ($"<:premium_subscriber:{_botConfig.PremiumSubscriberEmoji}>" ?? "\u2729")
