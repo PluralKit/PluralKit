@@ -19,6 +19,11 @@ public class PremiumAllowances
     public string? NextRenewalAt { get; private set; }
     public int IdChangesRemaining { get; private set; }
 
-    public bool IsActive => Status is "active" or "past_due" or "canceling";
+    // todo(premium): maybe just is not "canceled"
+    public bool IsActive => Status is "active" or "past_due" or "canceling" or "lifetime";
     public bool IsCanceling => Status is "canceling";
+
+    public bool Lifetime => Status is "lifetime";
+
+    public static implicit operator bool(PremiumAllowances? allowances) => allowances?.IsActive ?? false;
 }
