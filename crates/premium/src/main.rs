@@ -68,6 +68,7 @@ fn router(ctx: ApiContext) -> Router {
         .layer(axum::middleware::from_fn_with_state(ctx.clone(), auth::middleware))
 
         .route("/stripe", post(payments::webhook))
+        .route("/admin/grant-lifetime", post(payments::grant_lifetime))
 
         .layer(axum::middleware::from_fn(middleware::logger::logger))
         .nest_service("/static", ServeDir::new("static"))

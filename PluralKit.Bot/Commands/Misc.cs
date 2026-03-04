@@ -37,16 +37,15 @@ public class Misc
 
         String message;
 
-        var renewalTimestamp = DateTimeOffset.TryParse(ctx.PremiumAllowances?.NextRenewalAt, out var dto)
+        var renewalTimestamp = DateTimeOffset.TryParse(ctx.Premium?.NextRenewalAt, out var dto)
             ? dto.ToUnixTimeSeconds()
             : (long?)null;
 
-        // todo(premium)
-        if (false)
+        if (ctx.Premium?.Lifetime ?? false)
         {
             message = $"Your system has lifetime PluralKit Premium. {ctx.PremiumEmoji} Thanks for the support!";
         }
-        else if (ctx.Premium && ctx.PremiumAllowances?.IsCanceling == true)
+        else if (ctx.Premium?.IsCanceling ?? false)
         {
             message = renewalTimestamp != null
                 ? $"Your system has PluralKit Premium until <t:{renewalTimestamp}>. {ctx.PremiumEmoji} Thanks for the support!"

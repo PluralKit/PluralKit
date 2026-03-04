@@ -30,12 +30,17 @@ You are currently subscribed to PluralKit Premium. Thanks for the support!
 <br/>
 {% for sub in &subscriptions %}
 <p>
+    {% if sub.is_lifetime() %}
+    <strong>Status:</strong> Lifetime Premium<br/>
+    <strong>Linked System:</strong> {{ sub.system_id_display()|safe }}<br/>
+    {% else %}
     <strong>Subscription ID:</strong> {{ sub.subscription_id() }}<br/>
     <strong>Status:</strong> {{ sub.status() }}<br/>
     <strong>Next Renewal:</strong> {{ sub.next_renewal() }}<br/>
     <strong>Linked System:</strong> {{ sub.system_id_display()|safe }}<br/>
     {% if sub.is_cancellable() %}
     <a href="/cancel?id={{ sub.subscription_id() }}">Cancel</a><br/>
+    {% endif %}
     {% endif %}
 </div>
 {% endfor %}

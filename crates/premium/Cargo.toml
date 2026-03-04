@@ -40,3 +40,4 @@ thiserror = "1.0"
 serde_urlencoded = "0.7"
 time = "0.3"
 urlencoding = "2.1"
+subtle = { workspace = true }
