@@ -138,9 +138,10 @@ public class MessageCreated: IEventHandler<MessageCreateEvent>
         {
             var system = await _repo.GetSystemByAccount(evt.Author.Id);
             var config = system != null ? await _repo.GetSystemConfig(system.Id) : null;
+            var premium = system != null ? await _repo.GetSystemPremium(system.Id) : null;
             var guildConfig = guild != null ? await _repo.GetGuild(guild.Id) : null;
 
-            await _tree.ExecuteCommand(new Context(_services, shardId, guild, channel, evt, cmdStart, system, config, guildConfig, _config.Prefixes ?? BotConfig.DefaultPrefixes));
+            await _tree.ExecuteCommand(new Context(_services, shardId, guild, channel, evt, cmdStart, system, config, premium, guildConfig, _config.Prefixes ?? BotConfig.DefaultPrefixes));
         }
         catch (PKError)
         {

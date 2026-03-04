@@ -6,7 +6,6 @@ resolver = "2"
 
 [workspace.dependencies]
 anyhow = "1"
-axum-macros = "0.4.1"
 bytes = "1.6.0"
 chrono = "0.4"
 fred = { version = "9.3.0", default-features = false, features = ["tracing", "i-keys", "i-hashes", "i-scripts", "sha-1"] }
@@ -25,6 +24,9 @@ tracing-subscriber = { version = "0.3.20", features = ["env-filter", "json"] }
 uuid = { version = "1.7.0", features = ["serde"] }
 
 axum = { git = "https://github.com/pluralkit/axum", branch = "v0.8.4-pluralkit" }
+axum-macros = "0.4.1"
+axum-extra = { version = "0.10", features = ["cookie"] }
+tower-http = { version = "0.5.2", features = ["catch-panic", "fs"] }
 
 twilight-gateway = { git = "https://github.com/pluralkit/twilight", branch = "pluralkit-7f08d95" }
 twilight-cache-inmemory = { git = "https://github.com/pluralkit/twilight", branch = "pluralkit-7f08d95", features = ["permission-calculator"] }
@@ -37,3 +39,6 @@ twilight-http = { git = "https://github.com/pluralkit/twilight", branch = "plura
 # twilight-util = { path = "../twilight/twilight-util", features = ["permission-calculator"] }
 # twilight-model = { path = "../twilight/twilight-model" }
 # twilight-http = { path = "../twilight/twilight-http", default-features = false, features = ["rustls-aws_lc_rs", "rustls-native-roots"] }
+
+[patch.crates-io]
+axum = { git = "https://github.com/pluralkit/axum", branch = "v0.8.4-pluralkit" }
