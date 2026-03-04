@@ -192,7 +192,7 @@ public class EmbedService
                     new MessageComponent()
                     {
                         Type = ComponentType.Text,
-                        Content = $"-# System ID: `{system.DisplayHid(cctx.Config)}`\n-# Created: {system.Created.FormatZoned(cctx.Zone)}",
+                        Content = $"-# System ID: `{system.DisplayHid(cctx.Config)}`{cctx.PremiumEmoji}\n-# Created: {system.Created.FormatZoned(cctx.Zone)}",
                     },
                 ],
                 Accessory = new MessageComponent()

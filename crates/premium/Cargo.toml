@@ -1,0 +1,42 @@
+[package]
+name = "premium"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+pluralkit_models = { path = "../models" }
+pk_macros = { path = "../macros" }
+libpk = { path = "../libpk" }
+api = { path = "../api" }
+
+anyhow = { workspace = true }
+axum = { workspace = true }
+chrono = { workspace = true }
+axum-extra = { workspace = true }
+fred = { workspace = true }
+lazy_static = { workspace = true }
+metrics = { workspace = true }
+reqwest = { workspace = true }
+sea-query = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+sqlx = { workspace = true }
+tokio = { workspace = true }
+tower-http = { workspace = true }
+tracing = { workspace = true }
+twilight-http = { workspace = true }
+
+askama = "0.14.0"
+rustls = { version = "0.23", default-features = false, features = ["ring"] }
+async-stripe = { version = "1.0.0-rc.2", default-features = false, features = ["rustls-tls-webpki-roots", "rustls-ring"] }
+async-stripe-shared = { version = "1.0.0-rc.2" }
+async-stripe-billing = { version = "1.0.0-rc.2", features = ["subscription"] }
+async-stripe-core = { version = "1.0.0-rc.2", features = ["customer"] }
+async-stripe-checkout = { version = "1.0.0-rc.2" }
+async-stripe-webhook = { version = "1.0.0-rc.2", features = ["async-stripe-billing", "async-stripe-checkout", "deserialize"] }
+postmark = { version = "0.11", features = ["reqwest"] }
+rand = "0.8"
+thiserror = "1.0"
+serde_urlencoded = "0.7"
+time = "0.3"
+urlencoding = "2.1"

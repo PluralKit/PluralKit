@@ -49,3 +49,4 @@ RUN apk add gcompat
 EOF
 )"
 build gdpr_worker
+build premium
