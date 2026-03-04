@@ -36,6 +36,10 @@ public class BotConfig
     public bool IsBetaBot { get; set; } = false!;
     public string BetaBotAPIUrl { get; set; }
 
+    public String? PremiumSubscriberEmoji { get; set; }
+    public String? PremiumLifetimeEmoji { get; set; }
+    public String? PremiumDashboardUrl { get; set; }
+
     public record ClusterSettings
     {
         // this is zero-indexed

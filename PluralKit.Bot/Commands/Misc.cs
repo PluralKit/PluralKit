@@ -31,6 +31,45 @@ public class Misc
         _shards = shards;
     }
 
+    public async Task Premium(Context ctx)
+    {
+        ctx.CheckSystem();
+
+        String message;
+
+        var renewalTimestamp = DateTimeOffset.TryParse(ctx.PremiumAllowances?.NextRenewalAt, out var dto)
+            ? dto.ToUnixTimeSeconds()
+            : (long?)null;
+
+        // todo(premium)
+        if (false)
+        {
+            message = $"Your system has lifetime PluralKit Premium. {ctx.PremiumEmoji} Thanks for the support!";
+        }
+        else if (ctx.Premium && ctx.PremiumAllowances?.IsCanceling == true)
+        {
+            message = renewalTimestamp != null
+                ? $"Your system has PluralKit Premium until <t:{renewalTimestamp}>. {ctx.PremiumEmoji} Thanks for the support!"
+                : $"Your system has PluralKit Premium. {ctx.PremiumEmoji} Thanks for the support!";
+        }
+        else if (ctx.Premium)
+        {
+            message = renewalTimestamp != null
+                ? $"Your system has PluralKit Premium, and will renew on <t:{renewalTimestamp}>. {ctx.PremiumEmoji} Thanks for the support!"
+                : $"Your system has PluralKit Premium. {ctx.PremiumEmoji} Thanks for the support!";
+        }
+        else
+        {
+            message = "PluralKit Premium is not currently active for your system.";
+            if (renewalTimestamp != null)
+            {
+                message += $" The subscription expired at <t:{renewalTimestamp}> (<t:{renewalTimestamp}:R>)";
+            }
+        }
+
+        await ctx.Reply(message + $"\n\nManage your subscription at <{_botConfig.PremiumDashboardUrl}>");
+    }
+
     public async Task Invite(Context ctx)
     {
         var permissions =

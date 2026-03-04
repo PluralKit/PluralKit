@@ -1,5 +1,9 @@
-use crate::ApiContext;
-use axum::{extract::State, response::Json};
+use crate::{ApiContext, auth::AuthState, fail};
+use axum::{
+    Extension,
+    extract::{Path, State},
+    response::Json,
+};
 use fred::interfaces::*;
 use libpk::state::ShardState;
 use pk_macros::api_endpoint;

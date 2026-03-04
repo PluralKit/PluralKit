@@ -105,6 +105,17 @@ pub struct ScheduledTasksConfig {
     pub walg_s3_bucket: String,
 }
 
+#[derive(Deserialize, Clone, Debug)]
+pub struct PremiumConfig {
+    pub stripe_secret_key: String,
+    pub stripe_webhook_secret: String,
+    pub stripe_price_id: String,
+
+    pub postmark_token: String,
+    pub from_email: String,
+    pub base_url: String,
+}
+
 fn _metrics_default() -> bool {
     false
 }
@@ -124,6 +135,8 @@ pub struct PKConfig {
     avatars: Option<AvatarsConfig>,
     #[serde(default)]
     pub scheduled_tasks: Option<ScheduledTasksConfig>,
+    #[serde(default)]
+    premium: Option<PremiumConfig>,
 
     #[serde(default = "_metrics_default")]
     pub run_metrics_server: bool,
@@ -160,6 +173,10 @@ impl PKConfig {
         self.scheduled_tasks
             .as_ref()
             .expect("missing scheduled_tasks config")
+    }
+
+    pub fn premium(&self) -> &PremiumConfig {
+        self.premium.as_ref().expect("missing premium config")
     }
 }
 
