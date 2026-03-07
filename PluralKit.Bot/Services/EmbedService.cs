@@ -21,14 +21,16 @@ public class EmbedService
     private readonly IDatabase _db;
     private readonly ModelRepository _repo;
     private readonly DiscordApiClient _rest;
+    private readonly BotConfig _config;
     private readonly CoreConfig _coreConfig;
 
-    public EmbedService(IDatabase db, ModelRepository repo, IDiscordCache cache, DiscordApiClient rest, CoreConfig coreConfig)
+    public EmbedService(IDatabase db, ModelRepository repo, IDiscordCache cache, DiscordApiClient rest, BotConfig config, CoreConfig coreConfig)
     {
         _db = db;
         _repo = repo;
         _cache = cache;
         _rest = rest;
+        _config = config;
         _coreConfig = coreConfig;
     }
 
@@ -41,6 +43,17 @@ public class EmbedService
         }
 
         return Task.WhenAll(ids.Select(Inner));
+    }
+
+    private async Task<(bool Premium, string? Emoji)> SystemHasPremium(PKSystem system)
+    {
+        var premium = await _repo.GetSystemPremium(system.Id);
+        if (premium?.Lifetime ?? false)
+            return (true, (_config.PremiumLifetimeEmoji != null ? $"<:lifetime_premium:{_config.PremiumLifetimeEmoji}>" : "\u2729"));
+        else if (premium?.IsActive ?? false)
+            return (true, (_config.PremiumSubscriberEmoji != null ? $"<:premium_subscriber:{_config.PremiumSubscriberEmoji}>" : "\u2729"));
+        else
+            return (false, null);
     }
 
     public async Task<MessageComponent[]> CreateSystemMessageComponents(Context cctx, PKSystem system, LookupContext ctx)
@@ -141,7 +154,9 @@ public class EmbedService
             });
 
         var systemName = (cctx.Guild != null && guildSettings?.DisplayName != null) ? guildSettings?.DisplayName! : system.NameFor(ctx);
-        var premiumText = ""; // TODO(iris): "\n\U0001F31F *PluralKit Premium supporter!*";
+
+        var systemPremium = await SystemHasPremium(system);
+        var premiumText = systemPremium.Premium ? $"\n{systemPremium.Emoji} *PluralKit Premium supporter*" : "";
         List<MessageComponent> header = [
             new MessageComponent()
             {
@@ -192,7 +207,7 @@ public class EmbedService
                     new MessageComponent()
                     {
                         Type = ComponentType.Text,
-                        Content = $"-# System ID: `{system.DisplayHid(cctx.Config)}`{cctx.PremiumEmoji}\n-# Created: {system.Created.FormatZoned(cctx.Zone)}",
+                        Content = $"-# System ID: `{system.DisplayHid(cctx.Config)}`{(systemPremium.Premium ? $" {systemPremium.Emoji}" : "")}\n-# Created: {system.Created.FormatZoned(cctx.Zone)}",
                     },
                 ],
                 Accessory = new MessageComponent()
@@ -455,6 +470,7 @@ public class EmbedService
                 },
             ];
 
+        var systemPremium = await SystemHasPremium(system);
         return [
             new MessageComponent()
             {
@@ -469,7 +485,7 @@ public class EmbedService
                     new MessageComponent()
                     {
                         Type = ComponentType.Text,
-                        Content = $"-# System ID: `{system.DisplayHid(ccfg)}` \u2219 Member ID: `{member.DisplayHid(ccfg)}`{(member.MetadataPrivacy.CanAccess(ctx) ? $"\n-# Created: {member.Created.FormatZoned(zone)}" : "")}",
+                        Content = $"-# System ID: `{system.DisplayHid(ccfg)}`{(systemPremium.Premium ? $" {systemPremium.Emoji}" : "")} \u2219 Member ID: `{member.DisplayHid(ccfg)}`{(member.MetadataPrivacy.CanAccess(ctx) ? $"\n-# Created: {member.Created.FormatZoned(zone)}" : "")}",
                     },
                 ],
                 Accessory = new MessageComponent()
@@ -645,6 +661,7 @@ public class EmbedService
                 },
             ];
 
+        var systemPremium = await SystemHasPremium(system);
         return [
             new MessageComponent()
             {
@@ -659,7 +676,7 @@ public class EmbedService
                     new MessageComponent()
                     {
                         Type = ComponentType.Text,
-                        Content = $"-# System ID: `{system.DisplayHid(ctx.Config)}` \u2219 Group ID: `{target.DisplayHid(ctx.Config)}`{(target.MetadataPrivacy.CanAccess(pctx) ? $"\n-# Created: {target.Created.FormatZoned(ctx.Zone)}" : "")}",
+                        Content = $"-# System ID: `{system.DisplayHid(ctx.Config)}`{(systemPremium.Premium ? $" {systemPremium.Emoji}" : "")} \u2219 Group ID: `{target.DisplayHid(ctx.Config)}`{(target.MetadataPrivacy.CanAccess(pctx) ? $"\n-# Created: {target.Created.FormatZoned(ctx.Zone)}" : "")}",
                     },
                 ],
                 Accessory = new MessageComponent()
