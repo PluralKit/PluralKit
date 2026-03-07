@@ -29,6 +29,37 @@ public class SystemEdit
         _avatarHosting = avatarHosting;
     }
 
+    public async Task ChangeId(Context ctx, PKSystem target)
+    {
+        ctx.CheckSystem().CheckOwnSystem(target).CheckPremium();
+
+        var input = ctx.PopArgument();
+        if (!input.TryParseHid(out var newHid))
+            throw new PKError($"Invalid new system ID `{input}`.");
+
+        var existingSystem = await ctx.Repository.GetSystemByHid(newHid);
+        if (existingSystem != null)
+            throw new PKError($"Another system already exists with ID `{newHid.DisplayHid(ctx.Config)}`.");
+
+        var allowance = await ctx.Repository.GetSystemPremium(ctx.System.Id)!;
+        if (allowance.IdChangesRemaining < 1)
+            throw new PKError("You do not have enough available ID changes to do this.");
+        if ((await ctx.Repository.GetHidChangelogCountToday(target.Id)) >= Limits.PremiumDailyHidChanges)
+            throw new PKError($"You have already changed {Limits.PremiumDailyHidChanges} IDs today. Please try again tomorrow.");
+
+        if (!await ctx.PromptYesNo($"Change your system ID to `{newHid.DisplayHid(ctx.Config)}`?", "Change"))
+            throw new PKError("ID change cancelled.");
+
+        if (!await ctx.Repository.UpdatePremiumAllowanceForIdChange(target.Id))
+            throw new PKError("You do not have enough available ID changes to do this.");
+
+        await ctx.Repository.CreateHidChangelog(target.Id, ctx.Message.Author.Id, "system", target.Hid, newHid);
+        await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { Hid = newHid });
+
+        var newAllowance = await ctx.Repository.GetSystemPremium(target.Id)!;
+        await ctx.Reply($"{Emojis.Success} System ID changed to `{newHid.DisplayHid(ctx.Config)}`. You have **{newAllowance.IdChangesRemaining}** ID changes remaining.");
+    }
+
     public async Task Name(Context ctx, PKSystem target)
     {
         ctx.CheckSystemPrivacy(target.Id, target.NamePrivacy);
