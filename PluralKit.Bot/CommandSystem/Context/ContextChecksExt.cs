@@ -118,4 +118,12 @@ public static class ContextChecksExt
 
         return ctx;
     }
+
+    public static Context CheckPremium(this Context ctx)
+    {
+        if (!ctx.Premium)
+            throw Errors.PremiumExclusiveCommand;
+        
+        return ctx;
+    }
 }

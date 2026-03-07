@@ -99,6 +99,37 @@ public class Groups
         await ctx.Reply(replyStr, eb.Build());
     }
 
+    public async Task ChangeId(Context ctx, PKGroup target)
+    {
+        ctx.CheckSystem().CheckOwnGroup(target).CheckPremium();
+
+        var input = ctx.PopArgument();
+        if (!input.TryParseHid(out var newHid))
+            throw new PKError($"Invalid new member ID `{input}`.");
+
+        var existingGroup = await ctx.Repository.GetGroupByHid(newHid);
+        if (existingGroup != null)
+            throw new PKError($"Another group already exists with ID `{newHid.DisplayHid(ctx.Config)}`.");
+
+        var allowance = await ctx.Repository.GetSystemPremium(ctx.System.Id)!;
+        if (allowance.IdChangesRemaining < 1)
+            throw new PKError("You do not have enough available ID changes to do this.");
+        if ((await ctx.Repository.GetHidChangelogCountToday(ctx.System.Id)) >= Limits.PremiumDailyHidChanges)
+            throw new PKError($"You have already changed {Limits.PremiumDailyHidChanges} IDs today. Please try again tomorrow.");
+
+        if (!await ctx.PromptYesNo($"Change ID for group **{target.NameFor(ctx)}** (`{target.DisplayHid(ctx.Config)}`) to `{newHid.DisplayHid(ctx.Config)}`?", "Change"))
+            throw new PKError("ID change cancelled.");
+
+        if (!await ctx.Repository.UpdatePremiumAllowanceForIdChange(ctx.System.Id))
+            throw new PKError("You do not have enough available ID changes to do this.");
+
+        await ctx.Repository.CreateHidChangelog(ctx.System.Id, ctx.Message.Author.Id, "group", target.Hid, newHid);
+        await ctx.Repository.UpdateGroup(target.Id, new GroupPatch { Hid = newHid });
+
+        var newAllowance = await ctx.Repository.GetSystemPremium(ctx.System.Id)!;
+        await ctx.Reply($"{Emojis.Success} Group ID changed to `{newHid.DisplayHid(ctx.Config)}`. You have **{newAllowance.IdChangesRemaining}** ID changes remaining.");
+    }
+
     public async Task RenameGroup(Context ctx, PKGroup target)
     {
         ctx.CheckOwnGroup(target);

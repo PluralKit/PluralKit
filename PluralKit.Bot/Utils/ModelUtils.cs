@@ -31,6 +31,7 @@ public static class ModelUtils
     public static string DisplayHid(this PKSystem system, SystemConfig? cfg = null, bool isList = false) => HidTransform(system.Hid, cfg, isList);
     public static string DisplayHid(this PKGroup group, SystemConfig? cfg = null, bool isList = false, bool shouldPad = true) => HidTransform(group.Hid, cfg, isList, shouldPad);
     public static string DisplayHid(this PKMember member, SystemConfig? cfg = null, bool isList = false, bool shouldPad = true) => HidTransform(member.Hid, cfg, isList, shouldPad);
+    public static string DisplayHid(this string hid, SystemConfig? cfg = null, bool isList = false, bool shouldPad = true) => HidTransform(hid, cfg, isList, shouldPad);
     private static string HidTransform(string hid, SystemConfig? cfg = null, bool isList = false, bool shouldPad = true) =>
         HidUtils.HidTransform(
             hid,

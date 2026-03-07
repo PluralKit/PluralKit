@@ -37,6 +37,12 @@ public class Misc
 
         String message;
 
+        String linkText;
+        if (ctx.Premium)
+            linkText = "Manage your subscription";
+        else
+            linkText = "Subscribe to PluralKit Premium";
+
         var renewalTimestamp = DateTimeOffset.TryParse(ctx.Premium?.NextRenewalAt, out var dto)
             ? dto.ToUnixTimeSeconds()
             : (long?)null;
@@ -66,7 +72,57 @@ public class Misc
             }
         }
 
-        await ctx.Reply(message + $"\n\nManage your subscription at <{_botConfig.PremiumDashboardUrl}>");
+        List<MessageComponent> components = [
+            new MessageComponent()
+            {
+                Type = ComponentType.Text,
+                Content = message,
+            },
+        ];
+
+        if (ctx.Premium)
+        {
+            var hidChangesLeftToday = Limits.PremiumDailyHidChanges - await ctx.Repository.GetHidChangelogCountToday(ctx.System.Id);
+            var limitMessage = $"You have **{ctx.Premium.IdChangesRemaining}** ID changes available, of which you can use **{hidChangesLeftToday}** today.";
+
+            components.Add(new()
+            {
+                Type = ComponentType.Separator,
+            });
+            components.Add(new()
+            {
+                Type = ComponentType.Text,
+                Content = limitMessage,
+            });
+        }
+
+        await ctx.Reply(components: [
+            new()
+            {
+                Type = ComponentType.Container,
+                Components = [
+                    new()
+                    {
+                        Type = ComponentType.Text,
+                        Content = $"## {(_botConfig.PremiumSubscriberEmoji != null ? $"<:premium_subscriber:{_botConfig.PremiumSubscriberEmoji}>" : "\u2729")} PluralKit Premium",
+                    },
+                    ..components,
+                ],
+            },
+            new()
+            {
+                Type = ComponentType.ActionRow,
+                Components = [
+                    new()
+                    {
+                        Type = ComponentType.Button,
+                        Style = ButtonStyle.Link,
+                        Label = linkText,
+                        Url = _botConfig.PremiumDashboardUrl,
+                    },
+                ],
+            },
+        ]);
     }
 
     public async Task Invite(Context ctx)
