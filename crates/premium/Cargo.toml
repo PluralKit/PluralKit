@@ -32,8 +32,7 @@ async-stripe = { version = "1.0.0-rc.2", default-features = false, features = ["
 async-stripe-shared = { version = "1.0.0-rc.2" }
 async-stripe-billing = { version = "1.0.0-rc.2", features = ["subscription"] }
 async-stripe-core = { version = "1.0.0-rc.2", features = ["customer"] }
-async-stripe-checkout = { version = "1.0.0-rc.2" }
-async-stripe-webhook = { version = "1.0.0-rc.2", features = ["async-stripe-billing", "async-stripe-checkout", "deserialize"] }
+async-stripe-webhook = { version = "1.0.0-rc.2" }
 postmark = { version = "0.11", features = ["reqwest"] }
 rand = "0.8"
 thiserror = "1.0"
