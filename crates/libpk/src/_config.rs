@@ -98,6 +98,10 @@ pub struct ScheduledTasksConfig {
     pub expected_gateway_count: usize,
     pub gateway_url: String,
     pub prometheus_url: String,
+
+    #[serde(default)]
+    pub prometheus_auth_token: Option<String>,
+
     pub walg_s3_bucket: String,
 }
 
