@@ -1,6 +1,7 @@
 use std::time::{Duration, SystemTime};
 
 use axum::{
+    body::Body,
     extract::{MatchedPath, Request, State},
     http::{HeaderValue, Method, StatusCode},
     middleware::Next,
@@ -12,6 +13,7 @@ use tracing::{debug, error, info};
 
 use crate::{
     auth::AuthState,
+    middleware::params::RequestAboutSystem,
     util::{header_or_unknown, json_err},
 };
 
@@ -76,7 +78,7 @@ pub async fn do_request_ratelimited(
         // todo: make x-ratelimit-scope actually meaningful
 
         // hack: for now, we only have one "registered app", so we hardcode the app id
-        let rlimit = if let Some(app_id) = auth.app_id()
+        let rate_limit_type = if let Some(app_id) = auth.app_id()
             && app_id == 1
         {
             RatelimitType::TempCustom
@@ -88,16 +90,14 @@ pub async fn do_request_ratelimited(
             RatelimitType::GenericUpdate
         };
 
+        let rate_limit_by_system_or_source_ip =
+            system_id_if_resource_owned_by_system(auth, &request)
+                .unwrap_or_else(|| source_ip.to_string());
+
         let rl_key = format!(
             "{}:{}",
-            if let Some(system_id) = auth.system_id()
-                && matches!(rlimit, RatelimitType::GenericUpdate)
-            {
-                system_id.to_string()
-            } else {
-                source_ip.to_string()
-            },
-            rlimit.key()
+            rate_limit_by_system_or_source_ip,
+            rate_limit_type.key()
         );
 
         let period = 1; // seconds
@@ -135,7 +135,7 @@ pub async fn do_request_ratelimited(
             .evalsha::<(i32, String, u64), String, Vec<String>, Vec<i32>>(
                 LUA_SCRIPT_SHA.to_string(),
                 vec![rl_key.clone()],
-                vec![rlimit.rate(), period, cost],
+                vec![rate_limit_type.rate(), period, cost],
             )
             .await;
 
@@ -156,7 +156,7 @@ pub async fn do_request_ratelimited(
                         StatusCode::TOO_MANY_REQUESTS,
                         format!(
                             r#"{{"message":"429: too many requests","retry_after":{retry_after},"scope":"{}","code":0}}"#,
-                            rlimit.key(),
+                            rate_limit_type.key(),
                         ),
                     )
                 };
@@ -171,11 +171,12 @@ pub async fn do_request_ratelimited(
                 let headers = response.headers_mut();
                 headers.insert(
                     "X-RateLimit-Scope",
-                    HeaderValue::from_str(rlimit.key().as_str()).expect("invalid header value"),
+                    HeaderValue::from_str(rate_limit_type.key().as_str())
+                        .expect("invalid header value"),
                 );
                 headers.insert(
                     "X-RateLimit-Limit",
-                    HeaderValue::from_str(format!("{}", rlimit.rate()).as_str())
+                    HeaderValue::from_str(format!("{}", rate_limit_type.rate()).as_str())
                         .expect("invalid header value"),
                 );
                 headers.insert(
@@ -202,4 +203,15 @@ pub async fn do_request_ratelimited(
     }
 
     next.run(request).await
+}
+
+fn system_id_if_resource_owned_by_system(
+    auth: &AuthState,
+    request: &Request<Body>,
+) -> Option<String> {
+    let requested_system_id = request.extensions().get::<RequestAboutSystem>();
+    match (auth.system_id(), requested_system_id) {
+        (Some(auth_id), Some(req_id)) if auth_id == req_id.id => Some(auth_id.to_string()),
+        _ => None,
+    }
 }
