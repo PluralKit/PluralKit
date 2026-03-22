@@ -1,4 +1,4 @@
-use pluralkit_models::{PKSystem, PrivacyLevel, SystemId};
+use pluralkit_models::{PrivacyLevel, SystemId};
 
 pub const INTERNAL_SYSTEMID_HEADER: &'static str = "x-pluralkit-systemid";
 pub const INTERNAL_APPID_HEADER: &'static str = "x-pluralkit-appid";
