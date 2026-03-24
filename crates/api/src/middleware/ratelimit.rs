@@ -13,7 +13,7 @@ use tracing::{debug, error, info};
 
 use crate::{
     auth::AuthState,
-    middleware::params::RequestAboutSystem,
+    middleware::ownership::RequestAboutSystem,
     util::{header_or_unknown, json_err},
 };
 
