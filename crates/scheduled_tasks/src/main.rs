@@ -22,22 +22,10 @@ pub struct AppCtx {
 
 #[libpk::main]
 async fn main() -> anyhow::Result<()> {
-    let mut client_builder = twilight_http::Client::builder().token(
-        libpk::config
-            .discord
-            .as_ref()
-            .expect("missing discord config")
-            .bot_token
-            .clone(),
-    );
+    let mut client_builder =
+        twilight_http::Client::builder().token(libpk::config.discord().bot_token.clone());
 
-    if let Some(base_url) = libpk::config
-        .discord
-        .as_ref()
-        .expect("missing discord config")
-        .api_base_url
-        .clone()
-    {
+    if let Some(base_url) = libpk::config.discord().api_base_url.clone() {
         client_builder = client_builder.proxy(base_url, true).ratelimiter(None);
     }
 

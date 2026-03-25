@@ -76,7 +76,10 @@ async fn update_basebackup_ts(repo: String) -> anyhow::Result<()> {
 
     env.insert(
         "WALG_S3_PREFIX".to_string(),
-        format!("s3://pluralkit-backups/{repo}/"),
+        format!(
+            "s3://{}/{repo}/",
+            libpk::config.scheduled_tasks().walg_s3_bucket
+        ),
     );
 
     let output = Command::new("wal-g")
@@ -311,10 +314,12 @@ pub async fn update_stats_api(ctx: AppCtx) -> anyhow::Result<()> {
     macro_rules! prom_instant_query {
         ($t:ty, $q:expr) => {{
             tracing::info!("Query: {}", $q);
-            let resp = client
-                .get(format!("{}/api/v1/query?query={}", cfg.prometheus_url, $q))
-                .send()
-                .await?;
+            let mut req = client.get(format!("{}/api/v1/query?query={}", cfg.prometheus_url, $q));
+
+            if let Some(auth_token) = &cfg.prometheus_auth_token {
+                req = req.header(reqwest::header::AUTHORIZATION, auth_token);
+            }
+            let resp = req.send().await?;
 
             let data = resp.json::<PrometheusResult>().await?;
 
