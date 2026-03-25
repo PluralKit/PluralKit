@@ -332,6 +332,21 @@ public class ProxyService
         // Mangle embeds (for reply embed color changing)
         var mangledEmbeds = originalMsg.Embeds!.Select(embed => MangleReproxyEmbed(embed, member)).Where(embed => embed != null).ToArray();
 
+        Message.MessageFlags flags = 0;
+        // If the guild suppress notifications condition is set to Always
+        if (ctx.SuppressNotifications == GuildConfig.SuppressCondition.Always ||
+            // OR if it is set to Match/Invert and the first message proxied was silent
+            ((ctx.SuppressNotifications == GuildConfig.SuppressCondition.Match ||
+            ctx.SuppressNotifications == GuildConfig.SuppressCondition.Invert) &&
+                originalMsg.Flags.HasFlag(Message.MessageFlags.SuppressNotifications)))
+            // Make the proxied message silent
+            flags |= Message.MessageFlags.SuppressNotifications;
+        // Basically: If the server is using match or invert, leave as is
+        // If they're using always or never we respect it in the very rare
+        // case it may have changed before the reproxy message was sent
+        if (originalMsg.Flags.HasFlag(Message.MessageFlags.VoiceMessage))
+            flags |= Message.MessageFlags.VoiceMessage;
+
         // Send the reproxied webhook
         var proxyMessage = await _webhookExecutor.ExecuteWebhook(new ProxyRequest
         {
@@ -347,7 +362,7 @@ public class ProxyService
             Embeds = mangledEmbeds,
             Stickers = originalMsg.StickerItems!,
             AllowEveryone = allowEveryone,
-            Flags = originalMsg.Flags.HasFlag(Message.MessageFlags.VoiceMessage) ? Message.MessageFlags.VoiceMessage : null,
+            Flags = flags,
             Tts = tts,
             Poll = originalMsg.Poll,
         });
