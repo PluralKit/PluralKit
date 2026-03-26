@@ -87,7 +87,7 @@
           # };
 
           # TODO: expose other rust packages after it's verified they build and work properly
-          packages = lib.genAttrs ["gateway"] (name: rustOutputs.${name}.packages.release);
+          packages = lib.genAttrs ["gateway" "api"] (name: rustOutputs.${name}.packages.release);
           # TODO: package the bot itself (dotnet)
 
           devShells = {
@@ -193,6 +193,7 @@
                   # TODO: add liveness check
                   ready_log_line = "Received Ready";
                 };
+
                 ### migrations ###
                 pluralkit-migrate-init = mkServiceInitProcess {
                   name = "migrate";
@@ -209,6 +210,7 @@
                   depends_on.postgres.condition = "process_healthy";
                   depends_on.pluralkit-migrate-init.condition = "process_completed_successfully";
                 };
+
                 ### gateway ###
                 pluralkit-gateway-init = mkServiceInitProcess {
                   name = "gateway";
@@ -237,6 +239,29 @@
                   readiness_probe.exec.command = procCfg.pluralkit-gateway.liveness_probe.exec.command;
                   readiness_probe.period_seconds = 5;
                   readiness_probe.initial_delay_seconds = 3;
+                };
+                
+                ### api ###
+                pluralkit-api-init = mkServiceInitProcess {
+                  name = "api";
+                };
+                pluralkit-api = {
+                  command = pkgs.writeShellApplication {
+                    name = "pluralkit-api";
+                    runtimeInputs = with pkgs; [
+                      coreutils
+                      curl
+                      gnugrep
+                    ];
+                    text = ''
+                      ${sourceDotenv}
+                      set -x
+                      exec target/debug/api
+                    '';
+                  };
+                  depends_on.postgres.condition = "process_healthy";
+                  depends_on.redis.condition = "process_healthy";
+                  depends_on.pluralkit-api-init.condition = "process_completed_successfully";
                 };
                 # TODO: add the rest of the services
               };
