@@ -3,32 +3,21 @@ use pk_macros::api_endpoint;
 use serde_json::{Value, json};
 use sqlx::Postgres;
 
-use pluralkit_models::{PKSystem, PKSystemConfig, PrivacyLevel};
+use pluralkit_models::{PKSystemConfig, PrivacyLevel, SystemId};
 
-use crate::{ApiContext, auth::AuthState, error::fail};
+use crate::{
+    auth::AuthState, error::{fail, PKError}, middleware::ownership::RequestAboutSystem, ApiContext
+};
 
 #[api_endpoint]
 pub async fn get_system_settings(
     Extension(auth): Extension<AuthState>,
-    Extension(system): Extension<PKSystem>,
+    Extension(system): Extension<RequestAboutSystem>,
     State(ctx): State<ApiContext>,
 ) -> Json<Value> {
-    let access_level = auth.access_level_for(&system);
+    let access_level = auth.access_level_for(system.id);
 
-    let mut config = match sqlx::query_as::<Postgres, PKSystemConfig>(
-        "select * from system_config where system = $1",
-    )
-    .bind(system.id)
-    .fetch_optional(&ctx.db)
-    .await
-    {
-        Ok(Some(config)) => config,
-        Ok(None) => fail!(
-            system = system.id,
-            "failed to find system config for existing system"
-        ),
-        Err(err) => fail!(?err, "failed to query system config"),
-    };
+    let mut config = lookup_config(system.id, &ctx.db).await?;
 
     // fix this
     if config.name_format.is_none() {
@@ -49,4 +38,23 @@ pub async fn get_system_settings(
             "name_format": config.name_format,
         }),
     }))
+}
+
+async fn lookup_config(
+    system_id: SystemId,
+    db: &sqlx::Pool<Postgres>,
+) -> Result<PKSystemConfig, PKError> {
+    let db_result =
+        sqlx::query_as::<Postgres, PKSystemConfig>("select * from system_config where system = $1")
+            .bind(system_id)
+            .fetch_optional(db)
+            .await;
+    match db_result {
+        Ok(Some(config)) => Ok(config),
+        Ok(None) => fail!(
+            system = system_id,
+            "failed to find system config for existing system"
+        ),
+        Err(err) => fail!(?err, "failed to query system config"),
+    }
 }

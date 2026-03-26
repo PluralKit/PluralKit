@@ -1,14 +1,18 @@
 mod _util;
 
-macro_rules! model {
-    ($n:ident) => {
-        mod $n;
-        pub use $n::*;
-    };
-}
+mod group;
+mod id_ref;
+mod member;
+mod switch;
+mod system;
+mod system_config;
 
-model!(system);
-model!(system_config);
+pub use group::*;
+pub use id_ref::*;
+pub use member::*;
+pub use switch::*;
+pub use system::*;
+pub use system_config::*;
 
 #[derive(serde::Serialize, Debug, Clone)]
 #[serde(rename_all = "snake_case")]
