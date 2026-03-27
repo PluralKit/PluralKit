@@ -4,646 +4,326 @@ namespace PluralKit.Bot;
 
 public partial class CommandTree
 {
-    public Task ExecuteCommand(Context ctx)
+    public Task ExecuteCommand(Context ctx, Commands command)
     {
-        if (ctx.Match("system", "s", "account", "acc"))
-            return HandleSystemCommand(ctx);
-        if (ctx.Match("member", "m"))
-            return HandleMemberCommand(ctx);
-        if (ctx.Match("group", "g"))
-            return HandleGroupCommand(ctx);
-        if (ctx.Match("switch", "sw"))
-            return HandleSwitchCommand(ctx);
-        if (ctx.Match("commands", "cmd", "c"))
-            return CommandHelpRoot(ctx);
-        if (ctx.Match("ap", "autoproxy", "auto"))
-            return HandleAutoproxyCommand(ctx);
-        if (ctx.Match("config", "cfg", "configure"))
-            return HandleConfigCommand(ctx);
-        if (ctx.Match("serverconfig", "guildconfig", "scfg"))
-            return HandleServerConfigCommand(ctx);
-        if (ctx.Match("list", "find", "members", "search", "query", "l", "f", "fd", "ls"))
-            return ctx.Execute<SystemList>(SystemList, m => m.MemberList(ctx, ctx.System));
-        if (ctx.Match("link"))
-            return ctx.Execute<SystemLink>(Link, m => m.LinkSystem(ctx));
-        if (ctx.Match("unlink"))
-            return ctx.Execute<SystemLink>(Unlink, m => m.UnlinkAccount(ctx));
-        if (ctx.Match("token"))
-            if (ctx.Match("refresh", "renew", "invalidate", "reroll", "regen"))
-                return ctx.Execute<Api>(TokenRefresh, m => m.RefreshToken(ctx));
-            else
-                return ctx.Execute<Api>(TokenGet, m => m.GetToken(ctx));
-        if (ctx.Match("import"))
-            return ctx.Execute<ImportExport>(Import, m => m.Import(ctx));
-        if (ctx.Match("export"))
-            return ctx.Execute<ImportExport>(Export, m => m.Export(ctx));
-        if (ctx.Match("help", "h"))
-            if (ctx.Match("commands"))
-                return ctx.Reply("For the list of commands, see the website: <https://pluralkit.me/commands>");
-            else if (ctx.Match("proxy"))
-                return ctx.Reply(
-                    "The proxy help page has been moved! See the website: https://pluralkit.me/guide#proxying");
-            else return ctx.Execute<Help>(Help, m => m.HelpRoot(ctx));
-        if (ctx.Match("explain"))
-            return ctx.Execute<Help>(Explain, m => m.Explain(ctx));
-        if (ctx.Match("message", "msg", "messageinfo"))
-            return ctx.Execute<ProxiedMessage>(Message, m => m.GetMessage(ctx));
-        if (ctx.Match("edit", "e"))
-            return ctx.Execute<ProxiedMessage>(MessageEdit, m => m.EditMessage(ctx, false));
-        if (ctx.Match("x"))
-            return ctx.Execute<ProxiedMessage>(MessageEdit, m => m.EditMessage(ctx, true));
-        if (ctx.Match("reproxy", "rp", "crimes", "crime"))
-            return ctx.Execute<ProxiedMessage>(MessageReproxy, m => m.ReproxyMessage(ctx));
-        if (ctx.Match("log"))
-            if (ctx.Match("channel"))
-                return ctx.Execute<ServerConfig>(LogChannel, m => m.SetLogChannel(ctx), true);
-            else if (ctx.Match("enable", "on"))
-                return ctx.Execute<ServerConfig>(LogEnable, m => m.SetLogEnabled(ctx, true), true);
-            else if (ctx.Match("disable", "off"))
-                return ctx.Execute<ServerConfig>(LogDisable, m => m.SetLogEnabled(ctx, false), true);
-            else if (ctx.Match("list", "show"))
-                return ctx.Execute<ServerConfig>(LogShow, m => m.ShowLogDisabledChannels(ctx), true);
-            else
-                return ctx.Reply($"{Emojis.Warn} Message logging commands have moved to `{ctx.DefaultPrefix}serverconfig`.");
-        if (ctx.Match("logclean"))
-            return ctx.Execute<ServerConfig>(ServerConfigLogClean, m => m.SetLogCleanup(ctx), true);
-        if (ctx.Match("blacklist", "bl"))
-            if (ctx.Match("enable", "on", "add", "deny"))
-                return ctx.Execute<ServerConfig>(BlacklistAdd, m => m.SetProxyBlacklisted(ctx, true), true);
-            else if (ctx.Match("disable", "off", "remove", "allow"))
-                return ctx.Execute<ServerConfig>(BlacklistRemove, m => m.SetProxyBlacklisted(ctx, false), true);
-            else if (ctx.Match("list", "show"))
-                return ctx.Execute<ServerConfig>(BlacklistShow, m => m.ShowProxyBlacklisted(ctx), true);
-            else
-                return ctx.Reply($"{Emojis.Warn} Blacklist commands have moved to `{ctx.DefaultPrefix}serverconfig`.");
-        if (ctx.Match("proxy"))
-            if (ctx.Match("debug"))
-                return ctx.Execute<Checks>(ProxyCheck, m => m.MessageProxyCheck(ctx));
-            else
-                return ctx.Execute<SystemEdit>(SystemProxy, m => m.SystemProxy(ctx));
-        if (ctx.Match("invite")) return ctx.Execute<Misc>(Invite, m => m.Invite(ctx));
-        if (ctx.Match("mn")) return ctx.Execute<Fun>(null, m => m.Mn(ctx));
-        if (ctx.Match("fire")) return ctx.Execute<Fun>(null, m => m.Fire(ctx));
-        if (ctx.Match("thunder")) return ctx.Execute<Fun>(null, m => m.Thunder(ctx));
-        if (ctx.Match("freeze")) return ctx.Execute<Fun>(null, m => m.Freeze(ctx));
-        if (ctx.Match("starstorm")) return ctx.Execute<Fun>(null, m => m.Starstorm(ctx));
-        if (ctx.Match("flash")) return ctx.Execute<Fun>(null, m => m.Flash(ctx));
-        if (ctx.Match("rool")) return ctx.Execute<Fun>(null, m => m.Rool(ctx));
-        if (ctx.Match("sus")) return ctx.Execute<Fun>(null, m => m.Sus(ctx));
-        if (ctx.Match("error")) return ctx.Execute<Fun>(null, m => m.Error(ctx));
-        if (ctx.Match("stats", "status")) return ctx.Execute<Misc>(null, m => m.Stats(ctx));
-        if (ctx.Match("permcheck"))
-            return ctx.Execute<Checks>(PermCheck, m => m.PermCheckGuild(ctx));
-        if (ctx.Match("proxycheck"))
-            return ctx.Execute<Checks>(ProxyCheck, m => m.MessageProxyCheck(ctx));
-        if (ctx.Match("debug"))
-            return HandleDebugCommand(ctx);
-        if (ctx.Match("admin"))
-            return HandleAdminCommand(ctx);
-        if (ctx.Match("random", "rand", "r"))
-            if (ctx.Match("group", "g") || ctx.MatchFlag("group", "g"))
-                return ctx.Execute<Random>(GroupRandom, r => r.Group(ctx, ctx.System));
-            else
-                return ctx.Execute<Random>(MemberRandom, m => m.Member(ctx, ctx.System));
-        if (ctx.Match("dashboard", "dash"))
-            return ctx.Execute<Help>(Dashboard, m => m.Dashboard(ctx));
-
-        // don't send an "invalid command" response if the guild has those turned off
-        if (ctx.GuildConfig != null && ctx.GuildConfig!.InvalidCommandResponseEnabled != true)
-            return Task.CompletedTask;
-
-        // remove compiler warning
-        return ctx.Reply(
-            $"{Emojis.Error} Unknown command {ctx.PeekArgument().AsCode()}. For a list of possible commands, see <https://pluralkit.me/commands>.");
-    }
-
-    private async Task HandleAdminAbuseLogCommand(Context ctx)
-    {
-        ctx.AssertBotAdmin();
-
-        if (ctx.Match("n", "new", "create"))
-            await ctx.Execute<Admin>(Admin, a => a.AbuseLogCreate(ctx));
-        else
+        return command switch
         {
-            AbuseLog? abuseLog = null!;
-            var account = await ctx.MatchUser();
-            if (account != null)
+            Commands.CommandsList(var param, _) => PrintCommandList(ctx, param.subject, Parameters.GetRelatedCommands(ctx.DefaultPrefix, param.subject)),
+            Commands.Dashboard => ctx.Execute<Help>(Dashboard, m => m.Dashboard(ctx)),
+            Commands.Explain => ctx.Execute<Help>(Explain, m => m.Explain(ctx)),
+            Commands.Help(_, var flags) => ctx.Execute<Help>(Help, m => m.HelpRoot(ctx, flags.show_embed)),
+            Commands.HelpCommands => ctx.Reply(
+                    "For the list of commands, see the website: <https://pluralkit.me/commands>"),
+            Commands.HelpProxy => ctx.Reply(
+                    "The proxy help page has been moved! See the website: https://pluralkit.me/guide#proxying"),
+            Commands.Invite => ctx.Execute<Misc>(Invite, m => m.Invite(ctx)),
+            Commands.Stats => ctx.Execute<Misc>(null, m => m.Stats(ctx)),
+            Commands.MemberShow(var param, var flags) => ctx.Execute<Member>(MemberInfo, m => m.ViewMember(ctx, param.target, flags.show_embed)),
+            Commands.MemberNew(var param, var flags) => ctx.Execute<Member>(MemberNew, m => m.NewMember(ctx, param.name, flags.yes)),
+            Commands.MemberSoulscream(var param, _) => ctx.Execute<Member>(MemberInfo, m => m.Soulscream(ctx, param.target)),
+            Commands.MemberAvatarShow(var param, var flags) => ctx.Execute<MemberAvatar>(MemberAvatar, m => m.ShowAvatar(ctx, param.target, flags.GetReplyFormat())),
+            Commands.MemberAvatarClear(var param, var flags) => ctx.Execute<MemberAvatar>(MemberAvatar, m => m.ClearAvatar(ctx, param.target, flags.yes)),
+            Commands.MemberAvatarUpdate(var param, _) => ctx.Execute<MemberAvatar>(MemberAvatar, m => m.ChangeAvatar(ctx, param.target, param.avatar)),
+            Commands.MemberWebhookAvatarShow(var param, var flags) => ctx.Execute<MemberAvatar>(MemberAvatar, m => m.ShowWebhookAvatar(ctx, param.target, flags.GetReplyFormat())),
+            Commands.MemberWebhookAvatarClear(var param, var flags) => ctx.Execute<MemberAvatar>(MemberAvatar, m => m.ClearWebhookAvatar(ctx, param.target, flags.yes)),
+            Commands.MemberWebhookAvatarUpdate(var param, _) => ctx.Execute<MemberAvatar>(MemberAvatar, m => m.ChangeWebhookAvatar(ctx, param.target, param.avatar)),
+            Commands.MemberServerAvatarShow(var param, var flags) => ctx.Execute<MemberAvatar>(MemberAvatar, m => m.ShowServerAvatar(ctx, param.target, flags.GetReplyFormat())),
+            Commands.MemberServerAvatarClear(var param, var flags) => ctx.Execute<MemberAvatar>(MemberAvatar, m => m.ClearServerAvatar(ctx, param.target, flags.yes)),
+            Commands.MemberServerAvatarUpdate(var param, _) => ctx.Execute<MemberAvatar>(MemberAvatar, m => m.ChangeServerAvatar(ctx, param.target, param.avatar)),
+            Commands.MemberPronounsShow(var param, var flags) => ctx.Execute<MemberEdit>(MemberPronouns, m => m.ShowPronouns(ctx, param.target, flags.GetReplyFormat())),
+            Commands.MemberPronounsClear(var param, var flags) => ctx.Execute<MemberEdit>(MemberPronouns, m => m.ClearPronouns(ctx, param.target, flags.yes)),
+            Commands.MemberPronounsUpdate(var param, _) => ctx.Execute<MemberEdit>(MemberPronouns, m => m.ChangePronouns(ctx, param.target, param.pronouns)),
+            Commands.MemberDescShow(var param, var flags) => ctx.Execute<MemberEdit>(MemberDesc, m => m.ShowDescription(ctx, param.target, flags.GetReplyFormat())),
+            Commands.MemberDescClear(var param, var flags) => ctx.Execute<MemberEdit>(MemberDesc, m => m.ClearDescription(ctx, param.target, flags.yes)),
+            Commands.MemberDescUpdate(var param, _) => ctx.Execute<MemberEdit>(MemberDesc, m => m.ChangeDescription(ctx, param.target, param.description)),
+            Commands.MemberNameShow(var param, var flags) => ctx.Execute<MemberEdit>(MemberInfo, m => m.ShowName(ctx, param.target, flags.GetReplyFormat())),
+            Commands.MemberNameUpdate(var param, var flags) => ctx.Execute<MemberEdit>(MemberInfo, m => m.ChangeName(ctx, param.target, param.name, flags.yes)),
+            Commands.MemberBannerShow(var param, var flags) => ctx.Execute<MemberEdit>(MemberBannerImage, m => m.ShowBannerImage(ctx, param.target, flags.GetReplyFormat())),
+            Commands.MemberBannerClear(var param, var flags) => ctx.Execute<MemberEdit>(MemberBannerImage, m => m.ClearBannerImage(ctx, param.target, flags.yes)),
+            Commands.MemberBannerUpdate(var param, _) => ctx.Execute<MemberEdit>(MemberBannerImage, m => m.ChangeBannerImage(ctx, param.target, param.banner)),
+            Commands.MemberColorShow(var param, var flags) => ctx.Execute<MemberEdit>(MemberColor, m => m.ShowColor(ctx, param.target, flags.GetReplyFormat())),
+            Commands.MemberColorClear(var param, var flags) => ctx.Execute<MemberEdit>(MemberColor, m => m.ClearColor(ctx, param.target, flags.yes)),
+            Commands.MemberColorUpdate(var param, _) => ctx.Execute<MemberEdit>(MemberColor, m => m.ChangeColor(ctx, param.target, param.color)),
+            Commands.MemberBirthdayShow(var param, var flags) => ctx.Execute<MemberEdit>(MemberBirthday, m => m.ShowBirthday(ctx, param.target, flags.GetReplyFormat())),
+            Commands.MemberBirthdayClear(var param, var flags) => ctx.Execute<MemberEdit>(MemberBirthday, m => m.ClearBirthday(ctx, param.target, flags.yes)),
+            Commands.MemberBirthdayUpdate(var param, _) => ctx.Execute<MemberEdit>(MemberBirthday, m => m.ChangeBirthday(ctx, param.target, param.birthday)),
+            Commands.MemberDisplaynameShow(var param, var flags) => ctx.Execute<MemberEdit>(MemberDisplayName, m => m.ShowDisplayName(ctx, param.target, flags.GetReplyFormat())),
+            Commands.MemberDisplaynameClear(var param, var flags) => ctx.Execute<MemberEdit>(MemberDisplayName, m => m.ClearDisplayName(ctx, param.target, flags.yes)),
+            Commands.MemberDisplaynameUpdate(var param, _) => ctx.Execute<MemberEdit>(MemberDisplayName, m => m.ChangeDisplayName(ctx, param.target, param.name)),
+            Commands.MemberServernameShow(var param, var flags) => ctx.Execute<MemberEdit>(MemberServerName, m => m.ShowServerName(ctx, param.target, flags.GetReplyFormat())),
+            Commands.MemberServernameClear(var param, var flags) => ctx.Execute<MemberEdit>(MemberServerName, m => m.ClearServerName(ctx, param.target, flags.yes)),
+            Commands.MemberServernameUpdate(var param, _) => ctx.Execute<MemberEdit>(MemberServerName, m => m.ChangeServerName(ctx, param.target, param.name)),
+            Commands.MemberKeepproxyShow(var param, _) => ctx.Execute<MemberEdit>(MemberKeepProxy, m => m.ShowKeepProxy(ctx, param.target)),
+            Commands.MemberKeepproxyUpdate(var param, _) => ctx.Execute<MemberEdit>(MemberKeepProxy, m => m.ChangeKeepProxy(ctx, param.target, param.value)),
+            Commands.MemberServerKeepproxyShow(var param, _) => ctx.Execute<MemberEdit>(MemberServerKeepProxy, m => m.ShowServerKeepProxy(ctx, param.target)),
+            Commands.MemberServerKeepproxyUpdate(var param, _) => ctx.Execute<MemberEdit>(MemberServerKeepProxy, m => m.ChangeServerKeepProxy(ctx, param.target, param.value)),
+            Commands.MemberServerKeepproxyClear(var param, var flags) => ctx.Execute<MemberEdit>(MemberServerKeepProxy, m => m.ClearServerKeepProxy(ctx, param.target, flags.yes)),
+            Commands.MemberProxyShow(var param, _) => ctx.Execute<MemberProxy>(MemberProxy, m => m.ShowProxy(ctx, param.target)),
+            Commands.MemberProxyClear(var param, var flags) => ctx.Execute<MemberProxy>(MemberProxy, m => m.ClearProxy(ctx, param.target, flags.yes)),
+            Commands.MemberProxyAdd(var param, var flags) => ctx.Execute<MemberProxy>(MemberProxy, m => m.AddProxy(ctx, param.target, param.tag, flags.yes)),
+            Commands.MemberProxyRemove(var param, _) => ctx.Execute<MemberProxy>(MemberProxy, m => m.RemoveProxy(ctx, param.target, param.tag)),
+            Commands.MemberProxySet(var param, var flags) => ctx.Execute<MemberProxy>(MemberProxy, m => m.SetProxy(ctx, param.target, param.tags, flags.yes)),
+            Commands.MemberTtsShow(var param, _) => ctx.Execute<MemberEdit>(MemberTts, m => m.ShowTts(ctx, param.target)),
+            Commands.MemberTtsUpdate(var param, _) => ctx.Execute<MemberEdit>(MemberTts, m => m.ChangeTts(ctx, param.target, param.value)),
+            Commands.MemberAutoproxyShow(var param, _) => ctx.Execute<MemberEdit>(MemberAutoproxy, m => m.ShowAutoproxy(ctx, param.target)),
+            Commands.MemberAutoproxyUpdate(var param, _) => ctx.Execute<MemberEdit>(MemberAutoproxy, m => m.ChangeAutoproxy(ctx, param.target, param.value)),
+            Commands.MemberDelete(var param, _) => ctx.Execute<MemberEdit>(MemberDelete, m => m.Delete(ctx, param.target)),
+            Commands.MemberPrivacyShow(var param, _) => ctx.Execute<MemberEdit>(MemberPrivacy, m => m.ShowPrivacy(ctx, param.target)),
+            Commands.MemberPrivacyUpdate(var param, _) => ctx.Execute<MemberEdit>(MemberPrivacy, m => m.ChangePrivacy(ctx, param.target, param.member_privacy_target, param.new_privacy_level)),
+            Commands.MemberGroupAdd(var param, _) => ctx.Execute<GroupMember>(MemberGroupAdd, m => m.AddRemoveGroups(ctx, param.target, param.groups, Groups.AddRemoveOperation.Add)),
+            Commands.MemberGroupRemove(var param, _) => ctx.Execute<GroupMember>(MemberGroupRemove, m => m.AddRemoveGroups(ctx, param.target, param.groups, Groups.AddRemoveOperation.Remove)),
+            Commands.MemberId(var param, _) => ctx.Execute<Member>(MemberId, m => m.DisplayId(ctx, param.target)),
+            Commands.CfgShow => ctx.Execute<Config>(null, m => m.ShowConfig(ctx)),
+            Commands.CfgApAccountShow => ctx.Execute<Config>(null, m => m.ViewAutoproxyAccount(ctx)),
+            Commands.CfgApAccountUpdate(var param, _) => ctx.Execute<Config>(null, m => m.EditAutoproxyAccount(ctx, param.toggle)),
+            Commands.CfgApTimeoutShow => ctx.Execute<Config>(null, m => m.ViewAutoproxyTimeout(ctx)),
+            Commands.CfgApTimeoutOff => ctx.Execute<Config>(null, m => m.DisableAutoproxyTimeout(ctx)),
+            Commands.CfgApTimeoutReset => ctx.Execute<Config>(null, m => m.ResetAutoproxyTimeout(ctx)),
+            Commands.CfgApTimeoutUpdate(var param, _) => ctx.Execute<Config>(null, m => m.EditAutoproxyTimeout(ctx, param.timeout)),
+            Commands.CfgTimezoneShow => ctx.Execute<Config>(null, m => m.ViewSystemTimezone(ctx)),
+            Commands.CfgTimezoneReset => ctx.Execute<Config>(null, m => m.ResetSystemTimezone(ctx)),
+            Commands.CfgTimezoneUpdate(var param, var flags) => ctx.Execute<Config>(null, m => m.EditSystemTimezone(ctx, param.timezone, flags.yes)),
+            Commands.CfgPingShow => ctx.Execute<Config>(null, m => m.ViewSystemPing(ctx)),
+            Commands.CfgPingUpdate(var param, _) => ctx.Execute<Config>(null, m => m.EditSystemPing(ctx, param.toggle)),
+            Commands.CfgMemberPrivacyShow => ctx.Execute<Config>(null, m => m.ViewMemberDefaultPrivacy(ctx)),
+            Commands.CfgMemberPrivacyUpdate(var param, _) => ctx.Execute<Config>(null, m => m.EditMemberDefaultPrivacy(ctx, param.toggle)),
+            Commands.CfgGroupPrivacyShow => ctx.Execute<Config>(null, m => m.ViewGroupDefaultPrivacy(ctx)),
+            Commands.CfgGroupPrivacyUpdate(var param, _) => ctx.Execute<Config>(null, m => m.EditGroupDefaultPrivacy(ctx, param.toggle)),
+            Commands.CfgShowPrivateInfoShow => ctx.Execute<Config>(null, m => m.ViewShowPrivateInfo(ctx)),
+            Commands.CfgShowPrivateInfoUpdate(var param, _) => ctx.Execute<Config>(null, m => m.EditShowPrivateInfo(ctx, param.toggle)),
+            Commands.CfgCaseSensitiveProxyTagsShow => ctx.Execute<Config>(null, m => m.ViewCaseSensitiveProxyTags(ctx)),
+            Commands.CfgCaseSensitiveProxyTagsUpdate(var param, _) => ctx.Execute<Config>(null, m => m.EditCaseSensitiveProxyTags(ctx, param.toggle)),
+            Commands.CfgProxyErrorMessageShow => ctx.Execute<Config>(null, m => m.ViewProxyErrorMessageEnabled(ctx)),
+            Commands.CfgProxyErrorMessageUpdate(var param, _) => ctx.Execute<Config>(null, m => m.EditProxyErrorMessageEnabled(ctx, param.toggle)),
+            Commands.CfgHidSplitShow => ctx.Execute<Config>(null, m => m.ViewHidDisplaySplit(ctx)),
+            Commands.CfgHidSplitUpdate(var param, _) => ctx.Execute<Config>(null, m => m.EditHidDisplaySplit(ctx, param.toggle)),
+            Commands.CfgHidCapsShow => ctx.Execute<Config>(null, m => m.ViewHidDisplayCaps(ctx)),
+            Commands.CfgHidCapsUpdate(var param, _) => ctx.Execute<Config>(null, m => m.EditHidDisplayCaps(ctx, param.toggle)),
+            Commands.CfgHidPaddingShow => ctx.Execute<Config>(null, m => m.ViewHidListPadding(ctx)),
+            Commands.CfgHidPaddingUpdate(var param, _) => ctx.Execute<Config>(null, m => m.EditHidListPadding(ctx, param.padding)),
+            Commands.CfgCardShowColorHexShow => ctx.Execute<Config>(null, m => m.ViewCardShowColorHex(ctx)),
+            Commands.CfgCardShowColorHexUpdate(var param, _) => ctx.Execute<Config>(null, m => m.EditCardShowColorHex(ctx, param.toggle)),
+            Commands.CfgProxySwitchShow => ctx.Execute<Config>(null, m => m.ViewProxySwitch(ctx)),
+            Commands.CfgProxySwitchUpdate(var param, _) => ctx.Execute<Config>(null, m => m.EditProxySwitch(ctx, param.proxy_switch_action)),
+            Commands.CfgNameFormatShow => ctx.Execute<Config>(null, m => m.ViewNameFormat(ctx)),
+            Commands.CfgNameFormatReset => ctx.Execute<Config>(null, m => m.ResetNameFormat(ctx)),
+            Commands.CfgNameFormatUpdate(var param, _) => ctx.Execute<Config>(null, m => m.EditNameFormat(ctx, param.format)),
+            Commands.CfgServerNameFormatShow(_, var flags) => ctx.Execute<Config>(null, m => m.ViewServerNameFormat(ctx, flags.GetReplyFormat())),
+            Commands.CfgServerNameFormatReset => ctx.Execute<Config>(null, m => m.ResetServerNameFormat(ctx)),
+            Commands.CfgServerNameFormatUpdate(var param, _) => ctx.Execute<Config>(null, m => m.EditServerNameFormat(ctx, param.format)),
+            Commands.CfgLimitsUpdate => ctx.Execute<Config>(null, m => m.LimitUpdate(ctx)),
+            Commands.FunThunder => ctx.Execute<Fun>(null, m => m.Thunder(ctx)),
+            Commands.FunMeow => ctx.Execute<Fun>(null, m => m.Meow(ctx)),
+            Commands.FunPokemon => ctx.Execute<Fun>(null, m => m.Mn(ctx)),
+            Commands.FunFire => ctx.Execute<Fun>(null, m => m.Fire(ctx)),
+            Commands.FunFreeze => ctx.Execute<Fun>(null, m => m.Freeze(ctx)),
+            Commands.FunStarstorm => ctx.Execute<Fun>(null, m => m.Starstorm(ctx)),
+            Commands.FunFlash => ctx.Execute<Fun>(null, m => m.Flash(ctx)),
+            Commands.FunRool => ctx.Execute<Fun>(null, m => m.Rool(ctx)),
+            Commands.Amogus => ctx.Execute<Fun>(null, m => m.Sus(ctx)),
+            Commands.FunError => ctx.Execute<Fun>(null, m => m.Error(ctx)),
+            Commands.SystemInfo(var param, var flags) => ctx.Execute<System>(SystemInfo, m => m.Query(ctx, param.target ?? ctx.System, flags.all, flags.@public, flags.@private)),
+            Commands.SystemNew(var param, _) => ctx.Execute<System>(SystemNew, m => m.New(ctx, param.name)),
+            Commands.SystemShowName(var param, var flags) => ctx.Execute<SystemEdit>(SystemRename, m => m.ShowName(ctx, param.target ?? ctx.System, flags.GetReplyFormat())),
+            Commands.SystemRename(var param, _) => ctx.Execute<SystemEdit>(SystemRename, m => m.Rename(ctx, ctx.System, param.name)),
+            Commands.SystemShowServerName(var param, var flags) => ctx.Execute<SystemEdit>(SystemServerName, m => m.ShowServerName(ctx, param.target ?? ctx.System, flags.GetReplyFormat())),
+            Commands.SystemClearServerName(var param, var flags) => ctx.Execute<SystemEdit>(SystemServerName, m => m.ClearServerName(ctx, ctx.System, flags.yes)),
+            Commands.SystemRenameServerName(var param, _) => ctx.Execute<SystemEdit>(SystemServerName, m => m.RenameServerName(ctx, ctx.System, param.name)),
+            Commands.SystemShowDescription(var param, var flags) => ctx.Execute<SystemEdit>(SystemDesc, m => m.ShowDescription(ctx, param.target ?? ctx.System, flags.GetReplyFormat())),
+            Commands.SystemClearDescription(var param, var flags) => ctx.Execute<SystemEdit>(SystemDesc, m => m.ClearDescription(ctx, ctx.System, flags.yes)),
+            Commands.SystemChangeDescription(var param, _) => ctx.Execute<SystemEdit>(SystemDesc, m => m.ChangeDescription(ctx, ctx.System, param.description)),
+            Commands.SystemShowColor(var param, var flags) => ctx.Execute<SystemEdit>(SystemColor, m => m.ShowColor(ctx, param.target ?? ctx.System, flags.GetReplyFormat())),
+            Commands.SystemClearColor(var param, var flags) => ctx.Execute<SystemEdit>(SystemColor, m => m.ClearColor(ctx, ctx.System, flags.yes)),
+            Commands.SystemChangeColor(var param, _) => ctx.Execute<SystemEdit>(SystemColor, m => m.ChangeColor(ctx, ctx.System, param.color)),
+            Commands.SystemShowTag(var param, var flags) => ctx.Execute<SystemEdit>(SystemTag, m => m.ShowTag(ctx, param.target ?? ctx.System, flags.GetReplyFormat())),
+            Commands.SystemClearTag(var param, var flags) => ctx.Execute<SystemEdit>(SystemTag, m => m.ClearTag(ctx, ctx.System, flags.yes)),
+            Commands.SystemChangeTag(var param, _) => ctx.Execute<SystemEdit>(SystemTag, m => m.ChangeTag(ctx, ctx.System, param.tag)),
+            Commands.SystemShowServerTag(var param, var flags) => ctx.Execute<SystemEdit>(SystemServerTag, m => m.ShowServerTag(ctx, param.target ?? ctx.System, flags.GetReplyFormat())),
+            Commands.SystemClearServerTag(var param, var flags) => ctx.Execute<SystemEdit>(SystemServerTag, m => m.ClearServerTag(ctx, ctx.System, flags.yes)),
+            Commands.SystemChangeServerTag(var param, _) => ctx.Execute<SystemEdit>(SystemServerTag, m => m.ChangeServerTag(ctx, ctx.System, param.tag)),
+            Commands.SystemShowPronouns(var param, var flags) => ctx.Execute<SystemEdit>(SystemPronouns, m => m.ShowPronouns(ctx, param.target ?? ctx.System, flags.GetReplyFormat())),
+            Commands.SystemClearPronouns(var param, var flags) => ctx.Execute<SystemEdit>(SystemPronouns, m => m.ClearPronouns(ctx, ctx.System, flags.yes)),
+            Commands.SystemChangePronouns(var param, _) => ctx.Execute<SystemEdit>(SystemPronouns, m => m.ChangePronouns(ctx, ctx.System, param.pronouns)),
+            Commands.SystemShowAvatar(var param, var flags) => ((Func<Task>)(() =>
             {
-                abuseLog = await ctx.Repository.GetAbuseLogByAccount(account.Id);
-            }
-            else
-            {
-                abuseLog = await ctx.Repository.GetAbuseLogByGuid(new Guid(ctx.PopArgument()));
-            }
-
-            if (abuseLog == null)
-            {
-                await ctx.Reply($"{Emojis.Error} Could not find an existing abuse log entry for that query.");
-                return;
-            }
-
-            if (!ctx.HasNext())
-                await ctx.Execute<Admin>(Admin, a => a.AbuseLogShow(ctx, abuseLog));
-            else if (ctx.Match("au", "adduser"))
-                await ctx.Execute<Admin>(Admin, a => a.AbuseLogAddUser(ctx, abuseLog));
-            else if (ctx.Match("ru", "removeuser"))
-                await ctx.Execute<Admin>(Admin, a => a.AbuseLogRemoveUser(ctx, abuseLog));
-            else if (ctx.Match("desc", "description"))
-                await ctx.Execute<Admin>(Admin, a => a.AbuseLogDescription(ctx, abuseLog));
-            else if (ctx.Match("deny", "deny-bot-usage"))
-                await ctx.Execute<Admin>(Admin, a => a.AbuseLogFlagDeny(ctx, abuseLog));
-            else if (ctx.Match("yeet", "remove", "delete"))
-                await ctx.Execute<Admin>(Admin, a => a.AbuseLogDelete(ctx, abuseLog));
-            else
-                await ctx.Reply($"{Emojis.Error} Unknown subcommand {ctx.PeekArgument().AsCode()}.");
-        }
-    }
-
-    private async Task HandleAdminCommand(Context ctx)
-    {
-        if (ctx.Match("usid", "updatesystemid"))
-            await ctx.Execute<Admin>(Admin, a => a.UpdateSystemId(ctx));
-        else if (ctx.Match("umid", "updatememberid"))
-            await ctx.Execute<Admin>(Admin, a => a.UpdateMemberId(ctx));
-        else if (ctx.Match("ugid", "updategroupid"))
-            await ctx.Execute<Admin>(Admin, a => a.UpdateGroupId(ctx));
-        else if (ctx.Match("rsid", "rerollsystemid"))
-            await ctx.Execute<Admin>(Admin, a => a.RerollSystemId(ctx));
-        else if (ctx.Match("rmid", "rerollmemberid"))
-            await ctx.Execute<Admin>(Admin, a => a.RerollMemberId(ctx));
-        else if (ctx.Match("rgid", "rerollgroupid"))
-            await ctx.Execute<Admin>(Admin, a => a.RerollGroupId(ctx));
-        else if (ctx.Match("uml", "updatememberlimit"))
-            await ctx.Execute<Admin>(Admin, a => a.SystemMemberLimit(ctx));
-        else if (ctx.Match("ugl", "updategrouplimit"))
-            await ctx.Execute<Admin>(Admin, a => a.SystemGroupLimit(ctx));
-        else if (ctx.Match("sr", "systemrecover"))
-            await ctx.Execute<Admin>(Admin, a => a.SystemRecover(ctx));
-        else if (ctx.Match("sd", "systemdelete"))
-            await ctx.Execute<Admin>(Admin, a => a.SystemDelete(ctx));
-        else if (ctx.Match("sendmsg", "sendmessage"))
-            await ctx.Execute<Admin>(Admin, a => a.SendAdminMessage(ctx));
-        else if (ctx.Match("al", "abuselog"))
-            await HandleAdminAbuseLogCommand(ctx);
-        else
-            await ctx.Reply($"{Emojis.Error} Unknown command.");
-    }
-
-    private async Task HandleDebugCommand(Context ctx)
-    {
-        var availableCommandsStr = "Available debug targets: `permissions`, `proxying`";
-
-        if (ctx.Match("permissions", "perms", "permcheck"))
-            if (ctx.Match("channel", "ch"))
-                await ctx.Execute<Checks>(PermCheck, m => m.PermCheckChannel(ctx));
-            else
-                await ctx.Execute<Checks>(PermCheck, m => m.PermCheckGuild(ctx));
-        else if (ctx.Match("channel"))
-            await ctx.Execute<Checks>(PermCheck, m => m.PermCheckChannel(ctx));
-        else if (ctx.Match("proxy", "proxying", "proxycheck"))
-            await ctx.Execute<Checks>(ProxyCheck, m => m.MessageProxyCheck(ctx));
-        else if (!ctx.HasNext())
-            await ctx.Reply($"{Emojis.Error} You need to pass a command. {availableCommandsStr}");
-        else
-            await ctx.Reply(
-                $"{Emojis.Error} Unknown debug command {ctx.PeekArgument().AsCode()}. {availableCommandsStr}");
-    }
-
-    private async Task HandleSystemCommand(Context ctx)
-    {
-        // these commands never take a system target
-        if (ctx.Match("new", "create", "make", "add", "register", "init", "n"))
-            await ctx.Execute<System>(SystemNew, m => m.New(ctx));
-        else if (ctx.Match("commands", "help"))
-            await PrintCommandList(ctx, "systems", SystemCommands);
-
-        // todo: these aren't deprecated but also shouldn't be here
-        else if (ctx.Match("webhook", "hook"))
-            await ctx.Execute<Api>(null, m => m.SystemWebhook(ctx));
-        else if (ctx.Match("proxy"))
-            await ctx.Execute<SystemEdit>(SystemProxy, m => m.SystemProxy(ctx));
-
-        // finally, parse commands that *can* take a system target
-        else
-        {
-            // try matching a system ID
-            var target = await ctx.MatchSystem();
-            var previousPtr = ctx.Parameters._ptr;
-
-            // if we have a parsed target and no more commands, don't bother with the command flow
-            // we skip the `target != null` check here since the argument isn't be popped if it's not a system
-            if (!ctx.HasNext())
-            {
-                await ctx.Execute<System>(SystemInfo, m => m.Query(ctx, target ?? ctx.System));
-                return;
-            }
-
-            // hacky, but we need to CheckSystem(target) which throws a PKError
-            // normally PKErrors are only handled in ctx.Execute
-            try
-            {
-                await HandleSystemCommandTargeted(ctx, target ?? ctx.System);
-            }
-            catch (PKError e)
-            {
-                await ctx.Reply($"{Emojis.Error} {e.Message}");
-                return;
-            }
-
-            // if we *still* haven't matched anything, the user entered an invalid command name or system reference
-            if (ctx.Parameters._ptr == previousPtr)
-            {
-                if (!ctx.Parameters.Peek().TryParseHid(out _) && !ctx.Parameters.Peek().TryParseMention(out _))
+                if (param.target == null)
                 {
-                    await PrintCommandNotFoundError(ctx, SystemCommands);
-                    return;
+                    // we want to change avatar if an attached image is passed
+                    // we can't have a separate parsed command for this since the parser can't be aware of any attachments
+                    var attachedImage = ctx.ExtractImageFromAttachment();
+                    if (attachedImage is { } image)
+                        return ctx.Execute<SystemEdit>(SystemAvatar, m => m.ChangeAvatar(ctx, ctx.System, image));
                 }
-
-                var list = CreatePotentialCommandList(ctx.DefaultPrefix, SystemCommands);
-                await ctx.Reply($"{Emojis.Error} {await CreateSystemNotFoundError(ctx)}\n\n"
-                        + $"Perhaps you meant to use one of the following commands?\n{list}");
-            }
-        }
-    }
-
-    private async Task HandleSystemCommandTargeted(Context ctx, PKSystem target)
-    {
-        if (ctx.Match("name", "rename", "changename", "rn"))
-            await ctx.CheckSystem(target).Execute<SystemEdit>(SystemRename, m => m.Name(ctx, target));
-        else if (ctx.Match("servername", "sn", "sname", "snick", "snickname", "servernick", "servernickname",
-                     "serverdisplayname", "guildname", "guildnick", "guildnickname", "serverdn"))
-            await ctx.Execute<SystemEdit>(SystemServerName, m => m.ServerName(ctx, target));
-        else if (ctx.Match("tag", "t"))
-            await ctx.CheckSystem(target).Execute<SystemEdit>(SystemTag, m => m.Tag(ctx, target));
-        else if (ctx.Match("servertag", "st", "stag", "deer"))
-            await ctx.CheckSystem(target).Execute<SystemEdit>(SystemServerTag, m => m.ServerTag(ctx, target));
-        else if (ctx.Match("description", "desc", "describe", "d", "bio", "info", "text", "intro"))
-            await ctx.CheckSystem(target).Execute<SystemEdit>(SystemDesc, m => m.Description(ctx, target));
-        else if (ctx.Match("pronouns", "pronoun", "prns", "pn"))
-            await ctx.CheckSystem(target).Execute<SystemEdit>(SystemPronouns, m => m.Pronouns(ctx, target));
-        else if (ctx.Match("color", "colour"))
-            await ctx.CheckSystem(target).Execute<SystemEdit>(SystemColor, m => m.Color(ctx, target));
-        else if (ctx.Match("banner", "splash", "cover"))
-            await ctx.CheckSystem(target).Execute<SystemEdit>(SystemBannerImage, m => m.BannerImage(ctx, target));
-        else if (ctx.Match("avatar", "picture", "icon", "image", "pic", "pfp"))
-            await ctx.CheckSystem(target).Execute<SystemEdit>(SystemAvatar, m => m.Avatar(ctx, target));
-        else if (ctx.Match("serveravatar", "sa", "servericon", "serverimage", "serverpfp", "serverpic", "savatar", "spic",
-                     "guildavatar", "guildpic", "guildicon", "sicon", "spfp"))
-            await ctx.CheckSystem(target).Execute<SystemEdit>(SystemServerAvatar, m => m.ServerAvatar(ctx, target));
-        else if (ctx.Match("list", "l", "members", "ls"))
-            await ctx.CheckSystem(target).Execute<SystemList>(SystemList, m => m.MemberList(ctx, target));
-        else if (ctx.Match("find", "search", "query", "fd", "s"))
-            await ctx.CheckSystem(target).Execute<SystemList>(SystemFind, m => m.MemberList(ctx, target));
-        else if (ctx.Match("f", "front", "fronter", "fronters"))
-        {
-            if (ctx.Match("h", "history"))
-                await ctx.CheckSystem(target).Execute<SystemFront>(SystemFrontHistory, m => m.SystemFrontHistory(ctx, target));
-            else if (ctx.Match("p", "percent", "%"))
-                await ctx.CheckSystem(target).Execute<SystemFront>(SystemFrontPercent, m => m.FrontPercent(ctx, system: target));
-            else
-                await ctx.CheckSystem(target).Execute<SystemFront>(SystemFronter, m => m.SystemFronter(ctx, target));
-        }
-        else if (ctx.Match("fh", "fronthistory", "history", "switches"))
-            await ctx.CheckSystem(target).Execute<SystemFront>(SystemFrontHistory, m => m.SystemFrontHistory(ctx, target));
-        else if (ctx.Match("fp", "frontpercent", "front%", "frontbreakdown"))
-            await ctx.CheckSystem(target).Execute<SystemFront>(SystemFrontPercent, m => m.FrontPercent(ctx, system: target));
-        else if (ctx.Match("info", "view", "show"))
-            await ctx.CheckSystem(target).Execute<System>(SystemInfo, m => m.Query(ctx, target));
-        else if (ctx.Match("groups", "gs"))
-            await ctx.CheckSystem(target).Execute<Groups>(GroupList, g => g.ListSystemGroups(ctx, target));
-        else if (ctx.Match("privacy"))
-            await ctx.CheckSystem(target).Execute<SystemEdit>(SystemPrivacy, m => m.SystemPrivacy(ctx, target));
-        else if (ctx.Match("delete", "remove", "destroy", "erase", "yeet"))
-            await ctx.CheckSystem(target).Execute<SystemEdit>(SystemDelete, m => m.Delete(ctx, target));
-        else if (ctx.Match("id"))
-            await ctx.CheckSystem(target).Execute<System>(SystemId, m => m.DisplayId(ctx, target));
-        else if (ctx.Match("random", "rand", "r"))
-            if (ctx.Match("group", "g") || ctx.MatchFlag("group", "g"))
-                await ctx.CheckSystem(target).Execute<Random>(GroupRandom, r => r.Group(ctx, target));
-            else
-                await ctx.CheckSystem(target).Execute<Random>(MemberRandom, m => m.Member(ctx, target));
-    }
-
-    private async Task HandleMemberCommand(Context ctx)
-    {
-        if (ctx.Match("new", "n", "add", "create", "register"))
-            await ctx.Execute<Member>(MemberNew, m => m.NewMember(ctx));
-        else if (ctx.Match("list"))
-            await ctx.Execute<SystemList>(SystemList, m => m.MemberList(ctx, ctx.System));
-        else if (ctx.Match("commands", "help"))
-            await PrintCommandList(ctx, "members", MemberCommands);
-        else if (await ctx.MatchMember() is PKMember target)
-            await HandleMemberCommandTargeted(ctx, target);
-        else if (!ctx.HasNext())
-            await PrintCommandExpectedError(ctx, MemberNew, MemberInfo, MemberRename, MemberDisplayName,
-                MemberServerName, MemberDesc, MemberPronouns,
-                MemberColor, MemberBirthday, MemberProxy, MemberDelete, MemberAvatar);
-        else
-            await ctx.Reply($"{Emojis.Error} {ctx.CreateNotFoundError("Member", ctx.PopArgument())}");
-    }
-
-    private async Task HandleMemberCommandTargeted(Context ctx, PKMember target)
-    {
-        // Commands that have a member target (eg. pk;member <member> delete)
-        if (ctx.Match("rename", "name", "changename", "setname", "rn"))
-            await ctx.Execute<MemberEdit>(MemberRename, m => m.Name(ctx, target));
-        else if (ctx.Match("description", "desc", "describe", "d", "bio", "info", "text", "intro"))
-            await ctx.Execute<MemberEdit>(MemberDesc, m => m.Description(ctx, target));
-        else if (ctx.Match("pronouns", "pronoun", "prns", "pn"))
-            await ctx.Execute<MemberEdit>(MemberPronouns, m => m.Pronouns(ctx, target));
-        else if (ctx.Match("color", "colour"))
-            await ctx.Execute<MemberEdit>(MemberColor, m => m.Color(ctx, target));
-        else if (ctx.Match("birthday", "birth", "bday", "birthdate", "cakeday", "bdate", "bd"))
-            await ctx.Execute<MemberEdit>(MemberBirthday, m => m.Birthday(ctx, target));
-        else if (ctx.Match("proxy", "tags", "proxytags", "brackets"))
-            await ctx.Execute<MemberProxy>(MemberProxy, m => m.Proxy(ctx, target));
-        else if (ctx.Match("delete", "remove", "destroy", "erase", "yeet"))
-            await ctx.Execute<MemberEdit>(MemberDelete, m => m.Delete(ctx, target));
-        else if (ctx.Match("avatar", "profile", "picture", "icon", "image", "pfp", "pic"))
-            await ctx.Execute<MemberAvatar>(MemberAvatar, m => m.Avatar(ctx, target));
-        else if (ctx.Match("proxyavatar", "proxypfp", "webhookavatar", "webhookpfp", "pa", "pavatar", "ppfp"))
-            await ctx.Execute<MemberAvatar>(MemberAvatar, m => m.WebhookAvatar(ctx, target));
-        else if (ctx.Match("banner", "splash", "cover"))
-            await ctx.Execute<MemberEdit>(MemberBannerImage, m => m.BannerImage(ctx, target));
-        else if (ctx.Match("group", "groups", "g"))
-            if (ctx.Match("add", "a"))
-                await ctx.Execute<GroupMember>(MemberGroupAdd,
-                    m => m.AddRemoveGroups(ctx, target, Groups.AddRemoveOperation.Add));
-            else if (ctx.Match("remove", "rem"))
-                await ctx.Execute<GroupMember>(MemberGroupRemove,
-                    m => m.AddRemoveGroups(ctx, target, Groups.AddRemoveOperation.Remove));
-            else
-                await ctx.Execute<GroupMember>(MemberGroups, m => m.ListMemberGroups(ctx, target));
-        else if (ctx.Match("serveravatar", "sa", "servericon", "serverimage", "serverpfp", "serverpic", "savatar", "spic",
-                     "guildavatar", "guildpic", "guildicon", "sicon", "spfp"))
-            await ctx.Execute<MemberAvatar>(MemberServerAvatar, m => m.ServerAvatar(ctx, target));
-        else if (ctx.Match("displayname", "dn", "dname", "nick", "nickname", "dispname"))
-            await ctx.Execute<MemberEdit>(MemberDisplayName, m => m.DisplayName(ctx, target));
-        else if (ctx.Match("servername", "sn", "sname", "snick", "snickname", "servernick", "servernickname",
-                     "serverdisplayname", "guildname", "guildnick", "guildnickname", "serverdn"))
-            await ctx.Execute<MemberEdit>(MemberServerName, m => m.ServerName(ctx, target));
-        else if (ctx.Match("autoproxy", "ap"))
-            await ctx.Execute<MemberEdit>(MemberAutoproxy, m => m.MemberAutoproxy(ctx, target));
-        else if (ctx.Match("keepproxy", "keeptags", "showtags", "kp"))
-            await ctx.Execute<MemberEdit>(MemberKeepProxy, m => m.KeepProxy(ctx, target));
-        else if (ctx.Match("texttospeech", "text-to-speech", "tts"))
-            await ctx.Execute<MemberEdit>(MemberTts, m => m.Tts(ctx, target));
-        else if (ctx.Match("serverkeepproxy", "servershowtags", "guildshowtags", "guildkeeptags", "serverkeeptags", "skp"))
-            await ctx.Execute<MemberEdit>(MemberServerKeepProxy, m => m.ServerKeepProxy(ctx, target));
-        else if (ctx.Match("id"))
-            await ctx.Execute<Member>(MemberId, m => m.DisplayId(ctx, target));
-        else if (ctx.Match("privacy"))
-            await ctx.Execute<MemberEdit>(MemberPrivacy, m => m.Privacy(ctx, target, null));
-        else if (ctx.Match("private", "hidden", "hide"))
-            await ctx.Execute<MemberEdit>(MemberPrivacy, m => m.Privacy(ctx, target, PrivacyLevel.Private));
-        else if (ctx.Match("public", "shown", "show", "unhide", "unhidden"))
-            await ctx.Execute<MemberEdit>(MemberPrivacy, m => m.Privacy(ctx, target, PrivacyLevel.Public));
-        else if (ctx.Match("soulscream"))
-            await ctx.Execute<Member>(MemberInfo, m => m.Soulscream(ctx, target));
-        else if (!ctx.HasNext()) // Bare command
-            await ctx.Execute<Member>(MemberInfo, m => m.ViewMember(ctx, target));
-        else
-            await PrintCommandNotFoundError(ctx, MemberInfo, MemberRename, MemberDisplayName, MemberServerName,
-                MemberDesc, MemberPronouns, MemberColor, MemberBirthday, MemberProxy, MemberDelete, MemberAvatar,
-                SystemList);
-    }
-
-    private async Task HandleGroupCommand(Context ctx)
-    {
-        // Commands with no group argument
-        if (ctx.Match("n", "new"))
-            await ctx.Execute<Groups>(GroupNew, g => g.CreateGroup(ctx));
-        else if (ctx.Match("list", "l"))
-            await ctx.Execute<Groups>(GroupList, g => g.ListSystemGroups(ctx, null));
-        else if (ctx.Match("commands", "help"))
-            await PrintCommandList(ctx, "groups", GroupCommands);
-        else if (await ctx.MatchGroup() is { } target)
-        {
-            // Commands with group argument
-            if (ctx.Match("rename", "name", "changename", "setname", "rn"))
-                await ctx.Execute<Groups>(GroupRename, g => g.RenameGroup(ctx, target));
-            else if (ctx.Match("nick", "dn", "displayname", "nickname"))
-                await ctx.Execute<Groups>(GroupDisplayName, g => g.GroupDisplayName(ctx, target));
-            else if (ctx.Match("description", "desc", "describe", "d", "bio", "info", "text", "intro"))
-                await ctx.Execute<Groups>(GroupDesc, g => g.GroupDescription(ctx, target));
-            else if (ctx.Match("add", "a"))
-                await ctx.Execute<GroupMember>(GroupAdd,
-                    g => g.AddRemoveMembers(ctx, target, Groups.AddRemoveOperation.Add));
-            else if (ctx.Match("remove", "rem"))
-                await ctx.Execute<GroupMember>(GroupRemove,
-                    g => g.AddRemoveMembers(ctx, target, Groups.AddRemoveOperation.Remove));
-            else if (ctx.Match("members", "list", "ms", "l", "ls"))
-                await ctx.Execute<GroupMember>(GroupMemberList, g => g.ListGroupMembers(ctx, target));
-            else if (ctx.Match("random", "rand", "r"))
-                await ctx.Execute<Random>(GroupMemberRandom, r => r.GroupMember(ctx, target));
-            else if (ctx.Match("privacy"))
-                await ctx.Execute<Groups>(GroupPrivacy, g => g.GroupPrivacy(ctx, target, null));
-            else if (ctx.Match("public", "pub"))
-                await ctx.Execute<Groups>(GroupPrivacy, g => g.GroupPrivacy(ctx, target, PrivacyLevel.Public));
-            else if (ctx.Match("private", "priv"))
-                await ctx.Execute<Groups>(GroupPrivacy, g => g.GroupPrivacy(ctx, target, PrivacyLevel.Private));
-            else if (ctx.Match("delete", "destroy", "erase", "yeet"))
-                await ctx.Execute<Groups>(GroupDelete, g => g.DeleteGroup(ctx, target));
-            else if (ctx.Match("avatar", "picture", "icon", "image", "pic", "pfp"))
-                await ctx.Execute<Groups>(GroupIcon, g => g.GroupIcon(ctx, target));
-            else if (ctx.Match("banner", "splash", "cover"))
-                await ctx.Execute<Groups>(GroupBannerImage, g => g.GroupBannerImage(ctx, target));
-            else if (ctx.Match("fp", "frontpercent", "front%", "frontbreakdown"))
-                await ctx.Execute<SystemFront>(GroupFrontPercent, g => g.FrontPercent(ctx, group: target));
-            else if (ctx.Match("color", "colour"))
-                await ctx.Execute<Groups>(GroupColor, g => g.GroupColor(ctx, target));
-            else if (ctx.Match("id"))
-                await ctx.Execute<Groups>(GroupId, g => g.DisplayId(ctx, target));
-            else if (!ctx.HasNext())
-                await ctx.Execute<Groups>(GroupInfo, g => g.ShowGroupCard(ctx, target));
-            else
-                await PrintCommandNotFoundError(ctx, GroupCommandsTargeted);
-        }
-        else if (!ctx.HasNext())
-            await PrintCommandExpectedError(ctx, GroupCommands);
-        else
-            await ctx.Reply($"{Emojis.Error} {ctx.CreateNotFoundError("Group", ctx.PopArgument())}");
-    }
-
-    private async Task HandleSwitchCommand(Context ctx)
-    {
-        if (ctx.Match("out"))
-            await ctx.Execute<Switch>(SwitchOut, m => m.SwitchOut(ctx));
-        else if (ctx.Match("move", "m", "shift", "offset"))
-            await ctx.Execute<Switch>(SwitchMove, m => m.SwitchMove(ctx));
-        else if (ctx.Match("edit", "e", "replace"))
-            if (ctx.Match("out"))
-                await ctx.Execute<Switch>(SwitchEditOut, m => m.SwitchEditOut(ctx));
-            else
-                await ctx.Execute<Switch>(SwitchEdit, m => m.SwitchEdit(ctx));
-        else if (ctx.Match("delete", "remove", "erase", "cancel", "yeet"))
-            await ctx.Execute<Switch>(SwitchDelete, m => m.SwitchDelete(ctx));
-        else if (ctx.Match("copy", "add", "duplicate", "dupe"))
-            await ctx.Execute<Switch>(SwitchCopy, m => m.SwitchEdit(ctx, true));
-        else if (ctx.Match("commands", "help"))
-            await PrintCommandList(ctx, "switching", SwitchCommands);
-        else if (ctx.HasNext()) // there are following arguments
-            await ctx.Execute<Switch>(Switch, m => m.SwitchDo(ctx));
-        else
-            await PrintCommandNotFoundError(ctx, Switch, SwitchOut, SwitchMove, SwitchEdit, SwitchEditOut,
-                SwitchDelete, SwitchCopy, SystemFronter, SystemFrontHistory);
-    }
-
-    private async Task CommandHelpRoot(Context ctx)
-    {
-        if (!ctx.HasNext())
-        {
-            await ctx.Reply(
-                "Available command help targets: `system`, `member`, `group`, `switch`, `config`, `autoproxy`, `log`, `blacklist`."
-                + $"\n- **{ctx.DefaultPrefix}commands <target>** - *View commands related to a help target.*"
-                + "\n\nFor the full list of commands, see the website: <https://pluralkit.me/commands>");
-            return;
-        }
-
-        switch (ctx.PeekArgument())
-        {
-            case "system":
-            case "systems":
-            case "s":
-            case "account":
-            case "acc":
-                await PrintCommandList(ctx, "systems", SystemCommands);
-                break;
-            case "member":
-            case "members":
-            case "m":
-                await PrintCommandList(ctx, "members", MemberCommands);
-                break;
-            case "group":
-            case "groups":
-            case "g":
-                await PrintCommandList(ctx, "groups", GroupCommands);
-                break;
-            case "switch":
-            case "switches":
-            case "switching":
-            case "sw":
-                await PrintCommandList(ctx, "switching", SwitchCommands);
-                break;
-            case "log":
-                await PrintCommandList(ctx, "message logging", LogCommands);
-                break;
-            case "blacklist":
-            case "bl":
-                await PrintCommandList(ctx, "channel blacklisting", BlacklistCommands);
-                break;
-            case "config":
-            case "cfg":
-                await PrintCommandList(ctx, "settings", ConfigCommands);
-                break;
-            case "serverconfig":
-            case "guildconfig":
-            case "scfg":
-                await PrintCommandList(ctx, "server settings", ServerConfigCommands);
-                break;
-            case "autoproxy":
-            case "ap":
-                await PrintCommandList(ctx, "autoproxy", AutoproxyCommands);
-                break;
-            default:
-                await ctx.Reply("For the full list of commands, see the website: <https://pluralkit.me/commands>");
-                break;
-        }
-    }
-
-    private Task HandleAutoproxyCommand(Context ctx)
-    {
-        // ctx.CheckSystem();
-        // oops, that breaks stuff! PKErrors before ctx.Execute don't actually do anything.
-        // so we just emulate checking and throwing an error.
-        if (ctx.System == null)
-            return ctx.Reply($"{Emojis.Error} {Errors.NoSystemError(ctx.DefaultPrefix).Message}");
-
-        return ctx.Execute<Autoproxy>(AutoproxySet, m => m.SetAutoproxyMode(ctx));
-    }
-
-    private Task HandleConfigCommand(Context ctx)
-    {
-        if (ctx.System == null)
-            return ctx.Reply($"{Emojis.Error} {Errors.NoSystemError(ctx.DefaultPrefix).Message}");
-
-        if (!ctx.HasNext())
-            return ctx.Execute<Config>(null, m => m.ShowConfig(ctx));
-
-        if (ctx.MatchMultiple(new[] { "autoproxy", "ap" }, new[] { "account", "ac" }))
-            return ctx.Execute<Config>(null, m => m.AutoproxyAccount(ctx));
-        if (ctx.MatchMultiple(new[] { "autoproxy", "ap" }, new[] { "timeout", "tm" }))
-            return ctx.Execute<Config>(null, m => m.AutoproxyTimeout(ctx));
-        if (ctx.Match("timezone", "zone", "tz"))
-            return ctx.Execute<Config>(null, m => m.SystemTimezone(ctx));
-        if (ctx.Match("ping"))
-            return ctx.Execute<Config>(null, m => m.SystemPing(ctx));
-        if (ctx.MatchMultiple(new[] { "private" }, new[] { "member" }) || ctx.Match("mp"))
-            return ctx.Execute<Config>(null, m => m.MemberDefaultPrivacy(ctx));
-        if (ctx.MatchMultiple(new[] { "private" }, new[] { "group" }) || ctx.Match("gp"))
-            return ctx.Execute<Config>(null, m => m.GroupDefaultPrivacy(ctx));
-        if (ctx.MatchMultiple(new[] { "show" }, new[] { "private" }) || ctx.Match("sp"))
-            return ctx.Execute<Config>(null, m => m.ShowPrivateInfo(ctx));
-        if (ctx.MatchMultiple(new[] { "proxy" }, new[] { "case" }))
-            return ctx.Execute<Config>(null, m => m.CaseSensitiveProxyTags(ctx));
-        if (ctx.MatchMultiple(new[] { "proxy" }, new[] { "error" }) || ctx.Match("pe"))
-            return ctx.Execute<Config>(null, m => m.ProxyErrorMessageEnabled(ctx));
-        if (ctx.MatchMultiple(new[] { "split" }, new[] { "id", "ids" }) || ctx.Match("sid", "sids"))
-            return ctx.Execute<Config>(null, m => m.HidDisplaySplit(ctx));
-        if (ctx.MatchMultiple(new[] { "cap", "caps", "capitalize", "capitalise" }, new[] { "id", "ids" }) || ctx.Match("capid", "capids"))
-            return ctx.Execute<Config>(null, m => m.HidDisplayCaps(ctx));
-        if (ctx.MatchMultiple(new[] { "pad" }, new[] { "id", "ids" }) || ctx.MatchMultiple(new[] { "id" }, new[] { "pad", "padding" }) || ctx.Match("idpad", "padid", "padids"))
-            return ctx.Execute<Config>(null, m => m.HidListPadding(ctx));
-        if (ctx.MatchMultiple(new[] { "show" }, new[] { "color", "colour", "colors", "colours" }) || ctx.Match("showcolor", "showcolour", "showcolors", "showcolours", "colorcode", "colorhex"))
-            return ctx.Execute<Config>(null, m => m.CardShowColorHex(ctx));
-        if (ctx.MatchMultiple(new[] { "name" }, new[] { "format" }) || ctx.Match("nameformat", "nf"))
-            return ctx.Execute<Config>(null, m => m.NameFormat(ctx));
-        if (ctx.MatchMultiple(new[] { "member", "group" }, new[] { "limit" }) || ctx.Match("limit"))
-            return ctx.Execute<Config>(null, m => m.LimitUpdate(ctx));
-        if (ctx.MatchMultiple(new[] { "proxy" }, new[] { "switch" }) || ctx.Match("proxyswitch", "ps"))
-            return ctx.Execute<Config>(null, m => m.ProxySwitch(ctx));
-        if (ctx.MatchMultiple(new[] { "server" }, new[] { "name" }, new[] { "format" }) || ctx.MatchMultiple(new[] { "server", "servername" }, new[] { "format", "nameformat", "nf" }) || ctx.Match("snf", "servernf", "servernameformat", "snameformat"))
-            return ctx.Execute<Config>(null, m => m.ServerNameFormat(ctx));
-
-        // todo: maybe add the list of configuration keys here?
-        return ctx.Reply($"{Emojis.Error} Could not find a setting with that name. Please see `{ctx.DefaultPrefix}commands config` for the list of possible config settings.");
-    }
-
-    private Task HandleServerConfigCommand(Context ctx)
-    {
-        if (!ctx.HasNext())
-            return ctx.Execute<ServerConfig>(null, m => m.ShowConfig(ctx));
-
-        if (ctx.MatchMultiple(new[] { "log" }, new[] { "cleanup", "clean" }) || ctx.Match("logclean"))
-            return ctx.Execute<ServerConfig>(null, m => m.SetLogCleanup(ctx));
-        if (ctx.MatchMultiple(new[] { "invalid", "unknown" }, new[] { "command" }, new[] { "error", "response" }) || ctx.Match("invalidcommanderror", "unknowncommanderror"))
-            return ctx.Execute<ServerConfig>(null, m => m.InvalidCommandResponse(ctx));
-        if (ctx.MatchMultiple(new[] { "require", "enforce" }, new[] { "tag", "systemtag" }) || ctx.Match("requiretag", "enforcetag"))
-            return ctx.Execute<ServerConfig>(null, m => m.RequireSystemTag(ctx));
-        if (ctx.MatchMultiple(new[] { "suppress" }, new[] { "notifications" }) || ctx.Match("proxysilent"))
-            return ctx.Execute<ServerConfig>(null, m => m.SuppressNotifications(ctx));
-        if (ctx.MatchMultiple(new[] { "log" }, new[] { "channel" }))
-            return ctx.Execute<ServerConfig>(null, m => m.SetLogChannel(ctx));
-        if (ctx.MatchMultiple(new[] { "log" }, new[] { "blacklist" }))
-        {
-            if (ctx.Match("enable", "on", "add", "deny"))
-                return ctx.Execute<ServerConfig>(null, m => m.SetLogBlacklisted(ctx, true));
-            else if (ctx.Match("disable", "off", "remove", "allow"))
-                return ctx.Execute<ServerConfig>(null, m => m.SetLogBlacklisted(ctx, false));
-            else
-                return ctx.Execute<ServerConfig>(null, m => m.ShowLogDisabledChannels(ctx));
-        }
-        if (ctx.MatchMultiple(new[] { "proxy", "proxying" }, new[] { "blacklist" }))
-        {
-            if (ctx.Match("enable", "on", "add", "deny"))
-                return ctx.Execute<ServerConfig>(null, m => m.SetProxyBlacklisted(ctx, true));
-            else if (ctx.Match("disable", "off", "remove", "allow"))
-                return ctx.Execute<ServerConfig>(null, m => m.SetProxyBlacklisted(ctx, false));
-            else
-                return ctx.Execute<ServerConfig>(null, m => m.ShowProxyBlacklisted(ctx));
-        }
-
-        // todo: maybe add the list of configuration keys here?
-        return ctx.Reply($"{Emojis.Error} Could not find a setting with that name. Please see `{ctx.DefaultPrefix}commands serverconfig` for the list of possible config settings.");
+                // if no attachment show the avatar like intended
+                return ctx.Execute<SystemEdit>(SystemAvatar, m => m.ShowAvatar(ctx, param.target ?? ctx.System, flags.GetReplyFormat()));
+            }))(),
+            Commands.SystemClearAvatar(var param, var flags) => ctx.Execute<SystemEdit>(SystemAvatar, m => m.ClearAvatar(ctx, ctx.System, flags.yes)),
+            Commands.SystemChangeAvatar(var param, _) => ctx.Execute<SystemEdit>(SystemAvatar, m => m.ChangeAvatar(ctx, ctx.System, param.avatar)),
+            Commands.SystemShowServerAvatar(var param, var flags) => ((Func<Task>)(() =>
+            {
+                if (param.target == null)
+                {
+                    // we want to change avatar if an attached image is passed
+                    // we can't have a separate parsed command for this since the parser can't be aware of any attachments
+                    var attachedImage = ctx.ExtractImageFromAttachment();
+                    if (attachedImage is { } image)
+                        return ctx.Execute<SystemEdit>(SystemServerAvatar, m => m.ChangeServerAvatar(ctx, ctx.System, image));
+                }
+                // if no attachment show the avatar like intended
+                return ctx.Execute<SystemEdit>(SystemServerAvatar, m => m.ShowServerAvatar(ctx, param.target ?? ctx.System, flags.GetReplyFormat()));
+            }))(),
+            Commands.SystemClearServerAvatar(var param, var flags) => ctx.Execute<SystemEdit>(SystemServerAvatar, m => m.ClearServerAvatar(ctx, ctx.System, flags.yes)),
+            Commands.SystemChangeServerAvatar(var param, _) => ctx.Execute<SystemEdit>(SystemServerAvatar, m => m.ChangeServerAvatar(ctx, ctx.System, param.avatar)),
+            Commands.SystemShowBanner(var param, var flags) => ((Func<Task>)(() =>
+            {
+                if (param.target == null)
+                {
+                    // we want to change banner if an attached image is passed
+                    // we can't have a separate parsed command for this since the parser can't be aware of any attachments
+                    var attachedImage = ctx.ExtractImageFromAttachment();
+                    if (attachedImage is { } image)
+                        return ctx.Execute<SystemEdit>(SystemBannerImage, m => m.ChangeBannerImage(ctx, ctx.System, image));
+                }
+                // if no attachment show the banner like intended
+                return ctx.Execute<SystemEdit>(SystemBannerImage, m => m.ShowBannerImage(ctx, param.target ?? ctx.System, flags.GetReplyFormat()));
+            }))(),
+            Commands.SystemClearBanner(var param, var flags) => ctx.Execute<SystemEdit>(SystemBannerImage, m => m.ClearBannerImage(ctx, ctx.System, flags.yes)),
+            Commands.SystemChangeBanner(var param, _) => ctx.Execute<SystemEdit>(SystemBannerImage, m => m.ChangeBannerImage(ctx, ctx.System, param.banner)),
+            Commands.SystemDelete(_, var flags) => ctx.Execute<SystemEdit>(SystemDelete, m => m.Delete(ctx, ctx.System, flags.no_export)),
+            Commands.SystemShowProxyCurrent(_, _) => ctx.Execute<SystemEdit>(SystemProxy, m => m.ShowSystemProxy(ctx, ctx.Guild)),
+            Commands.SystemShowProxy(var param, _) => ctx.Execute<SystemEdit>(SystemProxy, m => m.ShowSystemProxy(ctx, param.target)),
+            Commands.SystemToggleProxyCurrent(var param, _) => ctx.Execute<SystemEdit>(SystemProxy, m => m.ToggleSystemProxy(ctx, ctx.Guild, param.toggle)),
+            Commands.SystemToggleProxy(var param, _) => ctx.Execute<SystemEdit>(SystemProxy, m => m.ToggleSystemProxy(ctx, param.target, param.toggle)),
+            Commands.SystemShowPrivacy(var param, _) => ctx.Execute<SystemEdit>(SystemPrivacy, m => m.ShowSystemPrivacy(ctx, ctx.System)),
+            Commands.SystemChangePrivacyAll(var param, _) => ctx.Execute<SystemEdit>(SystemPrivacy, m => m.ChangeSystemPrivacyAll(ctx, ctx.System, param.level)),
+            Commands.SystemChangePrivacy(var param, _) => ctx.Execute<SystemEdit>(SystemPrivacy, m => m.ChangeSystemPrivacy(ctx, ctx.System, param.privacy, param.level)),
+            Commands.SwitchOut(_, _) => ctx.Execute<Switch>(SwitchOut, m => m.SwitchOut(ctx)),
+            Commands.SwitchDo(var param, _) => ctx.Execute<Switch>(Switch, m => m.SwitchDo(ctx, param.targets)),
+            Commands.SwitchMove(var param, var flags) => ctx.Execute<Switch>(SwitchMove, m => m.SwitchMove(ctx, param.@string, flags.yes)),
+            Commands.SwitchEdit(var param, var flags) => ctx.Execute<Switch>(SwitchEdit, m => m.SwitchEdit(ctx, param.targets, false, flags.first, flags.remove, flags.append, flags.prepend, flags.yes)),
+            Commands.SwitchEditOut(_, var flags) => ctx.Execute<Switch>(SwitchEditOut, m => m.SwitchEditOut(ctx, flags.yes)),
+            Commands.SwitchDelete(var param, var flags) => ctx.Execute<Switch>(SwitchDelete, m => m.SwitchDelete(ctx, flags.all, flags.yes)),
+            Commands.SwitchCopy(var param, var flags) => ctx.Execute<Switch>(SwitchCopy, m => m.SwitchEdit(ctx, param.targets, true, flags.first, flags.remove, flags.append, flags.prepend, false)),
+            Commands.SystemFronter(var param, var flags) => ctx.Execute<SystemFront>(SystemFronter, m => m.Fronter(ctx, param.target ?? ctx.System)),
+            Commands.SystemFronterHistory(var param, var flags) => ctx.Execute<SystemFront>(SystemFrontHistory, m => m.FrontHistory(ctx, param.target ?? ctx.System, flags.clear)),
+            Commands.SystemFronterPercent(var param, var flags) => ctx.Execute<SystemFront>(SystemFrontPercent, m => m.FrontPercent(ctx, param.target ?? ctx.System, flags.duration, flags.fronters_only, flags.flat)),
+            Commands.SystemDisplayId(var param, _) => ctx.Execute<System>(SystemId, m => m.DisplayId(ctx, param.target ?? ctx.System)),
+            Commands.SystemWebhookShow => ctx.Execute<Api>(null, m => m.GetSystemWebhook(ctx)),
+            Commands.SystemWebhookClear(_, var flags) => ctx.Execute<Api>(null, m => m.ClearSystemWebhook(ctx, flags.yes)),
+            Commands.SystemWebhookSet(var param, _) => ctx.Execute<Api>(null, m => m.SetSystemWebhook(ctx, param.url)),
+            Commands.RandomSelf(_, var flags) =>
+            flags.group
+                ? ctx.Execute<Random>(GroupRandom, m => m.Group(ctx, ctx.System, flags.all, flags.show_embed))
+                : ctx.Execute<Random>(MemberRandom, m => m.Member(ctx, ctx.System, flags.all, flags.show_embed)),
+            Commands.RandomGroupSelf(_, var flags) => ctx.Execute<Random>(GroupRandom, m => m.Group(ctx, ctx.System, flags.all, flags.show_embed)),
+            Commands.RandomGroupMemberSelf(var param, var flags) => ctx.Execute<Random>(GroupMemberRandom, m => m.GroupMember(ctx, param.target, flags.all, flags.show_embed, flags)),
+            Commands.SystemRandom(var param, var flags) =>
+            flags.group
+                ? ctx.Execute<Random>(GroupRandom, m => m.Group(ctx, param.target, flags.all, flags.show_embed))
+                : ctx.Execute<Random>(MemberRandom, m => m.Member(ctx, param.target, flags.all, flags.show_embed)),
+            Commands.SystemRandomGroup(var param, var flags) =>
+                ctx.Execute<Random>(GroupRandom, m => m.Group(ctx, param.target, flags.all, flags.show_embed)),
+            Commands.GroupRandomMember(var param, var flags) => ctx.Execute<Random>(GroupMemberRandom, m => m.GroupMember(ctx, param.target, flags.all, flags.show_embed, flags)),
+            Commands.SystemLink(var param, var flags) => ctx.Execute<SystemLink>(Link, m => m.LinkSystem(ctx, param.account, flags.yes)),
+            Commands.SystemUnlink(var param, var flags) => ctx.Execute<SystemLink>(Unlink, m => m.UnlinkAccount(ctx, param.account, flags.yes)),
+            Commands.SystemMembers(var param, var flags) => ctx.Execute<SystemList>(SystemList, m => m.MemberList(ctx, param.target ?? ctx.System, param.query, flags)),
+            Commands.MemberGroups(var param, var flags) => ctx.Execute<GroupMember>(MemberGroups, m => m.ListMemberGroups(ctx, param.target, param.query, flags, flags.all)),
+            Commands.GroupMembers(var param, var flags) => ctx.Execute<GroupMember>(GroupMemberList, m => m.ListGroupMembers(ctx, param.target, param.query, flags)),
+            Commands.SystemGroups(var param, var flags) => ctx.Execute<Groups>(GroupList, g => g.ListSystemGroups(ctx, param.target ?? ctx.System, param.query, flags, flags.all)),
+            Commands.GroupsSelf(var param, var flags) => ctx.Execute<Groups>(GroupList, g => g.ListSystemGroups(ctx, ctx.System, param.query, flags, flags.all)),
+            Commands.GroupNew(var param, var flags) => ctx.Execute<Groups>(GroupNew, g => g.CreateGroup(ctx, param.name, flags.yes)),
+            Commands.GroupInfo(var param, var flags) => ctx.Execute<Groups>(GroupInfo, g => g.ShowGroupCard(ctx, param.target, flags.show_embed, flags.all)),
+            Commands.GroupShowName(var param, var flags) => ctx.Execute<Groups>(GroupRename, g => g.ShowGroupDisplayName(ctx, param.target, flags.GetReplyFormat())),
+            Commands.GroupClearName(var param, var flags) => ctx.Execute<Groups>(GroupRename, g => g.RenameGroup(ctx, param.target, null)),
+            Commands.GroupRename(var param, var flags) => ctx.Execute<Groups>(GroupRename, g => g.RenameGroup(ctx, param.target, param.name, flags.yes)),
+            Commands.GroupShowDisplayName(var param, var flags) => ctx.Execute<Groups>(GroupDisplayName, g => g.ShowGroupDisplayName(ctx, param.target, flags.GetReplyFormat())),
+            Commands.GroupClearDisplayName(var param, var flags) => ctx.Execute<Groups>(GroupDisplayName, g => g.ClearGroupDisplayName(ctx, param.target, flags.yes)),
+            Commands.GroupChangeDisplayName(var param, _) => ctx.Execute<Groups>(GroupDisplayName, g => g.ChangeGroupDisplayName(ctx, param.target, param.name)),
+            Commands.GroupShowDescription(var param, var flags) => ctx.Execute<Groups>(GroupDesc, g => g.ShowGroupDescription(ctx, param.target, flags.GetReplyFormat())),
+            Commands.GroupClearDescription(var param, var flags) => ctx.Execute<Groups>(GroupDesc, g => g.ClearGroupDescription(ctx, param.target, flags.yes)),
+            Commands.GroupChangeDescription(var param, _) => ctx.Execute<Groups>(GroupDesc, g => g.ChangeGroupDescription(ctx, param.target, param.description)),
+            Commands.GroupShowIcon(var param, var flags) => ctx.Execute<Groups>(GroupIcon, g => g.ShowGroupIcon(ctx, param.target, flags.GetReplyFormat())),
+            Commands.GroupClearIcon(var param, var flags) => ctx.Execute<Groups>(GroupIcon, g => g.ClearGroupIcon(ctx, param.target, flags.yes)),
+            Commands.GroupChangeIcon(var param, _) => ctx.Execute<Groups>(GroupIcon, g => g.ChangeGroupIcon(ctx, param.target, param.icon)),
+            Commands.GroupShowBanner(var param, var flags) => ctx.Execute<Groups>(GroupBannerImage, g => g.ShowGroupBanner(ctx, param.target, flags.GetReplyFormat())),
+            Commands.GroupClearBanner(var param, var flags) => ctx.Execute<Groups>(GroupBannerImage, g => g.ClearGroupBanner(ctx, param.target, flags.yes)),
+            Commands.GroupChangeBanner(var param, _) => ctx.Execute<Groups>(GroupBannerImage, g => g.ChangeGroupBanner(ctx, param.target, param.banner)),
+            Commands.GroupShowColor(var param, var flags) => ctx.Execute<Groups>(GroupColor, g => g.ShowGroupColor(ctx, param.target, flags.GetReplyFormat())),
+            Commands.GroupClearColor(var param, var flags) => ctx.Execute<Groups>(GroupColor, g => g.ClearGroupColor(ctx, param.target, flags.yes)),
+            Commands.GroupChangeColor(var param, _) => ctx.Execute<Groups>(GroupColor, g => g.ChangeGroupColor(ctx, param.target, param.color)),
+            Commands.GroupAddMember(var param, var flags) => ctx.Execute<GroupMember>(GroupAdd, g => g.AddRemoveMembers(ctx, param.target, param.targets, Groups.AddRemoveOperation.Add, flags.all)),
+            Commands.GroupRemoveMember(var param, var flags) => ctx.Execute<GroupMember>(GroupRemove, g => g.AddRemoveMembers(ctx, param.target, param.targets, Groups.AddRemoveOperation.Remove, flags.all, flags.yes)),
+            Commands.GroupShowPrivacy(var param, _) => ctx.Execute<Groups>(GroupPrivacy, g => g.ShowGroupPrivacy(ctx, param.target)),
+            Commands.GroupChangePrivacyAll(var param, _) => ctx.Execute<Groups>(GroupPrivacy, g => g.SetAllGroupPrivacy(ctx, param.target, param.level)),
+            Commands.GroupChangePrivacy(var param, _) => ctx.Execute<Groups>(GroupPrivacy, g => g.SetGroupPrivacy(ctx, param.target, param.privacy, param.level)),
+            Commands.GroupSetPublic(var param, _) => ctx.Execute<Groups>(GroupPrivacy, g => g.SetAllGroupPrivacy(ctx, param.target, PrivacyLevel.Public)),
+            Commands.GroupSetPrivate(var param, _) => ctx.Execute<Groups>(GroupPrivacy, g => g.SetAllGroupPrivacy(ctx, param.target, PrivacyLevel.Private)),
+            Commands.GroupDelete(var param, var flags) => ctx.Execute<Groups>(GroupDelete, g => g.DeleteGroup(ctx, param.target)),
+            Commands.GroupId(var param, _) => ctx.Execute<Groups>(GroupId, g => g.DisplayId(ctx, param.target)),
+            Commands.GroupFronterPercent(var param, var flags) => ctx.Execute<SystemFront>(GroupFrontPercent, g => g.FrontPercent(ctx, null, flags.duration, flags.fronters_only, flags.flat, param.target)),
+            Commands.TokenDisplay => ctx.Execute<Api>(TokenGet, m => m.GetToken(ctx)),
+            Commands.TokenRefresh => ctx.Execute<Api>(TokenRefresh, m => m.RefreshToken(ctx)),
+            Commands.AutoproxyShow => ctx.Execute<Autoproxy>(AutoproxySet, m => m.SetAutoproxyMode(ctx, null)),
+            Commands.AutoproxyOff => ctx.Execute<Autoproxy>(AutoproxySet, m => m.SetAutoproxyMode(ctx, new Autoproxy.Mode.Off())),
+            Commands.AutoproxyLatch => ctx.Execute<Autoproxy>(AutoproxySet, m => m.SetAutoproxyMode(ctx, new Autoproxy.Mode.Latch())),
+            Commands.AutoproxyFront => ctx.Execute<Autoproxy>(AutoproxySet, m => m.SetAutoproxyMode(ctx, new Autoproxy.Mode.Front())),
+            Commands.AutoproxyMember(var param, _) => ctx.Execute<Autoproxy>(AutoproxySet, m => m.SetAutoproxyMode(ctx, new Autoproxy.Mode.Member(param.target))),
+            Commands.PermcheckChannel(var param, _) => ctx.Execute<Checks>(PermCheck, m => m.PermCheckChannel(ctx, param.target)),
+            Commands.PermcheckGuild(var param, _) => ctx.Execute<Checks>(PermCheck, m => m.PermCheckGuild(ctx, param.target)),
+            Commands.MessageProxyCheck(var param, _) => ctx.Execute<Checks>(ProxyCheck, m => m.MessageProxyCheck(ctx, param.target)),
+            Commands.MessageInfo(var param, var flags) => ctx.Execute<ProxiedMessage>(Message, m => m.GetMessage(ctx, param.target, flags.GetReplyFormat(), flags.delete, flags.author, flags.show_embed)),
+            Commands.MessageAuthor(var param, var flags) => ctx.Execute<ProxiedMessage>(Message, m => m.GetMessage(ctx, param.target, flags.GetReplyFormat(), false, true, flags.show_embed)),
+            Commands.MessageDelete(var param, var flags) => ctx.Execute<ProxiedMessage>(Message, m => m.GetMessage(ctx, param.target, flags.GetReplyFormat(), true, false, flags.show_embed)),
+            Commands.MessageEdit(var param, var flags) => ctx.Execute<ProxiedMessage>(MessageEdit, m => m.EditMessage(ctx, param.target, param.new_content, flags.regex, flags.no_space, flags.append, flags.prepend, flags.clear_embeds, flags.clear_attachments)),
+            Commands.MessageReproxy(var param, _) => ctx.Execute<ProxiedMessage>(MessageReproxy, m => m.ReproxyMessage(ctx, param.msg, param.member)),
+            Commands.Import(var param, var flags) => ctx.Execute<ImportExport>(Import, m => m.Import(ctx, param.url, flags.yes)),
+            Commands.Export(_, _) => ctx.Execute<ImportExport>(Export, m => m.Export(ctx)),
+            Commands.ServerConfigShow => ctx.Execute<ServerConfig>(null, m => m.ShowConfig(ctx)),
+            Commands.ServerConfigLogChannelShow => ctx.Execute<ServerConfig>(null, m => m.ShowLogChannel(ctx)),
+            Commands.ServerConfigLogChannelSet(var param, _) => ctx.Execute<ServerConfig>(null, m => m.SetLogChannel(ctx, param.channel)),
+            Commands.ServerConfigLogChannelClear(_, var flags) => ctx.Execute<ServerConfig>(null, m => m.ClearLogChannel(ctx, flags.yes)),
+            Commands.ServerConfigLogCleanupShow => ctx.Execute<ServerConfig>(null, m => m.ShowLogCleanup(ctx)),
+            Commands.ServerConfigLogCleanupSet(var param, _) => ctx.Execute<ServerConfig>(null, m => m.SetLogCleanup(ctx, param.toggle)),
+            Commands.ServerConfigLogBlacklistShow => ctx.Execute<ServerConfig>(null, m => m.ShowLogBlacklist(ctx)),
+            Commands.ServerConfigLogBlacklistAdd(var param, var flags) => ctx.Execute<ServerConfig>(null, m => m.AddLogBlacklist(ctx, param.channel, flags.all)),
+            Commands.ServerConfigLogBlacklistRemove(var param, var flags) => ctx.Execute<ServerConfig>(null, m => m.RemoveLogBlacklist(ctx, param.channel, flags.all)),
+            Commands.ServerConfigProxyBlacklistShow => ctx.Execute<ServerConfig>(null, m => m.ShowProxyBlacklist(ctx)),
+            Commands.ServerConfigProxyBlacklistAdd(var param, var flags) => ctx.Execute<ServerConfig>(null, m => m.AddProxyBlacklist(ctx, param.channel, flags.all)),
+            Commands.ServerConfigProxyBlacklistRemove(var param, var flags) => ctx.Execute<ServerConfig>(null, m => m.RemoveProxyBlacklist(ctx, param.channel, flags.all)),
+            Commands.ServerConfigInvalidCommandResponseShow => ctx.Execute<ServerConfig>(null, m => m.ShowInvalidCommandResponse(ctx)),
+            Commands.ServerConfigInvalidCommandResponseSet(var param, _) => ctx.Execute<ServerConfig>(null, m => m.SetInvalidCommandResponse(ctx, param.toggle)),
+            Commands.ServerConfigRequireSystemTagShow => ctx.Execute<ServerConfig>(null, m => m.ShowRequireSystemTag(ctx)),
+            Commands.ServerConfigRequireSystemTagSet(var param, _) => ctx.Execute<ServerConfig>(null, m => m.SetRequireSystemTag(ctx, param.toggle)),
+            Commands.ServerConfigSuppressNotificationsShow => ctx.Execute<ServerConfig>(null, m => m.ShowSuppressNotifications(ctx)),
+            Commands.ServerConfigSuppressNotificationsSet(var param, _) => ctx.Execute<ServerConfig>(null, m => m.SetSuppressNotifications(ctx, param.toggle)),
+            Commands.AdminUpdateSystemId(var param, var flags) => ctx.Execute<Admin>(null, m => m.UpdateSystemId(ctx, param.target, param.new_hid, flags.yes)),
+            Commands.AdminUpdateMemberId(var param, var flags) => ctx.Execute<Admin>(null, m => m.UpdateMemberId(ctx, param.target, param.new_hid, flags.yes)),
+            Commands.AdminUpdateGroupId(var param, var flags) => ctx.Execute<Admin>(null, m => m.UpdateGroupId(ctx, param.target, param.new_hid, flags.yes)),
+            Commands.AdminRerollSystemId(var param, var flags) => ctx.Execute<Admin>(null, m => m.RerollSystemId(ctx, param.target, flags.yes)),
+            Commands.AdminRerollMemberId(var param, var flags) => ctx.Execute<Admin>(null, m => m.RerollMemberId(ctx, param.target, flags.yes)),
+            Commands.AdminRerollGroupId(var param, var flags) => ctx.Execute<Admin>(null, m => m.RerollGroupId(ctx, param.target, flags.yes)),
+            Commands.AdminSystemMemberLimit(var param, var flags) => ctx.Execute<Admin>(null, m => m.SystemMemberLimit(ctx, param.target, param.limit, flags.yes)),
+            Commands.AdminSystemGroupLimit(var param, var flags) => ctx.Execute<Admin>(null, m => m.SystemGroupLimit(ctx, param.target, param.limit, flags.yes)),
+            Commands.AdminSystemRecover(var param, var flags) => ctx.Execute<Admin>(null, m => m.SystemRecover(ctx, param.token, param.account, flags.reroll_token, flags.yes)),
+            Commands.AdminSystemDelete(var param, _) => ctx.Execute<Admin>(null, m => m.SystemDelete(ctx, param.target)),
+            Commands.AdminSendMessage(var param, _) => ctx.Execute<Admin>(null, m => m.SendAdminMessage(ctx, param.account, param.content)),
+            Commands.AdminAbuselogCreate(var param, var flags) => ctx.Execute<Admin>(null, m => m.AbuseLogCreate(ctx, param.account, flags.deny_boy_usage, param.description)),
+            Commands.AdminAbuselogShowAccount(var param, _) => ctx.Execute<Admin>(null, m => m.AbuseLogShow(ctx, param.account, null)),
+            Commands.AdminAbuselogFlagDenyAccount(var param, _) => ctx.Execute<Admin>(null, m => m.AbuseLogFlagDeny(ctx, param.account, null, param.value)),
+            Commands.AdminAbuselogDescriptionAccount(var param, var flags) => ctx.Execute<Admin>(null, m => m.AbuseLogDescription(ctx, param.account, null, param.desc, flags.clear, flags.yes)),
+            Commands.AdminAbuselogAddUserAccount(var param, _) => ctx.Execute<Admin>(null, m => m.AbuseLogAddUser(ctx, param.account, null, ctx.Author)),
+            Commands.AdminAbuselogRemoveUserAccount(var param, _) => ctx.Execute<Admin>(null, m => m.AbuseLogRemoveUser(ctx, param.account, null, ctx.Author)),
+            Commands.AdminAbuselogDeleteAccount(var param, _) => ctx.Execute<Admin>(null, m => m.AbuseLogDelete(ctx, param.account, null)),
+            Commands.AdminAbuselogShowLogId(var param, _) => ctx.Execute<Admin>(null, m => m.AbuseLogShow(ctx, null, param.log_id)),
+            Commands.AdminAbuselogFlagDenyLogId(var param, _) => ctx.Execute<Admin>(null, m => m.AbuseLogFlagDeny(ctx, null, param.log_id, param.value)),
+            Commands.AdminAbuselogDescriptionLogId(var param, var flags) => ctx.Execute<Admin>(null, m => m.AbuseLogDescription(ctx, null, param.log_id, param.desc, flags.clear, flags.yes)),
+            Commands.AdminAbuselogAddUserLogId(var param, _) => ctx.Execute<Admin>(null, m => m.AbuseLogAddUser(ctx, null, param.log_id, ctx.Author)),
+            Commands.AdminAbuselogRemoveUserLogId(var param, _) => ctx.Execute<Admin>(null, m => m.AbuseLogRemoveUser(ctx, null, param.log_id, ctx.Author)),
+            Commands.AdminAbuselogDeleteLogId(var param, _) => ctx.Execute<Admin>(null, m => m.AbuseLogDelete(ctx, null, param.log_id)),
+            _ =>
+            // this should only ever occur when deving if commands are not implemented...
+            ctx.Reply(
+                $"{Emojis.Error} Parsed command {ctx.Parameters.Callback().AsCode()} not implemented in PluralKit.Bot!"),
+        };
     }
 }
