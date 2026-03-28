@@ -242,7 +242,15 @@ public class ProxyService
         var tts = match.Member.Tts && senderPermissions.HasFlag(PermissionSet.SendTtsMessages);
 
         Message.MessageFlags flags = 0;
-        if (ctx.SuppressNotifications)
+        // If the guild suppress notifications condition is set to Always
+        if (ctx.SuppressNotifications == GuildConfig.SuppressCondition.Always ||
+            // OR if it is set to Match and the trigger message was silent
+            (ctx.SuppressNotifications == GuildConfig.SuppressCondition.Match &&
+                trigger.Flags.HasFlag(Message.MessageFlags.SuppressNotifications)) ||
+            // OR if it is set to Invert and the trigger message wasn't silent
+            (ctx.SuppressNotifications == GuildConfig.SuppressCondition.Invert &&
+                !trigger.Flags.HasFlag(Message.MessageFlags.SuppressNotifications)))
+            // Make the proxied message silent
             flags |= Message.MessageFlags.SuppressNotifications;
         if (trigger.Flags.HasFlag(Message.MessageFlags.VoiceMessage))
             flags |= Message.MessageFlags.VoiceMessage;
@@ -325,8 +333,17 @@ public class ProxyService
         var mangledEmbeds = originalMsg.Embeds!.Select(embed => MangleReproxyEmbed(embed, member)).Where(embed => embed != null).ToArray();
 
         Message.MessageFlags flags = 0;
-        if (originalMsg.Flags.HasFlag(Message.MessageFlags.SuppressNotifications))
+        // If the guild suppress notifications condition is set to Always
+        if (ctx.SuppressNotifications == GuildConfig.SuppressCondition.Always ||
+            // OR if it is set to Match/Invert and the first message proxied was silent
+            ((ctx.SuppressNotifications == GuildConfig.SuppressCondition.Match ||
+            ctx.SuppressNotifications == GuildConfig.SuppressCondition.Invert) &&
+                originalMsg.Flags.HasFlag(Message.MessageFlags.SuppressNotifications)))
+            // Make the proxied message silent
             flags |= Message.MessageFlags.SuppressNotifications;
+        // Basically: If the server is using match or invert, leave as is
+        // If they're using always or never we respect it in the very rare
+        // case it may have changed before the reproxy message was sent
         if (originalMsg.Flags.HasFlag(Message.MessageFlags.VoiceMessage))
             flags |= Message.MessageFlags.VoiceMessage;
 
