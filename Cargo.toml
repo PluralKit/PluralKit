@@ -7,7 +7,7 @@ resolver = "2"
 [workspace.dependencies]
 anyhow = "1"
 axum-macros = "0.4.1"
-bytes = "1.6.0"
+bytes = "1.11.1"
 chrono = "0.4"
 fred = { version = "9.3.0", default-features = false, features = ["tracing", "i-keys", "i-hashes", "i-scripts", "sha-1"] }
 futures = "0.3.30"
