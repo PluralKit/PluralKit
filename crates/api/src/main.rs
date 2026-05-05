@@ -127,6 +127,9 @@ fn router(ctx: ApiContext) -> Router {
         .route("/v2/members/{member_id}/oembed.json", get(rproxy))
         .route("/v2/groups/{group_id}/oembed.json", get(rproxy))
 
+        // according to https://docs.rs/axum/latest/axum/middleware/index.html#ordering
+        // when using repeated .layer(...), the layers are applied bottom to top, then the route handles the request,
+        // and finally the second part of the layer is applies top to bottom
         .layer(axum::middleware::from_fn_with_state(
             if config.api().use_ratelimiter {
                 Some(ctx.redis.clone())

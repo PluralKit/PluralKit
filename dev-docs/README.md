@@ -50,6 +50,11 @@ PluralKit__Bot__HttpCacheUrl="localhost:5000"
 ```
 
 1. Clone the repository: `git clone --recurse-submodules https://github.com/PluralKit/PluralKit`
+2. Head over to `https://discord.com/developers/applications` and create a new application:
+	* Installation > Set Guild Install scopes to applications.commands and bot and permissions to Administrator
+	* OAuth > Copy OAuth client id+secret
+	* Bot > Copy bot token. Activate Presence + Server Members + Message Content Intents
+3. Create a test discord server you own and invite the app to it via the application install link
 2. Create a `.env` configuration file in the `PluralKit` directory *(see above)*
 3. Build and run: `nix run .#dev`
 	- This will download the dependencies, build, and run PluralKit

@@ -1,4 +1,4 @@
-use pluralkit_models::{PKSystem, PrivacyLevel, SystemId};
+use pluralkit_models::{PrivacyLevel, SystemId};
 
 pub const INTERNAL_SYSTEMID_HEADER: &'static str = "x-pluralkit-systemid";
 pub const INTERNAL_APPID_HEADER: &'static str = "x-pluralkit-appid";
@@ -31,27 +31,15 @@ impl AuthState {
         self.internal
     }
 
-    pub fn access_level_for(&self, a: &impl Authable) -> PrivacyLevel {
+    pub fn access_level_for(&self, requested_system_id: SystemId) -> PrivacyLevel {
         if self
             .system_id
-            .map(|id| id == a.authable_system_id())
+            .map(|id| id == requested_system_id)
             .unwrap_or(false)
         {
             PrivacyLevel::Private
         } else {
             PrivacyLevel::Public
         }
-    }
-}
-
-// authable trait/impls
-
-pub trait Authable {
-    fn authable_system_id(&self) -> SystemId;
-}
-
-impl Authable for PKSystem {
-    fn authable_system_id(&self) -> SystemId {
-        self.id
     }
 }

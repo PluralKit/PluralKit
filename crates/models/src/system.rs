@@ -8,6 +8,13 @@ use crate::PrivacyLevel;
 // todo: fix this
 pub type SystemId = i32;
 
+#[derive(Debug, Clone)]
+pub enum SystemRef {
+    Uuid(uuid::Uuid),
+    DiscordAccountUid(i64),
+    Hid(String),
+}
+
 #[pk_model]
 struct System {
     id: SystemId,
