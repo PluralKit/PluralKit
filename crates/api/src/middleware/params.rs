@@ -2,16 +2,19 @@ use axum::{
     extract::{Request, State},
     http::StatusCode,
     middleware::Next,
-    response::Response,
+    response::{IntoResponse, Response},
     routing::url_params::UrlParams,
 };
+use sqlx::types::Uuid;
+use tracing::warn;
 
-use sqlx::{Postgres, types::Uuid};
-use tracing::error;
-
-use crate::auth::AuthState;
-use crate::{ApiContext, util::json_err};
-use pluralkit_models::PKSystem;
+use crate::{
+    ApiContext,
+    auth::AuthState,
+    error::{self, PKError},
+    util::json_err,
+};
+use pluralkit_models::{GroupId, MemberId, SwitchId, SystemId};
 
 // move this somewhere else
 fn parse_hid(hid: &str) -> String {
@@ -36,104 +39,139 @@ pub async fn params(State(ctx): State<ApiContext>, mut req: Request, next: Next)
     };
 
     for (key, value) in pms {
-        match key.as_ref() {
-            "system_id" => match value.as_str() {
-                "@me" => {
-                    let Some(system_id) = req
-                        .extensions()
-                        .get::<AuthState>()
-                        .expect("missing auth state")
-                        .system_id()
-                    else {
+        let id_ref = parse_hid(value.as_str());
+        let id_ref = id_ref.as_str();
+        let request_about = match key.as_ref() {
+            "system_id" if id_ref == "@me" => {
+                let system_id = match req
+                    .extensions()
+                    .get::<AuthState>()
+                    .expect("missing auth state")
+                    .system_id()
+                {
+                    Some(system_id) => system_id,
+                    _ => {
                         return json_err(
-                            StatusCode::UNAUTHORIZED,
-                            r#"{"message":"401: Missing or invalid Authorization header","code": 0}"#.to_string(),
-                        )
-                        .into();
-                    };
+                                        StatusCode::UNAUTHORIZED,
+                                        r#"{"message":"401: Missing or invalid Authorization header","code": 0}"#
+                                            .to_string(),
+                                    )
+                                    .into();
+                    }
+                };
 
-                    match sqlx::query_as::<Postgres, PKSystem>(
-                        "select * from systems where id = $1",
-                    )
-                    .bind(system_id)
-                    .fetch_optional(&ctx.db)
-                    .await
-                    {
-                        Ok(Some(system)) => {
-                            req.extensions_mut().insert(system);
-                        }
-                        Ok(None) => {
-                            error!(
-                                ?system_id,
-                                "could not find previously authenticated system in db"
-                            );
-                            return json_err(
-                                StatusCode::INTERNAL_SERVER_ERROR,
-                                r#"{"message": "500: Internal Server Error", "code": 0}"#
-                                    .to_string(),
-                            );
-                        }
-                        Err(err) => {
-                            error!(
-                                ?err,
-                                "failed to query previously authenticated system in db"
-                            );
-                            return json_err(
-                                StatusCode::INTERNAL_SERVER_ERROR,
-                                r#"{"message": "500: Internal Server Error", "code": 0}"#
-                                    .to_string(),
-                            );
-                        }
-                    }
-                }
-                id => {
-                    println!("a {id}");
-                    match match Uuid::parse_str(id) {
-                        Ok(uuid) => sqlx::query_as::<Postgres, PKSystem>(
-                            "select * from systems where uuid = $1",
-                        )
-                        .bind(uuid),
-                        Err(_) => match id.parse::<i64>() {
-                            Ok(parsed) => sqlx::query_as::<Postgres, PKSystem>(
-                                "select * from systems where id = (select system from accounts where uid = $1)"
-                            )
-                            .bind(parsed),
-                            Err(_) => sqlx::query_as::<Postgres, PKSystem>(
-                                "select * from systems where hid = $1",
-                            )
-                            .bind(parse_hid(id))
-                        },
-                    }
-                    .fetch_optional(&ctx.db)
-                    .await
-                    {
-                        Ok(Some(system)) => {
-                            req.extensions_mut().insert(system);
-                        }
-                        Ok(None) => {
-                            return json_err(
-                                StatusCode::NOT_FOUND,
-                                r#"{"message":"System not found.","code":20001}"#.to_string(),
-                            )
-                        }
-                        Err(err) => {
-                            error!(?err, ?id, "failed to query system from path in db");
-                            return json_err(
-                                StatusCode::INTERNAL_SERVER_ERROR,
-                                r#"{"message": "500: Internal Server Error", "code": 0}"#
-                                    .to_string(),
-                            );
-                        }
-                    }
-                }
-            },
-            "member_id" => {}
-            "group_id" => {}
-            "switch_id" => {}
-            "guild_id" => {}
-            _ => {}
+                Ok(Some(RequestAbout::System(system_id)))
+            }
+            "system_id" if Uuid::parse_str(id_ref).is_ok() => {
+                resolve_entity(&ctx.db, "systems", "uuid", id_ref).await
+            }
+            "system_id" if let Ok(discord_id) = id_ref.parse::<i64>() => {
+                sqlx::query_as::<_, ResolveEntityRow>("select 0 as id, system from accounts where uid = $1")
+                .bind(discord_id)
+                .fetch_optional(&ctx.db)
+                .await
+                .map_err(PKError::from)
+                .and_then(|v| v.ok_or(error::SYSTEM_NOT_FOUND))
+                .map(|v| Some(RequestAbout::System(v.system)))
+            }
+            "system_id" => resolve_entity(&ctx.db, "systems", "hid", id_ref).await,
+            "member_id" if Uuid::parse_str(id_ref).is_ok() => {
+                resolve_entity(&ctx.db, "members", "uuid", id_ref).await
+            }
+            "member_id" => resolve_entity(&ctx.db, "members", "hid", id_ref).await,
+            "group_id" if Uuid::parse_str(id_ref).is_ok() => {
+                resolve_entity(&ctx.db, "groups", "uuid", id_ref).await
+            }
+            "group_id" => resolve_entity(&ctx.db, "groups", "hid", id_ref).await,
+            "switch_id" => resolve_entity(&ctx.db, "switches", "uuid", id_ref).await,
+            _ => {
+                warn!("unmatched request param {key}");
+                Ok(None)
+            }
+        };
+
+        match request_about {
+            Ok(Some(about)) => {
+                req.extensions_mut().insert(about);
+            }
+            Err(err) => return err.into_response(),
+            Ok(None) => {}
         }
     }
 
     next.run(req).await
+}
+
+#[allow(dead_code)]
+#[derive(Clone)]
+pub enum RequestAbout {
+    System(SystemId),
+    Member { id: MemberId, system: SystemId },
+    Group { id: GroupId, system: SystemId },
+    Switch { id: SwitchId, system: SystemId },
+}
+
+impl RequestAbout {
+    pub fn system_id(&self) -> SystemId {
+        match self {
+            Self::System(id) => *id,
+            Self::Member { system, .. } => *system,
+            Self::Group { system, .. } => *system,
+            Self::Switch { system, .. } => *system,
+        }
+    }
+}
+
+#[derive(sqlx::FromRow)]
+struct ResolveEntityRow {
+    id: i32,
+    system: i32,
+}
+
+async fn resolve_entity(
+    pool: &sqlx::postgres::PgPool,
+    table: &str,
+    column: &str,
+    value: &str,
+) -> Result<Option<RequestAbout>, PKError> {
+    let system_col = if table == "systems" {
+        "0 as system"
+    } else {
+        "system"
+    };
+    let maybe_uuid = if column == "uuid" { "$1::uuid" } else { "$1" };
+
+    let Some(row): Option<ResolveEntityRow> = sqlx::query_as(
+        format!("select id, {system_col} from {table} where {column} = {maybe_uuid}").as_str(),
+    )
+    .bind(value)
+    .fetch_optional(pool)
+    .await
+    .map_err(PKError::from)?
+    else {
+        return Err(match table {
+            "systems" => error::SYSTEM_NOT_FOUND,
+            "members" => error::MEMBER_NOT_FOUND,
+            "groups" => error::GROUP_NOT_FOUND,
+            "switches" => error::SWITCH_NOT_FOUND,
+            _ => unreachable!(),
+        });
+    };
+
+    match table {
+        "systems" => Ok(Some(RequestAbout::System(row.id))),
+        "members" => Ok(Some(RequestAbout::Member {
+            id: row.id,
+            system: row.system,
+        })),
+        "groups" => Ok(Some(RequestAbout::Group {
+            id: row.id,
+            system: row.system,
+        })),
+        "switches" => Ok(Some(RequestAbout::Switch {
+            id: row.id,
+            system: row.system,
+        })),
+        _ => unreachable!(),
+    }
 }
