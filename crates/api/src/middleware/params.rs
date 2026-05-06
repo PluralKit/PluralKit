@@ -66,7 +66,9 @@ pub async fn params(State(ctx): State<ApiContext>, mut req: Request, next: Next)
                 resolve_entity(&ctx.db, "systems", "uuid", id_ref).await
             }
             "system_id" if let Ok(discord_id) = id_ref.parse::<i64>() => {
-                sqlx::query_as::<_, ResolveEntityRow>("select 0 as id, system from accounts where uid = $1")
+                sqlx::query_as::<_, ResolveEntityRow>(
+                    "select 0 as id, system from accounts where uid = $1",
+                )
                 .bind(discord_id)
                 .fetch_optional(&ctx.db)
                 .await
