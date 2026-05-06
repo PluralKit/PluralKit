@@ -5,7 +5,7 @@ use sqlx::Postgres;
 
 use pluralkit_models::{PKSystemConfig, PrivacyLevel};
 
-use crate::{auth::AuthState, error::fail, middleware::params::RequestAbout, ApiContext};
+use crate::{ApiContext, auth::AuthState, error::fail, middleware::params::RequestAbout};
 
 #[api_endpoint]
 pub async fn get_system_settings(
@@ -14,7 +14,9 @@ pub async fn get_system_settings(
     State(ctx): State<ApiContext>,
 ) -> Json<Value> {
     // todo: this needs to be better
-    let RequestAbout::System(system_id) = about else { unreachable!() };
+    let RequestAbout::System(system_id) = about else {
+        unreachable!()
+    };
 
     let access_level = auth.access_level_for(&about);
 

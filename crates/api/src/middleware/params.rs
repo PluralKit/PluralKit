@@ -9,7 +9,10 @@ use sqlx::types::Uuid;
 use tracing::warn;
 
 use crate::{
-    auth::{AuthState, Authable}, error::{self, PKError}, util::json_err, ApiContext
+    ApiContext,
+    auth::{AuthState, Authable},
+    error::{self, PKError},
+    util::json_err,
 };
 use pluralkit_models::{GroupId, MemberId, SwitchId, SystemId};
 
