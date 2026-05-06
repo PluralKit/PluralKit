@@ -12,6 +12,7 @@ use tracing::{debug, error, info};
 
 use crate::{
     auth::AuthState,
+    middleware::params::RequestAbout,
     util::{header_or_unknown, json_err},
 };
 
@@ -76,7 +77,7 @@ pub async fn do_request_ratelimited(
         // todo: make x-ratelimit-scope actually meaningful
 
         // hack: for now, we only have one "registered app", so we hardcode the app id
-        let rlimit = if let Some(app_id) = auth.app_id()
+        let limit_type = if let Some(app_id) = auth.app_id()
             && app_id == 1
         {
             RatelimitType::TempCustom
@@ -88,17 +89,27 @@ pub async fn do_request_ratelimited(
             RatelimitType::GenericUpdate
         };
 
-        let rl_key = format!(
-            "{}:{}",
-            if let Some(system_id) = auth.system_id()
-                && matches!(rlimit, RatelimitType::GenericUpdate)
-            {
-                system_id.to_string()
-            } else {
-                source_ip.to_string()
-            },
-            rlimit.key()
-        );
+        // use system id if target entity is owned by the currently authenticated system
+        // otherwise, use source ip
+        let own_system_request = auth
+            .system_id()
+            .and_then(|auth_id| {
+                request
+                    .extensions()
+                    .get::<RequestAbout>()
+                    .map(|about| auth_id == about.system_id())
+            })
+            .unwrap_or(false);
+
+        let limit_key = if own_system_request {
+            // i don't like using unwrap but this is safe
+            // if the request is for the current system, we must have a current system
+            auth.system_id().unwrap().to_string()
+        } else {
+            source_ip.to_string()
+        };
+
+        let redis_key = format!("{}:{}", limit_key, limit_type.key());
 
         let period = 1; // seconds
         let cost = 1; // todo: update this for group member endpoints
@@ -134,8 +145,8 @@ pub async fn do_request_ratelimited(
         let resp = redis
             .evalsha::<(i32, String, u64), String, Vec<String>, Vec<i32>>(
                 LUA_SCRIPT_SHA.to_string(),
-                vec![rl_key.clone()],
-                vec![rlimit.rate(), period, cost],
+                vec![redis_key.clone()],
+                vec![limit_type.rate(), period, cost],
             )
             .await;
 
@@ -150,13 +161,13 @@ pub async fn do_request_ratelimited(
                     next.run(request).await
                 } else {
                     let retry_after = (retry_after * 1_000_f64).ceil() as u64;
-                    debug!("ratelimited request from {rl_key}, retry_after={retry_after}",);
+                    debug!("ratelimited request from {redis_key}, retry_after={retry_after}",);
                     counter!("pk_http_requests_ratelimited").increment(1);
                     json_err(
                         StatusCode::TOO_MANY_REQUESTS,
                         format!(
                             r#"{{"message":"429: too many requests","retry_after":{retry_after},"scope":"{}","code":0}}"#,
-                            rlimit.key(),
+                            limit_type.key(),
                         ),
                     )
                 };
@@ -171,11 +182,19 @@ pub async fn do_request_ratelimited(
                 let headers = response.headers_mut();
                 headers.insert(
                     "X-RateLimit-Scope",
-                    HeaderValue::from_str(rlimit.key().as_str()).expect("invalid header value"),
+                    HeaderValue::from_str(
+                        if own_system_request {
+                            limit_type.key().replace("generic", "own_system")
+                        } else {
+                            limit_type.key()
+                        }
+                        .as_str(),
+                    )
+                    .expect("invalid header value"),
                 );
                 headers.insert(
                     "X-RateLimit-Limit",
-                    HeaderValue::from_str(format!("{}", rlimit.rate()).as_str())
+                    HeaderValue::from_str(format!("{}", limit_type.rate()).as_str())
                         .expect("invalid header value"),
                 );
                 headers.insert(
