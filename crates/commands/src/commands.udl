@@ -1,0 +1,36 @@
+namespace commands {
+    CommandResult parse_command(string prefix, string input);
+    string get_related_commands(string prefix, string input);
+};
+[Enum]
+interface CommandResult {
+	Ok(ParsedCommand command);
+	Err(string error);
+};
+[Enum]
+interface Parameter {
+	MemberRef(string member);
+	MemberRefs(sequence<string> members);
+	GroupRef(string group);
+	GroupRefs(sequence<string> groups);
+	SystemRef(string system);
+	UserRef(u64 user_id);
+	MessageRef(u64? guild_id, u64? channel_id, u64 message_id);
+	ChannelRef(u64 channel_id);
+	GuildRef(u64 guild_id);
+	MemberPrivacyTarget(string target);
+	GroupPrivacyTarget(string target);
+	SystemPrivacyTarget(string target);
+	PrivacyLevel(string level);
+	OpaqueString(string raw);
+	OpaqueInt(i32 raw);
+	Toggle(boolean toggle);
+	Avatar(string avatar);
+	ProxySwitchAction(string action);
+	Null();
+};
+dictionary ParsedCommand {
+	string command_ref;
+	record<string, Parameter> params;
+	record<string, Parameter?> flags;
+};

@@ -1,5 +1,3 @@
-using System.Text.RegularExpressions;
-
 using Humanizer;
 using Dapper;
 using SqlKata;
@@ -113,17 +111,9 @@ public class Admin
         return eb.Build();
     }
 
-    public async Task UpdateSystemId(Context ctx)
+    public async Task UpdateSystemId(Context ctx, PKSystem target, string newHid, bool confirmYes)
     {
         ctx.AssertBotAdmin();
-
-        var target = await ctx.MatchSystem();
-        if (target == null)
-            throw new PKError("Unknown system.");
-
-        var input = ctx.PopArgument();
-        if (!input.TryParseHid(out var newHid))
-            throw new PKError($"Invalid new system ID `{input}`.");
 
         var existingSystem = await ctx.Repository.GetSystemByHid(newHid);
         if (existingSystem != null)
@@ -131,24 +121,16 @@ public class Admin
 
         await ctx.Reply(null, await CreateEmbed(ctx, target));
 
-        if (!await ctx.PromptYesNo($"Change system ID of `{target.Hid}` to `{newHid}`?", "Change"))
+        if (!await ctx.PromptYesNo($"Change system ID of `{target.Hid}` to `{newHid}`?", "Change", flagValue: confirmYes))
             throw new PKError("ID change cancelled.");
 
         await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { Hid = newHid });
         await ctx.Reply($"{Emojis.Success} System ID updated (`{target.Hid}` -> `{newHid}`).");
     }
 
-    public async Task UpdateMemberId(Context ctx)
+    public async Task UpdateMemberId(Context ctx, PKMember target, string newHid, bool confirmYes)
     {
         ctx.AssertBotAdmin();
-
-        var target = await ctx.MatchMember();
-        if (target == null)
-            throw new PKError("Unknown member.");
-
-        var input = ctx.PopArgument();
-        if (!input.TryParseHid(out var newHid))
-            throw new PKError($"Invalid new member ID `{input}`.");
 
         var existingMember = await ctx.Repository.GetMemberByHid(newHid);
         if (existingMember != null)
@@ -159,7 +141,7 @@ public class Admin
 
         if (!await ctx.PromptYesNo(
             $"Change member ID of **{target.NameFor(LookupContext.ByNonOwner)}** (`{target.Hid}`) to `{newHid}`?",
-            "Change"
+            "Change", flagValue: confirmYes
         ))
             throw new PKError("ID change cancelled.");
 
@@ -167,17 +149,9 @@ public class Admin
         await ctx.Reply($"{Emojis.Success} Member ID updated (`{target.Hid}` -> `{newHid}`).");
     }
 
-    public async Task UpdateGroupId(Context ctx)
+    public async Task UpdateGroupId(Context ctx, PKGroup target, string newHid, bool confirmYes)
     {
         ctx.AssertBotAdmin();
-
-        var target = await ctx.MatchGroup();
-        if (target == null)
-            throw new PKError("Unknown group.");
-
-        var input = ctx.PopArgument();
-        if (!input.TryParseHid(out var newHid))
-            throw new PKError($"Invalid new group ID `{input}`.");
 
         var existingGroup = await ctx.Repository.GetGroupByHid(newHid);
         if (existingGroup != null)
@@ -187,7 +161,7 @@ public class Admin
         await ctx.Reply(null, await CreateEmbed(ctx, system));
 
         if (!await ctx.PromptYesNo($"Change group ID of **{target.Name}** (`{target.Hid}`) to `{newHid}`?",
-            "Change"
+            "Change", flagValue: confirmYes
         ))
             throw new PKError("ID change cancelled.");
 
@@ -195,17 +169,13 @@ public class Admin
         await ctx.Reply($"{Emojis.Success} Group ID updated (`{target.Hid}` -> `{newHid}`).");
     }
 
-    public async Task RerollSystemId(Context ctx)
+    public async Task RerollSystemId(Context ctx, PKSystem target, bool confirmYes)
     {
         ctx.AssertBotAdmin();
 
-        var target = await ctx.MatchSystem();
-        if (target == null)
-            throw new PKError("Unknown system.");
-
         await ctx.Reply(null, await CreateEmbed(ctx, target));
 
-        if (!await ctx.PromptYesNo($"Reroll system ID `{target.Hid}`?", "Reroll"))
+        if (!await ctx.PromptYesNo($"Reroll system ID `{target.Hid}`?", "Reroll", flagValue: confirmYes))
             throw new PKError("ID change cancelled.");
 
         var query = new Query("systems").AsUpdate(new
@@ -218,20 +188,16 @@ public class Admin
         await ctx.Reply($"{Emojis.Success} System ID updated (`{target.Hid}` -> `{newHid}`).");
     }
 
-    public async Task RerollMemberId(Context ctx)
+    public async Task RerollMemberId(Context ctx, PKMember target, bool confirmYes)
     {
         ctx.AssertBotAdmin();
-
-        var target = await ctx.MatchMember();
-        if (target == null)
-            throw new PKError("Unknown member.");
 
         var system = await ctx.Repository.GetSystem(target.System);
         await ctx.Reply(null, await CreateEmbed(ctx, system));
 
         if (!await ctx.PromptYesNo(
             $"Reroll member ID for **{target.NameFor(LookupContext.ByNonOwner)}** (`{target.Hid}`)?",
-            "Reroll"
+            "Reroll", flagValue: confirmYes
         ))
             throw new PKError("ID change cancelled.");
 
@@ -245,19 +211,15 @@ public class Admin
         await ctx.Reply($"{Emojis.Success} Member ID updated (`{target.Hid}` -> `{newHid}`).");
     }
 
-    public async Task RerollGroupId(Context ctx)
+    public async Task RerollGroupId(Context ctx, PKGroup target, bool confirmYes)
     {
         ctx.AssertBotAdmin();
-
-        var target = await ctx.MatchGroup();
-        if (target == null)
-            throw new PKError("Unknown group.");
 
         var system = await ctx.Repository.GetSystem(target.System);
         await ctx.Reply(null, await CreateEmbed(ctx, system));
 
         if (!await ctx.PromptYesNo($"Reroll group ID for **{target.Name}** (`{target.Hid}`)?",
-            "Change"
+            "Change", flagValue: confirmYes
         ))
             throw new PKError("ID change cancelled.");
 
@@ -271,71 +233,52 @@ public class Admin
         await ctx.Reply($"{Emojis.Success} Group ID updated (`{target.Hid}` -> `{newHid}`).");
     }
 
-    public async Task SystemMemberLimit(Context ctx)
+    public async Task SystemMemberLimit(Context ctx, PKSystem target, int? newLimit, bool confirmYes)
     {
         ctx.AssertBotAdmin();
-
-        var target = await ctx.MatchSystem();
-        if (target == null)
-            throw new PKError("Unknown system.");
 
         var config = await ctx.Repository.GetSystemConfig(target.Id);
 
         var currentLimit = config.MemberLimitOverride ?? Limits.MaxMemberCount;
-        if (!ctx.HasNext())
+        if (newLimit == null)
         {
             await ctx.Reply(null, await CreateEmbed(ctx, target));
             return;
         }
 
-        var newLimitStr = ctx.PopArgument().ToLower().Replace(",", null).Replace("k", "000");
-        if (!int.TryParse(newLimitStr, out var newLimit))
-            throw new PKError($"Couldn't parse `{newLimitStr}` as number.");
-
         await ctx.Reply(null, await CreateEmbed(ctx, target));
-        if (!await ctx.PromptYesNo($"Update member limit from **{currentLimit}** to **{newLimit}**?", "Update"))
+        if (!await ctx.PromptYesNo($"Update member limit from **{currentLimit}** to **{newLimit}**?", "Update", flagValue: confirmYes))
             throw new PKError("Member limit change cancelled.");
 
         await ctx.Repository.UpdateSystemConfig(target.Id, new SystemConfigPatch { MemberLimitOverride = newLimit });
         await ctx.Reply($"{Emojis.Success} Member limit updated.");
     }
 
-    public async Task SystemGroupLimit(Context ctx)
+    public async Task SystemGroupLimit(Context ctx, PKSystem target, int? newLimit, bool confirmYes)
     {
         ctx.AssertBotAdmin();
-
-        var target = await ctx.MatchSystem();
-        if (target == null)
-            throw new PKError("Unknown system.");
 
         var config = await ctx.Repository.GetSystemConfig(target.Id);
 
         var currentLimit = config.GroupLimitOverride ?? Limits.MaxGroupCount;
-        if (!ctx.HasNext())
+        if (newLimit == null)
         {
             await ctx.Reply(null, await CreateEmbed(ctx, target));
             return;
         }
 
-        var newLimitStr = ctx.PopArgument().ToLower().Replace(",", null).Replace("k", "000");
-        if (!int.TryParse(newLimitStr, out var newLimit))
-            throw new PKError($"Couldn't parse `{newLimitStr}` as number.");
-
         await ctx.Reply(null, await CreateEmbed(ctx, target));
-        if (!await ctx.PromptYesNo($"Update group limit from **{currentLimit}** to **{newLimit}**?", "Update"))
+        if (!await ctx.PromptYesNo($"Update group limit from **{currentLimit}** to **{newLimit}**?", "Update", flagValue: confirmYes))
             throw new PKError("Group limit change cancelled.");
 
         await ctx.Repository.UpdateSystemConfig(target.Id, new SystemConfigPatch { GroupLimitOverride = newLimit });
         await ctx.Reply($"{Emojis.Success} Group limit updated.");
     }
 
-    public async Task SystemRecover(Context ctx)
+    public async Task SystemRecover(Context ctx, string systemToken, User account, bool rerollToken, bool confirmYes)
     {
         ctx.AssertBotAdmin();
 
-        var rerollToken = ctx.MatchFlag("rt", "reroll-token");
-
-        var systemToken = ctx.PopArgument();
         var systemId = await ctx.Database.Execute(conn => conn.QuerySingleOrDefaultAsync<SystemId?>(
              "select id from systems where token = @token",
             new { token = systemToken }
@@ -344,10 +287,6 @@ public class Admin
         if (systemId == null)
             throw new PKError("Could not retrieve a system with that token.");
 
-        var account = await ctx.MatchUser();
-        if (account == null)
-            throw new PKError("You must pass an account to associate the system with (either ID or @mention).");
-
         var existingAccount = await ctx.Repository.GetSystemByAccount(account.Id);
         if (existingAccount != null)
             throw Errors.AccountInOtherSystem(existingAccount, ctx.Config, ctx.DefaultPrefix);
@@ -355,7 +294,7 @@ public class Admin
         var system = await ctx.Repository.GetSystem(systemId.Value!);
         await ctx.Reply(null, await CreateEmbed(ctx, system));
 
-        if (!await ctx.PromptYesNo($"Associate account {account.NameAndMention()} with system `{system.Hid}`?", "Recover account"))
+        if (!await ctx.PromptYesNo($"Associate account {account.NameAndMention()} with system `{system.Hid}`?", "Recover account", flagValue: confirmYes))
             throw new PKError("System recovery cancelled.");
 
         await ctx.Repository.AddAccount(system.Id, account.Id);
@@ -378,13 +317,9 @@ public class Admin
         });
     }
 
-    public async Task SystemDelete(Context ctx)
+    public async Task SystemDelete(Context ctx, PKSystem target)
     {
         ctx.AssertBotAdmin();
-
-        var target = await ctx.MatchSystem();
-        if (target == null)
-            throw new PKError("Unknown system.");
 
         await ctx.Reply($"To delete the following system, reply with the system's UUID: `{target.Uuid.ToString()}`",
             await CreateEmbed(ctx, target));
@@ -396,18 +331,11 @@ public class Admin
         await ctx.Reply($"{Emojis.Success} System deletion succesful.");
     }
 
-    public async Task AbuseLogCreate(Context ctx)
+    public async Task AbuseLogCreate(Context ctx, User account, bool denyBotUsage, string? description)
     {
-        var denyBotUsage = ctx.MatchFlag("deny", "deny-bot-usage");
-        var account = await ctx.MatchUser();
-        if (account == null)
-            throw new PKError("You must pass an account to associate the abuse log with (either ID or @mention).");
+        ctx.AssertBotAdmin();
 
-        string? desc = null!;
-        if (ctx.HasNext(false))
-            desc = ctx.RemainderOrNull(false).NormalizeLineEndSpacing();
-
-        var abuseLog = await ctx.Repository.CreateAbuseLog(desc, denyBotUsage);
+        var abuseLog = await ctx.Repository.CreateAbuseLog(description, denyBotUsage);
         await ctx.Repository.AddAbuseLogAccount(abuseLog.Id, account.Id);
 
         await ctx.Reply(
@@ -415,14 +343,49 @@ public class Admin
             await CreateAbuseLogEmbed(ctx, abuseLog));
     }
 
-    public async Task AbuseLogShow(Context ctx, AbuseLog abuseLog)
+    public async Task<AbuseLog?> GetAbuseLog(Context ctx, User? account, string? id)
     {
+        ctx.AssertBotAdmin();
+
+        AbuseLog? abuseLog = null!;
+        if (account != null)
+        {
+            abuseLog = await ctx.Repository.GetAbuseLogByAccount(account.Id);
+        }
+        else
+        {
+            abuseLog = await ctx.Repository.GetAbuseLogByGuid(new Guid(id));
+        }
+
+        if (abuseLog == null)
+        {
+            await ctx.Reply($"{Emojis.Error} Could not find an existing abuse log entry for that query.");
+            return null;
+        }
+
+        return abuseLog;
+    }
+
+    public async Task AbuseLogShow(Context ctx, User? account, string? id)
+    {
+        ctx.AssertBotAdmin();
+
+        AbuseLog? abuseLog = await GetAbuseLog(ctx, account, id);
+        if (abuseLog == null)
+            return;
+
         await ctx.Reply(null, await CreateAbuseLogEmbed(ctx, abuseLog));
     }
 
-    public async Task AbuseLogFlagDeny(Context ctx, AbuseLog abuseLog)
+    public async Task AbuseLogFlagDeny(Context ctx, User? account, string? id, bool? value)
     {
-        if (!ctx.HasNext())
+        ctx.AssertBotAdmin();
+
+        AbuseLog? abuseLog = await GetAbuseLog(ctx, account, id);
+        if (abuseLog == null)
+            return;
+
+        if (value == null)
         {
             await ctx.Reply(
                 $"Bot usage is currently {(abuseLog.DenyBotUsage ? "denied" : "allowed")} "
@@ -430,27 +393,31 @@ public class Admin
         }
         else
         {
-            var value = ctx.MatchToggle(true);
             if (abuseLog.DenyBotUsage != value)
-                await ctx.Repository.UpdateAbuseLog(abuseLog.Id, new AbuseLogPatch { DenyBotUsage = value });
+                await ctx.Repository.UpdateAbuseLog(abuseLog.Id, new AbuseLogPatch { DenyBotUsage = value.Value });
 
             await ctx.Reply(
-                $"Bot usage is now **{(value ? "denied" : "allowed")}** "
+                $"Bot usage is now **{(value.Value ? "denied" : "allowed")}** "
                 + $"for accounts associated with abuse log `{abuseLog.Uuid}`.");
         }
     }
 
-    public async Task AbuseLogDescription(Context ctx, AbuseLog abuseLog)
+    public async Task AbuseLogDescription(Context ctx, User? account, string? id, string? description, bool clear, bool confirmClear)
     {
-        if (ctx.MatchClear() && await ctx.ConfirmClear("this abuse log description"))
+        ctx.AssertBotAdmin();
+
+        AbuseLog? abuseLog = await GetAbuseLog(ctx, account, id);
+        if (abuseLog == null)
+            return;
+
+        if (clear && await ctx.ConfirmClear("this abuse log description", confirmClear))
         {
             await ctx.Repository.UpdateAbuseLog(abuseLog.Id, new AbuseLogPatch { Description = null });
             await ctx.Reply($"{Emojis.Success} Abuse log description cleared.");
         }
-        else if (ctx.HasNext())
+        else if (description != null)
         {
-            var desc = ctx.RemainderOrNull(false).NormalizeLineEndSpacing();
-            await ctx.Repository.UpdateAbuseLog(abuseLog.Id, new AbuseLogPatch { Description = desc });
+            await ctx.Repository.UpdateAbuseLog(abuseLog.Id, new AbuseLogPatch { Description = description });
             await ctx.Reply($"{Emojis.Success} Abuse log description updated.");
         }
         else
@@ -461,11 +428,13 @@ public class Admin
         }
     }
 
-    public async Task AbuseLogAddUser(Context ctx, AbuseLog abuseLog)
+    public async Task AbuseLogAddUser(Context ctx, User? accountToFind, string? id, User account)
     {
-        var account = await ctx.MatchUser();
-        if (account == null)
-            throw new PKError("You must pass an account to associate the abuse log with (either ID or @mention).");
+        ctx.AssertBotAdmin();
+
+        AbuseLog? abuseLog = await GetAbuseLog(ctx, accountToFind, id);
+        if (abuseLog == null)
+            return;
 
         await ctx.Repository.AddAbuseLogAccount(abuseLog.Id, account.Id);
         await ctx.Reply(
@@ -473,11 +442,13 @@ public class Admin
             await CreateAbuseLogEmbed(ctx, abuseLog));
     }
 
-    public async Task AbuseLogRemoveUser(Context ctx, AbuseLog abuseLog)
+    public async Task AbuseLogRemoveUser(Context ctx, User? accountToFind, string? id, User account)
     {
-        var account = await ctx.MatchUser();
-        if (account == null)
-            throw new PKError("You must pass an account to remove from the abuse log (either ID or @mention).");
+        ctx.AssertBotAdmin();
+
+        AbuseLog? abuseLog = await GetAbuseLog(ctx, accountToFind, id);
+        if (abuseLog == null)
+            return;
 
         await ctx.Repository.UpdateAccount(account.Id, new()
         {
@@ -489,8 +460,14 @@ public class Admin
             await CreateAbuseLogEmbed(ctx, abuseLog));
     }
 
-    public async Task AbuseLogDelete(Context ctx, AbuseLog abuseLog)
+    public async Task AbuseLogDelete(Context ctx, User? account, string? id)
     {
+        ctx.AssertBotAdmin();
+
+        AbuseLog? abuseLog = await GetAbuseLog(ctx, account, id);
+        if (abuseLog == null)
+            return;
+
         if (!await ctx.PromptYesNo($"Really delete abuse log entry `{abuseLog.Uuid}`?", "Delete", matchFlag: false))
         {
             await ctx.Reply($"{Emojis.Error} Deletion cancelled.");
@@ -501,17 +478,10 @@ public class Admin
         await ctx.Reply($"{Emojis.Success} Successfully deleted abuse log entry.");
     }
 
-    public async Task SendAdminMessage(Context ctx)
+    public async Task SendAdminMessage(Context ctx, User account, string content)
     {
         ctx.AssertBotAdmin();
 
-        var account = await ctx.MatchUser();
-        if (account == null)
-            throw new PKError("You must pass an account to send an admin message to (either ID or @mention).");
-        if (!ctx.HasNext())
-            throw new PKError("You must provide a message to send.");
-
-        var content = ctx.RemainderOrNull(false).NormalizeLineEndSpacing();
         var messageContent = $"## [Admin Message]\n\n{content}\n\nWe cannot read replies sent to this DM. If you wish to contact the staff team, please join the support server (<https://discord.gg/PczBt78>) or send us an email at <legal@pluralkit.me>.";
 
         try

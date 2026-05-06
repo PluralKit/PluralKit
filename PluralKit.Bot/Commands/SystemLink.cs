@@ -1,4 +1,5 @@
 using Myriad.Extensions;
+using Myriad.Types;
 
 using PluralKit.Core;
 
@@ -6,12 +7,10 @@ namespace PluralKit.Bot;
 
 public class SystemLink
 {
-    public async Task LinkSystem(Context ctx)
+    public async Task LinkSystem(Context ctx, User account, bool confirmYes = false)
     {
         ctx.CheckSystem();
 
-        var account = await ctx.MatchUser() ??
-                      throw new PKSyntaxError("You must pass an account to link with (either ID or @mention).");
         var accountIds = await ctx.Repository.GetSystemAccounts(ctx.System.Id);
         if (accountIds.Contains(account.Id))
             throw Errors.AccountAlreadyLinked;
@@ -21,17 +20,17 @@ public class SystemLink
             throw Errors.AccountInOtherSystem(existingAccount, ctx.Config, ctx.DefaultPrefix);
 
         var msg = $"{account.Mention()}, please confirm the link.";
-        if (!await ctx.PromptYesNo(msg, "Confirm", account, false)) throw Errors.MemberLinkCancelled;
+        if (!await ctx.PromptYesNo(msg, "Confirm", account, true, confirmYes)) throw Errors.MemberLinkCancelled;
         await ctx.Repository.AddAccount(ctx.System.Id, account.Id);
         await ctx.Reply($"{Emojis.Success} Account linked to system.");
     }
 
-    public async Task UnlinkAccount(Context ctx)
+    public async Task UnlinkAccount(Context ctx, string idRaw, bool confirmYes)
     {
         ctx.CheckSystem();
 
         ulong id;
-        if (!ctx.MatchUserRaw(out id))
+        if (!idRaw.TryParseMention(out id))
             throw new PKSyntaxError("You must pass an account to unlink from (either ID or @mention).");
 
         var accountIds = (await ctx.Repository.GetSystemAccounts(ctx.System.Id)).ToList();
@@ -39,7 +38,7 @@ public class SystemLink
         if (accountIds.Count == 1) throw Errors.UnlinkingLastAccount(ctx.DefaultPrefix);
 
         var msg = $"Are you sure you want to unlink <@{id}> from your system?";
-        if (!await ctx.PromptYesNo(msg, "Unlink")) throw Errors.MemberUnlinkCancelled;
+        if (!await ctx.PromptYesNo(msg, "Unlink", flagValue: confirmYes)) throw Errors.MemberUnlinkCancelled;
 
         await ctx.Repository.RemoveAccount(ctx.System.Id, id);
         await ctx.Reply($"{Emojis.Success} Account unlinked.");
