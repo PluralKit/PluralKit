@@ -9,10 +9,7 @@ use sqlx::types::Uuid;
 use tracing::warn;
 
 use crate::{
-    ApiContext,
-    auth::AuthState,
-    error::{self, PKError},
-    util::json_err,
+    auth::{AuthState, Authable}, error::{self, PKError}, util::json_err, ApiContext
 };
 use pluralkit_models::{GroupId, MemberId, SwitchId, SystemId};
 
@@ -121,6 +118,12 @@ impl RequestAbout {
             Self::Group { system, .. } => *system,
             Self::Switch { system, .. } => *system,
         }
+    }
+}
+
+impl Authable for RequestAbout {
+    fn authable_system_id(&self) -> SystemId {
+        self.system_id()
     }
 }
 

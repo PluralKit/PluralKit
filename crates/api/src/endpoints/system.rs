@@ -3,28 +3,31 @@ use pk_macros::api_endpoint;
 use serde_json::{Value, json};
 use sqlx::Postgres;
 
-use pluralkit_models::{PKSystem, PKSystemConfig, PrivacyLevel};
+use pluralkit_models::{PKSystemConfig, PrivacyLevel};
 
-use crate::{ApiContext, auth::AuthState, error::fail};
+use crate::{auth::AuthState, error::fail, middleware::params::RequestAbout, ApiContext};
 
 #[api_endpoint]
 pub async fn get_system_settings(
     Extension(auth): Extension<AuthState>,
-    Extension(system): Extension<PKSystem>,
+    Extension(about): Extension<RequestAbout>,
     State(ctx): State<ApiContext>,
 ) -> Json<Value> {
-    let access_level = auth.access_level_for(&system);
+    // todo: this needs to be better
+    let RequestAbout::System(system_id) = about else { unreachable!() };
+
+    let access_level = auth.access_level_for(&about);
 
     let mut config = match sqlx::query_as::<Postgres, PKSystemConfig>(
         "select * from system_config where system = $1",
     )
-    .bind(system.id)
+    .bind(system_id)
     .fetch_optional(&ctx.db)
     .await
     {
         Ok(Some(config)) => config,
         Ok(None) => fail!(
-            system = system.id,
+            system = system_id,
             "failed to find system config for existing system"
         ),
         Err(err) => fail!(?err, "failed to query system config"),
