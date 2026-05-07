@@ -123,7 +123,7 @@ public static class ContextChecksExt
     {
         if (!ctx.Premium)
             throw Errors.PremiumExclusiveCommand;
-        
+
         return ctx;
     }
 }

@@ -16,10 +16,14 @@ public class AvatarHostingService
         {
             Timeout = TimeSpan.FromSeconds(10),
         };
+        if (_config.InternalAuthToken != null)
+            _client.DefaultRequestHeaders.Add("x-pluralkit-internalauth", _config.InternalAuthToken);
     }
 
-    public async Task VerifyAvatarOrThrow(string url, bool isBanner = false)
+    public async Task<ParsedImage> VerifyAndRehostImage(Context ctx, ParsedImage input, RehostedImageType type)
     {
+        var url = input.Url;
+
         if (url.Length > Limits.MaxUriLength)
             throw Errors.UrlTooLong(url);
 
@@ -29,62 +33,10 @@ public class AvatarHostingService
         if (uri.Host.Contains("toyhou.se"))
             throw new PKError("Due to server issues, PluralKit is unable to read images hosted on toyhou.se.");
 
-        if (uri.Host == "cdn.pluralkit.me") return;
+        if (uri.Host == "cdn.pluralkit.me") return input;
 
         if (_config.AvatarServiceUrl == null)
-            return;
-
-        var kind = isBanner ? "banner" : "avatar";
-
-        try
-        {
-            var response = await _client.PostAsJsonAsync(_config.AvatarServiceUrl + "/verify",
-                new { url, kind });
-
-            if (response.StatusCode != HttpStatusCode.OK)
-            {
-                var error = await response.Content.ReadFromJsonAsync<ErrorResponse>();
-                throw new PKError($"{error.Error}");
-            }
-        }
-        catch (TaskCanceledException e)
-        {
-            // don't show an internal error to users
-            if (e.Message.Contains("HttpClient.Timeout"))
-                throw new PKError("Temporary error setting image, please try again later");
-            throw;
-        }
-    }
-
-    public async Task<ParsedImage> TryRehostImage(ParsedImage input, RehostedImageType type, ulong userId, PKSystem? system)
-    {
-        try
-        {
-            var uploaded = await TryUploadAvatar(input.Url, type, userId, system);
-            if (uploaded != null)
-            {
-                // todo: make new image type called Cdn?
-                return new ParsedImage { Url = uploaded, Source = AvatarSource.HostedCdn };
-            }
-
             return input;
-        }
-        catch (TaskCanceledException e)
-        {
-            // don't show an internal error to users
-            if (e.Message.Contains("HttpClient.Timeout"))
-                throw new PKError("Temporary error setting image, please try again later");
-            throw;
-        }
-    }
-
-    public async Task<string?> TryUploadAvatar(string? avatarUrl, RehostedImageType type, ulong userId, PKSystem? system)
-    {
-        if (!AvatarUtils.IsDiscordCdnUrl(avatarUrl))
-            return null;
-
-        if (_config.AvatarServiceUrl == null)
-            return null;
 
         var kind = type switch
         {
@@ -93,16 +45,52 @@ public class AvatarHostingService
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
         };
 
-        var response = await _client.PostAsJsonAsync(_config.AvatarServiceUrl + "/pull",
-            new { url = avatarUrl, kind, uploaded_by = userId, system_id = system?.Uuid.ToString() });
-        if (response.StatusCode != HttpStatusCode.OK)
+        if (!AvatarUtils.IsDiscordCdnUrl(input.Url))
         {
-            var error = await response.Content.ReadFromJsonAsync<ErrorResponse>();
-            throw new PKError($"Error uploading image to CDN: {error.Error}");
+            // just verify image, not rehost
+            try
+            {
+                var response = await _client.PostAsJsonAsync(_config.AvatarServiceUrl + "/verify",
+                    new { url, kind });
+
+                if (response.StatusCode != HttpStatusCode.OK)
+                {
+                    var error = await response.Content.ReadFromJsonAsync<ErrorResponse>();
+                    throw new PKError($"{error.Error}");
+                }
+            }
+            catch (TaskCanceledException e)
+            {
+                // don't show an internal error to users
+                if (e.Message.Contains("HttpClient.Timeout"))
+                    throw new PKError("Temporary error setting image, please try again later");
+                throw;
+            }
+
+            return input;
         }
 
-        var success = await response.Content.ReadFromJsonAsync<SuccessResponse>();
-        return success.Url;
+        try
+        {
+            var response = await _client.PostAsJsonAsync(_config.AvatarServiceUrl + "/pull",
+                new { url = input.Url, kind, uploaded_by = ctx.Author.Id, system_id = ctx.System.Uuid.ToString() });
+            if (response.StatusCode != HttpStatusCode.OK)
+            {
+                var error = await response.Content.ReadFromJsonAsync<ErrorResponse>();
+                throw new PKError($"Error uploading image to CDN: {error.Error}");
+            }
+
+            var success = await response.Content.ReadFromJsonAsync<SuccessResponse>();
+            // todo: make new image type called Cdn?
+            return new ParsedImage { Url = success.Url, Source = AvatarSource.HostedCdn };
+        }
+        catch (TaskCanceledException e)
+        {
+            // don't show an internal error to users
+            if (e.Message.Contains("HttpClient.Timeout"))
+                throw new PKError("Temporary error setting image, please try again later");
+            throw;
+        }
     }
 
     public record ErrorResponse(string Error);

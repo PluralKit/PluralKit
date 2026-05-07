@@ -321,8 +321,7 @@ public class Groups
         {
             ctx.CheckOwnGroup(target);
 
-            img = await _avatarHosting.TryRehostImage(img, AvatarHostingService.RehostedImageType.Avatar, ctx.Author.Id, ctx.System);
-            await _avatarHosting.VerifyAvatarOrThrow(img.Url);
+            img = await _avatarHosting.VerifyAndRehostImage(ctx, img, AvatarHostingService.RehostedImageType.Avatar);
 
             await ctx.Repository.UpdateGroup(target.Id, new GroupPatch { Icon = img.CleanUrl ?? img.Url });
 
@@ -396,8 +395,7 @@ public class Groups
         {
             ctx.CheckOwnGroup(target);
 
-            img = await _avatarHosting.TryRehostImage(img, AvatarHostingService.RehostedImageType.Banner, ctx.Author.Id, ctx.System);
-            await _avatarHosting.VerifyAvatarOrThrow(img.Url, true);
+            img = await _avatarHosting.VerifyAndRehostImage(ctx, img, AvatarHostingService.RehostedImageType.Banner);
 
             await ctx.Repository.UpdateGroup(target.Id, new GroupPatch { BannerImage = img.CleanUrl ?? img.Url });
 

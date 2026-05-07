@@ -85,6 +85,14 @@ impl IntoResponse for PKError {
 }
 
 #[macro_export]
+macro_rules! reject_request {
+    () => {{
+        use axum::response::IntoResponse;
+        return (StatusCode::BAD_REQUEST, "failure").into_response();
+    }};
+}
+
+#[macro_export]
 macro_rules! fail {
     ($($stuff:tt)+) => {{
         tracing::error!($($stuff)+);

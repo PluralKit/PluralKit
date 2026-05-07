@@ -4,7 +4,9 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-anyhow = { workspace = true } 
+anyhow = { workspace = true }
+aws-sdk-s3 = { workspace = true }
+data-encoding = { workspace = true }
 fred = { workspace = true }
 lazy_static = { workspace = true }
 metrics = { workspace = true }
@@ -12,6 +14,7 @@ pk_macros = { path = "../macros" }
 sentry = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
+sha2 = { workspace = true }
 sqlx = { workspace = true }
 tokio = { workspace = true }
 tracing = { workspace = true }

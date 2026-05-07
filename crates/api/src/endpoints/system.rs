@@ -2,9 +2,8 @@ use axum::{Extension, Json, extract::State, response::IntoResponse};
 use pk_macros::api_endpoint;
 use serde_json::{Value, json};
 use sqlx::Postgres;
-use pluralkit_models::{PKDashView, PKSystemConfig, PrivacyLevel};
 
-use crate::{ApiContext, auth::AuthState, error::fail, middleware::params::RequestAbout};
+use crate::{ApiContext, auth::AuthState, fail, middleware::params::RequestAbout};
 use pluralkit_models::{PKDashView, PKSystem, PKSystemConfig, PrivacyLevel};
 
 #[api_endpoint]

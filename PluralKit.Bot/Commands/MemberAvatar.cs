@@ -158,8 +158,8 @@ public class MemberAvatar
 
         ctx.CheckSystem().CheckOwnMember(target);
 
-        avatarArg = await _avatarHosting.TryRehostImage(avatarArg.Value, AvatarHostingService.RehostedImageType.Avatar, ctx.Author.Id, ctx.System);
-        await _avatarHosting.VerifyAvatarOrThrow(avatarArg.Value.Url);
+        avatarArg = await _avatarHosting.VerifyAndRehostImage(ctx, avatarArg.Value, AvatarHostingService.RehostedImageType.Avatar);
+
         await UpdateAvatar(location, ctx, target, avatarArg.Value.CleanUrl ?? avatarArg.Value.Url);
         await PrintResponse(location, ctx, target, avatarArg.Value, guildData);
     }

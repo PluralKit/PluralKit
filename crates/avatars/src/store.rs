@@ -1,12 +1,18 @@
-use crate::process::ProcessOutput;
+use aws_sdk_s3::primitives::ByteStream;
 use tracing::error;
+
+use crate::process::ProcessOutput;
 
 pub struct StoreResult {
     pub id: String,
     pub path: String,
 }
 
-pub async fn store(bucket: &s3::Bucket, res: &ProcessOutput) -> anyhow::Result<StoreResult> {
+pub async fn store(
+    client: &aws_sdk_s3::Client,
+    bucket: &str,
+    res: &ProcessOutput,
+) -> anyhow::Result<StoreResult> {
     // errors here are all going to be internal
     let encoded_hash = res.hash.to_string();
     let path = format!(
@@ -23,37 +29,33 @@ pub async fn store(bucket: &s3::Bucket, res: &ProcessOutput) -> anyhow::Result<S
             tokio::time::sleep(tokio::time::Duration::new(2, 0)).await;
         }
         if retry_count > 2 {
-            anyhow::bail!("error uploading image to cdn, too many retries") // nicer user-facing error?
+            anyhow::bail!("error uploading image to cdn, too many retries")
         }
         retry_count += 1;
 
-        let resp = bucket
-            .put_object_with_content_type(&path, &res.data, res.format.mime_type())
-            .await?;
-        match resp.status_code() {
-            200 => {
+        match client
+            .put_object()
+            .bucket(bucket)
+            .key(&path)
+            .body(ByteStream::from(res.data.clone()))
+            .content_type(res.format.mime_type())
+            .send()
+            .await
+        {
+            Ok(_) => {
                 tracing::debug!("uploaded image to {}", &path);
-
                 return Ok(StoreResult {
                     id: encoded_hash,
                     path,
                 });
             }
-            500 | 503 => {
-                tracing::warn!(
-                    "got 503 uploading image to {} ({}), retrying... (try {}/3)",
-                    &path,
-                    resp.as_str()?,
-                    retry_count
-                );
+            Err(e) => {
+                error!("error uploading image to {}: {}", &path, e);
+                if retry_count > 2 {
+                    anyhow::bail!(e);
+                }
+                tracing::warn!("retrying upload to {} (try {}/3)", &path, retry_count);
                 continue;
-            }
-            _ => {
-                error!(
-                    "storage backend responded status code {}",
-                    resp.status_code()
-                );
-                anyhow::bail!("error uploading image to cdn") // nicer user-facing error?
             }
         }
     }

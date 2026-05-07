@@ -8,7 +8,7 @@ use axum::{
 use tower_http::{catch_panic::CatchPanicLayer, services::ServeDir};
 use tracing::info;
 
-use api::{ApiContext, middleware};
+use api::middleware;
 
 mod auth;
 mod error;
@@ -16,6 +16,12 @@ mod mailer;
 mod payments;
 mod system;
 mod web;
+
+#[derive(Clone)]
+pub struct ApiContext {
+    pub db: sqlx::postgres::PgPool,
+    pub redis: fred::clients::RedisPool,
+}
 
 pub use api::fail;
 
@@ -84,10 +90,10 @@ async fn main() -> anyhow::Result<()> {
         .install_default()
         .expect("failed to install rustls crypto provider");
 
-    let db = libpk::db::init_data_db().await?;
-    let redis = libpk::db::init_redis().await?;
-
-    let ctx = ApiContext { db, redis };
+    let ctx = ApiContext {
+        db: libpk::db::init_data_db().await?,
+        redis: libpk::db::init_redis().await?,
+    };
 
     let app = router(ctx);
 
