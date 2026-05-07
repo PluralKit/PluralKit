@@ -261,8 +261,7 @@ public class MemberEdit
         async Task SetBannerImage(ParsedImage img)
         {
             ctx.CheckOwnMember(target);
-            img = await _avatarHosting.TryRehostImage(img, AvatarHostingService.RehostedImageType.Banner, ctx.Author.Id, ctx.System);
-            await _avatarHosting.VerifyAvatarOrThrow(img.Url, true);
+            img = await _avatarHosting.VerifyAndRehostImage(ctx, img, AvatarHostingService.RehostedImageType.Banner);
 
             await ctx.Repository.UpdateMember(target.Id, new MemberPatch { BannerImage = img.CleanUrl ?? img.Url });
 

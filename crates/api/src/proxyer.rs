@@ -46,6 +46,13 @@ impl Proxyer {
             headers.append(INTERNAL_APPID_HEADER, aid.into());
         }
 
+        if let Some(ref token) = libpk::config.internal_auth {
+            headers.insert(
+                "x-pluralkit-internalauth",
+                token.parse().expect("invalid internal auth token"),
+            );
+        }
+
         Ok(self.rproxy_client.request(req).await?.into_response())
     }
 }

@@ -1,39 +1,22 @@
 use anyhow::Context;
 use reqwest::{ClientBuilder, StatusCode};
 use sqlx::prelude::FromRow;
-use std::{sync::Arc, time::Duration};
+use std::time::Duration;
 use tracing::{error, info};
 
 #[libpk::main]
 async fn main() -> anyhow::Result<()> {
     let config = libpk::config.avatars();
 
-    let bucket = {
-        let region = s3::Region::Custom {
-            region: "auto".to_string(),
-            endpoint: config.s3.endpoint.to_string(),
-        };
-
-        let credentials = s3::creds::Credentials::new(
-            Some(&config.s3.application_id),
-            Some(&config.s3.application_key),
-            None,
-            None,
-            None,
-        )
-        .unwrap();
-
-        let bucket = s3::Bucket::new(&config.s3.bucket, region, credentials)?;
-
-        Arc::new(bucket)
-    };
+    let s3_client = libpk::s3::create_client(&config.s3);
+    let s3_bucket = config.s3.bucket.clone();
 
     let pool = libpk::db::init_data_db().await?;
 
     loop {
         // no infinite loops
         tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
-        match cleanup_job(pool.clone(), bucket.clone()).await {
+        match cleanup_job(pool.clone(), s3_client.clone(), s3_bucket.clone()).await {
             Ok(()) => {}
             Err(error) => {
                 error!(?error, "failed to run avatar cleanup job");
@@ -48,7 +31,11 @@ struct CleanupJobEntry {
     id: String,
 }
 
-async fn cleanup_job(pool: sqlx::PgPool, bucket: Arc<s3::Bucket>) -> anyhow::Result<()> {
+async fn cleanup_job(
+    pool: sqlx::PgPool,
+    s3_client: aws_sdk_s3::Client,
+    s3_bucket: String,
+) -> anyhow::Result<()> {
     let mut tx = pool.begin().await?;
 
     let image_id: Option<CleanupJobEntry> = sqlx::query_as(

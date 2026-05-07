@@ -56,6 +56,7 @@ public static class ContextAvatarExt
 public struct ParsedImage
 {
     public string Url;
+    // "clean url" - discord cdn url without query parameters
     public string? CleanUrl;
     public AvatarSource Source;
     public User? SourceUser;

@@ -1,15 +1,15 @@
-mod hash;
 // mod migrate;
 mod process;
 mod pull;
 mod store;
 
 use anyhow::Context;
-use axum::extract::State;
+use axum::extract::{Request, State};
 use axum::routing::get;
 use axum::{
     Json, Router,
     http::StatusCode,
+    middleware::Next,
     response::{IntoResponse, Response},
     routing::post,
 };
@@ -23,6 +23,7 @@ use sqlx::PgPool;
 use std::error::Error;
 use std::sync::Arc;
 use std::time::Duration;
+use subtle::ConstantTimeEq;
 use thiserror::Error;
 use tracing::{error, info, warn};
 use uuid::Uuid;
@@ -109,7 +110,7 @@ async fn pull(
     let original_file_size = result.data.len();
     let encoded = process::process_async(result.data, req.kind).await?;
 
-    let store_res = crate::store::store(&state.bucket, &encoded).await?;
+    let store_res = crate::store::store(&state.s3_client, &state.s3_bucket, &encoded).await?;
     let final_url = format!("{}{}", state.config.cdn_url, store_res.path);
     let is_new = db::add_image(
         &state.pool,
@@ -162,9 +163,29 @@ pub async fn stats(State(state): State<AppState>) -> Result<Json<Stats>, PKAvata
     Ok(Json(db::get_stats(&state.pool).await?))
 }
 
+async fn check_internal_auth(req: Request, next: Next) -> Response {
+    let Some(ref expected) = libpk::config.internal_auth else {
+        return next.run(req).await;
+    };
+
+    let authorized = req
+        .headers()
+        .get("x-pluralkit-internalauth")
+        .and_then(|h| h.to_str().ok())
+        .map(|h| h.as_bytes().ct_eq(expected.as_bytes()).into())
+        .unwrap_or(false);
+
+    if !authorized {
+        return (StatusCode::UNAUTHORIZED, "unauthorized").into_response();
+    }
+
+    next.run(req).await
+}
+
 #[derive(Clone)]
 pub struct AppState {
-    bucket: Arc<s3::Bucket>,
+    s3_client: aws_sdk_s3::Client,
+    s3_bucket: String,
     pull_client: Arc<Client>,
     pool: PgPool,
     config: Arc<AvatarsConfig>,
@@ -174,25 +195,8 @@ pub struct AppState {
 async fn main() -> anyhow::Result<()> {
     let config = libpk::config.avatars();
 
-    let bucket = {
-        let region = s3::Region::Custom {
-            region: "auto".to_string(),
-            endpoint: config.s3.endpoint.to_string(),
-        };
-
-        let credentials = s3::creds::Credentials::new(
-            Some(&config.s3.application_id),
-            Some(&config.s3.application_key),
-            None,
-            None,
-            None,
-        )
-        .unwrap();
-
-        let bucket = s3::Bucket::new(&config.s3.bucket, region, credentials)?;
-
-        Arc::new(bucket)
-    };
+    let s3_client = libpk::s3::create_client(&config.s3);
+    let s3_bucket = config.s3.bucket.clone();
 
     let pull_client = Arc::new(
         ClientBuilder::new()
@@ -206,7 +210,8 @@ async fn main() -> anyhow::Result<()> {
     let pool = libpk::db::init_data_db().await?;
 
     let state = AppState {
-        bucket,
+        s3_client,
+        s3_bucket,
         pull_client,
         pool,
         config: Arc::new(config.clone()),
@@ -219,6 +224,7 @@ async fn main() -> anyhow::Result<()> {
         .route("/verify", post(verify))
         .route("/pull", post(pull))
         .route("/stats", get(stats))
+        .layer(axum::middleware::from_fn(check_internal_auth))
         .with_state(state);
 
     let host = &config.bind_addr;

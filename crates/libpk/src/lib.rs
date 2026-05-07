@@ -7,7 +7,9 @@ use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitEx
 use sentry_tracing::event_from_event;
 
 pub mod db;
+pub mod hash;
 pub mod runtime_config;
+pub mod s3;
 pub mod state;
 
 pub mod _config;

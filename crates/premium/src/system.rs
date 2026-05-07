@@ -6,8 +6,7 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::auth::AuthState;
-use api::ApiContext;
+use crate::{ApiContext, auth::AuthState};
 
 #[derive(Deserialize)]
 pub(crate) struct ValidateTokenRequest {

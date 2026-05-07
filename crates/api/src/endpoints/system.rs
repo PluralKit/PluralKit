@@ -5,7 +5,7 @@ use sqlx::Postgres;
 
 use pluralkit_models::{PKSystemConfig, PrivacyLevel};
 
-use crate::{ApiContext, auth::AuthState, error::fail, middleware::params::RequestAbout};
+use crate::{ApiContext, auth::AuthState, fail, middleware::params::RequestAbout};
 use pluralkit_models::{PKDashView, PKSystem, PKSystemConfig, PrivacyLevel};
 
 #[api_endpoint]

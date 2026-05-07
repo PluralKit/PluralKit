@@ -41,7 +41,8 @@ public partial class ModelRepository
 
     public async Task CreateHidChangelog(SystemId system, ulong discord_uid, string hid_type, string hid_old, string hid_new)
     {
-        var query = new Query("hid_changelog").AsInsert(new {
+        var query = new Query("hid_changelog").AsInsert(new
+        {
             system,
             discord_uid,
             hid_type,

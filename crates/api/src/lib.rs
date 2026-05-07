@@ -1,3 +1,4 @@
+#![feature(if_let_guard)]
 mod auth;
 pub mod error;
 pub mod middleware;

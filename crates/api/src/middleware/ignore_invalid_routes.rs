@@ -1,3 +1,4 @@
+use crate::reject_request;
 use axum::{
     extract::MatchedPath,
     extract::Request,
@@ -57,7 +58,7 @@ pub async fn ignore_invalid_routes(request: Request, next: Next) -> Response {
     // but "unknown" isn't really a valid user-agent
     else if user_agent == "unknown" {
         // please set a valid user-agent
-        return StatusCode::BAD_REQUEST.into_response();
+        reject_request!();
     } else {
         next.run(request).await
     }
