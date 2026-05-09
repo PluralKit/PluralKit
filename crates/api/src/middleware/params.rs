@@ -147,10 +147,15 @@ async fn resolve_entity(
     } else {
         "system"
     };
-    let maybe_uuid = if column == "uuid" { "$1::uuid" } else { "$1" };
+
+    let maybe_cast = match column {
+        "uuid" => "$1::uuid",
+        "hid" => "$1::char(6)",
+        _ => "$1",
+    };
 
     let Some(row): Option<ResolveEntityRow> = sqlx::query_as(
-        format!("select id, {system_col} from {table} where {column} = {maybe_uuid}").as_str(),
+        format!("select id, {system_col} from {table} where {column} = {maybe_cast}").as_str(),
     )
     .bind(value)
     .fetch_optional(pool)
