@@ -1,14 +1,12 @@
 use std::{str::FromStr, sync::Arc};
 
-use crate::PKAvatarError;
+use crate::{NORMAL_HARD_LIMIT, PKAvatarError, PREMIUM_HARD_LIMIT};
 use anyhow::Context;
 use reqwest::{Client, StatusCode, Url};
 use std::error::Error;
 use std::fmt::Write;
 use std::time::Instant;
 use tracing::{error, instrument};
-
-const MAX_SIZE: u64 = 8 * 1024 * 1024;
 
 #[allow(dead_code)]
 pub struct PullResult {
@@ -19,8 +17,9 @@ pub struct PullResult {
 
 #[instrument(skip_all)]
 pub async fn pull(
-    client: Arc<Client>,
+    client: &Arc<Client>,
     parsed_url: &ParsedUrl,
+    premium: bool,
 ) -> Result<PullResult, PKAvatarError> {
     let time_before = Instant::now();
     let mut trimmed_url = trim_url_query(&parsed_url.full_url)?;
@@ -59,10 +58,16 @@ pub async fn pull(
         }
     }
 
+    let max_size = if premium {
+        PREMIUM_HARD_LIMIT
+    } else {
+        NORMAL_HARD_LIMIT
+    } as u64;
+
     let size = match response.content_length() {
         None => return Err(PKAvatarError::MissingHeader("Content-Length")),
-        Some(size) if size > MAX_SIZE => {
-            return Err(PKAvatarError::ImageFileSizeTooLarge(size, MAX_SIZE));
+        Some(size) if size > max_size => {
+            return Err(PKAvatarError::ImageFileSizeTooLarge(size, max_size));
         }
         Some(size) => size,
     };

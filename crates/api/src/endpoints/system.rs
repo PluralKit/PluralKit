@@ -42,7 +42,44 @@ pub async fn get_system_settings(
     }
 
     Ok(Json(match access_level {
-        PrivacyLevel::Private => config.to_json(),
+        PrivacyLevel::Private => {
+            let mut config_json = config.clone().to_json();
+
+            match sqlx::query_as::<Postgres, PKDashView>(
+                "select * from dash_views where system = $1",
+            )
+            .bind(system_id)
+            .fetch_all(&ctx.db)
+            .await
+            {
+                Ok(val) => {
+                    config_json.as_object_mut().unwrap().insert(
+                        "dash_views".to_string(),
+                        serde_json::to_value(
+                            &val.iter()
+                                .map(|v| v.clone().to_json())
+                                .collect::<Vec<serde_json::Value>>(),
+                        )
+                        .unwrap(),
+                    );
+                }
+                Err(err) => fail!(?err, "failed to query dash views"),
+            };
+
+            if let Some(premium) = auth.premium() {
+                config_json.as_object_mut().unwrap().insert(
+                    "premium".to_string(),
+                    json!({
+                        "active": premium.is_active(),
+                        "status": premium.status,
+                        "next_renewal_at": premium.next_renewal_at,
+                        "id_changes_remaining": premium.id_changes_remaining,
+                    }),
+                );
+            }
+
+            config_json
+        }
         PrivacyLevel::Public => json!({
             "pings_enabled": config.pings_enabled,
             "latch_timeout": config.latch_timeout,

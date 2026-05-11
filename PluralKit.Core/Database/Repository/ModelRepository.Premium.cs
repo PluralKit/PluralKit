@@ -73,6 +73,7 @@ public class PremiumAllowances
     public int IdChangesRemaining { get; private set; }
 
     // todo(premium): maybe just is not "canceled"
+    // todo(premiun): why does "past_due" count as active??
     public bool IsActive => Status is "active" or "past_due" or "canceling" or "lifetime";
     public bool IsCanceling => Status is "canceling";
 

@@ -4,23 +4,24 @@ use tracing::error;
 use crate::process::ProcessOutput;
 
 pub struct StoreResult {
-    pub id: String,
+    pub key: String,
     pub path: String,
 }
 
+// store image into a temporary uploads path
+// api will MoveObject later to the correct storage path
 pub async fn store(
     client: &aws_sdk_s3::Client,
     bucket: &str,
+    uuid_key: &str,
     res: &ProcessOutput,
 ) -> anyhow::Result<StoreResult> {
-    // errors here are all going to be internal
-    let encoded_hash = res.hash.to_string();
-    let path = format!(
-        "images/{}/{}.{}",
-        &encoded_hash[..2],
-        &encoded_hash[2..],
-        res.format.extension()
-    );
+    let ext = res
+        .format
+        .extensions_str()
+        .first()
+        .expect("expected valid extension");
+    let path = format!("uploads/{}.{}", uuid_key, ext);
 
     // todo: something better than these retries
     let mut retry_count = 0;
@@ -38,14 +39,14 @@ pub async fn store(
             .bucket(bucket)
             .key(&path)
             .body(ByteStream::from(res.data.clone()))
-            .content_type(res.format.mime_type())
+            .content_type(res.format.to_mime_type())
             .send()
             .await
         {
             Ok(_) => {
                 tracing::debug!("uploaded image to {}", &path);
                 return Ok(StoreResult {
-                    id: encoded_hash,
+                    key: path.clone(),
                     path,
                 });
             }

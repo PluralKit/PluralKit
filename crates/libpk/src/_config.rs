@@ -53,6 +53,10 @@ fn _default_api_addr() -> String {
     "[::]:5000".to_string()
 }
 
+fn _default_cdn_url() -> String {
+    "cdn.pluralkit.me".to_string()
+}
+
 #[derive(Deserialize, Clone, Debug)]
 pub struct ApiConfig {
     #[serde(default = "_default_api_addr")]
@@ -63,13 +67,25 @@ pub struct ApiConfig {
 
     pub remote_url: String,
 
+    pub avatars_service_url: String,
+
     #[serde(default)]
     pub temp_token2: Option<String>,
+
+    pub storage_bucket: String,
+    pub uploads_bucket: String,
+    pub s3: S3Config,
+
+    #[serde(default = "_default_cdn_url")]
+    pub cdn_url: String,
 }
 
 #[derive(Deserialize, Clone, Debug)]
 pub struct AvatarsConfig {
+    pub storage_bucket: String,
+    pub uploads_bucket: String,
     pub s3: S3Config,
+    #[serde(default = "_default_cdn_url")]
     pub cdn_url: String,
 
     #[serde(default = "_default_api_addr")]
@@ -77,16 +93,10 @@ pub struct AvatarsConfig {
 
     #[serde(default)]
     pub migrate_worker_count: u32,
-
-    #[serde(default)]
-    pub cloudflare_zone_id: Option<String>,
-    #[serde(default)]
-    pub cloudflare_token: Option<String>,
 }
 
 #[derive(Deserialize, Clone, Debug)]
 pub struct S3Config {
-    pub bucket: String,
     pub application_id: String,
     pub application_key: String,
     pub endpoint: String,
@@ -103,6 +113,8 @@ pub struct ScheduledTasksConfig {
     pub prometheus_auth_token: Option<String>,
 
     pub walg_s3_bucket: String,
+    #[serde(default = "_default_cdn_url")]
+    pub cdn_url: String,
 }
 
 #[derive(Deserialize, Clone, Debug)]
