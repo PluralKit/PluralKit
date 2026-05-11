@@ -8,8 +8,10 @@ pluralkit_models = { path = "../models" }
 pk_macros = { path = "../macros" }
 libpk = { path = "../libpk" }
 
-anyhow = { workspace = true } 
+anyhow = { workspace = true }
+aws-sdk-s3 = { workspace = true }
 axum = { workspace = true }
+data-encoding = { workspace = true }
 fred = { workspace = true }
 lazy_static = { workspace = true }
 metrics = { workspace = true }
@@ -17,11 +19,13 @@ reqwest = { workspace = true }
 sea-query = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
+sha2 = { workspace = true }
 sqlx = { workspace = true }
 tokio = { workspace = true }
 tower-http = { workspace = true }
 tracing = { workspace = true }
 twilight-http = { workspace = true }
+uuid = { workspace = true }
 
 hyper = { version = "1.3.1", features = ["http1"] }
 hyper-util = { version = "0.1.5", features = ["client", "client-legacy", "http1"] }

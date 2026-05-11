@@ -9,9 +9,10 @@ path = "src/cleanup.rs"
 
 [dependencies]
 libpk = { path = "../libpk" }
+pluralkit_models = { path = "../models" }
 anyhow = { workspace = true }
 aws-sdk-s3 = { workspace = true }
-axum = { workspace = true }
+axum = { workspace = true, features = ["multipart"]}
 data-encoding = { workspace = true }
 futures = { workspace = true }
 reqwest = { workspace = true }

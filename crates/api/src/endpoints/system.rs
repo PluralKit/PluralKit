@@ -64,6 +64,18 @@ pub async fn get_system_settings(
                 Err(err) => fail!(?err, "failed to query dash views"),
             };
 
+            if let Some(premium) = auth.premium() {
+                config_json.as_object_mut().unwrap().insert(
+                    "premium".to_string(),
+                    json!({
+                        "active": premium.is_active(),
+                        "status": premium.status,
+                        "next_renewal_at": premium.next_renewal_at,
+                        "id_changes_remaining": premium.id_changes_remaining,
+                    }),
+                );
+            }
+
             config_json
         }
         PrivacyLevel::Public => json!({

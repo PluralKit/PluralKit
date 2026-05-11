@@ -4,13 +4,15 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-anyhow = { workspace = true }
+anyhow = { workspace = true } 
 aws-sdk-s3 = { workspace = true }
+chrono = { workspace = true, features = ["serde"] }
 data-encoding = { workspace = true }
 fred = { workspace = true }
 lazy_static = { workspace = true }
 metrics = { workspace = true }
 pk_macros = { path = "../macros" }
+pluralkit_models = { path = "../models" }
 sentry = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }

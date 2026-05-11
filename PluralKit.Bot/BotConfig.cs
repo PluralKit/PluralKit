@@ -30,6 +30,7 @@ public class BotConfig
 
     public string? DiscordBaseUrl { get; set; }
     public string? AvatarServiceUrl { get; set; }
+    public string? ApiInternalUrl { get; set; }
     public string? InternalAuthToken { get; set; }
 
     public bool DisableErrorReporting { get; set; } = false;

@@ -1,5 +1,5 @@
 #![feature(if_let_guard)]
-use api::ApiContext;
+use api::{ApiContext, AvatarServiceClient};
 use auth::{AuthState, INTERNAL_APPID_HEADER, INTERNAL_SYSTEMID_HEADER};
 use axum::{
     Extension, Router,
@@ -66,6 +66,10 @@ fn router(ctx: ApiContext, proxyer: Proxyer) -> Router {
         .route("/v2/systems/{system_id}/switches/{switch_id}/members", patch(rproxy.clone()))
         .route("/v2/systems/{system_id}/switches/{switch_id}", delete(rproxy.clone()))
 
+        .route("/v2/systems/{system_id}/images", get(endpoints::images::list_images))
+        .route("/v2/systems/{system_id}/images", post(endpoints::images::ingest_image))
+        .route("/private/images/{system_uuid}/{image_file}", get(endpoints::images::image_data))
+
         .route("/v2/systems/{system_id}/guilds/{guild_id}", get(rproxy.clone()))
         .route("/v2/systems/{system_id}/guilds/{guild_id}", patch(rproxy.clone()))
 
@@ -115,10 +119,18 @@ fn router(ctx: ApiContext, proxyer: Proxyer) -> Router {
 
 #[libpk::main]
 async fn main() -> anyhow::Result<()> {
-    let db = libpk::db::init_data_db().await?;
-    let redis = libpk::db::init_redis().await?;
+    let api_config = libpk::config.api();
 
-    let rproxy_uri = Uri::from_static(&libpk::config.api().remote_url).to_string();
+    let ctx = ApiContext {
+        db: libpk::db::init_data_db().await?,
+        redis: libpk::db::init_redis().await?,
+        s3_client: libpk::s3::create_client(&api_config.s3),
+        storage_bucket: api_config.storage_bucket.clone(),
+        uploads_bucket: api_config.uploads_bucket.clone(),
+        avatar_service: AvatarServiceClient::new(api_config.avatars_service_url.clone()),
+    };
+
+    let rproxy_uri = Uri::from_static(&api_config.remote_url).to_string();
     let rproxy_client = hyper_util::client::legacy::Client::<(), ()>::builder(TokioExecutor::new())
         .build(HttpConnector::new());
 
@@ -127,11 +139,9 @@ async fn main() -> anyhow::Result<()> {
         rproxy_client,
     };
 
-    let ctx = ApiContext { db, redis };
-
     let app = router(ctx, proxyer);
 
-    let addr: &str = libpk::config.api().addr.as_ref();
+    let addr: &str = api_config.addr.as_ref();
 
     let listener = tokio::net::TcpListener::bind(addr).await?;
     info!("listening on {}", addr);

@@ -122,7 +122,9 @@ macro_rules! define_error {
 }
 
 define_error! { GENERIC_AUTH_ERROR, StatusCode::UNAUTHORIZED, 0, "401: Missing or invalid Authorization header" }
+define_error! { GENERIC_MISSING_PERMISSIONS, StatusCode::FORBIDDEN, 0, "401: Missing or invalid Authorization header" } // todo(premium): wrong
 define_error! { GENERIC_BAD_REQUEST, StatusCode::BAD_REQUEST, 0, "400: Bad Request" }
+define_error! { GENERIC_NOT_FOUND, StatusCode::NOT_FOUND, 0, "404: Not Found" }
 define_error! { GENERIC_SERVER_ERROR, StatusCode::INTERNAL_SERVER_ERROR, 0, "500: Internal Server Error" }
 define_error! { SYSTEM_NOT_FOUND, StatusCode::NOT_FOUND, 20001, "System not found." }
 define_error! { MEMBER_NOT_FOUND, StatusCode::NOT_FOUND, 20002, "Member not found." }
@@ -131,6 +133,8 @@ define_error! { SWITCH_NOT_FOUND, StatusCode::NOT_FOUND, 20007, "Switch not foun
 
 define_error! { NOT_OWN_MEMBER, StatusCode::FORBIDDEN, 30006, "Target member is not part of your system." }
 define_error! { NOT_OWN_GROUP, StatusCode::FORBIDDEN, 30007, "Target group is not part of your system." }
+
+define_error! { PREMIUM_REQUIRED, StatusCode::FORBIDDEN, 30010, "This endpoint requires an active PluralKit Premium subscription" }
 
 define_error! { TARGET_MEMBER_NOT_FOUND, StatusCode::BAD_REQUEST, 40010, "Target member not found." }
 define_error! { TARGET_GROUP_NOT_FOUND, StatusCode::BAD_REQUEST, 40011, "Target group not found." }

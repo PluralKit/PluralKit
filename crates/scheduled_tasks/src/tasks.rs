@@ -31,13 +31,17 @@ pub async fn update_prometheus(ctx: AppCtx) -> anyhow::Result<()> {
         count: i64,
     }
 
-    let pending_count: Count = sqlx::query_as("select count(*) from image_cleanup_pending_jobs")
-        .fetch_one(&ctx.data)
-        .await?;
+    let pending_count: Count = sqlx::query_as(
+        "select count(*) from image_cleanup_jobs where ts >= now() - '24 hours'::interval",
+    )
+    .fetch_one(&ctx.data)
+    .await?;
 
-    let count: Count = sqlx::query_as("select count(*) from image_cleanup_jobs")
-        .fetch_one(&ctx.data)
-        .await?;
+    let count: Count = sqlx::query_as(
+        "select count(*) from image_cleanup_jobs where ts < now() - '24 hours'::interval",
+    )
+    .fetch_one(&ctx.data)
+    .await?;
 
     gauge!("pluralkit_image_cleanup_queue_length", "pending" => "true")
         .set(pending_count.count as f64);
@@ -232,55 +236,78 @@ pub async fn update_discord_stats(ctx: AppCtx) -> anyhow::Result<()> {
 }
 
 pub async fn queue_deleted_image_cleanup(ctx: AppCtx) -> anyhow::Result<()> {
-    // if an image is present on no member, add it to the pending deletion queue
-    // if it is still present on no member after 24h, actually delete it
+    // cleanup non-premium images not on any member
+    // todo: maybe also cleanup non-premium images not on any member _of the same system_?
+    let cdn_prefix = format!("https://{}/images/", config.scheduled_tasks().cdn_url);
 
-    let usage_query = r#"
-    and not exists (select from systems where avatar_url = images.url)
-    and not exists (select from systems where banner_image = images.url)
-    and not exists (select from system_guild where avatar_url = images.url)
+    let mut usage_query = String::new();
+    for (table, col) in libpk::db::repository::avatars::IMAGE_CHECK_COLUMNS {
+        usage_query.push_str(&format!(
+            r#"
+            and not exists (
+                select 1 from {table}
+                where {col} = h.url
+                -- todo(premium): wtf is this
+                or {col} = $1 || s.uuid::text || '/' || a.id::text || '.' || substring(h.url from '\.([^.]+)$')
+            )
+            "#
+        ));
+    }
 
-    and not exists (select from members where avatar_url = images.url)
-    and not exists (select from members where banner_image = images.url)
-    and not exists (select from members where webhook_avatar_url = images.url)
-    and not exists (select from member_guild where avatar_url = images.url)
-
-    and not exists (select from groups where icon = images.url)
-    and not exists (select from groups where banner_image = images.url);
-    "#;
-
-    ctx.data
-        .execute(
-            format!(
-                r#"
-            insert into image_cleanup_pending_jobs
-            select id, now() from images where
-            not exists (select from image_cleanup_pending_jobs j where j.id = images.id)
-            and not exists (select from image_cleanup_jobs j where j.id = images.id)
+    let query_str = format!(
+        r#"
+            insert into image_cleanup_jobs (id, system_id, ts)
+            select a.id, a.system_id, now() from images_assets a
+                join images_hashes h on a.image = h.hash
+                join systems s on s.id = a.system_id
+            where
+                a.deleted_at is null
+                and a.kind not in ('premium_banner', 'premium_avatar')
+                and not exists (select from image_cleanup_jobs j where j.id = a.id)
             {}
         "#,
-                usage_query
-            )
-            .as_str(),
-        )
+        usage_query
+    );
+
+    sqlx::query(&query_str)
+        .bind(&cdn_prefix)
+        .execute(&ctx.data)
         .await?;
 
-    ctx.data
-        .execute(
-            format!(
-                r#"
-            insert into image_cleanup_jobs
-            select image_cleanup_pending_jobs.id from image_cleanup_pending_jobs
-            left join images on images.id = image_cleanup_pending_jobs.id
-            where
-            ts < now() - '24 hours'::interval
-            and not exists (select from image_cleanup_jobs j where j.id = images.id)
-            {}
-        "#,
-                usage_query
+    Ok(())
+}
+
+pub async fn queue_orphaned_hash_cleanup(ctx: AppCtx) -> anyhow::Result<()> {
+    // cleanup hashes without an active images_assets row and not referenced by any entity
+    // we don't need to check the new format here, as soft-deleted images_assets rows already don't resolve
+    let cdn_prefix = format!("https://{}/images/", config.scheduled_tasks().cdn_url);
+
+    let mut usage_checks = String::new();
+    for (table, col) in libpk::db::repository::avatars::IMAGE_CHECK_COLUMNS {
+        usage_checks.push_str(&format!(
+            "and not exists (select 1 from {table} where {col} = h.url)"
+        ));
+    }
+
+    let query_str = format!(
+        r#"
+        insert into image_hash_cleanup_jobs (hash, ts)
+        select h.hash, now()
+        from images_hashes h
+        where
+            not exists (
+                select 1 from images_assets a
+                where (a.image = h.hash or a.proxy_image = h.hash)
+                and a.deleted_at is null
             )
-            .as_str(),
-        )
+            {usage_checks}
+            and not exists (select 1 from image_hash_cleanup_jobs j where j.hash = h.hash)
+        "#
+    );
+
+    sqlx::query(&query_str)
+        .bind(&cdn_prefix)
+        .execute(&ctx.data)
         .await?;
 
     Ok(())
