@@ -158,9 +158,11 @@ pub async fn update_db_message_meta(ctx: AppCtx) -> anyhow::Result<()> {
     struct MessageCount {
         count: i64,
     }
-    let message_count: MessageCount = sqlx::query_as("select reltuples::bigint as count from pg_class where relname = 'messages'")
-        .fetch_one(&ctx.messages)
-        .await?;
+    let message_count: MessageCount = sqlx::query_as(
+        "select reltuples::bigint as count from pg_class where relname = 'messages'",
+    )
+    .fetch_one(&ctx.messages)
+    .await?;
     sqlx::query("update info set message_count = $1")
         .bind(message_count.count)
         .execute(&ctx.data)
