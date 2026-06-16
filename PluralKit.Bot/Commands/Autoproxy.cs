@@ -11,37 +11,51 @@ public class Autoproxy
 {
     private readonly IClock _clock;
 
+    public abstract record Mode()
+    {
+        public record Off(): Mode;
+        public record Latch(): Mode;
+        public record Front(): Mode;
+        public record Member(PKMember member): Mode;
+    }
+
     public Autoproxy(IClock clock)
     {
         _clock = clock;
     }
 
-    public async Task SetAutoproxyMode(Context ctx)
+    public async Task SetAutoproxyMode(Context ctx, Mode? mode = null)
     {
-        // no need to check account here, it's already done at CommandTree
-        ctx.CheckGuildContext();
+        ctx.CheckSystem().CheckGuildContext();
 
         // for now, just for guild
         // this also creates settings if there are none present
         var settings = await ctx.Repository.GetAutoproxySettings(ctx.System.Id, ctx.Guild.Id, null);
 
-        if (ctx.Match("off", "stop", "cancel", "no", "disable", "remove"))
-            await AutoproxyOff(ctx, settings);
-        else if (ctx.Match("latch", "last", "proxy", "stick", "sticky", "l"))
-            await AutoproxyLatch(ctx, settings);
-        else if (ctx.Match("front", "fronter", "switch", "f"))
-            await AutoproxyFront(ctx, settings);
-        else if (ctx.Match("member"))
-            throw new PKSyntaxError($"Member-mode autoproxy must target a specific member. Use the `{ctx.DefaultPrefix}autoproxy <member>` command, where `member` is the name or ID of a member in your system.");
-        else if (await ctx.MatchMember() is PKMember member)
-            await AutoproxyMember(ctx, member);
-        else if (!ctx.HasNext())
-            await ctx.Reply(embed: await CreateAutoproxyStatusEmbed(ctx, settings));
-        else
-            throw new PKSyntaxError($"Invalid autoproxy mode {ctx.PopArgument().AsCode()}.");
+        if (mode == null)
+        {
+            await AutoproxyShow(ctx, settings);
+            return;
+        }
+
+        switch (mode)
+        {
+            case Mode.Off:
+                await AutoproxyOff(ctx, settings);
+                break;
+            case Mode.Latch:
+                await AutoproxyLatch(ctx, settings);
+                break;
+            case Mode.Front:
+                await AutoproxyFront(ctx, settings);
+                break;
+            case Mode.Member(var member):
+                await AutoproxyMember(ctx, member);
+                break;
+        }
     }
 
-    private async Task AutoproxyOff(Context ctx, AutoproxySettings settings)
+    public async Task AutoproxyOff(Context ctx, AutoproxySettings settings)
     {
         if (settings.AutoproxyMode == AutoproxyMode.Off)
         {
@@ -54,7 +68,7 @@ public class Autoproxy
         }
     }
 
-    private async Task AutoproxyLatch(Context ctx, AutoproxySettings settings)
+    public async Task AutoproxyLatch(Context ctx, AutoproxySettings settings)
     {
         if (settings.AutoproxyMode == AutoproxyMode.Latch)
         {
@@ -67,7 +81,7 @@ public class Autoproxy
         }
     }
 
-    private async Task AutoproxyFront(Context ctx, AutoproxySettings settings)
+    public async Task AutoproxyFront(Context ctx, AutoproxySettings settings)
     {
         if (settings.AutoproxyMode == AutoproxyMode.Front)
         {
@@ -80,7 +94,7 @@ public class Autoproxy
         }
     }
 
-    private async Task AutoproxyMember(Context ctx, PKMember member)
+    public async Task AutoproxyMember(Context ctx, PKMember member)
     {
         ctx.CheckOwnMember(member);
 
@@ -88,6 +102,11 @@ public class Autoproxy
 
         await UpdateAutoproxy(ctx, AutoproxyMode.Member, member.Id);
         await ctx.Reply($"{Emojis.Success} Autoproxy set to **{member.NameFor(ctx)}** in this server.");
+    }
+
+    public async Task AutoproxyShow(Context ctx, AutoproxySettings settings)
+    {
+        await ctx.Reply(embed: await CreateAutoproxyStatusEmbed(ctx, settings));
     }
 
     private async Task<Embed> CreateAutoproxyStatusEmbed(Context ctx, AutoproxySettings settings)

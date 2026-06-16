@@ -1,0 +1,7 @@
+[package]
+name = "command_definitions"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+command_parser = { path = "../command_parser"}

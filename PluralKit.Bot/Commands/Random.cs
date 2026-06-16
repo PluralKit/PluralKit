@@ -15,7 +15,7 @@ public class Random
 
     // todo: get postgresql to return one random member/group instead of querying all members/groups
 
-    public async Task Member(Context ctx, PKSystem target)
+    public async Task Member(Context ctx, PKSystem target, bool all, bool showEmbed = false)
     {
         if (target == null)
             throw Errors.NoSystemError(ctx.DefaultPrefix);
@@ -24,7 +24,7 @@ public class Random
 
         var members = await ctx.Repository.GetSystemMembers(target.Id).ToListAsync();
 
-        if (!ctx.MatchFlag("all", "a"))
+        if (!all)
             members = members.Where(m => m.MemberVisibility == PrivacyLevel.Public).ToList();
         else
             ctx.CheckOwnSystem(target);
@@ -37,7 +37,7 @@ public class Random
 
         var randInt = randGen.Next(members.Count);
 
-        if (ctx.MatchFlag("show-embed", "se"))
+        if (showEmbed)
         {
             await ctx.Reply(
                 text: EmbedService.LEGACY_EMBED_WARNING,
@@ -49,7 +49,7 @@ public class Random
             components: await _embeds.CreateMemberMessageComponents(target, members[randInt], ctx.Guild, ctx.Config, ctx.LookupContextFor(target.Id), ctx.Zone));
     }
 
-    public async Task Group(Context ctx, PKSystem target)
+    public async Task Group(Context ctx, PKSystem target, bool all, bool showEmbed = false)
     {
         if (target == null)
             throw Errors.NoSystemError(ctx.DefaultPrefix);
@@ -57,7 +57,7 @@ public class Random
         ctx.CheckSystemPrivacy(target.Id, target.GroupListPrivacy);
 
         var groups = await ctx.Repository.GetSystemGroups(target.Id).ToListAsync();
-        if (!ctx.MatchFlag("all", "a"))
+        if (!all)
             groups = groups.Where(g => g.Visibility == PrivacyLevel.Public).ToList();
         else
             ctx.CheckOwnSystem(target);
@@ -70,23 +70,23 @@ public class Random
 
         var randInt = randGen.Next(groups.Count());
 
-        if (ctx.MatchFlag("show-embed", "se"))
+        if (showEmbed)
         {
             await ctx.Reply(
                 text: EmbedService.LEGACY_EMBED_WARNING,
-                embed: await _embeds.CreateGroupEmbed(ctx, target, groups.ToArray()[randInt]));
+                embed: await _embeds.CreateGroupEmbed(ctx, target, groups.ToArray()[randInt], all));
             return;
         }
 
         await ctx.Reply(
-            components: await _embeds.CreateGroupMessageComponents(ctx, target, groups.ToArray()[randInt]));
+            components: await _embeds.CreateGroupMessageComponents(ctx, target, groups.ToArray()[randInt], all));
     }
 
-    public async Task GroupMember(Context ctx, PKGroup group)
+    public async Task GroupMember(Context ctx, PKGroup group, bool all, bool show_embed, IHasListOptions flags)
     {
         ctx.CheckSystemPrivacy(group.System, group.ListPrivacy);
 
-        var opts = ctx.ParseListOptions(ctx.DirectLookupContextFor(group.System), ctx.LookupContextFor(group.System));
+        var opts = flags.GetListOptions(ctx, group.System);
         opts.GroupFilter = group.Id;
 
         var members = await ctx.Database.Execute(conn => conn.QueryMemberList(group.System, opts.ToQueryOptions()));
@@ -96,7 +96,7 @@ public class Random
                 "This group has no members!"
                 + (ctx.System?.Id == group.System ? " Please add at least one member to this group before using this command." : ""));
 
-        if (!ctx.MatchFlag("all", "a"))
+        if (!all)
             members = members.Where(g => g.MemberVisibility == PrivacyLevel.Public);
         else
             ctx.CheckOwnGroup(group);
@@ -112,7 +112,7 @@ public class Random
 
         var randInt = randGen.Next(ms.Count);
 
-        if (ctx.MatchFlag("show-embed", "se"))
+        if (show_embed)
         {
             await ctx.Reply(
                 text: EmbedService.LEGACY_EMBED_WARNING,

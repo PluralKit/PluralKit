@@ -12,7 +12,7 @@ pk_macros = { path = "../macros" }
 sentry = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
-sqlx = { workspace = true }
+sqlx = { workspace = true, features = ["chrono"] }
 tokio = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true}

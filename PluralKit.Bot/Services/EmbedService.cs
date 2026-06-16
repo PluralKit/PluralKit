@@ -43,7 +43,7 @@ public class EmbedService
         return Task.WhenAll(ids.Select(Inner));
     }
 
-    public async Task<MessageComponent[]> CreateSystemMessageComponents(Context cctx, PKSystem system, LookupContext ctx)
+    public async Task<MessageComponent[]> CreateSystemMessageComponents(Context cctx, PKSystem system, LookupContext ctx, bool countctxByOwner)
     {
         // Fetch/render info for all accounts simultaneously
         var accounts = await _repo.GetSystemAccounts(system.Id);
@@ -55,7 +55,7 @@ public class EmbedService
         };
 
         var countctx = LookupContext.ByNonOwner;
-        if (cctx.MatchFlag("a", "all"))
+        if (countctxByOwner)
         {
             if (system.Id == cctx.System?.Id)
                 countctx = LookupContext.ByOwner;
@@ -206,14 +206,14 @@ public class EmbedService
         ];
     }
 
-    public async Task<Embed> CreateSystemEmbed(Context cctx, PKSystem system, LookupContext ctx)
+    public async Task<Embed> CreateSystemEmbed(Context cctx, PKSystem system, LookupContext ctx, bool countctxByOwner)
     {
         // Fetch/render info for all accounts simultaneously
         var accounts = await _repo.GetSystemAccounts(system.Id);
         var users = (await GetUsers(accounts)).Select(x => x.User?.NameAndMention() ?? $"(deleted account {x.Id})");
 
         var countctx = LookupContext.ByNonOwner;
-        if (cctx.MatchFlag("a", "all"))
+        if (countctxByOwner)
         {
             if (system.Id == cctx.System?.Id)
                 countctx = LookupContext.ByOwner;
@@ -560,7 +560,7 @@ public class EmbedService
         return eb.Build();
     }
 
-    public async Task<MessageComponent[]> CreateGroupMessageComponents(Context ctx, PKSystem system, PKGroup target)
+    public async Task<MessageComponent[]> CreateGroupMessageComponents(Context ctx, PKSystem system, PKGroup target, bool all)
     {
         var pctx = ctx.LookupContextFor(system.Id);
         var name = target.NameFor(ctx);
@@ -568,7 +568,7 @@ public class EmbedService
         var systemName = (ctx.Guild != null && systemGuildSettings?.DisplayName != null) ? systemGuildSettings?.DisplayName! : system.NameFor(ctx);
 
         var countctx = LookupContext.ByNonOwner;
-        if (ctx.MatchFlag("a", "all"))
+        if (all)
         {
             if (system.Id == ctx.System?.Id)
                 countctx = LookupContext.ByOwner;
@@ -673,12 +673,12 @@ public class EmbedService
         ];
     }
 
-    public async Task<Embed> CreateGroupEmbed(Context ctx, PKSystem system, PKGroup target)
+    public async Task<Embed> CreateGroupEmbed(Context ctx, PKSystem system, PKGroup target, bool all)
     {
         var pctx = ctx.LookupContextFor(system.Id);
 
         var countctx = LookupContext.ByNonOwner;
-        if (ctx.MatchFlag("a", "all"))
+        if (all)
         {
             if (system.Id == ctx.System?.Id)
                 countctx = LookupContext.ByOwner;

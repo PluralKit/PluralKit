@@ -1,0 +1,566 @@
+#![feature(anonymous_lifetime_in_impl_trait)]
+#![feature(round_char_boundary)]
+#![feature(iter_intersperse)]
+
+use std::sync::Arc;
+
+pub mod command;
+pub mod flag;
+pub mod parameter;
+mod string;
+pub mod token;
+pub mod tree;
+
+use core::panic;
+use std::fmt::Write;
+use std::ops::Not;
+use std::{collections::HashMap, usize};
+
+use command::Command;
+use flag::{Flag, FlagMatchError, FlagValueMatchError};
+use log::debug;
+use parameter::ParameterValue;
+use smol_str::SmolStr;
+use string::MatchedFlag;
+use token::{Token, TokenMatchResult};
+
+// todo: this should come from the bot probably
+const MAX_SUGGESTIONS: usize = 5;
+
+pub type Tree = tree::TreeBranch;
+
+#[derive(Debug)]
+pub struct ParsedCommand {
+    pub command_def: Arc<Command>,
+    pub parameters: HashMap<String, ParameterValue>,
+    pub flags: HashMap<String, Option<ParameterValue>>,
+}
+
+#[derive(Clone, Debug)]
+struct MatchedTokenState {
+    tree: Arc<Tree>,
+    token: Token,
+    match_result: TokenMatchResult,
+    start_pos: usize,
+    filtered_tokens: Vec<Token>,
+}
+
+pub fn parse_command(
+    command_tree: impl Into<Arc<Tree>>,
+    prefix: String,
+    input: String,
+) -> Result<ParsedCommand, String> {
+    let input: SmolStr = input.into();
+    let mut local_tree = command_tree.into();
+
+    // end position of all currently matched tokens
+    let mut current_pos: usize = 0;
+    let mut current_token_idx: usize = 0;
+    let mut raw_flags: Vec<(usize, MatchedFlag)> = Vec::new();
+
+    let mut matched_tokens: Vec<MatchedTokenState> = Vec::new();
+    let mut filtered_tokens: Vec<Token> = Vec::new(); // these are tokens that we've already tried (and failed)
+
+    let mut last_optional_param_error: Option<(SmolStr, SmolStr)> = None;
+
+    // track the best attempt at parsing (deepest matched tokens)
+    // so we can use it for error messages/suggestions even if we backtrack later
+    let mut best_attempt: Option<(Arc<Tree>, Vec<MatchedTokenState>, usize)> = None;
+
+    loop {
+        let mut possible_tokens = local_tree
+            .possible_tokens()
+            .filter(|t| !filtered_tokens.contains(t))
+            .collect::<Vec<_>>();
+        // sort so parameters come last
+        // we always want to test values first
+        // parameters that parse the remainder come last (otherwise they would always match)
+        possible_tokens.sort_by(|a, b| match (a, b) {
+            (Token::Parameter(param), _) if param.is_remainder() => std::cmp::Ordering::Greater,
+            (_, Token::Parameter(param)) if param.is_remainder() => std::cmp::Ordering::Less,
+            (Token::Parameter(_), Token::Parameter(_)) => std::cmp::Ordering::Equal,
+            (Token::Parameter(_), _) => std::cmp::Ordering::Greater,
+            (_, Token::Parameter(_)) => std::cmp::Ordering::Less,
+            _ => std::cmp::Ordering::Equal,
+        });
+        debug!("possible: {:?}", possible_tokens);
+        let next = next_token(possible_tokens.iter().cloned(), &input, current_pos);
+        debug!("next: {:?}", next);
+        match &next {
+            Some((found_token, result, new_pos)) => {
+                match &result {
+                    // todo: better error messages for these?
+                    TokenMatchResult::MissingParameter { name } => {
+                        return Err(format!(
+                            "Expected parameter `{name}` in command `{prefix}{input} {found_token}`."
+                        ));
+                    }
+                    TokenMatchResult::ParameterMatchError { input: raw, msg } => {
+                        // we can try other branches if the parameter is optional or skip-on-error parameter
+                        if matches!(found_token, Token::Parameter(param) if param.is_optional() || param.is_skip())
+                            && possible_tokens.len() > 1
+                        {
+                            // save error for later, will be used if no other tokens match
+                            last_optional_param_error = Some((raw.clone(), msg.clone()));
+                            // try the other branches first
+                            filtered_tokens.push(found_token.clone());
+                            continue;
+                        }
+
+                        return Err(format!(
+                            "Parameter `{raw}` in command `{prefix}{input}` could not be parsed: {msg}."
+                        ));
+                    }
+                    // don't use a catch-all here, we want to make sure compiler errors when new errors are added
+                    TokenMatchResult::MatchedParameter { .. } | TokenMatchResult::MatchedValue => {
+                        // clear the error since we successfully matched forward, we dont need it anymore
+                        last_optional_param_error = None;
+                    }
+                }
+
+                if let TokenMatchResult::MatchedParameter { .. } = result {
+                    // we don't add params here, but wait until we matched a full command
+                    // then we can use matched_tokens to extract the params
+                    // this is so we don't have to keep track of "params" when trying branches
+                }
+
+                // move to the next branch
+                if let Some(next_tree) = local_tree.get_branch(&found_token) {
+                    matched_tokens.push(MatchedTokenState {
+                        tree: local_tree.clone(),
+                        token: found_token.clone(),
+                        match_result: result.clone(),
+                        start_pos: current_pos,
+                        filtered_tokens: filtered_tokens.clone(),
+                    });
+
+                    // update best attempt if we're deeper
+                    if best_attempt.as_ref().map(|x| x.1.len()).unwrap_or(0) < matched_tokens.len()
+                    {
+                        best_attempt = Some((next_tree.clone(), matched_tokens.clone(), *new_pos));
+                    }
+
+                    filtered_tokens.clear(); // new branch, new tokens
+                    local_tree = next_tree.clone();
+                } else {
+                    panic!("found token {found_token:?} could not match tree, at {input}");
+                }
+
+                // advance our position on the input
+                current_pos = *new_pos;
+                current_token_idx += 1;
+            }
+            None => {
+                // redo the previous branches if we didnt match on a parameter
+                // this is a bit of a hack, but its necessary for making parameters on the same depth work
+                if let Some(state) = matched_tokens
+                    .pop()
+                    .and_then(|m| matches!(m.token, Token::Parameter(_)).then_some(m))
+                {
+                    debug!("redoing previous branch: {:?}", state.token);
+                    local_tree = state.tree;
+                    current_pos = state.start_pos; // reset position to previous branch's start
+                    filtered_tokens = state.filtered_tokens; // reset filtered tokens to the previous branch's
+                    filtered_tokens.push(state.token);
+                    continue;
+                }
+
+                if let Some((raw, msg)) = last_optional_param_error {
+                    return Err(format!(
+                        "Parameter `{raw}` in command `{prefix}{input}` could not be parsed: {msg}."
+                    ));
+                }
+
+                // restore best attempt if it's deeper than current state
+                // this helps when we backtracked out of the correct path because of a later error
+                if let Some((best_tree, best_matched, best_pos)) = best_attempt {
+                    if best_matched.len() > matched_tokens.len() {
+                        local_tree = best_tree;
+                        matched_tokens = best_matched;
+                        current_pos = best_pos;
+                    }
+                }
+
+                let mut error = format!("Unknown command `{prefix}{input}`.");
+
+                // normalize input by replacing parameters with placeholders
+                let mut normalized_input = String::new();
+                for state in &matched_tokens {
+                    write!(&mut normalized_input, "{} ", state.token).unwrap();
+                }
+                normalized_input.push_str(&input[current_pos..].trim_start());
+
+                let input_tokens = input.split_whitespace().collect::<Vec<_>>();
+                let mut possible_commands = rank_possible_commands(
+                    &normalized_input,
+                    local_tree.possible_commands(usize::MAX),
+                    &input_tokens,
+                );
+
+                // checks if we matched a parameter last
+                // if we did, we might have matched a parameter "by accident" (ie. `pk;s renam` matched `s <system>`)
+                // so we also want to suggest commands from the *previous* branch
+                if let Some(state) = matched_tokens.last()
+                    && matches!(state.token, Token::Parameter(_))
+                {
+                    let mut parent_input = String::new();
+                    // recreate input string up to the parameter
+                    for parent_state in matched_tokens.iter().take(matched_tokens.len() - 1) {
+                        write!(&mut parent_input, "{} ", parent_state.token).unwrap();
+                    }
+                    // assume the user intended to type a command here, so we use the raw input
+                    // (eg. `s renam` -> `s renam`)
+                    parent_input.push_str(&input[state.start_pos..].trim_start());
+
+                    let input_tokens = parent_input.split_whitespace().collect::<Vec<_>>();
+                    let parent_commands = rank_possible_commands(
+                        &parent_input,
+                        state.tree.possible_commands(usize::MAX),
+                        &input_tokens,
+                    );
+                    possible_commands.extend(parent_commands);
+
+                    // re-deduplicate
+                    possible_commands.dedup_by(|a, b| {
+                        let cmd_a = a.0.original.as_deref().unwrap_or(&a.0);
+                        let cmd_b = b.0.original.as_deref().unwrap_or(&b.0);
+                        cmd_a == cmd_b
+                    });
+                    // re-sort after extending
+                    possible_commands
+                        .sort_by(|a, b| b.2.partial_cmp(&a.2).unwrap_or(std::cmp::Ordering::Equal));
+                }
+
+                if possible_commands.is_empty().not() {
+                    error.push_str(" Perhaps you meant one of the following commands:\n");
+                    fmt_commands_list(&mut error, &prefix, possible_commands);
+                } else {
+                    // add a space between the unknown command and "for a list of all possible commands"
+                    // message if we didn't add any possible suggestions
+                    error.push_str(" ");
+                }
+
+                error.push_str(
+                    "For a list of all possible commands, see <https://pluralkit.me/commands>.",
+                );
+
+                // todo: check if last token is a common incorrect unquote (multi-member names etc)
+                // todo: check if this is a system name in pk;s command
+                return Err(error);
+            }
+        }
+        // match flags until there are none left
+        while let Some(matched_flag) = string::next_flag(&input, current_pos) {
+            current_pos = matched_flag.next_pos;
+            debug!("flag matched {matched_flag:?}");
+            raw_flags.push((current_token_idx, matched_flag));
+        }
+        // if we have a command, stop parsing and return it (only if there is no remaining input)
+        if current_pos >= input.len()
+            && let Some(command) = local_tree.command()
+        {
+            // match the flags against this commands flags
+            let mut flags: HashMap<String, Option<ParameterValue>> = HashMap::new();
+            let mut misplaced_flags: Vec<MatchedFlag> = Vec::new();
+            let mut invalid_flags: Vec<MatchedFlag> = Vec::new();
+
+            let mut params: HashMap<String, ParameterValue> = HashMap::new();
+            for state in &matched_tokens {
+                if let TokenMatchResult::MatchedParameter { name, value } = &state.match_result {
+                    params.insert(name.to_string(), value.clone());
+                }
+            }
+
+            for (token_idx, raw_flag) in raw_flags {
+                let Some(matched_flag) = match_flag(command.flags.iter(), raw_flag.clone()) else {
+                    invalid_flags.push(raw_flag);
+                    continue;
+                };
+
+                if token_idx != command.parse_flags_before {
+                    misplaced_flags.push(raw_flag);
+                    continue;
+                }
+
+                match matched_flag {
+                    // a flag was matched
+                    Ok((name, value)) => {
+                        flags.insert(name.into(), value);
+                    }
+                    Err((flag, err)) => {
+                        let error = match err {
+                            FlagMatchError::ValueMatchFailed(FlagValueMatchError::ValueMissing) => {
+                                format!(
+                                    "Flag `-{name}` in command `{prefix}{input}` is missing a value, try passing `{flag}`.",
+                                    name = flag.get_name()
+                                )
+                            }
+                            FlagMatchError::ValueMatchFailed(
+                                FlagValueMatchError::InvalidValue { msg, raw },
+                            ) => {
+                                format!(
+                                    "Flag `-{name}` in command `{prefix}{input}` has a value (`{raw}`) that could not be parsed: {msg}.",
+                                    name = flag.get_name()
+                                )
+                            }
+                        };
+                        return Err(error);
+                    }
+                }
+            }
+
+            let full_cmd = command.original.as_ref().unwrap_or(&command);
+            if misplaced_flags.is_empty().not() {
+                let mut error = format!(
+                    "Flag{} ",
+                    (misplaced_flags.len() > 1).then_some("s").unwrap_or("")
+                );
+                for (idx, matched_flag) in misplaced_flags.iter().enumerate() {
+                    write!(&mut error, "`-{}`", matched_flag.name).expect("oom");
+                    if idx < misplaced_flags.len() - 1 {
+                        error.push_str(", ");
+                    }
+                }
+                write!(
+                    &mut error,
+                    " in command `{prefix}{input}` {} misplaced. Try reordering to match the command usage `{prefix}{command}`.",
+                    (misplaced_flags.len() > 1).then_some("are").unwrap_or("is"),
+                    command = full_cmd
+                ).expect("oom");
+                return Err(error);
+            }
+            if invalid_flags.is_empty().not() {
+                let mut error = format!(
+                    "Flag{} ",
+                    (invalid_flags.len() > 1).then_some("s").unwrap_or("")
+                );
+                for (idx, matched_flag) in invalid_flags.iter().enumerate() {
+                    write!(&mut error, "`-{}`", matched_flag.name).expect("oom");
+                    if idx < invalid_flags.len() - 1 {
+                        error.push_str(", ");
+                    }
+                }
+                write!(
+                    &mut error,
+                    " {} seem to be applicable in this command (`{prefix}{command}`).",
+                    (invalid_flags.len() > 1)
+                        .then_some("don't")
+                        .unwrap_or("doesn't"),
+                    command = full_cmd
+                )
+                .expect("oom");
+                return Err(error);
+            }
+
+            for (name, value) in &full_cmd.flag_values {
+                flags.insert(name.to_string(), value.clone());
+            }
+
+            debug!("{} {flags:?} {params:?}", full_cmd.cb);
+            return Ok(ParsedCommand {
+                command_def: full_cmd.clone(),
+                flags,
+                parameters: params,
+            });
+        }
+    }
+}
+
+fn match_flag<'a>(
+    possible_flags: impl Iterator<Item = &'a Flag>,
+    matched_flag: MatchedFlag<'a>,
+) -> Option<Result<(SmolStr, Option<ParameterValue>), (&'a Flag, FlagMatchError)>> {
+    // check for all (possible) flags, see if token matches
+    for flag in possible_flags {
+        debug!("matching flag {flag:?}");
+        match flag.try_match(matched_flag.name, matched_flag.value) {
+            Some(Ok(param)) => return Some(Ok((flag.get_name().into(), param))),
+            Some(Err(err)) => return Some(Err((flag, err))),
+            None => {}
+        }
+    }
+
+    None
+}
+
+/// Find the next token from an either raw or partially parsed command string
+///
+/// Returns:
+/// - nothing (none matched)
+/// - matched token, to move deeper into the tree
+/// - matched value (if this command matched an user-provided value such as a member name)
+/// - end position of matched token
+/// - error when matching
+fn next_token<'a>(
+    possible_tokens: impl Iterator<Item = &'a Token>,
+    input: &str,
+    current_pos: usize,
+) -> Option<(Token, TokenMatchResult, usize)> {
+    // get next parameter, matching quotes
+    let matched = string::next_param(&input, current_pos);
+    debug!("matched: {matched:?}\n---");
+
+    // iterate over tokens and run try_match
+    for token in possible_tokens {
+        let is_match_remaining_token =
+            |token: &Token| matches!(token, Token::Parameter(param) if param.is_remainder());
+        // check if this is a token that matches the rest of the input
+        let match_remaining = is_match_remaining_token(token);
+        // either use matched param or rest of the input if matching remaining
+        let input_to_match = matched.as_ref().map(|v| {
+            match_remaining
+                .then_some(&input[current_pos..])
+                .unwrap_or(v.value)
+        });
+        let next_pos = match matched {
+            // return last possible pos if we matched remaining,
+            Some(_) if match_remaining => input.len(),
+            // otherwise use matched param next pos,
+            Some(ref param) => param.next_pos,
+            // and if didnt match anything we stay where we are
+            None => current_pos,
+        };
+        match token.try_match(input_to_match) {
+            Some(result) => {
+                //debug!("matched token: {}", token);
+                return Some((token.clone(), result, next_pos));
+            }
+            None => {} // continue matching until we exhaust all tokens
+        }
+    }
+
+    None
+}
+
+// todo: should probably move this somewhere else
+fn rank_possible_commands(
+    input: &str,
+    possible_commands: impl IntoIterator<Item = &Command>,
+    input_tokens: &[&str],
+) -> Vec<(Command, String, f64, bool)> {
+    let mut commands_with_scores: Vec<(&Command, String, f64, bool)> = possible_commands
+        .into_iter()
+        .map(|cmd| cmd.original.as_deref().unwrap_or(cmd))
+        .filter(|cmd| cmd.show_in_suggestions)
+        .flat_map(|cmd| {
+            let versions = generate_command_versions(cmd, input_tokens);
+            versions
+                .into_iter()
+                .map(move |(display, scoring, is_alias)| {
+                    let similarity = strsim::jaro_winkler(&input, &scoring);
+                    // if similarity > 0.7 {
+                    //     debug!("DEBUG: ranking: '{}' vs '{}' = {}", input, scoring, similarity);
+                    // }
+                    (cmd, display, similarity, is_alias)
+                })
+        })
+        .collect();
+
+    commands_with_scores.sort_by(|a, b| b.2.partial_cmp(&a.2).unwrap_or(std::cmp::Ordering::Equal));
+
+    // remove duplicate commands
+    let mut seen_commands = std::collections::HashSet::new();
+    let mut best_commands = Vec::new();
+    for (cmd, version, score, is_alias) in commands_with_scores {
+        if seen_commands.insert(cmd) {
+            best_commands.push((cmd, version, score, is_alias));
+        }
+    }
+
+    const MIN_SCORE_THRESHOLD: f64 = 0.8;
+    if best_commands.is_empty() || best_commands[0].2 < MIN_SCORE_THRESHOLD {
+        return Vec::new();
+    }
+
+    // if score falls off too much, don't show
+    let falloff_threshold: f64 = 0.2;
+    let best_score = best_commands[0].2;
+
+    let mut commands_to_show = Vec::new();
+    for (command, version, score, is_alias) in best_commands.into_iter().take(MAX_SUGGESTIONS) {
+        let delta = best_score - score;
+        if delta > falloff_threshold {
+            break;
+        }
+        commands_to_show.push((command.clone(), version, score, is_alias));
+    }
+
+    commands_to_show
+}
+
+fn fmt_commands_list(
+    f: &mut String,
+    prefix: &str,
+    commands_to_show: Vec<(Command, String, f64, bool)>,
+) {
+    for (command, version, _, is_alias) in commands_to_show {
+        writeln!(
+            f,
+            "- **{prefix}{version}**{alias} - *{help}*",
+            help = command.help,
+            alias = is_alias
+                .then(|| format!(
+                    " (alias of **{prefix}{base_version}**)",
+                    base_version = build_command_string(&command, None, &[])
+                ))
+                .unwrap_or_else(String::new),
+        )
+        .expect("oom");
+    }
+}
+
+fn generate_command_versions(cmd: &Command, input_tokens: &[&str]) -> Vec<(String, String, bool)> {
+    let mut versions = Vec::new();
+
+    // Start with base version using primary names
+    let base_display = build_command_string(cmd, None, &[]);
+    let base_scoring = build_command_string(cmd, None, input_tokens);
+    versions.push((base_display, base_scoring, false));
+
+    // Generate versions for each alias combination
+    for (idx, token) in cmd.tokens.iter().enumerate() {
+        if let Token::Value { aliases, .. } = token {
+            for alias in aliases {
+                let display = build_command_string(cmd, Some((idx, alias.as_str())), &[]);
+                let scoring = build_command_string(cmd, Some((idx, alias.as_str())), input_tokens);
+                versions.push((display, scoring, true));
+            }
+        }
+    }
+
+    versions
+}
+
+fn build_command_string(
+    cmd: &Command,
+    alias_replacement: Option<(usize, &str)>,
+    input_tokens: &[&str],
+) -> String {
+    let mut result = String::new();
+    for (idx, token) in cmd.tokens.iter().enumerate() {
+        if idx > 0 {
+            result.push(' ');
+        }
+
+        // Check if we should use an alias for this token
+        let replacement = alias_replacement
+            .filter(|(i, _)| *i == idx)
+            .map(|(_, alias)| alias);
+
+        match token {
+            Token::Value { name, .. } => {
+                result.push_str(replacement.unwrap_or(name));
+            }
+            Token::Parameter(param) => {
+                // if we have an input token at this position, use it
+                // otherwise use the placeholder
+                if let Some(input_token) = input_tokens.get(idx) {
+                    result.push_str(input_token);
+                } else {
+                    write!(&mut result, "{param}").unwrap()
+                }
+            }
+        }
+    }
+    result
+}

@@ -1,0 +1,183 @@
+use std::{
+    collections::HashMap,
+    fmt::Write,
+    sync::{Arc, Once},
+};
+
+use command_parser::{parameter::ParameterValue, token::TokenMatchResult, Tree};
+
+uniffi::include_scaffolding!("commands");
+
+lazy_static::lazy_static! {
+    pub static ref COMMAND_TREE: Arc<Tree> = {
+        let mut tree = Tree::default();
+
+        command_definitions::all().into_iter().for_each(|x| tree.register_command(x));
+
+        Arc::new(tree)
+    };
+}
+
+static LOG_INIT: Once = Once::new();
+
+#[derive(Debug)]
+pub enum CommandResult {
+    Ok { command: ParsedCommand },
+    Err { error: String },
+}
+
+#[derive(Debug, Clone)]
+pub enum Parameter {
+    MemberRef {
+        member: String,
+    },
+    MemberRefs {
+        members: Vec<String>,
+    },
+    GroupRef {
+        group: String,
+    },
+    GroupRefs {
+        groups: Vec<String>,
+    },
+    SystemRef {
+        system: String,
+    },
+    UserRef {
+        user_id: u64,
+    },
+    MessageRef {
+        guild_id: Option<u64>,
+        channel_id: Option<u64>,
+        message_id: u64,
+    },
+    ChannelRef {
+        channel_id: u64,
+    },
+    GuildRef {
+        guild_id: u64,
+    },
+    MemberPrivacyTarget {
+        target: String,
+    },
+    GroupPrivacyTarget {
+        target: String,
+    },
+    SystemPrivacyTarget {
+        target: String,
+    },
+    PrivacyLevel {
+        level: String,
+    },
+    OpaqueString {
+        raw: String,
+    },
+    OpaqueInt {
+        raw: i32,
+    },
+    Toggle {
+        toggle: bool,
+    },
+    Avatar {
+        avatar: String,
+    },
+    ProxySwitchAction {
+        action: String,
+    },
+    Null,
+}
+
+impl From<ParameterValue> for Parameter {
+    fn from(value: ParameterValue) -> Self {
+        match value {
+            ParameterValue::MemberRef(member) => Self::MemberRef { member },
+            ParameterValue::MemberRefs(members) => Self::MemberRefs { members },
+            ParameterValue::GroupRef(group) => Self::GroupRef { group },
+            ParameterValue::GroupRefs(groups) => Self::GroupRefs { groups },
+            ParameterValue::SystemRef(system) => Self::SystemRef { system },
+            ParameterValue::UserRef(user_id) => Self::UserRef { user_id },
+            ParameterValue::MemberPrivacyTarget(target) => Self::MemberPrivacyTarget { target },
+            ParameterValue::GroupPrivacyTarget(target) => Self::GroupPrivacyTarget { target },
+            ParameterValue::SystemPrivacyTarget(target) => Self::SystemPrivacyTarget { target },
+            ParameterValue::PrivacyLevel(level) => Self::PrivacyLevel { level },
+            ParameterValue::OpaqueString(raw) => Self::OpaqueString { raw },
+            ParameterValue::OpaqueInt(raw) => Self::OpaqueInt { raw },
+            ParameterValue::Toggle(toggle) => Self::Toggle { toggle },
+            ParameterValue::Avatar(avatar) => Self::Avatar { avatar },
+            ParameterValue::MessageRef(guild_id, channel_id, message_id) => Self::MessageRef {
+                guild_id,
+                channel_id,
+                message_id,
+            },
+            ParameterValue::ChannelRef(channel_id) => Self::ChannelRef { channel_id },
+            ParameterValue::GuildRef(guild_id) => Self::GuildRef { guild_id },
+            ParameterValue::Null => Self::Null,
+            ParameterValue::ProxySwitchAction(action) => Self::ProxySwitchAction {
+                action: action.as_ref().to_string(),
+            },
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct ParsedCommand {
+    pub command_ref: String,
+    pub params: HashMap<String, Parameter>,
+    pub flags: HashMap<String, Option<Parameter>>,
+}
+
+pub fn parse_command(prefix: String, input: String) -> CommandResult {
+    LOG_INIT.call_once(|| {
+        if let Err(err) = simple_logger::SimpleLogger::new()
+            .with_level(log::LevelFilter::Info)
+            .env()
+            .init()
+        {
+            eprintln!("cant initialize logger: {err}");
+        }
+    });
+
+    command_parser::parse_command(COMMAND_TREE.clone(), prefix, input).map_or_else(
+        |error| CommandResult::Err { error },
+        |parsed| CommandResult::Ok {
+            command: {
+                let command_ref = parsed.command_def.cb.clone().into();
+                let mut flags = HashMap::with_capacity(parsed.flags.capacity());
+                for (name, value) in parsed.flags {
+                    flags.insert(name, value.map(Parameter::from));
+                }
+                let mut params = HashMap::with_capacity(parsed.parameters.capacity());
+                for (name, value) in parsed.parameters {
+                    params.insert(name, Parameter::from(value));
+                }
+                ParsedCommand {
+                    command_ref,
+                    flags,
+                    params,
+                }
+            },
+        },
+    )
+}
+
+pub fn get_related_commands(prefix: String, input: String) -> String {
+    let mut s = String::new();
+    for command in command_definitions::all() {
+        if !command.show_in_suggestions {
+            continue;
+        }
+        if command.tokens.first().map_or(false, |token| {
+            token
+                .try_match(Some(&input))
+                .map_or(false, |r| matches!(r, TokenMatchResult::MatchedValue))
+        }) {
+            writeln!(
+                &mut s,
+                "- **{prefix}{command}** - *{help}*",
+                help = command.help
+            )
+            .unwrap();
+        }
+    }
+    s
+}

@@ -10,11 +10,11 @@ namespace PluralKit.Bot;
 
 public class GroupMember
 {
-    public async Task AddRemoveGroups(Context ctx, PKMember target, Groups.AddRemoveOperation op)
+    public async Task AddRemoveGroups(Context ctx, PKMember target, List<PKGroup> _groups, Groups.AddRemoveOperation op)
     {
         ctx.CheckSystem().CheckOwnMember(target);
 
-        var groups = (await ctx.ParseGroupList(ctx.System.Id))
+        var groups = _groups.FindAll(g => g.System == ctx.System.Id)
             .Select(g => g.Id)
             .Distinct()
             .ToList();
@@ -51,11 +51,12 @@ public class GroupMember
             groups.Count - toAction.Count));
     }
 
-    public async Task ListMemberGroups(Context ctx, PKMember target)
+    public async Task ListMemberGroups(Context ctx, PKMember target, string? query, IHasListOptions flags, bool all)
     {
         var targetSystem = await ctx.Repository.GetSystem(target.System);
-        var opts = ctx.ParseListOptions(ctx.DirectLookupContextFor(target.System), ctx.LookupContextFor(target.System));
+        var opts = flags.GetListOptions(ctx, target.System);
         opts.MemberFilter = target.Id;
+        opts.Search = query;
 
         var title = new StringBuilder($"Groups containing {target.NameFor(ctx)} (`{target.DisplayHid(ctx.Config)}`) in ");
         if (ctx.Guild != null)
@@ -79,15 +80,15 @@ public class GroupMember
             title.Append($" matching **{opts.Search.Truncate(100)}**");
 
         await ctx.RenderGroupList(ctx.LookupContextFor(target.System), target.System, title.ToString(),
-            target.Color, opts);
+            target.Color, opts, all);
     }
 
-    public async Task AddRemoveMembers(Context ctx, PKGroup target, Groups.AddRemoveOperation op)
+    public async Task AddRemoveMembers(Context ctx, PKGroup target, List<PKMember>? _members, Groups.AddRemoveOperation op, bool all, bool confirmYes = false)
     {
         ctx.CheckOwnGroup(target);
 
         List<MemberId> members;
-        if (ctx.MatchFlag("all", "a"))
+        if (all)
         {
             members = (await ctx.Database.Execute(conn => conn.QueryMemberList(target.System,
                     new DatabaseViewsExt.ListQueryOptions { })))
@@ -97,10 +98,14 @@ public class GroupMember
         }
         else
         {
-            members = (await ctx.ParseMemberList(ctx.System.Id))
-            .Select(m => m.Id)
-            .Distinct()
-            .ToList();
+            if (_members == null)
+                throw new PKError("Please provide a list of members to add/remove.");
+
+            members = _members
+                .FindAll(m => m.System == ctx.System.Id)
+                .Select(m => m.Id)
+                .Distinct()
+                .ToList();
         }
 
         var existingMembersInGroup = (await ctx.Database.Execute(conn => conn.QueryMemberList(target.System,
@@ -124,7 +129,7 @@ public class GroupMember
                 .Where(m => existingMembersInGroup.Contains(m.Value))
                 .ToList();
 
-            if (ctx.MatchFlag("all", "a") && !await ctx.PromptYesNo($"Are you sure you want to remove all members from group {target.Reference(ctx)}?", "Empty Group")) throw Errors.GenericCancelled();
+            if (all && !await ctx.PromptYesNo($"Are you sure you want to remove all members from group {target.Reference(ctx)}?", "Empty Group", flagValue: confirmYes)) throw Errors.GenericCancelled();
 
             await ctx.Repository.RemoveMembersFromGroup(target.Id, toAction);
         }
@@ -137,15 +142,16 @@ public class GroupMember
             members.Count - toAction.Count));
     }
 
-    public async Task ListGroupMembers(Context ctx, PKGroup target)
+    public async Task ListGroupMembers(Context ctx, PKGroup target, string? query, IHasListOptions flags)
     {
         // see global system list for explanation of how privacy settings are used here
 
         var targetSystem = await GetGroupSystem(ctx, target);
         ctx.CheckSystemPrivacy(targetSystem.Id, target.ListPrivacy);
 
-        var opts = ctx.ParseListOptions(ctx.DirectLookupContextFor(target.System), ctx.LookupContextFor(target.System));
+        var opts = flags.GetListOptions(ctx, target.System);
         opts.GroupFilter = target.Id;
+        opts.Search = query;
 
         var title = new StringBuilder($"Members of {target.DisplayName ?? target.Name} (`{target.DisplayHid(ctx.Config)}`) in ");
         if (ctx.Guild != null)
