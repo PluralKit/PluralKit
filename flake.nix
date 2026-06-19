@@ -2,7 +2,7 @@
   description = "flake for pluralkit";
 
   inputs = {
-    nixpkgs.url = "nixpkgs/nixpkgs-unstable";
+    nixpkgs.url = "https://channels.nixos.org/nixpkgs-unstable/nixexprs.tar.xz";
     parts.url = "github:hercules-ci/flake-parts";
     systems.url = "github:nix-systems/default";
     # process compose
