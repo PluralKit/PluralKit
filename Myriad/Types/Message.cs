@@ -43,6 +43,16 @@ public record Message
         GuildInviteReminder = 22
     }
 
+    [Flags]
+    public enum AttachmentFlags
+    {
+        IsClip = 1 << 0,
+        IsThumbnail = 1 << 1,
+        // IsRemix = 1 << 2,
+        IsSpoiler = 1 << 3,
+        IsAnimated = 1 << 4,
+    }
+
     public ulong Id { get; init; }
     public ulong ChannelId { get; init; }
     public ulong? GuildId { get; init; }
@@ -88,6 +98,7 @@ public record Message
         public string ProxyUrl { get; init; }
         public string? Waveform { get; init; }
         public float? DurationSecs { get; init; }
+        public AttachmentFlags Flags { get; init; }
         // public int? Width { get; init; }
         // public int? Height { get; init; }
     }

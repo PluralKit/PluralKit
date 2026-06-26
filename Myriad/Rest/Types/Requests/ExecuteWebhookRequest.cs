@@ -9,7 +9,7 @@ public record ExecuteWebhookRequest
     public string? AvatarUrl { get; init; }
     public Embed[] Embeds { get; init; }
     public Sticker[] Stickers { get; init; }
-    public Message.Attachment[] Attachments { get; set; }
+    public AttachmentRequest[] Attachments { get; set; }
     public AllowedMentions? AllowedMentions { get; init; }
     public bool? Tts { get; init; }
     public Message.MessageFlags? Flags { get; set; }

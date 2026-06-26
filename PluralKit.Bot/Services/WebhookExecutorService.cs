@@ -110,8 +110,8 @@ public class WebhookExecutorService
             AllowedMentions = allowedMentions,
             Embeds = (clearEmbeds ? Optional<Embed[]>.Some(new Embed[] { }) : Optional<Embed[]>.None()),
             Attachments = (clearAttachments
-                ? Optional<Message.Attachment[]>.Some(new Message.Attachment[] { })
-                : Optional<Message.Attachment[]>.None())
+                ? Optional<AttachmentRequest[]>.Some(new AttachmentRequest[] { })
+                : Optional<AttachmentRequest[]>.None())
         };
 
         return await _rest.EditWebhookMessage(webhook.Id, webhook.Token, messageId, editReq, threadId);
@@ -151,13 +151,14 @@ public class WebhookExecutorService
                 req.Attachments.Length, req.Attachments.Select(a => a.Size).Sum() / 1024 / 1024,
                 attachmentChunks.Count);
             files = await GetAttachmentFiles(attachmentChunks[0]);
-            webhookReq.Attachments = files.Select(f => new Message.Attachment
+            webhookReq.Attachments = files.Select(f => new AttachmentRequest
             {
                 Id = (ulong)Array.IndexOf(files, f),
                 Description = f.Description,
                 Filename = f.Filename,
                 Waveform = f.Waveform,
-                DurationSecs = f.DurationSecs
+                DurationSecs = f.DurationSecs,
+                IsSpoiler = f.IsSpoiler
             }).ToArray();
         }
 
@@ -258,12 +259,13 @@ public class WebhookExecutorService
             {
                 Username = name,
                 AvatarUrl = avatarUrl,
-                Attachments = files.Select(f => new Message.Attachment
+                Attachments = files.Select(f => new AttachmentRequest
                 {
                     Id = (ulong)Array.IndexOf(files, f),
                     Description = f.Description,
                     Filename = f.Filename,
-                    Waveform = f.Waveform
+                    Waveform = f.Waveform,
+                    IsSpoiler = f.IsSpoiler
                 }).ToArray()
             };
             await _rest.ExecuteWebhook(webhook.Id, webhook.Token!, req, files, threadId);
@@ -277,7 +279,8 @@ public class WebhookExecutorService
             var attachmentResponse =
                 await _client.GetAsync(attachment.Url, HttpCompletionOption.ResponseHeadersRead);
             return new MultipartFile(attachment.Filename, await attachmentResponse.Content.ReadAsStreamAsync(),
-                attachment.Description, attachment.Waveform, attachment.DurationSecs);
+                attachment.Description, attachment.Waveform, attachment.DurationSecs,
+                attachment.Flags.HasFlag(Message.AttachmentFlags.IsSpoiler));
         }
 
         return await Task.WhenAll(attachments.Select(GetStream));
