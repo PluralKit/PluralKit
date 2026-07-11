@@ -93,7 +93,12 @@ async fn cleanup_job(pool: sqlx::PgPool, bucket: Arc<s3::Bucket>) -> anyhow::Res
             info!("successfully deleted image {image_id} from s3");
         }
         _ => {
-            anyhow::bail!("s3 returned bad error code {}", s3_resp.status_code());
+            anyhow::bail!(
+                "s3 returned bad error code {} while deleting {}: {}",
+                s3_resp.status_code(),
+                image_id,
+                s3_resp.as_str().unwrap_or("invalid body")
+            );
         }
     }
 

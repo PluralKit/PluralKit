@@ -73,9 +73,7 @@ pub async fn params(State(ctx): State<ApiContext>, mut req: Request, next: Next)
                 .fetch_optional(&ctx.db)
                 .await
                 .map_err(PKError::from)
-                .and_then(|v| { v.and_then(|row| row.system)
-                    .ok_or(error::SYSTEM_NOT_FOUND)
-                })
+                .and_then(|v| v.and_then(|row| row.system).ok_or(error::SYSTEM_NOT_FOUND))
                 .map(|system| Some(RequestAbout::System(system)))
             }
             "system_id" => resolve_entity(&ctx.db, "systems", "hid", id_ref).await,
