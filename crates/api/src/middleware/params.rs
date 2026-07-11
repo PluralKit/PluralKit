@@ -73,8 +73,10 @@ pub async fn params(State(ctx): State<ApiContext>, mut req: Request, next: Next)
                 .fetch_optional(&ctx.db)
                 .await
                 .map_err(PKError::from)
-                .and_then(|v| v.ok_or(error::SYSTEM_NOT_FOUND))
-                .map(|v| Some(RequestAbout::System(v.system)))
+                .and_then(|v| { v.and_then(|row| row.system)
+                    .ok_or(error::SYSTEM_NOT_FOUND)
+                })
+                .map(|system| Some(RequestAbout::System(system)))
             }
             "system_id" => resolve_entity(&ctx.db, "systems", "hid", id_ref).await,
             "member_id" if Uuid::parse_str(id_ref).is_ok() => {
@@ -133,7 +135,7 @@ impl Authable for RequestAbout {
 #[derive(sqlx::FromRow)]
 struct ResolveEntityRow {
     id: i32,
-    system: i32,
+    system: Option<i32>,
 }
 
 async fn resolve_entity(
@@ -175,15 +177,15 @@ async fn resolve_entity(
         "systems" => Ok(Some(RequestAbout::System(row.id))),
         "members" => Ok(Some(RequestAbout::Member {
             id: row.id,
-            system: row.system,
+            system: row.system.expect("members.system is not null"),
         })),
         "groups" => Ok(Some(RequestAbout::Group {
             id: row.id,
-            system: row.system,
+            system: row.system.expect("groups.system is not null"),
         })),
         "switches" => Ok(Some(RequestAbout::Switch {
             id: row.id,
-            system: row.system,
+            system: row.system.expect("switches.system is not null"),
         })),
         _ => unreachable!(),
     }
