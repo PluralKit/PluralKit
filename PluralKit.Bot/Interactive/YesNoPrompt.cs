@@ -14,10 +14,12 @@ public class YesNoPrompt: BaseInteractive
     public YesNoPrompt(Context ctx) : base(ctx)
     {
         User = ctx.Author.Id;
+        Author = ctx.Author.Id;
     }
 
     public bool? Result { get; private set; }
     public ulong? User { get; set; }
+    public ulong? Author { get; set; }
     public string Message { get; set; } = "Are you sure?";
 
     public string AcceptLabel { get; set; } = "OK";
@@ -41,7 +43,12 @@ public class YesNoPrompt: BaseInteractive
 
     private async Task OnButtonClick(InteractionContext ctx, bool result)
     {
-        if (ctx.User.Id != User)
+        if (result && ctx.User.Id != User)
+        {
+            await Error(ctx, Errors.InteractionWrongAccount(User ?? 0));
+            return;
+        }
+        if (!result && ctx.User.Id != User && ctx.User.Id != Author)
         {
             await Error(ctx, Errors.InteractionWrongAccount(User ?? 0));
             return;
