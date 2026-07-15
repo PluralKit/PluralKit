@@ -61,17 +61,16 @@ public class YesNoPrompt: BaseInteractive
     private bool MessagePredicate(MessageCreateEvent e)
     {
         if (e.ChannelId != _ctx.Channel.Id) return false;
-        if (e.Author.Id != User) return false;
 
         var response = e.Content.ToLowerInvariant();
 
-        if (response == "y" || response == "yes")
+        if ((response == "y" || response == "yes") && e.Author.Id == User)
         {
             Result = true;
             return true;
         }
 
-        if (response == "n" || response == "no")
+        if ((response == "n" || response == "no") && (e.Author.Id == User || e.Author.Id == Author))
         {
             Result = false;
             return true;
