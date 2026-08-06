@@ -16,6 +16,7 @@ pub async fn logger(request: Request, next: Next) -> Response {
 
     let remote_ip = header_or_unknown(headers.get("X-PluralKit-Client-IP"));
     let user_agent = header_or_unknown(headers.get("User-Agent"));
+    let origin = header_or_unknown(headers.get("Origin"));
 
     let extensions = request.extensions().clone();
 
@@ -33,6 +34,7 @@ pub async fn logger(request: Request, next: Next) -> Response {
         remote_ip,
         method = method.as_str(),
         endpoint = endpoint.clone(),
+        origin,
         user_agent
     );
 
@@ -83,6 +85,7 @@ pub async fn logger(request: Request, next: Next) -> Response {
         method = method.to_string(),
         endpoint,
         elapsed,
+        origin,
         user_agent,
         remote_ip,
         system_id,
