@@ -1,4 +1,4 @@
--- database version 57
+-- database version 55
 -- add hid changelog
 
 -- messages db
@@ -15,4 +15,4 @@ create table hid_changelog (
 
 create index hid_changelog_system_idx on hid_changelog (system);
 
-update info set schema_version = 56;
+update info set schema_version = 55;
