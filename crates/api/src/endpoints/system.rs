@@ -3,10 +3,8 @@ use pk_macros::api_endpoint;
 use serde_json::{Value, json};
 use sqlx::Postgres;
 
-use pluralkit_models::{PKSystemConfig, PrivacyLevel};
-
 use crate::{ApiContext, auth::AuthState, fail, middleware::params::RequestAbout};
-use pluralkit_models::{PKDashView, PKSystem, PKSystemConfig, PrivacyLevel};
+use pluralkit_models::{PKSystem, PKSystemConfig, PrivacyLevel};
 
 #[api_endpoint]
 pub async fn get_system_settings(
@@ -44,27 +42,6 @@ pub async fn get_system_settings(
     Ok(Json(match access_level {
         PrivacyLevel::Private => {
             let mut config_json = config.clone().to_json();
-
-            match sqlx::query_as::<Postgres, PKDashView>(
-                "select * from dash_views where system = $1",
-            )
-            .bind(system_id)
-            .fetch_all(&ctx.db)
-            .await
-            {
-                Ok(val) => {
-                    config_json.as_object_mut().unwrap().insert(
-                        "dash_views".to_string(),
-                        serde_json::to_value(
-                            &val.iter()
-                                .map(|v| v.clone().to_json())
-                                .collect::<Vec<serde_json::Value>>(),
-                        )
-                        .unwrap(),
-                    );
-                }
-                Err(err) => fail!(?err, "failed to query dash views"),
-            };
 
             if let Some(premium) = auth.premium() {
                 config_json.as_object_mut().unwrap().insert(
