@@ -44,7 +44,9 @@
           };
 
           pluralkit.crates = {
-            api = { };
+            api = {
+              runCompose.enable = true;
+            };
             avatars = { };
             dispatch = { };
             gateway = {
@@ -64,6 +66,9 @@
               };
             };
             migrate = {
+              runCompose.enable = true;
+            };
+            premium = {
               runCompose.enable = true;
             };
             scheduled_tasks = {
