@@ -1,5 +1,3 @@
-#![feature(ip)]
-
 use hickory_client::{
     client::{AsyncClient, ClientHandle},
     rr::{DNSClass, Name, RData, RecordType},
@@ -63,6 +61,26 @@ impl std::fmt::Display for DispatchResponse {
     }
 }
 
+// it's still only on nightly .-.
+// https://github.com/rust-lang/rust/issues/27709
+pub const fn is_global_v4(ip: &Ipv4Addr) -> bool {
+    !(ip.octets()[0] == 0 // "This network"
+        || ip.is_private()
+        || (ip.octets()[0] == 100 && (ip.octets()[1] & 0b1100_0000 == 0b0100_0000))
+        || ip.is_loopback()
+        || ip.is_link_local()
+        // addresses reserved for future protocols (`192.0.0.0/24`)
+        // .9 and .10 are documented as globally reachable so they're excluded
+        || (
+            ip.octets()[0] == 192 && ip.octets()[1] == 0 && ip.octets()[2] == 0
+            && ip.octets()[3] != 9 && ip.octets()[3] != 10
+        )
+        || ip.is_documentation()
+        || (ip.octets()[0] == 198 && (ip.octets()[1] & 0xfe) == 18)
+        || (ip.octets()[0] & 240 == 240 && !ip.is_broadcast())
+        || ip.is_broadcast())
+}
+
 async fn dispatch(
     // not entirely sure if this RwLock is the right way to do it
     State(dns): State<Arc<RwLock<DNSClient>>>,
@@ -94,7 +112,7 @@ async fn dispatch(
             }
         }
     };
-    if ips.iter().any(|ip| !ip.is_global()) {
+    if ips.iter().any(|ip| !is_global_v4(&ip)) {
         return DispatchResponse::InvalidIP.to_string();
     }
 
