@@ -292,7 +292,7 @@ dependencies = [
 [[package]]
 name = "axum"
 version = "0.8.4"
-source = "git+https://github.com/asleepyskye/axum?branch=v0.8.4-pluralkit#40d7e1eaae6f73cd9d709ac6824e1d02ff939ec8"
+source = "git+https://github.com/PluralKit/axum?branch=v0.8.4-pluralkit#12dcd16d287e5c640edd105dae3c4071f5638504"
 dependencies = [
  "axum-core 0.5.2",
  "bytes",
@@ -342,7 +342,7 @@ dependencies = [
 [[package]]
 name = "axum-core"
 version = "0.5.2"
-source = "git+https://github.com/asleepyskye/axum?branch=v0.8.4-pluralkit#40d7e1eaae6f73cd9d709ac6824e1d02ff939ec8"
+source = "git+https://github.com/PluralKit/axum?branch=v0.8.4-pluralkit#12dcd16d287e5c640edd105dae3c4071f5638504"
 dependencies = [
  "bytes",
  "futures-core",

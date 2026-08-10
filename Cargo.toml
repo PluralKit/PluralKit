@@ -23,7 +23,7 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3.20", features = ["env-filter", "json"] }
 uuid = { version = "1.7.0", features = ["serde"] }
 
-axum = { git = "https://github.com/asleepyskye/axum", branch = "v0.8.4-pluralkit" }
+axum = { git = "https://github.com/PluralKit/axum", branch = "v0.8.4-pluralkit" }
 
 twilight-gateway = { git = "https://github.com/pluralkit/twilight", branch = "pluralkit-7f08d95" }
 twilight-cache-inmemory = { git = "https://github.com/pluralkit/twilight", branch = "pluralkit-7f08d95", features = ["permission-calculator"] }
