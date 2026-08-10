@@ -13,7 +13,7 @@ create table premium_subscriptions (
 );
 
 create table premium_allowances (
-    subscription_id int not null references premium_subscriptions(id) on delete cascade,
+    subscription_id int primary key not null references premium_subscriptions(id) on delete cascade,
     system_id int references systems(id) on delete set null,
     id_changes_remaining int not null default 0
 );
