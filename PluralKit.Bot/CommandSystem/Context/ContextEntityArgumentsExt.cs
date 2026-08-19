@@ -1,5 +1,7 @@
 using System.Text.RegularExpressions;
 
+using Dapper;
+
 using Myriad.Extensions;
 using Myriad.Types;
 
@@ -10,6 +12,23 @@ namespace PluralKit.Bot;
 
 public static class ContextEntityArgumentsExt
 {
+    /// <summary>
+    /// Finds other members in the same system whose name, display name, or an alias matches
+    /// <paramref name="text"/> (case-insensitive), excluding <paramref name="excludeId"/> itself.
+    /// Used to warn (not block) when setting a name/display name/alias that collides with an
+    /// existing identifier elsewhere in the system.
+    /// </summary>
+    public static async Task<List<PKMember>> FindConflictingMembers(this Context ctx, MemberId excludeId, string text)
+    {
+        var query = "select * from members where system = @System and id != @Exclude and " +
+                     "(lower(name) = lower(@Text) or lower(display_name) = lower(@Text) or " +
+                     "lower(@Text) = any(select lower(x) from unnest(aliases) as x))";
+        var conflicts = await ctx.Database.Execute(conn => conn.QueryAsync<PKMember>(query,
+            new { System = ctx.System.Id, Exclude = excludeId, Text = text }));
+        return conflicts.ToList();
+    }
+
+
     public static async Task<User> MatchUser(this Context ctx)
     {
         var text = ctx.PeekArgument();
@@ -85,6 +104,14 @@ public static class ContextEntityArgumentsExt
             if (ctx.System != null &&
                 await ctx.Repository.GetMemberByDisplayName(ctx.System.Id, input) is PKMember memberByDisplayName)
                 return memberByDisplayName;
+
+            // And if THAT fails, we try finding a member by alias in the system.
+            // Unlike name/display name, aliases aren't unique, so this can match more than one member.
+            var aliasMatches = (await ctx.Repository.GetMembersByAlias(ctx.System.Id, input)).ToList();
+            if (aliasMatches.Count == 1)
+                return aliasMatches[0];
+            if (aliasMatches.Count > 1)
+                throw Errors.AmbiguousAlias(input, aliasMatches, LookupContext.ByOwner, ctx.Config);
         }
 
         // Finally (or if by-HID lookup is specified), check if input is a valid HID and then try member HID parsing:
