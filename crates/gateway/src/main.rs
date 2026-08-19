@@ -40,13 +40,7 @@ async fn main() -> anyhow::Result<()> {
     );
 
     // hacky, but needed for selfhost for now
-    if let Some(target) = libpk::config
-        .discord
-        .as_ref()
-        .unwrap()
-        .gateway_target
-        .clone()
-    {
+    if let Some(target) = libpk::config.discord().gateway_target.clone() {
         runtime_config
             .set(RUNTIME_CONFIG_KEY_EVENT_TARGET.to_string(), target)
             .await?;
@@ -236,12 +230,7 @@ async fn main() -> anyhow::Result<()> {
 }
 
 async fn scheduled_task(redis: RedisPool, senders: Vec<(ShardId, MessageSender)>) {
-    let prefix = libpk::config
-        .discord
-        .as_ref()
-        .expect("missing discord config")
-        .bot_prefix_for_gateway
-        .clone();
+    let prefix = libpk::config.discord().bot_prefix_for_gateway.clone();
 
     println!("{prefix}");
 

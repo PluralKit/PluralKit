@@ -13,11 +13,7 @@ use twilight_gateway::queue::Queue;
 pub fn new(redis: RedisPool) -> RedisQueue {
     RedisQueue {
         redis,
-        concurrency: libpk::config
-            .discord
-            .as_ref()
-            .expect("missing discord config")
-            .max_concurrency,
+        concurrency: libpk::config.discord().max_concurrency,
     }
 }
 

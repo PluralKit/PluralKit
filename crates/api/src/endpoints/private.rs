@@ -83,8 +83,8 @@ pub async fn discord_callback(
         .expect("error making client");
 
     let reqbody = serde_urlencoded::to_string(&CallbackDiscordData {
-        client_id: config.discord.as_ref().unwrap().client_id.get().to_string(),
-        client_secret: config.discord.as_ref().unwrap().client_secret.clone(),
+        client_id: config.discord().client_id.get().to_string(),
+        client_secret: config.discord().client_secret.clone(),
         grant_type: "authorization_code".to_string(),
         redirect_uri: request_data.redirect_domain, // change this!
         code: request_data.code,

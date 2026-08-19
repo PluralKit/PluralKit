@@ -70,7 +70,7 @@ public class DispatchService
     {
         var repo = _provider.Resolve<ModelRepository>();
         var system = await repo.GetSystem(systemId);
-        if (system.WebhookUrl == null)
+        if (system == null || system.WebhookUrl == null)
             return;
 
         var memberUuid = patch.AutoproxyMember.IsPresent && patch.AutoproxyMember.Value is MemberId id
@@ -114,8 +114,11 @@ public class DispatchService
 
         var repo = _provider.Resolve<ModelRepository>();
         var member = await repo.GetMember(memberId);
+        if (member == null)
+            return;
+
         var system = await repo.GetSystem(member.System);
-        if (system.WebhookUrl == null)
+        if (system == null || system.WebhookUrl == null)
             return;
 
         data.SigningToken = system.WebhookToken;
@@ -133,8 +136,11 @@ public class DispatchService
 
         var repo = _provider.Resolve<ModelRepository>();
         var group = await repo.GetGroup(groupId);
+        if (group == null)
+            return;
+
         var system = await repo.GetSystem(group.System);
-        if (system.WebhookUrl == null)
+        if (system == null || system.WebhookUrl == null)
             return;
 
         data.SigningToken = system.WebhookToken;
@@ -149,8 +155,11 @@ public class DispatchService
     {
         var repo = _provider.Resolve<ModelRepository>();
         var g = await repo.GetGroup(dict.Keys.FirstOrDefault());
+        if (g == null)
+            return;
+
         var system = await repo.GetSystem(g.System);
-        if (system.WebhookUrl == null)
+        if (system == null || system.WebhookUrl == null)
             return;
 
         var data = new UpdateDispatchData();
@@ -166,8 +175,11 @@ public class DispatchService
     {
         var repo = _provider.Resolve<ModelRepository>();
         var sw = await repo.GetSwitch(swId);
+        if (sw == null)
+            return;
+
         var system = await repo.GetSystem(sw.System);
-        if (system.WebhookUrl == null)
+        if (system == null || system.WebhookUrl == null)
             return;
 
         data.SigningToken = system.WebhookToken;
@@ -182,7 +194,7 @@ public class DispatchService
     {
         var repo = _provider.Resolve<ModelRepository>();
         var system = await repo.GetSystem(systemId);
-        if (system.WebhookUrl == null)
+        if (system == null || system.WebhookUrl == null)
             return;
 
         var member = await repo.GetMember(newMessage.Member!.Value);
@@ -208,7 +220,7 @@ public class DispatchService
     {
         var repo = _provider.Resolve<ModelRepository>();
         var system = await repo.GetSystem(systemId);
-        if (system.WebhookUrl == null)
+        if (system == null || system.WebhookUrl == null)
             return;
 
         var data = new UpdateDispatchData();
@@ -225,8 +237,11 @@ public class DispatchService
     {
         var repo = _provider.Resolve<ModelRepository>();
         var member = await repo.GetMember(memberId);
+        if (member == null)
+            return;
+
         var system = await repo.GetSystem(member.System);
-        if (system.WebhookUrl == null)
+        if (system == null || system.WebhookUrl == null)
             return;
 
         var data = new UpdateDispatchData();
@@ -247,12 +262,13 @@ public class DispatchService
     {
         var repo = _provider.Resolve<ModelRepository>();
         var system = await repo.GetSystemByAccount(accountId);
-        if (system?.WebhookUrl == null)
+        if (system == null || system?.WebhookUrl == null)
             return;
 
         var data = new UpdateDispatchData();
         data.Event = DispatchEvent.UPDATE_MEMBER_GUILD;
         data.SigningToken = system.WebhookToken;
+        data.SystemId = system.Uuid.ToString();
         data.EntityId = accountId.ToString();
         data.EventData = patch.ToJson();
 
@@ -264,7 +280,7 @@ public class DispatchService
     {
         var repo = _provider.Resolve<ModelRepository>();
         var system = await repo.GetSystem(systemId);
-        if (system.WebhookUrl == null)
+        if (system == null || system.WebhookUrl == null)
             return;
 
         var data = new UpdateDispatchData();

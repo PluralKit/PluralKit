@@ -91,22 +91,10 @@ fn member_to_cached_member(item: Member, id: Id<UserMarker>) -> CachedMember {
 }
 
 pub fn new() -> DiscordCache {
-    let mut client_builder = twilight_http::Client::builder().token(
-        libpk::config
-            .discord
-            .as_ref()
-            .expect("missing discord config")
-            .bot_token
-            .clone(),
-    );
+    let mut client_builder =
+        twilight_http::Client::builder().token(libpk::config.discord().bot_token.clone());
 
-    if let Some(base_url) = libpk::config
-        .discord
-        .as_ref()
-        .expect("missing discord config")
-        .api_base_url
-        .clone()
-    {
+    if let Some(base_url) = libpk::config.discord().api_base_url.clone() {
         client_builder = client_builder.proxy(base_url, true).ratelimiter(None);
     }
 
@@ -268,13 +256,7 @@ impl DiscordCache {
             return Ok(Permissions::all());
         }
 
-        let member = if user_id
-            == libpk::config
-                .discord
-                .as_ref()
-                .expect("missing discord config")
-                .client_id
-        {
+        let member = if user_id == libpk::config.discord().client_id {
             self.0
                 .member(guild_id, user_id)
                 .ok_or(format_err!("self member not found"))?
@@ -340,13 +322,7 @@ impl DiscordCache {
             return Ok(Permissions::all());
         }
 
-        let member = if user_id
-            == libpk::config
-                .discord
-                .as_ref()
-                .expect("missing discord config")
-                .client_id
-        {
+        let member = if user_id == libpk::config.discord().client_id {
             self.0
                 .member(guild_id, user_id)
                 .ok_or_else(|| {

@@ -1,0 +1,1 @@
+Please report security issues privately at [team@pluralkit.me](mailto:team@pluralkit.me).

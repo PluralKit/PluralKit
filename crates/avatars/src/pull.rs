@@ -190,6 +190,11 @@ pub fn parse_url(url: &str) -> anyhow::Result<ParsedUrl> {
 fn trim_url_query(url: &str) -> anyhow::Result<Url> {
     let mut parsed = Url::parse(url)?;
 
+    match (parsed.scheme(), parsed.domain()) {
+        ("https", Some("media.discordapp.net" | "cdn.discordapp.com")) => {}
+        _ => return Ok(parsed), //don't trim query params from non discord urls
+    }
+
     let mut qs = form_urlencoded::Serializer::new(String::new());
     for (key, value) in parsed.query_pairs() {
         match key.as_ref() {

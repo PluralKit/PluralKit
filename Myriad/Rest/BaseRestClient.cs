@@ -35,7 +35,10 @@ public class BaseRestClient: IAsyncDisposable
         if (!token.StartsWith("Bot "))
             token = "Bot " + token;
 
-        Client = new HttpClient();
+        Client = new HttpClient(new SocketsHttpHandler
+        {
+            PooledConnectionIdleTimeout = TimeSpan.FromSeconds(3),
+        });
         Client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", userAgent);
         Client.DefaultRequestHeaders.TryAddWithoutValidation("Authorization", token);
 
@@ -150,7 +153,7 @@ public class BaseRestClient: IAsyncDisposable
         if (files != null)
             for (var i = 0; i < files.Length; i++)
             {
-                var (filename, stream, _, _, _) = files[i];
+                var (filename, stream, _, _, _, _) = files[i];
                 mfd.Add(new StreamContent(stream), $"files[{i}]", filename);
             }
 
