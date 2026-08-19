@@ -90,6 +90,10 @@ You can have a space after `pk;`, e.g. `pk;system` and `pk; system` will do the 
 - `pk;member <member> proxy [tags]` - Changes the proxy tags of a member. use below add/remove commands for members with multiple tag pairs.
 - `pk;member <member> proxy add [tags]` - Adds a proxy tag pair to a member.
 - `pk;member <member> proxy remove [tags]` - Removes a proxy tag from a member.
+- `pk;member <member> alias` - Lists the aliases set on a member.
+- `pk;member <member> alias add [alias]` - Adds an alias to a member. Aliases can be used in place of a member's name or ID in commands, e.g. for switching.
+- `pk;member <member> alias remove [alias]` - Removes an alias from a member.
+- `pk;member <member> alias clear` - Removes all aliases from a member.
 - `pk;member <member> autoproxy [on|off]` - Sets whether a member will be autoproxied when autoproxy is set to latch or front mode.
 - `pk;member <member> keepproxy [on|off]` - Sets whether to include a member's proxy tags in the proxied message.
 - `pk;member <member> serverkeepproxy [on|off|clear]` - Sets whether to include a member's proxy tag in the proxied message in a specific server.
