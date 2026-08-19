@@ -59,9 +59,7 @@
                   {
                     liveness_probe.exec.command = probeCmd;
                     liveness_probe.period_seconds = 5;
-                    readiness_probe.exec.command = probeCmd;
-                    readiness_probe.period_seconds = 5;
-                    readiness_probe.initial_delay_seconds = 3;
+                    ready_log_line = "shard 0 ready";
                   };
               };
             };

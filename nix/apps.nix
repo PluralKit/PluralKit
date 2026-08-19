@@ -29,10 +29,10 @@
             set -x
             commandslib="''${1:-}"
             if [ "$commandslib" == "" ]; then
-            cargo -Z unstable-options build --package commands --lib --release --artifact-dir obj/
-            commandslib="obj/libcommands.so"
+                cargo -Z unstable-options build --package commands --lib --release --artifact-dir obj/
+                commandslib="obj/libcommands.so"
             else
-            cp -f "$commandslib" obj/
+                cp -f "$commandslib" obj/
             fi
             uniffi-bindgen-cs "$commandslib" --library --out-dir="''${2:-./PluralKit.Bot}"
             cargo run --package commands --bin write_cs_glue -- "''${2:-./PluralKit.Bot}"/commandtypes.cs
