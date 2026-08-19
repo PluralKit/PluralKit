@@ -54,6 +54,7 @@ public class PKMember
     public string Pronouns { get; private set; }
     public string Description { get; private set; }
     public ICollection<ProxyTag> ProxyTags { get; private set; }
+    public ICollection<string> Aliases { get; private set; }
     public bool KeepProxy { get; private set; }
     public bool Tts { get; private set; }
     public Instant Created { get; private set; }
@@ -159,6 +160,8 @@ public static class PKMemberExt
                 tagArray.Add(new JObject { { "prefix", tag.Prefix }, { "suffix", tag.Suffix } });
         }
         o.Add("proxy_tags", tagArray);
+
+        o.Add("aliases", ctx == LookupContext.ByOwner ? new JArray(member.Aliases) : null);
 
         if (includePrivacy)
         {
