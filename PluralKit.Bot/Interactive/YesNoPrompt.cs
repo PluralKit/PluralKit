@@ -14,10 +14,12 @@ public class YesNoPrompt: BaseInteractive
     public YesNoPrompt(Context ctx) : base(ctx)
     {
         User = ctx.Author.Id;
+        Author = ctx.Author.Id;
     }
 
     public bool? Result { get; private set; }
     public ulong? User { get; set; }
+    public ulong? Author { get; set; }
     public string Message { get; set; } = "Are you sure?";
 
     public string AcceptLabel { get; set; } = "OK";
@@ -41,7 +43,12 @@ public class YesNoPrompt: BaseInteractive
 
     private async Task OnButtonClick(InteractionContext ctx, bool result)
     {
-        if (ctx.User.Id != User)
+        if (result && ctx.User.Id != User)
+        {
+            await Error(ctx, Errors.InteractionWrongAccount(User ?? 0));
+            return;
+        }
+        if (!result && ctx.User.Id != User && ctx.User.Id != Author)
         {
             await Error(ctx, Errors.InteractionWrongAccount(User ?? 0));
             return;
@@ -54,17 +61,16 @@ public class YesNoPrompt: BaseInteractive
     private bool MessagePredicate(MessageCreateEvent e)
     {
         if (e.ChannelId != _ctx.Channel.Id) return false;
-        if (e.Author.Id != User) return false;
 
         var response = e.Content.ToLowerInvariant();
 
-        if (response == "y" || response == "yes")
+        if ((response == "y" || response == "yes") && e.Author.Id == User)
         {
             Result = true;
             return true;
         }
 
-        if (response == "n" || response == "no")
+        if ((response == "n" || response == "no") && (e.Author.Id == User || e.Author.Id == Author))
         {
             Result = false;
             return true;
