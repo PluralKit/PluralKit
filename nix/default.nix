@@ -1,5 +1,6 @@
 {
   imports = [
+    ./apps.nix
     ./compose.nix
     ./images.nix
     ./lib.nix

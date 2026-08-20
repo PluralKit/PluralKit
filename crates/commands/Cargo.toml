@@ -1,0 +1,23 @@
+[package]
+name = "commands"
+version = "0.1.0"
+edition = "2021"
+default-run = "commands"
+
+[[bin]]
+name = "write_cs_glue"
+path = "src/write_cs_glue.rs"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[dependencies]
+lazy_static = { workspace = true }
+command_parser = { path = "../command_parser"}
+command_definitions = { path = "../command_definitions"}
+uniffi = { version = "0.29" }
+log = "0.4"
+simple_logger = "4.3.3"
+
+[build-dependencies]
+uniffi = { version = "0.29", features = [ "build" ] }

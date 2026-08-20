@@ -11,11 +11,13 @@
     # rust
     d2n.url = "github:nix-community/dream2nix";
     d2n.inputs.nixpkgs.follows = "nixpkgs";
-    nci.url = "github:yusdacra/nix-cargo-integration";
+    nci.url = "github:90-008/nix-cargo-integration";
     nci.inputs.parts.follows = "parts";
     nci.inputs.nixpkgs.follows = "nixpkgs";
     nci.inputs.dream2nix.follows = "d2n";
     nci.inputs.treefmt.follows = "treefmt";
+    uniffi-bindgen-cs.url = "git+https://github.com/90-008/uniffi-bindgen-cs?ref=refs/heads/main&submodules=1";
+    uniffi-bindgen-cs.flake = false;
     # misc
     treefmt.url = "github:numtide/treefmt-nix";
     treefmt.inputs.nixpkgs.follows = "nixpkgs";
@@ -57,9 +59,7 @@
                   {
                     liveness_probe.exec.command = probeCmd;
                     liveness_probe.period_seconds = 5;
-                    readiness_probe.exec.command = probeCmd;
-                    readiness_probe.period_seconds = 5;
-                    readiness_probe.initial_delay_seconds = 3;
+                    ready_log_line = "shard 0 ready";
                   };
               };
             };
