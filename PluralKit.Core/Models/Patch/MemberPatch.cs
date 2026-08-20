@@ -20,6 +20,7 @@ public class MemberPatch: PatchObject
     public Partial<string?> Pronouns { get; set; }
     public Partial<string?> Description { get; set; }
     public Partial<ProxyTag[]> ProxyTags { get; set; }
+    public Partial<string[]> Aliases { get; set; }
     public Partial<bool> KeepProxy { get; set; }
     public Partial<bool> Tts { get; set; }
     public Partial<int> MessageCount { get; set; }
@@ -47,6 +48,7 @@ public class MemberPatch: PatchObject
         .With("pronouns", Pronouns)
         .With("description", Description)
         .With("proxy_tags", ProxyTags)
+        .With("aliases", Aliases)
         .With("keep_proxy", KeepProxy)
         .With("tts", Tts)
         .With("message_count", MessageCount)
@@ -87,6 +89,21 @@ public class MemberPatch: PatchObject
                                     ProxyTags.Value.Any(tag => tag.ProxyString.IsLongerThan(100))))
             // todo: have a better error for this
             Errors.Add(new ValidationError("proxy_tags"));
+
+        if (Aliases.IsPresent)
+        {
+            for (var i = 0; i < Aliases.Value.Length; i++)
+            {
+                var alias = Aliases.Value[i];
+                if (alias.Length > Limits.MaxMemberNameLength)
+                    Errors.Add(new FieldTooLongError($"aliases[{i}]", Limits.MaxMemberNameLength, alias.Length));
+                if (string.IsNullOrWhiteSpace(alias))
+                    Errors.Add(new ValidationError($"aliases[{i}]", "Aliases cannot be empty."));
+            }
+
+            if (Aliases.Value.Select(a => a.ToLower()).Distinct().Count() != Aliases.Value.Length)
+                Errors.Add(new ValidationError("aliases", "Aliases must not contain duplicates."));
+        }
     }
 
 #nullable disable
@@ -163,6 +180,9 @@ public class MemberPatch: PatchObject
                 .Where(p => p.Valid)
                 .ToArray();
 
+        if (o.ContainsKey("aliases"))
+            patch.Aliases = o.Value<JArray>("aliases").Select(x => x.Value<string>().Trim()).ToArray();
+
         if (o.ContainsKey("privacy") && o["privacy"].Type == JTokenType.Object)
         {
             var privacy = o.Value<JObject>("privacy");
@@ -229,6 +249,9 @@ public class MemberPatch: PatchObject
                 tagArray.Add(new JObject { { "prefix", tag.Prefix }, { "suffix", tag.Suffix } });
             o.Add("proxy_tags", tagArray);
         }
+
+        if (Aliases.IsPresent)
+            o.Add("aliases", new JArray(Aliases.Value));
 
         if (KeepProxy.IsPresent)
             o.Add("keep_proxy", KeepProxy.Value);

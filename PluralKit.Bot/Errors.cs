@@ -146,6 +146,9 @@ public static class Errors
     public static PKError AmbiguousTimeZone(string zoneStr, int count) => new(
         $"The time zone query '{zoneStr}' resulted in **{count}** different time zone regions. Try being more specific - e.g. pass an exact time zone specifier from the following website: <https://xske.github.io/tz>");
 
+    public static PKError AmbiguousAlias(string alias, ICollection<PKMember> matches, LookupContext ctx, SystemConfig config) => new(
+        $"Multiple members match the alias \"{alias}\":\n{string.Join('\n', matches.Select(m => $"- **{m.NameFor(ctx)}** (`{m.DisplayHid(config)}`)"))}\nPlease use the member's name or ID instead.");
+
     public static PKError MessageNotFound(ulong id) =>
         new($"Message with ID '{id}' not found. Are you sure it's a message proxied by PluralKit?");
 
