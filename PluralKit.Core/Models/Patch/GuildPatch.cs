@@ -10,7 +10,7 @@ public class GuildPatch: PatchObject
     public Partial<bool> LogCleanupEnabled { get; set; }
     public Partial<bool> InvalidCommandResponseEnabled { get; set; }
     public Partial<bool> RequireSystemTag { get; set; }
-    public Partial<bool> SuppressNotifications { get; set; }
+    public Partial<GuildConfig.SuppressCondition> SuppressNotifications { get; set; }
 
     public override Query Apply(Query q) => q.ApplyPatch(wrapper => wrapper
         .With("log_channel", LogChannel)

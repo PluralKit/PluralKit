@@ -9,5 +9,18 @@ public class GuildConfig
     public bool LogCleanupEnabled { get; }
     public bool InvalidCommandResponseEnabled { get; }
     public bool RequireSystemTag { get; }
-    public bool SuppressNotifications { get; }
+    public SuppressCondition SuppressNotifications { get; }
+
+    public enum SuppressCondition
+    {
+        Never = 0,
+        Always = 1,
+        Match = 2,
+        Invert = 3,
+    }
+}
+
+public static class GuildConfigExt
+{
+    public static string ToUserString(this GuildConfig.SuppressCondition val) => val.ToString().ToLower();
 }
