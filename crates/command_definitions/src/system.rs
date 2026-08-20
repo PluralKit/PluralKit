@@ -51,12 +51,12 @@ pub fn edit() -> impl Iterator<Item = Command> {
     .into_iter()
     .map(add_info_flags);
 
-    let name = "name";
+    let name = ("name", ["rename"]);
     let system_name_cmd = once(
         command!(system, Optional(SystemRef), name => "system_show_name")
             .help("Shows the systems name"),
     );
-    let system_name_self = tokens!(system, ("rename", [name]));
+    let system_name_self = tokens!(system, name);
     let system_name_self_cmd = [
         command!(system_name_self, CLEAR => "system_clear_name")
             .flag(YES)
