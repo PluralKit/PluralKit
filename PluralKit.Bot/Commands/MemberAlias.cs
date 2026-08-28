@@ -61,7 +61,10 @@ public class MemberAlias
             var patch = new MemberPatch { Aliases = Partial<string[]>.Present(newAliases.ToArray()) };
             await ctx.Repository.UpdateMember(target.Id, patch);
 
-            await ctx.Reply($"{Emojis.Success} Added alias {aliasToAdd.AsCode()} (using {aliasToAdd.Length}/{Limits.MaxMemberNameLength} characters).");
+            var replyStr = $"{Emojis.Success} Added alias {aliasToAdd.AsCode()} (using {aliasToAdd.Length}/{Limits.MaxMemberNameLength} characters).";
+            if (aliasToAdd.Contains(" "))
+                replyStr += $"\n{Emojis.Note} Note that this alias contains spaces. You will need to surround it with \"double quotes\" when using commands referring to it, or just use the member's short ID (which is `{target.DisplayHid(ctx.Config)}`).";
+            await ctx.Reply(replyStr);
         }
         // Subcommand: "remove"
         else if (ctx.Match("remove", "delete"))
