@@ -804,7 +804,7 @@ public class MemberEdit
         {
             await ctx.Reply(embed: new EmbedBuilder()
                 .Title($"Current privacy settings for {target.NameFor(ctx)}")
-                .Field(new Embed.Field("Name (replaces name with display name if member has one)",
+                .Field(new Embed.Field("Name (replaces name with display name if member has one; also covers aliases)",
                     target.NamePrivacy.Explanation()))
                 .Field(new Embed.Field("Description", target.DescriptionPrivacy.Explanation()))
                 .Field(new Embed.Field("Banner", target.BannerPrivacy.Explanation()))
