@@ -161,7 +161,7 @@ public static class PKMemberExt
         }
         o.Add("proxy_tags", tagArray);
 
-        o.Add("aliases", ctx == LookupContext.ByOwner ? new JArray(member.Aliases) : null);
+        o.Add("aliases", member.NamePrivacy.CanAccess(ctx) ? new JArray(member.Aliases) : null);
 
         if (includePrivacy)
         {
