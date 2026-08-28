@@ -18,9 +18,9 @@ public static class ContextEntityArgumentsExt
     /// Used to warn (not block) when setting a name/display name/alias that collides with an
     /// existing identifier elsewhere in the system.
     /// </summary>
-    public static async Task<List<PKMember>> FindConflictingMembers(this Context ctx, MemberId excludeId, string text)
+    public static async Task<List<PKMember>> FindConflictingMembers(this Context ctx, MemberId? excludeId, string text)
     {
-        var query = "select * from members where system = @System and id != @Exclude and " +
+        var query = "select * from members where system = @System and (@Exclude is null or id != @Exclude) and " +
                      "(lower(name) = lower(@Text) or lower(display_name) = lower(@Text) or " +
                      "lower(@Text) = any(select lower(x) from unnest(aliases) as x))";
         var conflicts = await ctx.Database.Execute(conn => conn.QueryAsync<PKMember>(query,
@@ -103,12 +103,12 @@ public static class ContextEntityArgumentsExt
                 return memberByName;
 
             // And if that fails, we try finding a member by alias in the system.
-            // Unlike name/display name, aliases aren't unique, so this can match more than one member.
-            var aliasMatches = (await ctx.Repository.GetMembersByAlias(ctx.System.Id, input)).ToList();
-            if (aliasMatches.Count == 1)
-                return aliasMatches[0];
-            if (aliasMatches.Count > 1)
-                throw Errors.AmbiguousAlias(input, aliasMatches, LookupContext.ByOwner, ctx.Config);
+            // Unlike name/display name, aliases aren't unique, so this can match more than one member;
+            // PeekMember runs above the command error handler (it's used for speculative matching too),
+            // so throwing here would silently fail instead of surfacing an error. Just take the first match.
+            var aliasMatches = await ctx.Repository.GetMembersByAlias(ctx.System.Id, input);
+            if (aliasMatches.FirstOrDefault() is PKMember memberByAlias)
+                return memberByAlias;
 
             // And if THAT fails, we try finding a member with a display name matching the argument from the system
             if (ctx.System != null &&
