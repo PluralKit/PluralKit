@@ -1,12 +1,12 @@
 using System.Text.RegularExpressions;
 
-using Dapper;
-
 using Myriad.Extensions;
 using Myriad.Types;
 
 using PluralKit.Bot.Utils;
 using PluralKit.Core;
+
+using SqlKata;
 
 namespace PluralKit.Bot;
 
@@ -20,12 +20,18 @@ public static class ContextEntityArgumentsExt
     /// </summary>
     public static async Task<List<PKMember>> FindConflictingMembers(this Context ctx, MemberId? excludeId, string text)
     {
-        var query = "select * from members where system = @System and (@Exclude is null or id != @Exclude) and " +
-                     "(lower(name) = lower(@Text) or lower(display_name) = lower(@Text) or " +
-                     "lower(@Text) = any(select lower(x) from unnest(aliases) as x))";
-        var conflicts = await ctx.Database.Execute(conn => conn.QueryAsync<PKMember>(query,
-            new { System = ctx.System.Id, Exclude = excludeId, Text = text }));
-        return conflicts.ToList();
+        var query = new Query("members")
+            .Where("system", ctx.System.Id)
+            .Where(q => q
+                .WhereRaw("lower(name) = lower(?)", text)
+                .OrWhereRaw("lower(display_name) = lower(?)", text)
+                .OrWhereRaw("lower(?) = any(select lower(x) from unnest(aliases) as x)", text)
+            );
+
+        if (excludeId != null)
+            query.WhereNot("id", excludeId);
+
+        return (await ctx.Database.Query<PKMember>(query)).ToList();
     }
 
 
