@@ -62,7 +62,7 @@
         "rev": "ff81ac966bb2cae68946d5ed5fc4994f96d0ffec",
         "revCount": 69,
         "type": "tarball",
-        "url": "https://api.flakehub.com/f/pinned/edolstra/flake-compat/1.1.0/01948eb7-9cba-704f-bbf3-3fa956735b52/source.tar.gz"
+        "url": "https://api.flakehub.com/f/pinned/edolstra/flake-compat/1.1.0/01948eb7-9cba-704f-bbf3-3fa956735b52/source.tar.gz?rev=ff81ac966bb2cae68946d5ed5fc4994f96d0ffec&revCount=69"
       },
       "original": {
         "type": "tarball",
@@ -112,7 +112,7 @@
         "type": "github"
       },
       "original": {
-        "owner": "yusdacra",
+        "owner": "90-008",
         "repo": "nix-cargo-integration",
         "type": "github"
       }
@@ -232,7 +232,8 @@
         "process-compose": "process-compose",
         "services": "services",
         "systems": "systems",
-        "treefmt": "treefmt"
+        "treefmt": "treefmt",
+        "uniffi-bindgen-cs": "uniffi-bindgen-cs"
       }
     },
     "rust-overlay": {
@@ -326,6 +327,25 @@
         "owner": "numtide",
         "repo": "treefmt-nix",
         "type": "github"
+      }
+    },
+    "uniffi-bindgen-cs": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1759932560,
+        "narHash": "sha256-CnfB7/n1W5hbeC+cniJZthkpWO9kLyog/q5ldL6yS9g=",
+        "ref": "refs/heads/main",
+        "rev": "66c316454a04c025a88f8cc8af495bfc2b422d2f",
+        "revCount": 181,
+        "submodules": true,
+        "type": "git",
+        "url": "https://github.com/90-008/uniffi-bindgen-cs"
+      },
+      "original": {
+        "ref": "refs/heads/main",
+        "submodules": true,
+        "type": "git",
+        "url": "https://github.com/90-008/uniffi-bindgen-cs"
       }
     }
   },
