@@ -184,7 +184,7 @@ public class ProxyService
             throw new ProxyChecksFailedException("This message is the initial message in a forum post, which PluralKit is unable to proxy correctly.");
 
         // Make sure proxying is enabled here
-        if (ctx.InBlacklist)
+        if (ctx.InProxyBlacklist)
             throw new ProxyChecksFailedException(
                 "Proxying was disabled in this channel by a server administrator (via the proxy blacklist).");
 
@@ -290,7 +290,7 @@ public class ProxyService
             await _repo.GetMessageContext(msg.Sender, msg.Guild!.Value, rootChannel.Id, msg.Channel);
 
         // Make sure proxying is enabled here
-        if (ctx.InBlacklist)
+        if (ctx.InProxyBlacklist)
             throw new ProxyChecksFailedException(
                 "Proxying was disabled in this channel by a server administrator (via the proxy blacklist).");
 
