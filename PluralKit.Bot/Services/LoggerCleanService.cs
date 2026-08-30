@@ -191,11 +191,32 @@ public class LoggerCleanService
 
     private static ulong? ExtractDyno(Message msg)
     {
-        // Embed *description* contains "Message sent by [mention] deleted in [channel]", contains message ID in footer per regex
+        // Legacy embed format: description contains "Message sent by [mention] deleted in [channel]", contains message ID in footer per regex
         var embed = msg.Embeds?.FirstOrDefault();
-        if (embed?.Footer == null || !(embed.Description?.Contains("Deleted in") ?? false)) return null;
-        var match = _dynoRegex.Match(embed.Footer.Text ?? "");
+        if (embed?.Footer != null && (embed.Description?.Contains("Deleted in") ?? false))
+        {
+            var embedMatch = _dynoRegex.Match(embed.Footer.Text ?? "");
+            if (embedMatch.Success) return ulong.Parse(embedMatch.Groups[1].Value);
+        }
+
+        // Newer Components V2 format: no embed, text lives in nested Container/Text components instead, e.g.
+        // "**Message Deleted**" ... "-# Author: [id] | Message ID: [id]"
+        if (msg.Components == null) return null;
+        var text = string.Join("\n", FlattenComponentText(msg.Components));
+        if (!text.Contains("Message Deleted")) return null;
+        var match = _dynoRegex.Match(text);
         return match.Success ? ulong.Parse(match.Groups[1].Value) : null;
+    }
+
+    private static IEnumerable<string> FlattenComponentText(IEnumerable<MessageComponent> components)
+    {
+        foreach (var component in components)
+        {
+            if (component.Content != null) yield return component.Content;
+            if (component.Components != null)
+                foreach (var text in FlattenComponentText(component.Components))
+                    yield return text;
+        }
     }
 
     private static ulong? ExtractLogger(Message msg)

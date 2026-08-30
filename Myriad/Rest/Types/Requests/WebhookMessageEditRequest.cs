@@ -17,5 +17,5 @@ public record WebhookMessageEditRequest
     public Optional<Embed[]?> Embeds { get; init; }
 
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-    public Optional<Message.Attachment[]?> Attachments { get; init; }
+    public Optional<AttachmentRequest[]?> Attachments { get; init; }
 }

@@ -209,8 +209,8 @@ public class SwitchControllerV2: PKControllerBase
             throw Errors.DuplicateMembersInList;
 
         var sw = await _repo.GetSwitchByUuid(switchId);
-        if (sw == null)
-            throw Errors.SwitchNotFound;
+        if (sw == null || system.Id != sw.System)
+            throw Errors.SwitchNotFoundPublic;
 
         var members = new List<PKMember>();
 

@@ -87,23 +87,31 @@ async fn cleanup_job(pool: sqlx::PgPool, bucket: Arc<s3::Bucket>) -> anyhow::Res
         .strip_prefix(config.cdn_url.as_str())
         .unwrap();
 
-    let s3_resp = bucket.delete_object(path).await?;
-    match s3_resp.status_code() {
-        204 => {
+    let client = ClientBuilder::new()
+        .connect_timeout(Duration::from_secs(3))
+        .timeout(Duration::from_secs(3))
+        .build()
+        .context("error making client")?;
+
+    // tmp fix for 403s on deletes
+    // https://github.com/durch/rust-s3/issues/466
+    let delete_url = bucket.presign_delete(path, 5)?;
+    let s3_resp = client.delete(delete_url).send().await?;
+    match s3_resp.status() {
+        StatusCode::NO_CONTENT => {
             info!("successfully deleted image {image_id} from s3");
         }
-        _ => {
-            anyhow::bail!("s3 returned bad error code {}", s3_resp.status_code());
+        status => {
+            anyhow::bail!(
+                "s3 returned bad error code {} while deleting {}: {}",
+                status,
+                path,
+                s3_resp.text().await.unwrap_or_default()
+            );
         }
     }
 
     if let Some(zone_id) = config.cloudflare_zone_id.as_ref() {
-        let client = ClientBuilder::new()
-            .connect_timeout(Duration::from_secs(3))
-            .timeout(Duration::from_secs(3))
-            .build()
-            .context("error making client")?;
-
         let cf_resp = client
             .post(format!(
                 "https://api.cloudflare.com/client/v4/zones/{zone_id}/purge_cache"

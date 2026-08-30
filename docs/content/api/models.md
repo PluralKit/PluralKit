@@ -54,6 +54,7 @@ The PluralKit Discord bot can be configured to display short IDs in uppercase, o
 |description|?string|1000-character limit|
 |created|?datetime||
 |proxy_tags|array of [ProxyTag objects](#proxytag-object)|
+|?aliases|array of strings|only returned when viewed by the owning system; covered by `name_privacy`|
 |keep_proxy|boolean||
 |tts|boolean||
 |autoproxy_enabled|?boolean||

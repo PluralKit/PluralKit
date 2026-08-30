@@ -80,9 +80,9 @@ async fn main() -> anyhow::Result<()> {
     );
     // every minute
     doforever!("* * * * *", "database stats updater", update_db_meta);
-    // every 10 minutes
+    // every 30 minutes shifted by 15
     doforever!(
-        "0,10,20,30,40,50 * * * *",
+        "15,45 * * * *",
         "message stats updater",
         update_db_message_meta
     );

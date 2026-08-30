@@ -10,6 +10,11 @@ macro_rules! model {
 model!(system);
 model!(system_config);
 
+// todo: move these into model files later
+pub type MemberId = i32;
+pub type GroupId = i32;
+pub type SwitchId = i32;
+
 #[derive(serde::Serialize, Debug, Clone)]
 #[serde(rename_all = "snake_case")]
 pub enum PrivacyLevel {

@@ -84,3 +84,7 @@ macro_rules! define_error {
 
 define_error! { GENERIC_BAD_REQUEST, StatusCode::BAD_REQUEST, 0, "400: Bad Request" }
 define_error! { GENERIC_SERVER_ERROR, StatusCode::INTERNAL_SERVER_ERROR, 0, "500: Internal Server Error" }
+define_error! { SYSTEM_NOT_FOUND, StatusCode::NOT_FOUND, 20001, "System not found." }
+define_error! { MEMBER_NOT_FOUND, StatusCode::NOT_FOUND, 20002, "Member not found." }
+define_error! { GROUP_NOT_FOUND, StatusCode::NOT_FOUND, 20004, "Group not found." }
+define_error! { SWITCH_NOT_FOUND, StatusCode::NOT_FOUND, 20007, "Switch not found." }
