@@ -13,7 +13,7 @@ public partial class ModelRepository
 
     public Task<PKMember?> GetMemberByHid(string hid, SystemId? system = null)
     {
-        var query = new Query("members").Where("hid", hid.ToLower());
+        var query = new Query("members").WhereRaw("hid = (?)::char(6)", hid.ToLower());
         if (system != null)
             query = query.Where("system", system);
         return _db.QueryFirst<PKMember?>(query);

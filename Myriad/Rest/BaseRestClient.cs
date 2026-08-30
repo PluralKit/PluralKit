@@ -35,7 +35,10 @@ public class BaseRestClient: IAsyncDisposable
         if (!token.StartsWith("Bot "))
             token = "Bot " + token;
 
-        Client = new HttpClient();
+        Client = new HttpClient(new SocketsHttpHandler
+        {
+            PooledConnectionIdleTimeout = TimeSpan.FromSeconds(3),
+        });
         Client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", userAgent);
         Client.DefaultRequestHeaders.TryAddWithoutValidation("Authorization", token);
 

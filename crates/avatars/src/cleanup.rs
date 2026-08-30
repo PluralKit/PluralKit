@@ -6,10 +6,7 @@ use tracing::{error, info};
 
 #[libpk::main]
 async fn main() -> anyhow::Result<()> {
-    let config = libpk::config
-        .avatars
-        .as_ref()
-        .expect("missing avatar service config");
+    let config = libpk::config.avatars();
 
     let bucket = {
         let region = s3::Region::Custom {
@@ -83,10 +80,7 @@ async fn cleanup_job(pool: sqlx::PgPool, bucket: Arc<s3::Bucket>) -> anyhow::Res
     }
     let image_data = image_data.unwrap();
 
-    let config = libpk::config
-        .avatars
-        .as_ref()
-        .expect("missing avatar service config");
+    let config = libpk::config.avatars();
 
     let path = image_data
         .url

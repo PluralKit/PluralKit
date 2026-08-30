@@ -3,12 +3,12 @@ use std::time::{Duration, SystemTime};
 use axum::{
     extract::{MatchedPath, Request, State},
     http::{HeaderValue, Method, StatusCode},
-    middleware::{FromFnLayer, Next},
+    middleware::Next,
     response::Response,
 };
-use fred::{clients::RedisPool, interfaces::ClientLike, prelude::LuaInterface, util::sha1_hash};
+use fred::{clients::RedisPool, prelude::LuaInterface, util::sha1_hash};
 use metrics::counter;
-use tracing::{debug, error, info, warn};
+use tracing::{debug, error, info};
 
 use crate::{
     auth::AuthState,
@@ -19,40 +19,6 @@ const LUA_SCRIPT: &str = include_str!("ratelimit.lua");
 
 lazy_static::lazy_static! {
     static ref LUA_SCRIPT_SHA: String = sha1_hash(LUA_SCRIPT);
-}
-
-// this is awful but it works
-pub fn ratelimiter<F, T>(f: F) -> FromFnLayer<F, Option<RedisPool>, T> {
-    let redis = libpk::config
-        .api
-        .as_ref()
-        .expect("missing api config")
-        .ratelimit_redis_addr
-        .as_ref()
-        .map(|val| {
-            // todo: this should probably use the global pool
-            let r = RedisPool::new(
-                fred::types::RedisConfig::from_url_centralized(val.as_ref())
-                    .expect("redis url is invalid"),
-                None,
-                None,
-                Some(Default::default()),
-                10,
-            )
-            .expect("failed to connect to redis");
-
-            let handle = r.connect();
-
-            tokio::spawn(async move { handle });
-
-            r
-        });
-
-    if redis.is_none() {
-        warn!("running without request rate limiting!");
-    }
-
-    axum::middleware::from_fn_with_state(redis, f)
 }
 
 enum RatelimitType {
