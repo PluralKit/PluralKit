@@ -31,7 +31,7 @@ Your .env should contain at least the following for the bot to run (see the C#/R
 pluralkit__discord__bot_token="<YOUR_BOT_TOKEN_HERE>"
 PluralKit__Bot__Token="<YOUR_BOT_TOKEN_HERE>"
 pluralkit__discord__client_id="<YOUR_CLIENT_ID_HERE>"
-PluralKit__Bot__Client="<YOUR_CLIENT_ID_HERE>"
+PluralKit__Bot__ClientId="<YOUR_CLIENT_ID_HERE>"
 
 RUST_LOG="info"
 pluralkit__db__db_password="postgres"
