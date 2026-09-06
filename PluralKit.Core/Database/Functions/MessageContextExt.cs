@@ -1,7 +1,6 @@
 #nullable enable
 
 namespace PluralKit.Core;
-
 public static class MessageContextExt
 {
     public static bool HasProxyableTag(this MessageContext ctx)

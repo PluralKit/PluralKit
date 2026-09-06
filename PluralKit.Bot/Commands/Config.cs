@@ -9,7 +9,6 @@ using NodaTime.TimeZones;
 using PluralKit.Core;
 
 namespace PluralKit.Bot;
-
 public class Config
 {
     private record PaginatedConfigItem(string Key, string Description, string? CurrentValue, string DefaultValue);
