@@ -77,6 +77,8 @@ pub fn dm_channel(id: Id<ChannelMarker>) -> Channel {
 fn member_to_cached_member(item: Member, id: Id<UserMarker>) -> CachedMember {
     CachedMember {
         avatar: item.avatar,
+        avatar_decoration_data: item.avatar_decoration_data,
+        banner: item.banner,
         communication_disabled_until: item.communication_disabled_until,
         deaf: Some(item.deaf),
         flags: item.flags,
