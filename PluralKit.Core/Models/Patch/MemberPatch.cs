@@ -92,6 +92,8 @@ public class MemberPatch: PatchObject
 
         if (Aliases.IsPresent)
         {
+            if (Aliases.Value.Length > 10)
+                Errors.Add(new ValidationError("aliases", "Cannot have more than 10 aliases per member."));
             for (var i = 0; i < Aliases.Value.Length; i++)
             {
                 var alias = Aliases.Value[i];
