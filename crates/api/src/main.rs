@@ -1,4 +1,3 @@
-#![feature(if_let_guard)]
 use auth::{AuthState, INTERNAL_APPID_HEADER, INTERNAL_SYSTEMID_HEADER};
 use axum::{
     Extension, Router,
