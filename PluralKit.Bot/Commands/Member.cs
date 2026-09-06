@@ -36,11 +36,12 @@ public class Member
         if (memberName.Length > Limits.MaxMemberNameLength)
             throw Errors.StringTooLongError("Member name", memberName.Length, Limits.MaxMemberNameLength);
 
-        // Warn if there's already a member by this name
-        var existingMember = await ctx.Repository.GetMemberByName(ctx.System.Id, memberName);
-        if (existingMember != null)
+        // Warn if this name is already set as a name, display name, or alias on an existing member
+        var conflicts = await ctx.FindConflictingMembers(null, memberName);
+        if (conflicts.Count > 0)
         {
-            var msg = $"{Emojis.Warn} You already have a member in your system with the name \"{existingMember.NameFor(ctx)}\" (with ID `{existingMember.DisplayHid(ctx.Config)}`). Do you want to create another member with the same name?";
+            var conflictList = conflicts.Select(m => $"- **{m.NameFor(ctx)}** (`{m.DisplayHid(ctx.Config)}`)");
+            var msg = $"{Emojis.Warn} The following members already have this set as a name, display name, or alias:\n{string.Join('\n', conflictList)}\nDo you want to create another member with this name too?";
             if (!await ctx.PromptYesNo(msg, "Create")) throw new PKError("Member creation cancelled.");
         }
 

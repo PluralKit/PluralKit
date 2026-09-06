@@ -6,10 +6,35 @@ using Myriad.Types;
 using PluralKit.Bot.Utils;
 using PluralKit.Core;
 
+using SqlKata;
+
 namespace PluralKit.Bot;
 
 public static class ContextEntityArgumentsExt
 {
+    /// <summary>
+    /// Finds other members in the same system whose name, display name, or an alias matches
+    /// <paramref name="text"/> (case-insensitive), excluding <paramref name="excludeId"/> itself.
+    /// Used to warn (not block) when setting a name/display name/alias that collides with an
+    /// existing identifier elsewhere in the system.
+    /// </summary>
+    public static async Task<List<PKMember>> FindConflictingMembers(this Context ctx, MemberId? excludeId, string text)
+    {
+        var query = new Query("members")
+            .Where("system", ctx.System.Id)
+            .Where(q => q
+                .WhereRaw("lower(name) = lower(?)", text)
+                .OrWhereRaw("lower(display_name) = lower(?)", text)
+                .OrWhereRaw("lower(?) = any(select lower(x) from unnest(aliases) as x)", text)
+            );
+
+        if (excludeId != null)
+            query.WhereNot("id", excludeId);
+
+        return (await ctx.Database.Query<PKMember>(query)).ToList();
+    }
+
+
     public static async Task<User> MatchUser(this Context ctx)
     {
         var text = ctx.PeekArgument();
@@ -67,11 +92,13 @@ public static class ContextEntityArgumentsExt
     {
         var input = ctx.PeekArgument();
 
-        // Member references can have one of three forms, depending on
+        // Member references can have one of four forms, depending on
         // whether you're in a system or not:
         // - A member hid
         // - A textual name of a member *in your own system*
+        // - a textual alias of a member *in your own system*
         // - a textual display name of a member *in your own system*
+        // Priority order (when in a system): name > alias > display name > hid
 
         // Skip name / display name matching if the user does not have a system
         // or if they specifically request by-HID matching
@@ -81,7 +108,15 @@ public static class ContextEntityArgumentsExt
             if (await ctx.Repository.GetMemberByName(ctx.System.Id, input) is PKMember memberByName)
                 return memberByName;
 
-            // And if that fails, we try finding a member with a display name matching the argument from the system
+            // And if that fails, we try finding a member by alias in the system.
+            // Unlike name/display name, aliases aren't unique, so this can match more than one member;
+            // PeekMember runs above the command error handler (it's used for speculative matching too),
+            // so throwing here would silently fail instead of surfacing an error. Just take the first match.
+            var aliasMatches = await ctx.Repository.GetMembersByAlias(ctx.System.Id, input);
+            if (aliasMatches.FirstOrDefault() is PKMember memberByAlias)
+                return memberByAlias;
+
+            // And if THAT fails, we try finding a member with a display name matching the argument from the system
             if (ctx.System != null &&
                 await ctx.Repository.GetMemberByDisplayName(ctx.System.Id, input) is PKMember memberByDisplayName)
                 return memberByDisplayName;

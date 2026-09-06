@@ -46,6 +46,7 @@ public partial class CommandTree
     public static Command MemberColor = new Command("member color", "member <member> color [color]", "Changes a member's color");
     public static Command MemberBirthday = new Command("member birthday", "member <member> birthday [birthday]", "Changes a member's birthday");
     public static Command MemberProxy = new Command("member proxy", "member <member> proxy [add|remove] [example proxy]", "Changes, adds, or removes a member's proxy tags");
+    public static Command MemberAlias = new Command("member alias", "member <member> alias [add|remove] [alias]", "Adds, removes, or lists a member's aliases");
     public static Command MemberDelete = new Command("member delete", "member <member> delete", "Deletes a member");
     public static Command MemberBannerImage = new Command("member banner", "member <member> banner [url]", "Set the member's banner image");
     public static Command MemberAvatar = new Command("member avatar", "member <member> avatar [url|@mention]", "Changes a member's avatar");

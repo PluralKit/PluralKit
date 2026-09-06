@@ -174,11 +174,12 @@ As the one exception to the rule above, if the name consists of multiple words y
 :::
 
 ### Looking up member info
-To view information about a member, there are a couple ways to do it. Either you can address a member by their name (if they're in your own system), by their 5 or 6 letter *member ID*, or by their *display name*, like so:
+To view information about a member, there are a couple ways to do it. Either you can address a member by their name (if they're in your own system), by their 5 or 6 letter *member ID*, by their *display name*, or by an *alias* you've set on them, like so:
 
     pk;member John
     pk;member qazws
     pk;member J
+    pk;member Johnny
 
 Member IDs are the only way to address a member in another system, and you can find it in various places - for example the system's member list, or on a message info card gotten by reacting to messages with a question mark.
 
@@ -217,6 +218,16 @@ To remove a display name, use the same command with `-clear` as the parameter, e
     pk;member John displayname -clear
     
 This will remove the display name, and thus the member will be proxied with their canonical name.
+
+### Member aliases
+If a member has a longer name, or goes by several names, you can set one or more *aliases* on them. Unlike display names, aliases don't change how a member is proxied - they're just extra shorthand you can use to look up or switch to a member instead of typing their full name, and are only visible to you.
+
+    pk;member Icariah alias add Ic
+    pk;member Icariah alias
+    pk;member Icariah alias remove Ic
+    pk;member Icariah alias clear
+
+Once set, an alias works anywhere you'd normally type a member's name or ID, e.g. `pk;switch Ic`.
 
 ### Member server display names
 If you'd like to set a display name (as above), but only for a specific server, you can set the member's *server display name*.
