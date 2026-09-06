@@ -43,6 +43,14 @@ public partial class ModelRepository
         return _db.QueryFirst<PKMember?>(query);
     }
 
+    public Task<IEnumerable<PKMember>> GetMembersByAlias(SystemId system, string alias)
+    {
+        var query = new Query("members")
+            .WhereRaw("? = ANY(SELECT lower(x) FROM unnest(aliases) AS x)", alias.ToLower())
+            .Where("system", system);
+        return _db.Query<PKMember>(query);
+    }
+
     public Task<IEnumerable<Guid>> GetMemberGuids(IEnumerable<MemberId> ids)
     {
         var query = new Query("members")

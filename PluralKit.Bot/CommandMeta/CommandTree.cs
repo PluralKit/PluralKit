@@ -337,7 +337,7 @@ public partial class CommandTree
         else if (!ctx.HasNext())
             await PrintCommandExpectedError(ctx, MemberNew, MemberInfo, MemberRename, MemberDisplayName,
                 MemberServerName, MemberDesc, MemberPronouns,
-                MemberColor, MemberBirthday, MemberProxy, MemberDelete, MemberAvatar);
+                MemberColor, MemberBirthday, MemberProxy, MemberAlias, MemberDelete, MemberAvatar);
         else
             await ctx.Reply($"{Emojis.Error} {ctx.CreateNotFoundError("Member", ctx.PopArgument())}");
     }
@@ -357,6 +357,8 @@ public partial class CommandTree
             await ctx.Execute<MemberEdit>(MemberBirthday, m => m.Birthday(ctx, target));
         else if (ctx.Match("proxy", "tags", "proxytags", "brackets"))
             await ctx.Execute<MemberProxy>(MemberProxy, m => m.Proxy(ctx, target));
+        else if (ctx.Match("alias", "aliases"))
+            await ctx.Execute<MemberAlias>(MemberAlias, m => m.Alias(ctx, target));
         else if (ctx.Match("delete", "remove", "destroy", "erase", "yeet"))
             await ctx.Execute<MemberEdit>(MemberDelete, m => m.Delete(ctx, target));
         else if (ctx.Match("avatar", "profile", "picture", "icon", "image", "pfp", "pic"))
@@ -404,7 +406,7 @@ public partial class CommandTree
             await ctx.Execute<Member>(MemberInfo, m => m.ViewMember(ctx, target));
         else
             await PrintCommandNotFoundError(ctx, MemberInfo, MemberRename, MemberDisplayName, MemberServerName,
-                MemberDesc, MemberPronouns, MemberColor, MemberBirthday, MemberProxy, MemberDelete, MemberAvatar,
+                MemberDesc, MemberPronouns, MemberColor, MemberBirthday, MemberProxy, MemberAlias, MemberDelete, MemberAvatar,
                 SystemList);
     }
 
