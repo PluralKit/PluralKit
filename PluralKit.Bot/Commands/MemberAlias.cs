@@ -45,6 +45,8 @@ public class MemberAlias
                 throw Errors.StringTooLongError("Alias", aliasToAdd.Length, Limits.MaxMemberNameLength);
             if (target.Aliases.Any(a => a.Equals(aliasToAdd, StringComparison.OrdinalIgnoreCase)))
                 throw new PKError("This member already has that alias.");
+            if (target.Aliases.Count >= 10)
+                throw new PKError("Cannot have more than 10 aliases per member.");
 
             // Warn (but don't block) if this alias is already set as a name, display name, or alias elsewhere
             var conflicts = await ctx.FindConflictingMembers(target.Id, aliasToAdd);
