@@ -34,7 +34,7 @@
     {
       devShells = {
         services = withCommon rustDevshell;
-        bot = (pkLib.mkBotEnv "bash").env;
+        bot = withCommon pkLib.mkBotShell;
         docs = withCommon docs;
         default = withCommon rustDevshell;
       };
