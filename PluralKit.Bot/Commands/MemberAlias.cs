@@ -7,6 +7,7 @@ public class MemberAlias
     public async Task Alias(Context ctx, PKMember target)
     {
         ctx.CheckSystem().CheckOwnMember(target);
+        var format = ctx.MatchFormat();
 
         // "Sub"command: clear flag
         if (ctx.MatchClear())
@@ -25,12 +26,16 @@ public class MemberAlias
             await ctx.Reply($"{Emojis.Success} Aliases cleared.");
         }
         // "Sub"command: no arguments; will print aliases
-        else if (!ctx.HasNext(false))
+        else if (!ctx.HasNext(false) || format != ReplyFormat.Standard)
         {
-            if (target.Aliases.Count == 0)
+            var aliases = target.Aliases;
+
+            if (aliases.Count == 0)
                 await ctx.Reply("This member does not have any aliases.");
+            else if (format == ReplyFormat.Raw)
+                await ctx.Reply($"This member's aliases are:\n{string.Join("\n", aliases.Select(alias => $"```\n{alias}\n```"))}");
             else
-                await ctx.Reply($"This member's aliases are:\n{string.Join('\n', target.Aliases.Select(a => $"- {a}"))}");
+                await ctx.Reply($"This member's aliases are:\n{string.Join('\n', aliases.Select(alias => $"- {alias}"))}");
         }
         // Subcommand: "add"
         else if (ctx.Match("add", "append"))

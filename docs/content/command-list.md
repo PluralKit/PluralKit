@@ -68,7 +68,7 @@ You can have a space after `pk;`, e.g. `pk;system` and `pk; system` will do the 
 - `pk;system [system] frontpercent [timeframe]` - Shows the aggregated front history of a system within a given time frame.
 - `pk;system [system] list` - Shows a paginated list of a system's members.
 - `pk;system [system] list -full` - Shows a paginated list of a system's members, with increased detail.
-- `pk;find <search term>` - Searches members by name.
+- `pk;find <search term>` - Searches members by name, display name, or alias.
 - `pk;system [system] find <search term>` - (same as above, but for a specific system)
 - `pk;system [system] random [-group]` - Shows the info card of a randomly selected member [or group] in a system.
 - `pk;system [system] id` - Prints a system's id. 

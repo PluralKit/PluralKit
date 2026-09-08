@@ -127,7 +127,7 @@ public partial class CommandTree
     public static Command[] MemberCommands =
     {
         MemberInfo, MemberNew, MemberRename, MemberDisplayName, MemberServerName, MemberDesc, MemberPronouns,
-        MemberColor, MemberBirthday, MemberProxy, MemberAutoproxy, MemberKeepProxy, MemberTts, MemberGroups, MemberGroupAdd,
+        MemberColor, MemberBirthday, MemberProxy, MemberAlias, MemberAutoproxy, MemberKeepProxy, MemberTts, MemberGroups, MemberGroupAdd,
         MemberGroupRemove, MemberDelete, MemberAvatar, MemberServerAvatar, MemberBannerImage, MemberPrivacy,
         MemberRandom
     };
