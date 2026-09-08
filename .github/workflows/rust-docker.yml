@@ -4,7 +4,7 @@ on:
     paths:
     - 'crates/**'
     - '.dockerignore'
-    - '.github/workflows/rust.yml'
+    - '.github/workflows/rust-docker.yml'
     - 'ci/Dockerfile.rust'
     - 'ci/rust-docker-target.sh'
     - 'Cargo.toml'
