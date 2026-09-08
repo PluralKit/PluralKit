@@ -23,9 +23,15 @@ public static class DatabaseViewsExt
         {
             static string Filter(string column) =>
                 $"(position(lower(@filter) in lower(coalesce({column}, ''))) > 0)";
+            static string AliasFilter() =>
+                "(exists (select 1 from unnest(aliases) as alias where position(lower(@filter) in lower(alias)) > 0))";
 
             var nameColumn = opts.Context == LookupContext.ByOwner ? "name" : "public_name";
-            query.Append($" and ({Filter(nameColumn)} or {Filter("display_name")}");
+            var aliases = opts.Context == LookupContext.ByOwner
+                ? AliasFilter()
+                : $"(name_privacy = {(int)PrivacyLevel.Public} and {AliasFilter()})";
+
+            query.Append($" and ({Filter(nameColumn)} or {Filter("display_name")} or {aliases}");
             if (opts.SearchDescription)
             {
                 // We need to account for the possibility of description privacy when searching
