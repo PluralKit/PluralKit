@@ -12,39 +12,23 @@ using PluralKit.Core;
 
 namespace PluralKit.Bot;
 
-public class InteractionContext
+public class InteractionContext: JointContext
 {
-    private readonly ILifetimeScope _provider;
-    private readonly IMetrics _metrics;
 
-    public InteractionContext(ILifetimeScope provider, InteractionCreateEvent evt, PKSystem system, SystemConfig config)
+    public InteractionContext(ILifetimeScope provider, InteractionCreateEvent evt, PKSystem system, SystemConfig config) : base(provider, system, config)
     {
         Event = evt;
-        System = system;
-        Config = config;
-        Cache = provider.Resolve<IDiscordCache>();
-        Rest = provider.Resolve<DiscordApiClient>();
-        Repository = provider.Resolve<ModelRepository>();
-        _metrics = provider.Resolve<IMetrics>();
-        _provider = provider;
+        Member = Event.Member;
+        Author = Event.Member?.User ?? Event.User;
     }
-
-    internal readonly IDiscordCache Cache;
-    internal readonly DiscordApiClient Rest;
-    internal readonly ModelRepository Repository;
-    public readonly PKSystem System;
-    public readonly SystemConfig Config;
 
     public InteractionCreateEvent Event { get; }
 
     public ulong GuildId => Event.GuildId;
     public ulong ChannelId => Event.ChannelId;
     public ulong? MessageId => Event.Message?.Id;
-    public GuildMember? Member => Event.Member;
-    public User User => Event.Member?.User ?? Event.User;
     public string Token => Event.Token;
     public string? CustomId => Event.Data?.CustomId;
-    public IComponentContext Services => _provider;
 
     public async Task Execute<T>(ApplicationCommand? command, Func<T, Task> handler)
     {
@@ -66,18 +50,18 @@ public class InteractionContext
         }
     }
 
-    public async Task Reply(string content = null, Embed[]? embeds = null)
+    public async override Task Reply(string text = null, Embed embed = null, AllowedMentions? mentions = null, MultipartFile[]? files = null)
     {
         await Respond(InteractionResponse.ResponseType.ChannelMessageWithSource,
             new InteractionApplicationCommandCallbackData
             {
-                Content = content,
-                Embeds = embeds,
+                Content = text,
+                Embeds = embed != null ? new[] { embed } : null,
                 Flags = Message.MessageFlags.Ephemeral
             });
     }
 
-    public async Task Reply(MessageComponent[] components = null, AllowedMentions? mentions = null)
+    public async override Task Reply(MessageComponent[] components = null, AllowedMentions? mentions = null, MultipartFile[]? files = null)
     {
         await Respond(InteractionResponse.ResponseType.ChannelMessageWithSource,
             new InteractionApplicationCommandCallbackData

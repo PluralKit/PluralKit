@@ -10,7 +10,6 @@ using NodaTime;
 using Myriad.Cache;
 using Myriad.Extensions;
 using Myriad.Gateway;
-using Myriad.Rest;
 using Myriad.Rest.Types;
 using Myriad.Rest.Types.Requests;
 using Myriad.Types;
@@ -19,46 +18,30 @@ using PluralKit.Core;
 
 namespace PluralKit.Bot;
 
-public class Context
+public class Context: JointContext
 {
-    private readonly ILifetimeScope _provider;
-
-    private readonly IMetrics _metrics;
-    private readonly CommandMessageService _commandMessageService;
-
-    private Command? _currentCommand;
 
     public Context(ILifetimeScope provider, int shardId, Guild? guild, Channel channel, MessageCreateEvent message,
                                                     int commandParseOffset, PKSystem senderSystem, SystemConfig config,
                                                     GuildConfig? guildConfig, string[] prefixes)
+                                                    : base(provider, senderSystem, config)
     {
         Message = (Message)message;
         ShardId = shardId;
         Guild = guild;
         GuildConfig = guildConfig;
         Channel = channel;
-        System = senderSystem;
-        Config = config;
-        Cache = provider.Resolve<IDiscordCache>();
         Database = provider.Resolve<IDatabase>();
-        Repository = provider.Resolve<ModelRepository>();
         Redis = provider.Resolve<RedisService>();
-        _metrics = provider.Resolve<IMetrics>();
-        _provider = provider;
-        _commandMessageService = provider.Resolve<CommandMessageService>();
         CommandPrefix = message.Content?.Substring(0, commandParseOffset);
         DefaultPrefix = prefixes[0];
         Parameters = new Parameters(message.Content?.Substring(commandParseOffset));
-        Rest = provider.Resolve<DiscordApiClient>();
         Cluster = provider.Resolve<Cluster>();
+        Author = Message.Author;
+        Member = ((MessageCreateEvent)Message).Member;
     }
 
-    public readonly IDiscordCache Cache;
-    public readonly DiscordApiClient Rest;
-
     public readonly Channel Channel;
-    public User Author => Message.Author;
-    public GuildMemberPartial Member => ((MessageCreateEvent)Message).Member;
 
     public readonly Message Message;
     public readonly Guild Guild;
@@ -70,8 +53,6 @@ public class Context
     public Task<PermissionSet> UserPermissions => Cache.PermissionsForMCE((MessageCreateEvent)Message);
 
 
-    public readonly PKSystem System;
-    public readonly SystemConfig Config;
     public DateTimeZone Zone => Config?.Zone ?? DateTimeZone.Utc;
 
     public readonly string CommandPrefix;
@@ -79,10 +60,9 @@ public class Context
     public readonly Parameters Parameters;
 
     internal readonly IDatabase Database;
-    internal readonly ModelRepository Repository;
     internal readonly RedisService Redis;
 
-    public async Task<Message> Reply(string text = null, Embed embed = null, AllowedMentions? mentions = null, MultipartFile[]? files = null)
+    public override async Task Reply(string text = null, Embed embed = null, AllowedMentions? mentions = null, MultipartFile[]? files = null)
     {
         var botPerms = await BotPermissions;
 
@@ -115,11 +95,9 @@ public class Context
                 Sender = Author.Id,
                 OriginalMid = Message.Id,
             });
-
-        return msg;
     }
 
-    public async Task<Message> Reply(MessageComponent[] components = null, AllowedMentions? mentions = null, MultipartFile[]? files = null)
+    public override async Task Reply(MessageComponent[] components = null, AllowedMentions? mentions = null, MultipartFile[]? files = null)
     {
         var botPerms = await BotPermissions;
 
@@ -150,13 +128,10 @@ public class Context
                 Sender = Author.Id,
                 OriginalMid = Message.Id,
             });
-
-        return msg;
     }
 
     public async Task Execute<T>(Command? commandDef, Func<T, Task> handler, bool deprecated = false)
     {
-        _currentCommand = commandDef;
 
         if (deprecated && commandDef != null)
         {
@@ -190,12 +165,6 @@ public class Context
         }
     }
 
-    /// <summary>
-    /// Same as LookupContextFor, but skips flags / config checks.
-    /// </summary>
-    public LookupContext DirectLookupContextFor(SystemId systemId)
-        => System?.Id == systemId ? LookupContext.ByOwner : LookupContext.ByNonOwner;
-
     public LookupContext LookupContextFor(SystemId systemId)
     {
         var hasPrivateOverride = this.MatchFlag("private", "priv");
@@ -220,6 +189,4 @@ public class Context
             ? LookupContext.ByOwner
             : LookupContext.ByNonOwner;
     }
-
-    public IComponentContext Services => _provider;
 }

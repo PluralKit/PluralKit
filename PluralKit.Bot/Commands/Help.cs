@@ -17,7 +17,7 @@ public class Help
 
     public static Task ButtonClick(InteractionContext ctx, string prefix)
     {
-        if (!ctx.CustomId.Contains(ctx.User.Id.ToString()))
+        if (!ctx.CustomId.Contains(ctx.Author.Id.ToString()))
             return ctx.Ignore();
 
         if (ctx.CustomId.StartsWith("new-"))
@@ -26,7 +26,7 @@ public class Help
             if (ctx.Event.Message.Components.First().Components[1].Components.Where(x => x.CustomId == ctx.CustomId).First().Style == ButtonStyle.Primary)
                 return ctx.Respond(InteractionResponse.ResponseType.UpdateMessage, new()
                 {
-                    Components = BuildComponents(ctx.User.Id, Help.Description.Replace("{prefix}", prefix), -1),
+                    Components = BuildComponents(ctx.Author.Id, Help.Description.Replace("{prefix}", prefix), -1),
                     Flags = Message.MessageFlags.IsComponentsV2,
                 });
 
@@ -35,7 +35,7 @@ public class Help
             ).ToArray();
 
             var index = Array.FindIndex(ctx.Event.Message.Components.First().Components[1].Components, x => x.CustomId == ctx.CustomId);
-            var components = BuildComponents(ctx.User.Id, Help.Description.Replace("{prefix}", prefix), index);
+            var components = BuildComponents(ctx.Author.Id, Help.Description.Replace("{prefix}", prefix), index);
 
             components.First().Components[ctx.Event.Message.Components.First().Components.Length - 1] = new MessageComponent()
             {
@@ -230,7 +230,7 @@ public class Help
 
     public static Task ButtonClickOld(InteractionContext ctx, string prefix)
     {
-        var buttons = helpPageButtons(ctx.User.Id);
+        var buttons = helpPageButtons(ctx.Author.Id);
 
         if (ctx.Event.Message.Components.First().Components.Where(x => x.CustomId == ctx.CustomId).First().Style == ButtonStyle.Primary)
             return ctx.Respond(InteractionResponse.ResponseType.UpdateMessage, new()

@@ -43,12 +43,12 @@ public class YesNoPrompt: BaseInteractive
 
     private async Task OnButtonClick(InteractionContext ctx, bool result)
     {
-        if (result && ctx.User.Id != User)
+        if (result && ctx.Author.Id != User)
         {
             await Error(ctx, Errors.InteractionWrongAccount(User ?? 0));
             return;
         }
-        if (!result && ctx.User.Id != User && ctx.User.Id != Author)
+        if (!result && ctx.Author.Id != User && ctx.Author.Id != Author)
         {
             await Error(ctx, Errors.InteractionWrongAccount(User ?? 0));
             return;
