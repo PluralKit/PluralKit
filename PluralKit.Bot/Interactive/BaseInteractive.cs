@@ -50,7 +50,7 @@ public abstract class BaseInteractive
 
     protected async Task Error(InteractionContext ctx, PKError error)
     {
-        await ctx.Reply(content: $"{Emojis.Error} {error.Message}");
+        await ctx.Reply(text: $"{Emojis.Error} {error.Message}");
     }
 
     protected async Task Finish(InteractionContext? ctx = null)

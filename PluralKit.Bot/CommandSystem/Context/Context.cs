@@ -62,7 +62,7 @@ public class Context: JointContext
     internal readonly IDatabase Database;
     internal readonly RedisService Redis;
 
-    public override async Task Reply(string text = null, Embed embed = null, AllowedMentions? mentions = null, MultipartFile[]? files = null)
+    public override async Task<Message> Reply(string text = null, Embed embed = null, AllowedMentions? mentions = null, MultipartFile[]? files = null)
     {
         var botPerms = await BotPermissions;
 
@@ -95,9 +95,11 @@ public class Context: JointContext
                 Sender = Author.Id,
                 OriginalMid = Message.Id,
             });
+
+        return msg;
     }
 
-    public override async Task Reply(MessageComponent[] components = null, AllowedMentions? mentions = null, MultipartFile[]? files = null)
+    public override async Task<Message> Reply(MessageComponent[] components = null, AllowedMentions? mentions = null, MultipartFile[]? files = null)
     {
         var botPerms = await BotPermissions;
 
@@ -128,6 +130,8 @@ public class Context: JointContext
                 Sender = Author.Id,
                 OriginalMid = Message.Id,
             });
+        
+        return msg;
     }
 
     public async Task Execute<T>(Command? commandDef, Func<T, Task> handler, bool deprecated = false)
