@@ -14,6 +14,20 @@ public partial class ApplicationCommandTree
         else if (ctx.Event.Data!.Name == ProxiedMessagePing.Name)
             return ctx.Execute<ApplicationCommandProxiedMessage>(ProxiedMessagePing, m => m.PingMessageAuthor(ctx));
 
+        // Slash commands
+
+        else if (ctx.Event.Type == InteractionType.ApplicationCommand)
+            // System commands
+            if (ctx.Event.Data!.Name == "system")
+                switch (ctx.Event.Data!.Options[0].Name)
+                {
+                    case "new":
+                        return ctx.Execute<ApplicationCommandSystem>(SystemNew, m => m.New(ctx));
+                    default:
+                        // TODO error here?
+                        break;
+                }
+
         return null;
     }
 }
