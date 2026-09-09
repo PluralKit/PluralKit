@@ -15,7 +15,7 @@ public class ApplicationCommandSystem
 
         var systemName = Convert.ToString(ctx.Event.Data!.Options[0].Options[0]?.Value);
 
-        var res = await _logic.New(ctx.User.Id, "/", systemName, slashcommand: true);
+        var res = await _logic.New(ctx.Author.Id, "/", systemName, slashcommand: true);
 
         await ctx.Reply(components: [res]);
 

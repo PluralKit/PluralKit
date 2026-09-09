@@ -80,10 +80,10 @@ public class ApplicationCommandProxiedMessage
         var cmessage = await ctx.Services.Resolve<CommandMessageService>().GetCommandMessage(messageId);
         if (cmessage != null)
         {
-            if (cmessage.AuthorId != ctx.User.Id)
+            if (cmessage.AuthorId != ctx.Author.Id)
                 throw new PKError("You can only delete command messages queried by this account.");
 
-            var isDM = (await _repo.GetDmChannel(ctx.User!.Id)) == cmessage.ChannelId;
+            var isDM = (await _repo.GetDmChannel(ctx.Author!.Id)) == cmessage.ChannelId;
             await DeleteMessageInner(ctx, cmessage.GuildId, cmessage.ChannelId, messageId, isDM);
             return;
         }
@@ -93,7 +93,7 @@ public class ApplicationCommandProxiedMessage
         if (message != null)
         {
             // if user has has a system and their system sent the message, or if user sent the message, do not error
-            if (!((ctx.System != null && message.System?.Id == ctx.System.Id) || message.Message.Sender == ctx.User.Id))
+            if (!((ctx.System != null && message.System?.Id == ctx.System.Id) || message.Message.Sender == ctx.Author.Id))
                 throw new PKError("You can only delete your own messages.");
 
             await DeleteMessageInner(ctx, message.Message.Guild ?? 0, message.Message.Channel, message.Message.Mid, false);
@@ -117,7 +117,7 @@ public class ApplicationCommandProxiedMessage
     public async Task PingMessageAuthor(InteractionContext ctx)
     {
         // if the command message was sent by a user account with bot usage disallowed, ignore it
-        var abuse_log = await _repo.GetAbuseLogByAccount(ctx.User.Id);
+        var abuse_log = await _repo.GetAbuseLogByAccount(ctx.Author.Id);
         if (abuse_log != null && abuse_log.DenyBotUsage)
         {
             await ctx.Defer();
@@ -131,7 +131,7 @@ public class ApplicationCommandProxiedMessage
 
         // Check if the "pinger" has permission to send messages in this channel
         // (if not, PK shouldn't send messages on their behalf)
-        var member = await _rest.GetGuildMember(ctx.GuildId, ctx.User.Id);
+        var member = await _rest.GetGuildMember(ctx.GuildId, ctx.Author.Id);
         var requiredPerms = PermissionSet.ViewChannel | PermissionSet.SendMessages;
         if (member == null || !(await _cache.PermissionsForMemberInChannel(ctx.GuildId, ctx.ChannelId, member)).HasFlag(requiredPerms))
         {
@@ -147,7 +147,7 @@ public class ApplicationCommandProxiedMessage
             await ctx.Respond(InteractionResponse.ResponseType.ChannelMessageWithSource,
                 new InteractionApplicationCommandCallbackData
                 {
-                    Content = $"Psst, **{msg.Member.DisplayName()}** (<@{msg.Message.Sender}>), you have been pinged by <@{ctx.User.Id}>.",
+                    Content = $"Psst, **{msg.Member.DisplayName()}** (<@{msg.Message.Sender}>), you have been pinged by <@{ctx.Author.Id}>.",
                     Components = new[]
                     {
                         new MessageComponent
