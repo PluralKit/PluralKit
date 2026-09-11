@@ -49,12 +49,9 @@ public class Switch
 
         if (members.Count == 0)
             await ctx.Reply($"{Emojis.Success} Switch-out registered.");
-        else if (members.Count == 1)
-            await ctx.Reply(
-                $"{Emojis.Success} Switch registered. Current fronter is now {string.Join(", ", members.Select(m => m.NameFor(ctx)))}.");
         else
             await ctx.Reply(
-                $"{Emojis.Success} Switch registered. Current fronters are now {string.Join(", ", members.Select(m => m.NameFor(ctx)))}.");
+                $"{Emojis.Success} Switch registered. Current fronter{(members.Count == 1 ? " is" : "s are")} now {members.Select(m => m.NameFor(ctx)).JoinTruncated(maxLength: 1750)}.");
     }
 
     public async Task SwitchMove(Context ctx)
@@ -86,8 +83,7 @@ public class Switch
         // Now we can actually do the move, yay!
         // But, we do a prompt to confirm.
         var lastSwitchMembers = ctx.Database.Execute(conn => ctx.Repository.GetSwitchMembers(conn, lastTwoSwitches[0].Id));
-        var lastSwitchMemberStr =
-            string.Join(", ", await lastSwitchMembers.Select(m => m.NameFor(ctx)).ToListAsync());
+        var lastSwitchMemberStr = (await lastSwitchMembers.Select(m => m.NameFor(ctx)).ToListAsync()).JoinTruncated(maxLength: 1750);
         var lastSwitchTime = lastTwoSwitches[0].Timestamp.ToUnixTimeSeconds(); // .FormatZoned(ctx.System)
         var lastSwitchDeltaStr =
             (SystemClock.Instance.GetCurrentInstant() - lastTwoSwitches[0].Timestamp).FormatDuration();
@@ -194,9 +190,8 @@ public class Switch
 
         // Send a prompt asking the user to confirm the switch
         var lastSwitchDeltaStr = (SystemClock.Instance.GetCurrentInstant() - lastSwitch.Timestamp).FormatDuration();
-        var lastSwitchMemberStr =
-            string.Join(", ", await lastSwitchMembers.Select(m => m.NameFor(ctx)).ToListAsync());
-        var newSwitchMemberStr = string.Join(", ", members.Select(m => m.NameFor(ctx)));
+        var lastSwitchMemberStr = (await lastSwitchMembers.Select(m => m.NameFor(ctx)).ToListAsync()).JoinTruncated(maxLength: 750);
+        var newSwitchMemberStr = members.Select(m => m.NameFor(ctx)).JoinTruncated(maxLength: 750);
 
         string msg;
         if (members.Count == 0)
@@ -211,10 +206,8 @@ public class Switch
         // Tell the user the edit suceeded
         if (members.Count == 0)
             await ctx.Reply($"{Emojis.Success} Switch edited. The latest switch is now a switch-out.");
-        if (members.Count == 1)
-            await ctx.Reply($"{Emojis.Success} Switch edited. Current fronter is now {newSwitchMemberStr}.");
         else
-            await ctx.Reply($"{Emojis.Success} Switch edited. Current fronters are now {newSwitchMemberStr}.");
+            await ctx.Reply($"{Emojis.Success} Switch edited. Current fronter{(members.Count == 1 ? " is" : "s are")} now {newSwitchMemberStr}.");
     }
 
     public async Task SwitchDelete(Context ctx)
@@ -238,8 +231,7 @@ public class Switch
         if (lastTwoSwitches.Count == 0) throw Errors.NoRegisteredSwitches;
 
         var lastSwitchMembers = ctx.Database.Execute(conn => ctx.Repository.GetSwitchMembers(conn, lastTwoSwitches[0].Id));
-        var lastSwitchMemberStr =
-            string.Join(", ", await lastSwitchMembers.Select(m => m.NameFor(ctx)).ToListAsync());
+        var lastSwitchMemberStr = (await lastSwitchMembers.Select(m => m.NameFor(ctx)).ToListAsync()).JoinTruncated(maxLength: 750);
         var lastSwitchDeltaStr =
             (SystemClock.Instance.GetCurrentInstant() - lastTwoSwitches[0].Timestamp).FormatDuration();
 
@@ -251,8 +243,7 @@ public class Switch
         else
         {
             var secondSwitchMembers = ctx.Database.Execute(conn => ctx.Repository.GetSwitchMembers(conn, lastTwoSwitches[1].Id));
-            var secondSwitchMemberStr =
-                string.Join(", ", await secondSwitchMembers.Select(m => m.NameFor(ctx)).ToListAsync());
+            var secondSwitchMemberStr = (await secondSwitchMembers.Select(m => m.NameFor(ctx)).ToListAsync()).JoinTruncated(maxLength: 750);
             var secondSwitchDeltaStr = (SystemClock.Instance.GetCurrentInstant() - lastTwoSwitches[1].Timestamp)
                 .FormatDuration();
             msg = $"{Emojis.Warn} This will delete the latest switch ({lastSwitchMemberStr}, {lastSwitchDeltaStr} ago). The next latest switch is {secondSwitchMemberStr} ({secondSwitchDeltaStr} ago). Is this okay?";

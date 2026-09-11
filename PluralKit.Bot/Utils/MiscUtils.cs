@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Sockets;
 using System.Globalization;
+using System.Text;
 using Myriad.Rest.Exceptions;
 using Myriad.Rest.Types;
 
@@ -124,5 +125,33 @@ public static class MiscUtils
         imgBytes[15] = byte.Parse(color.Substring(4, 2), NumberStyles.HexNumber);
 
         return new MultipartFile("color.gif", new MemoryStream(imgBytes), null, null, null);
+    }
+
+    // quick and dirty function(s) to join a list of strings without causing API length errors
+    public static string JoinTruncated(this IEnumerable<string> source, int maxLength = 1024, string separator = ", ")
+    {
+        return source.ToList().JoinTruncated(maxLength: maxLength, separator: separator);
+    }
+    public static string JoinTruncated(this List<string> source, int maxLength = 1024, string separator = ", ")
+    {
+        // if this throws, you probably shouldn't be using this function
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(maxLength, 30);
+
+        var sb = new StringBuilder();
+        var shown = 0;
+
+        foreach (var item in source)
+        {
+            // we leave 20 characters for the (x not shown) text to be safe
+            if (sb.Length + separator.Length + item.Length + 20 > maxLength) break;
+
+            if (shown > 0) sb.Append(separator);
+            sb.Append(item);
+            shown++;
+        }
+
+        var remaining = source.Count - shown;
+        if (remaining > 0) sb.Append($" ({remaining} not shown)");
+        return sb.ToString();
     }
 }

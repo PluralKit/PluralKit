@@ -29,7 +29,7 @@ public class MemberProxy
             if (conflicts.Count <= 0) return true;
 
             var conflictList = conflicts.Select(m => $"- **{m.NameFor(ctx)}**");
-            var msg = $"{Emojis.Warn} The following members have conflicting proxy tags:\n{string.Join('\n', conflictList)}\nDo you want to proceed anyway?";
+            var msg = $"{Emojis.Warn} The following members have conflicting proxy tags:\n{conflictList.JoinTruncated(maxLength: 1750, separator: "\n")}\nDo you want to proceed anyway?";
             return await ctx.PromptYesNo(msg, "Proceed");
         }
 

@@ -128,7 +128,7 @@ public static class Errors
         if (members.Count == 0) return new PKError("There's already no one in front.");
         if (members.Count == 1) return new PKError($"Member {members.First().NameFor(ctx)} is already fronting.");
         return new PKError(
-            $"Members {string.Join(", ", members.Select(m => m.NameFor(ctx)))} are already fronting.");
+            $"Members {members.Select(m => m.NameFor(ctx)).JoinTruncated(maxLength: 1750)} are already fronting.");
     }
 
     public static PKError InvalidDateTime(string str) => new(
