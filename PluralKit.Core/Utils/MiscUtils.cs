@@ -11,6 +11,10 @@ public static class MiscUtils
 
     private static readonly string DiscordCdnReplacement = "https://cdn.discordapp.com/attachments/$1/$2/$3.$4";
 
+    // Rewrite time "cachebuster" parameters for randomly generated/chosen avatars with custom URLs.
+    private static readonly Regex TimePlaceholder = new(@"(?:\{|%7B)(time(?:stamp|_(?:1m|5m|30m|1h|6h|1d)))(?:\}|%7D)");
+    private const Int64 TimeAccuracy = 60;
+
     public static bool TryMatchUri(string input, out Uri uri)
     {
         if (input.StartsWith('<') && input.EndsWith('>'))
@@ -32,5 +36,24 @@ public static class MiscUtils
     }
 
     public static string? TryGetCleanCdnUrl(this string? url) =>
-        url == null ? null : MediaProxyUrl.Replace(url, DiscordCdnReplacement);
+        url == null ? null : TimePlaceholder.Replace(MediaProxyUrl.Replace(url, DiscordCdnReplacement), ProcessTimePlaceholder);
+
+    private static string? ProcessTimePlaceholder(Match m) {
+        // Limit maximum accuracy to avoid too much cache thrashing, multiply for standard-ish Unix time
+        // AND with the maximum positive value so it's always positive (as if this code will exist long enough for the 64-bit signed unix time to go negative...)
+        var time = ((DateTimeOffset.UtcNow.ToUnixTimeSeconds()/TimeAccuracy)*TimeAccuracy)&Int64.MaxValue;
+        
+        switch (m.Groups[1].Value) {
+            case "timestamp": break;
+            case "time_1m": time /= 60; break;
+            case "time_5m": time /= 60*5; break;
+            case "time_30m": time /= 60*30; break;
+            case "time_1h": time /= 60*60; break;
+            case "time_6h": time /= 6*60*60; break;
+            case "time_1d": time /= 24*60*60; break;
+        }
+
+        return time.ToString();
+    }
+
 }
