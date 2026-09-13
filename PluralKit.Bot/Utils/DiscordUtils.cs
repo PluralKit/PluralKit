@@ -45,6 +45,9 @@ public static class DiscordUtils
     public static ulong InstantToSnowflake(Instant time) =>
         (ulong)(time - Instant.FromUtc(2015, 1, 1, 0, 0, 0)).TotalMilliseconds << 22;
 
+    public static string InstantToTimestampString(Instant time) =>
+        $"<t:{time.ToUnixTimeSeconds()}:f>";
+
     public static async Task CreateReactionsBulk(this DiscordApiClient rest, Message msg, string[] reactions)
     {
         foreach (var reaction in reactions)

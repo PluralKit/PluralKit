@@ -192,7 +192,7 @@ public class EmbedService
                     new MessageComponent()
                     {
                         Type = ComponentType.Text,
-                        Content = $"-# System ID: `{system.DisplayHid(cctx.Config)}`\n-# Created: {system.Created.FormatZoned(cctx.Zone)}",
+                        Content = $"-# System ID: `{system.DisplayHid(cctx.Config)}`\n-# Created: {DiscordUtils.InstantToTimestampString(system.Created)}",
                     },
                 ],
                 Accessory = new MessageComponent()
@@ -469,7 +469,7 @@ public class EmbedService
                     new MessageComponent()
                     {
                         Type = ComponentType.Text,
-                        Content = $"-# System ID: `{system.DisplayHid(ccfg)}` \u2219 Member ID: `{member.DisplayHid(ccfg)}`{(member.MetadataPrivacy.CanAccess(ctx) ? $"\n-# Created: {member.Created.FormatZoned(zone)}" : "")}",
+                        Content = $"-# System ID: `{system.DisplayHid(ccfg)}` \u2219 Member ID: `{member.DisplayHid(ccfg)}`{(member.MetadataPrivacy.CanAccess(ctx) ? $"\n-# Created: {DiscordUtils.InstantToTimestampString(member.Created)}" : "")}",
                     },
                 ],
                 Accessory = new MessageComponent()
@@ -659,7 +659,7 @@ public class EmbedService
                     new MessageComponent()
                     {
                         Type = ComponentType.Text,
-                        Content = $"-# System ID: `{system.DisplayHid(ctx.Config)}` \u2219 Group ID: `{target.DisplayHid(ctx.Config)}`{(target.MetadataPrivacy.CanAccess(pctx) ? $"\n-# Created: {target.Created.FormatZoned(ctx.Zone)}" : "")}",
+                        Content = $"-# System ID: `{system.DisplayHid(ctx.Config)}` \u2219 Group ID: `{target.DisplayHid(ctx.Config)}`{(target.MetadataPrivacy.CanAccess(pctx) ? $"\n-# Created: {DiscordUtils.InstantToTimestampString(target.Created)}" : "")}",
                     },
                 ],
                 Accessory = new MessageComponent()
@@ -903,7 +903,7 @@ public class EmbedService
         MessageComponent footer = new MessageComponent()
         {
             Type = ComponentType.Text,
-            Content = $"-# Original Message ID: {msg.Message.OriginalMid} · <t:{DiscordUtils.SnowflakeToTimestamp(msg.Message.Mid)}:f>"
+            Content = $"-# Original Message ID: {msg.Message.OriginalMid} · {DiscordUtils.InstantToTimestampString(DiscordUtils.SnowflakeToInstant(msg.Message.Mid))}"
         };
 
         return [
@@ -1091,7 +1091,7 @@ public class EmbedService
         MessageComponent footer = new MessageComponent()
         {
             Type = ComponentType.Text,
-            Content = $"-# Original Message ID: {msg.OriginalMid} · <t:{DiscordUtils.SnowflakeToTimestamp(msg.OriginalMid)}:f>"
+            Content = $"-# Original Message ID: {msg.OriginalMid} · {DiscordUtils.InstantToTimestampString(DiscordUtils.SnowflakeToInstant(msg.OriginalMid))}"
         };
 
         return [
