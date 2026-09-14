@@ -183,7 +183,7 @@ public class EmbedService
             {
                 Type = ComponentType.Container,
                 AccentColor = system.Color?.ToDiscordColor(),
-                Components = [ ..header, ..switchComponent, linkedAccounts, ..descComponents ],
+                Components = [.. header, .. switchComponent, linkedAccounts, .. descComponents],
             },
             new MessageComponent()
             {
@@ -460,7 +460,7 @@ public class EmbedService
             {
                 Type = ComponentType.Container,
                 AccentColor = member.Color?.ToDiscordColor(),
-                Components = [ ..header, ..extraData, ..descComponents ],
+                Components = [.. header, .. extraData, .. descComponents],
             },
             new MessageComponent()
             {
@@ -650,7 +650,7 @@ public class EmbedService
             {
                 Type = ComponentType.Container,
                 AccentColor = target.Color?.ToDiscordColor(),
-                Components = [ ..header, ..descComponents ],
+                Components = [.. header, .. descComponents],
             },
             new MessageComponent()
             {
@@ -908,11 +908,11 @@ public class EmbedService
 
         return [
             new MessageComponent()
-    {
-        Type = ComponentType.Container,
+            {
+                Type = ComponentType.Container,
                 Components = [
                     header,
-                    ..body
+                    .. body
                 ]
             },
             footer
@@ -1095,10 +1095,11 @@ public class EmbedService
         };
 
         return [
-            new MessageComponent(){
+            new MessageComponent()
+            {
                 Type = ComponentType.Container,
                 Components = [
-                    ..body
+                    .. body
                 ]
             },
             footer

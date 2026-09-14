@@ -43,7 +43,7 @@ public abstract class JointContext
 
     public readonly PKSystem System;
     public readonly SystemConfig Config;
-    
+
     public readonly string DefaultPrefix;
 
     internal readonly ModelRepository Repository;
