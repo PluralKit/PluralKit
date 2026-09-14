@@ -13,11 +13,9 @@ public class ApplicationCommandSystem
     {
         ctx.CheckNoSystem();
 
-        var systemName = Convert.ToString(ctx.Event.Data!.Options[0].Options[0]?.Value);
+        var systemName = ctx.OptionValue("name")?.ToString();
 
-        var res = await _logic.New(ctx.Author.Id, "/", systemName, slashcommand: true);
-
-        await ctx.Reply(components: [res]);
+        await _logic.New(ctx, systemName, slashcommand: true);
 
     }
 

@@ -34,9 +34,7 @@ public class System
 
         var systemName = ctx.RemainderOrNull();
 
-        var res = await _logic.New(ctx.Author.Id, ctx.DefaultPrefix, systemName, legacyEmbed: ctx.MatchFlag("show-embed", "se"));
-
-        await ctx.Reply(components: [res]);
+        await _logic.New(ctx, systemName);
 
     }
 

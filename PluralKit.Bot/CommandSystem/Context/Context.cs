@@ -24,7 +24,7 @@ public class Context: JointContext
     public Context(ILifetimeScope provider, int shardId, Guild? guild, Channel channel, MessageCreateEvent message,
                                                     int commandParseOffset, PKSystem senderSystem, SystemConfig config,
                                                     GuildConfig? guildConfig, string[] prefixes)
-                                                    : base(provider, senderSystem, config)
+                                                    : base(provider, senderSystem, config, prefixes)
     {
         Message = (Message)message;
         ShardId = shardId;
@@ -34,7 +34,6 @@ public class Context: JointContext
         Database = provider.Resolve<IDatabase>();
         Redis = provider.Resolve<RedisService>();
         CommandPrefix = message.Content?.Substring(0, commandParseOffset);
-        DefaultPrefix = prefixes[0];
         Parameters = new Parameters(message.Content?.Substring(commandParseOffset));
         Cluster = provider.Resolve<Cluster>();
         Author = Message.Author;
@@ -56,7 +55,6 @@ public class Context: JointContext
     public DateTimeZone Zone => Config?.Zone ?? DateTimeZone.Utc;
 
     public readonly string CommandPrefix;
-    public readonly string DefaultPrefix;
     public readonly Parameters Parameters;
 
     internal readonly IDatabase Database;

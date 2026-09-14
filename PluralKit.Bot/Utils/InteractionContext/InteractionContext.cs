@@ -1,10 +1,7 @@
 using App.Metrics;
 
 using Autofac;
-
-using Myriad.Cache;
 using Myriad.Gateway;
-using Myriad.Rest;
 using Myriad.Rest.Types;
 using Myriad.Types;
 
@@ -15,7 +12,7 @@ namespace PluralKit.Bot;
 public class InteractionContext: JointContext
 {
 
-    public InteractionContext(ILifetimeScope provider, InteractionCreateEvent evt, PKSystem system, SystemConfig config) : base(provider, system, config)
+    public InteractionContext(ILifetimeScope provider, InteractionCreateEvent evt, PKSystem system, SystemConfig config) : base(provider, system, config, ["/"])
     {
         Event = evt;
         Member = Event.Member;
@@ -29,6 +26,24 @@ public class InteractionContext: JointContext
     public ulong? MessageId => Event.Message?.Id;
     public string Token => Event.Token;
     public string? CustomId => Event.Data?.CustomId;
+
+
+    public object OptionValue(string name)
+    {
+        return OptionValueInner(name, Event.Data!.Options);
+    }
+    private object OptionValueInner(string name, ApplicationCommandInteractionDataOption[] container)
+    {
+        foreach (var opt in container)
+        {
+            if (opt.Options == null && opt.Name == name)
+                return opt.Value;
+            var recurse = OptionValueInner(name, opt.Options);
+            if (recurse != null)
+                return recurse;
+        }
+        return null;
+    }
 
     public async Task Execute<T>(ApplicationCommand? command, Func<T, Task> handler)
     {
