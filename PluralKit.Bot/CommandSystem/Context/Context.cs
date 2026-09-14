@@ -128,7 +128,7 @@ public class Context: JointContext
                 Sender = Author.Id,
                 OriginalMid = Message.Id,
             });
-        
+
         return msg;
     }
 
