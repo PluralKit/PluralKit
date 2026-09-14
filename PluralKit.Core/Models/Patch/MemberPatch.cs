@@ -33,6 +33,7 @@ public class MemberPatch: PatchObject
     public Partial<PrivacyLevel> BirthdayPrivacy { get; set; }
     public Partial<PrivacyLevel> AvatarPrivacy { get; set; }
     public Partial<PrivacyLevel> ProxyPrivacy { get; set; }
+    public Partial<PrivacyLevel> AliasPrivacy { get; set; }
     public Partial<PrivacyLevel> MetadataPrivacy { get; set; }
 
 
@@ -61,6 +62,7 @@ public class MemberPatch: PatchObject
         .With("birthday_privacy", BirthdayPrivacy)
         .With("avatar_privacy", AvatarPrivacy)
         .With("proxy_privacy", ProxyPrivacy)
+        .With("alias_privacy", AliasPrivacy)
         .With("metadata_privacy", MetadataPrivacy)
     );
 
@@ -171,6 +173,8 @@ public class MemberPatch: PatchObject
                 patch.PronounPrivacy = patch.ParsePrivacy(o, "pronoun_privacy");
             if (o.ContainsKey("proxy_privacy"))
                 patch.ProxyPrivacy = patch.ParsePrivacy(o, "proxy_privacy");
+            if (o.ContainsKey("alias_privacy"))
+                patch.AliasPrivacy = patch.ParsePrivacy(o, "alias_privacy");
             if (o.ContainsKey("metadata_privacy"))
                 patch.MetadataPrivacy = patch.ParsePrivacy(o, "metadata_privacy");
         }
@@ -212,6 +216,9 @@ public class MemberPatch: PatchObject
 
             if (privacy.ContainsKey("proxy_privacy"))
                 patch.ProxyPrivacy = patch.ParsePrivacy(privacy, "proxy_privacy");
+
+            if (privacy.ContainsKey("alias_privacy"))
+                patch.AliasPrivacy = patch.ParsePrivacy(privacy, "alias_privacy");
 
             if (privacy.ContainsKey("metadata_privacy"))
                 patch.MetadataPrivacy = patch.ParsePrivacy(privacy, "metadata_privacy");
@@ -270,6 +277,7 @@ public class MemberPatch: PatchObject
             || BirthdayPrivacy.IsPresent
             || AvatarPrivacy.IsPresent
             || ProxyPrivacy.IsPresent
+            || AliasPrivacy.IsPresent
             || MetadataPrivacy.IsPresent
         )
         {
@@ -298,6 +306,9 @@ public class MemberPatch: PatchObject
 
             if (ProxyPrivacy.IsPresent)
                 p.Add("proxy_privacy", ProxyPrivacy.Value.ToJsonString());
+
+            if (AliasPrivacy.IsPresent)
+                p.Add("alias_privacy", AliasPrivacy.Value.ToJsonString());
 
             if (MetadataPrivacy.IsPresent)
                 p.Add("metadata_privacy", MetadataPrivacy.Value.ToJsonString());

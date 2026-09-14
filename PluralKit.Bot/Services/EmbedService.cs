@@ -371,7 +371,7 @@ public class EmbedService
             headerText += $"\n**Message count:** {member.MessageCount}";
 
         List<MessageComponent> extraData = [];
-        if (member.Aliases.Count > 0 && member.NamePrivacy.CanAccess(ctx))
+        if (member.Aliases.Count > 0 && member.AliasPrivacy.CanAccess(ctx))
         {
             var aliases = string.Join("\n", member.Aliases);
             extraData.Add(new MessageComponent
@@ -552,7 +552,7 @@ public class EmbedService
             eb.Field(new Embed.Field("Pronouns", pronouns.Truncate(1024), true));
         if (member.MessageCountFor(ctx) is { } count && count > 0)
             eb.Field(new Embed.Field("Message Count", member.MessageCount.ToString(), true));
-        if (member.Aliases.Count > 0 && member.NamePrivacy.CanAccess(ctx))
+        if (member.Aliases.Count > 0 && member.AliasPrivacy.CanAccess(ctx))
         {
             var aliases = string.Join("\n", member.Aliases);
             eb.Field(new Embed.Field("Aliases", aliases.Truncate(1024), true));
