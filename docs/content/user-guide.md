@@ -745,6 +745,7 @@ There are also some options for configuring member privacy:
 - Avatar
 - Birthday
 - Pronouns
+- Aliases
 - Metadata *(message count, creation date, last message timestamp, etc)*
 - Visibility *(whether the member shows up in member lists)*
 - Proxy tags
@@ -769,6 +770,7 @@ To update a member's privacy, you can use the command:
   * `metadata`
   * `visiblity`
   * `proxy` or `tag` (*not* `proxy tag`)
+  * `aliases`
   * `all` (to change all subjects at once)
 
 * `level` is either `public` or `private`

@@ -10,6 +10,7 @@ public enum MemberPrivacySubject
     Birthday,
     Pronouns,
     Proxy,
+    Aliases,
     Metadata
 }
 
@@ -28,6 +29,7 @@ public static class MemberPrivacyUtils
             MemberPrivacySubject.Birthday => member.BirthdayPrivacy = level,
             MemberPrivacySubject.Metadata => member.MetadataPrivacy = level,
             MemberPrivacySubject.Proxy => member.ProxyPrivacy = level,
+            MemberPrivacySubject.Aliases => member.AliasPrivacy = level,
             MemberPrivacySubject.Visibility => member.Visibility = level,
             _ => throw new ArgumentOutOfRangeException($"Unknown privacy subject {subject}")
         };
@@ -96,6 +98,10 @@ public static class MemberPrivacyUtils
             case "tag":
             case "tags":
                 subject = MemberPrivacySubject.Proxy;
+                break;
+            case "alias":
+            case "aliases":
+                subject = MemberPrivacySubject.Aliases;
                 break;
             case "visibility":
             case "hidden":

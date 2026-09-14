@@ -62,7 +62,7 @@ The PluralKit Discord bot can be configured to display short IDs in uppercase, o
 |last_message_timestamp|?datetime||
 |privacy|?member privacy object||
 
-* Member privacy keys: `visibility`, `name_privacy`, `description_privacy`, `birthday_privacy`, `pronoun_privacy`, `avatar_privacy`, `banner_privacy`, `metadata_privacy`, `proxy_privacy`
+* Member privacy keys: `visibility`, `name_privacy`, `description_privacy`, `birthday_privacy`, `pronoun_privacy`, `avatar_privacy`, `banner_privacy`, `metadata_privacy`, `proxy_privacy`, `alias_privacy`
 
 #### ProxyTag object
 

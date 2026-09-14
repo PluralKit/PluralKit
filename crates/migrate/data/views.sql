@@ -38,7 +38,16 @@ select members.*,
             when members.name_privacy = 1 then members.name
             -- Any other privacy (rn just '2'), return display name
             else coalesce(members.display_name, members.name)
-        end as public_name
+        end as public_name,
+
+        -- Extract member aliases as seen by "the public"
+        case
+           -- Privacy '1' = public; just return aliases as normal
+           when members.alias_privacy = 1 then members.aliases
+            -- Any other privacy (rn just '2'), return empty array
+           else ARRAY[]::text[]
+        end as public_aliases
+
 from members;
 
 create view group_list as
