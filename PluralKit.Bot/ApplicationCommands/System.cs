@@ -19,4 +19,9 @@ public class ApplicationCommandSystem
 
     }
 
+    public async Task Query(InteractionContext ctx)
+    {
+        await _logic.Query(ctx, await ctx.MatchSystem());
+    }
+
 }

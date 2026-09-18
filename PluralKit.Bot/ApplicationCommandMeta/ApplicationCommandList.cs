@@ -12,4 +12,5 @@ public partial class ApplicationCommandTree
     // Slash commands
     // system commands
     public static ApplicationCommand SystemNew = new(ApplicationCommandType.ChatInput, "new");
+    public static ApplicationCommand SystemInfo = new(ApplicationCommandType.ChatInput, "info");
 }

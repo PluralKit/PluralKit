@@ -4,13 +4,19 @@ namespace PluralKit.Bot;
 
 public static class InteractionContextEntityArgumentsExt
 {
-    public static async Task<PKSystem> MatchSystem(this InteractionContext ctx, string input)
+    public static async Task<PKSystem> MatchSystem(this InteractionContext ctx)
     {
-
         // System references can take three forms:
         // - The direct user ID of an account connected to the system
         // - A @mention of an account connected to the system (<@uid>)
         // - A system hid
+        var idRef = ctx.OptionValue("id")?.ToString();
+        var user = ctx.OptionValue("account")?.ToString();
+
+        if (idRef != null && user != null)
+            throw new PKError("Please only use reference by ID *or* by Account");
+
+        string input = idRef ?? user ?? ctx.Author.Id.ToString();
 
         // Direct IDs and mentions are both handled by the below method:
         if (input.TryParseMention(out var id))

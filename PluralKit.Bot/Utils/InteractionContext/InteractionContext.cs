@@ -12,7 +12,7 @@ namespace PluralKit.Bot;
 public class InteractionContext: JointContext
 {
 
-    public InteractionContext(ILifetimeScope provider, InteractionCreateEvent evt, PKSystem system, SystemConfig config) : base(provider, system, config, ["/"])
+    public InteractionContext(ILifetimeScope provider, InteractionCreateEvent evt, PKSystem system, SystemConfig config) : base(provider, system, config, ["/"], evt.Guild)
     {
         Event = evt;
         Member = Event.Member;
@@ -21,26 +21,41 @@ public class InteractionContext: JointContext
 
     public InteractionCreateEvent Event { get; }
 
-    public ulong GuildId => Event.GuildId;
     public ulong ChannelId => Event.ChannelId;
     public ulong? MessageId => Event.Message?.Id;
     public string Token => Event.Token;
     public string? CustomId => Event.Data?.CustomId;
 
 
+    /// <summary>
+    /// Finds the value of a given fillable parameter
+    /// </summary>
     public object OptionValue(string name)
     {
+        // This doesn't technically need to be recursive like this since right now
+        // it can only go 4 layers deep (Command, SubCommandGroup, SubCommand, Options)
+        // But I think it makes sense so we don't need to worry so much about finding which
+        // layer we need to go to and it's possible those layers could be able to be nested
+        // further in the future
         return OptionValueInner(name, Event.Data!.Options);
     }
     private object OptionValueInner(string name, ApplicationCommandInteractionDataOption[] container)
     {
         foreach (var opt in container)
         {
+            // If opt.Options is null that means we've hit a parameter
+            // (Options and Value are mutually exclusive. We could just as easily check if opt.Value is not null)
+            // If it's the correct one return its value
             if (opt.Options == null && opt.Name == name)
                 return opt.Value;
-            var recurse = OptionValueInner(name, opt.Options);
-            if (recurse != null)
-                return recurse;
+            // If Options isn't null that means we need to go a layer deeper to find the parameters
+            // If it is we continue to the next one in the same layer
+            if (opt.Options != null)
+            {
+                var recurse = OptionValueInner(name, opt.Options);
+                if (recurse != null)
+                    return recurse;
+            }
         }
         return null;
     }
@@ -118,4 +133,6 @@ public class InteractionContext: JointContext
         await Rest.CreateInteractionResponse(Event.Id, Event.Token,
             new InteractionResponse { Type = type, Data = data });
     }
+
+    public override LookupContext LookupContextFor(SystemId systemId) => DirectLookupContextFor(systemId);
 }

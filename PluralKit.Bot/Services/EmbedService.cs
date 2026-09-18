@@ -43,7 +43,7 @@ public class EmbedService
         return Task.WhenAll(ids.Select(Inner));
     }
 
-    public async Task<MessageComponent[]> CreateSystemMessageComponents(Context cctx, PKSystem system, LookupContext ctx)
+    public async Task<MessageComponent[]> CreateSystemMessageComponents(JointContext cctx, PKSystem system, LookupContext ctx)
     {
         // Fetch/render info for all accounts simultaneously
         var accounts = await _repo.GetSystemAccounts(system.Id);
@@ -55,7 +55,7 @@ public class EmbedService
         };
 
         var countctx = LookupContext.ByNonOwner;
-        if (cctx.MatchFlag("a", "all"))
+        if (cctx is Context && (cctx as Context).MatchFlag("a", "all"))
         {
             if (system.Id == cctx.System?.Id)
                 countctx = LookupContext.ByOwner;

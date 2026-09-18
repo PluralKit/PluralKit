@@ -72,7 +72,7 @@ public class SerilogGatewayEnricherFactory
         MessageReactionRemoveEvent e => (e.GuildId, e.ChannelId),
         MessageReactionRemoveAllEvent e => (e.GuildId, e.ChannelId),
         MessageReactionRemoveEmojiEvent e => (e.GuildId, e.ChannelId),
-        InteractionCreateEvent e => (e.GuildId, e.ChannelId),
+        InteractionCreateEvent e => (e.Guild.Id, e.ChannelId),
         _ => (null, null)
     };
 

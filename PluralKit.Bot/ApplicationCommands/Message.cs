@@ -44,7 +44,7 @@ public class ApplicationCommandProxiedMessage
             showContent = false;
 
         var components = new List<MessageComponent>();
-        var guild = await _cache.GetGuild(ctx.GuildId);
+        var guild = await _cache.GetGuild(ctx.Guild.Id);
         if (msg.Member != null)
             components.AddRange(await _embeds.CreateMemberMessageComponents(
                 msg.System,
@@ -131,9 +131,9 @@ public class ApplicationCommandProxiedMessage
 
         // Check if the "pinger" has permission to send messages in this channel
         // (if not, PK shouldn't send messages on their behalf)
-        var member = await _rest.GetGuildMember(ctx.GuildId, ctx.Author.Id);
+        var member = await _rest.GetGuildMember(ctx.Guild.Id, ctx.Author.Id);
         var requiredPerms = PermissionSet.ViewChannel | PermissionSet.SendMessages;
-        if (member == null || !(await _cache.PermissionsForMemberInChannel(ctx.GuildId, ctx.ChannelId, member)).HasFlag(requiredPerms))
+        if (member == null || !(await _cache.PermissionsForMemberInChannel(ctx.Guild.Id, ctx.ChannelId, member)).HasFlag(requiredPerms))
         {
             throw new PKError("You do not have permission to send messages in this channel.");
         }

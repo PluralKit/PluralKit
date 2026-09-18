@@ -1,5 +1,7 @@
 use twilight_model::application::command::CommandType;
-use twilight_util::builder::command::{CommandBuilder, StringBuilder, SubCommandBuilder};
+use twilight_util::builder::command::{
+    CommandBuilder, StringBuilder, SubCommandBuilder, UserBuilder,
+};
 
 #[libpk::main]
 async fn main() -> anyhow::Result<()> {
@@ -21,7 +23,7 @@ async fn main() -> anyhow::Result<()> {
         CommandBuilder::new(
             "system",
             "Commands run on a PK system",
-            CommandType::ChatInput,
+            CommandType::ChatInput
         )
         .option(
             SubCommandBuilder::new(
@@ -29,7 +31,16 @@ async fn main() -> anyhow::Result<()> {
                 "Makes a new PK system if one is not already on your account",
             )
             .option(StringBuilder::new("name", "The name of the new system"))
-            .build(),
+            .build()
+        )
+        .option(
+            SubCommandBuilder::new(
+                "info",
+                "Show information about a PK system, defaults to the one on the current account if no info given"
+            )
+            .option(StringBuilder::new("id", "ID of system or discord account to fetch system of"))
+            .option(UserBuilder::new("account", "Discord account to fetch the system of"))
+            .build()
         )
         .build(),
     ];

@@ -23,6 +23,8 @@ public partial class ApplicationCommandTree
                 {
                     case "new":
                         return ctx.Execute<ApplicationCommandSystem>(SystemNew, m => m.New(ctx));
+                    case "info":
+                        return ctx.Execute<ApplicationCommandSystem>(SystemInfo, m => m.Query(ctx));
                     default:
                         // TODO error here?
                         break;

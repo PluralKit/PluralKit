@@ -24,11 +24,10 @@ public class Context: JointContext
     public Context(ILifetimeScope provider, int shardId, Guild? guild, Channel channel, MessageCreateEvent message,
                                                     int commandParseOffset, PKSystem senderSystem, SystemConfig config,
                                                     GuildConfig? guildConfig, string[] prefixes)
-                                                    : base(provider, senderSystem, config, prefixes)
+                                                    : base(provider, senderSystem, config, prefixes, guild)
     {
         Message = (Message)message;
         ShardId = shardId;
-        Guild = guild;
         GuildConfig = guildConfig;
         Channel = channel;
         Database = provider.Resolve<IDatabase>();
@@ -43,7 +42,6 @@ public class Context: JointContext
     public readonly Channel Channel;
 
     public readonly Message Message;
-    public readonly Guild Guild;
     public readonly GuildConfig? GuildConfig;
     public readonly int ShardId;
     public readonly Cluster Cluster;
@@ -167,7 +165,7 @@ public class Context: JointContext
         }
     }
 
-    public LookupContext LookupContextFor(SystemId systemId)
+    public override LookupContext LookupContextFor(SystemId systemId)
     {
         var hasPrivateOverride = this.MatchFlag("private", "priv");
         var hasPublicOverride = this.MatchFlag("public", "pub");

@@ -9,10 +9,12 @@ public class SystemLogic
 {
 
     private readonly ModelRepository _repo;
+    private readonly EmbedService _embeds;
 
-    public SystemLogic(ModelRepository repo)
+    public SystemLogic(ModelRepository repo, EmbedService embeds)
     {
         _repo = repo;
+        _embeds = embeds;
     }
 
     // We could remove the slashcommand parameter and instead check if defaultprefix is / or not
@@ -102,6 +104,17 @@ public class SystemLogic
                 }
             ]
         }]);
+    }
 
+    public async Task Query(JointContext ctx, PKSystem system)
+    {
+        if (system == null) throw Errors.NoSystemError(ctx.DefaultPrefix);
+        if (ctx is Context && (ctx as Context).MatchFlag("show-embed", "se"))
+        {
+            await ctx.Reply(text: EmbedService.LEGACY_EMBED_WARNING, embed: await _embeds.CreateSystemEmbed(ctx as Context, system, ctx.LookupContextFor(system.Id)));
+            return;
+        }
+
+        await ctx.Reply(components: await _embeds.CreateSystemMessageComponents(ctx, system, ctx.LookupContextFor(system.Id)));
     }
 }
