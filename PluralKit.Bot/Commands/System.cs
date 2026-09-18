@@ -23,12 +23,9 @@ public class System
 
     public async Task New(Context ctx)
     {
-        ctx.CheckNoSystem();
-
         var systemName = ctx.RemainderOrNull();
 
         await _logic.New(ctx, systemName);
-
     }
 
     public async Task DisplayId(Context ctx, PKSystem target)

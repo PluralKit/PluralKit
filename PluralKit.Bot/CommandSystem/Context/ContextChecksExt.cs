@@ -62,13 +62,6 @@ public static class ContextChecksExt
         return ctx;
     }
 
-    public static Context CheckNoSystem(this Context ctx)
-    {
-        if (ctx.System != null)
-            throw Errors.ExistingSystemError(ctx.DefaultPrefix);
-        return ctx;
-    }
-
     public static async Task<Context> CheckAuthorPermission(this Context ctx, PermissionSet neededPerms,
                                                             string permissionName)
     {

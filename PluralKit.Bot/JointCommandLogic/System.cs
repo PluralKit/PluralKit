@@ -21,6 +21,8 @@ public class SystemLogic
     // Unsure which is cleaner
     public async Task New(JointContext ctx, string? systemName = null, bool slashcommand = false)
     {
+        ctx.CheckNoSystem();
+        
         if (systemName != null && systemName.Length > Limits.MaxSystemNameLength)
             throw Errors.StringTooLongError("System name", systemName.Length, Limits.MaxSystemNameLength);
 

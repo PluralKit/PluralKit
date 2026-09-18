@@ -11,12 +11,9 @@ public class ApplicationCommandSystem
 
     public async Task New(InteractionContext ctx)
     {
-        ctx.CheckNoSystem();
-
         var systemName = ctx.OptionValue("name")?.ToString();
 
         await _logic.New(ctx, systemName, slashcommand: true);
-
     }
 
     public async Task Query(InteractionContext ctx)

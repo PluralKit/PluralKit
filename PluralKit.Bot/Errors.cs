@@ -40,7 +40,7 @@ public static class Errors
         new($"You do not have a system registered with PluralKit. To create one, type `{prefix}system new`.");
 
     public static PKError ExistingSystemError(string prefix) => new(
-        $"You already have a system registered with PluralKit. To view it, type `{prefix}system`. If you'd like to delete your system and start anew, type `{prefix}system delete`, or if you'd like to unlink this account from it, type `{prefix}unlink`.");
+        $"You already have a system registered with PluralKit. To view it, type `{prefix}system{(prefix == "/" ? " info" : "")}`. If you'd like to delete your system and start anew, type `{prefix}system delete`, or if you'd like to unlink this account from it, type `{prefix}unlink`.");
 
     public static PKError MissingMemberError =>
         new PKSyntaxError("You need to specify a member to run this command on.");
