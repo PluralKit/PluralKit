@@ -22,7 +22,7 @@ public class SystemLogic
     public async Task New(JointContext ctx, string? systemName = null, bool slashcommand = false)
     {
         ctx.CheckNoSystem();
-        
+
         if (systemName != null && systemName.Length > Limits.MaxSystemNameLength)
             throw Errors.StringTooLongError("System name", systemName.Length, Limits.MaxSystemNameLength);
 
@@ -110,7 +110,6 @@ public class SystemLogic
 
     public async Task Query(JointContext ctx, PKSystem system)
     {
-        if (system == null) throw Errors.NoSystemError(ctx.DefaultPrefix);
         if (ctx is Context && (ctx as Context).MatchFlag("show-embed", "se"))
         {
             await ctx.Reply(text: EmbedService.LEGACY_EMBED_WARNING, embed: await _embeds.CreateSystemEmbed(ctx as Context, system, ctx.LookupContextFor(system.Id)));

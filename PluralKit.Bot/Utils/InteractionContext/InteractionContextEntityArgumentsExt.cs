@@ -18,14 +18,18 @@ public static class InteractionContextEntityArgumentsExt
 
         string input = idRef ?? user ?? ctx.Author.Id.ToString();
 
+        PKSystem? system = null;
+
         // Direct IDs and mentions are both handled by the below method:
         if (input.TryParseMention(out var id))
-            return await ctx.Repository.GetSystemByAccount(id);
+            system = await ctx.Repository.GetSystemByAccount(id);
 
         // Finally, try HID parsing
         if (input.TryParseHid(out var hid))
-            return await ctx.Repository.GetSystemByHid(hid);
+            system = await ctx.Repository.GetSystemByHid(hid);
 
-        return null;
+        // If there is no system, throw an error
+        ctx.CheckSystem(system);
+        return system;
     }
 }

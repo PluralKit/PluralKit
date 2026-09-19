@@ -132,9 +132,11 @@ public class BotModule: Module
         builder.RegisterType<ApplicationCommandTree>().AsSelf();
         builder.RegisterType<ApplicationCommandProxiedMessage>().AsSelf();
         builder.RegisterType<ApplicationCommandSystem>().AsSelf();
+        builder.RegisterType<ApplicationCommandSystemEdit>().AsSelf();
 
         // Joint command logic
         builder.RegisterType<SystemLogic>().AsSelf();
+        builder.RegisterType<SystemEditLogic>().AsSelf();
 
         // Bot core
         builder.RegisterType<Bot>().AsSelf().SingleInstance();

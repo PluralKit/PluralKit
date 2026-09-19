@@ -13,4 +13,5 @@ public partial class ApplicationCommandTree
     // system commands
     public static ApplicationCommand SystemNew = new(ApplicationCommandType.ChatInput, "new");
     public static ApplicationCommand SystemInfo = new(ApplicationCommandType.ChatInput, "info");
+    public static ApplicationCommand SystemTag = new(ApplicationCommandType.ChatInput, "tag");
 }

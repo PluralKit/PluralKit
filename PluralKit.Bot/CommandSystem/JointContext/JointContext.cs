@@ -22,7 +22,7 @@ public abstract class JointContext
     // So I haven't implemented them here yet
     // IE: Context uses Channel/Message/Guild Types but InteractionContext
     // only stores the IDs
-    public JointContext(ILifetimeScope provider, PKSystem system, SystemConfig config, string[] prefixes, Guild guild)
+    public JointContext(ILifetimeScope provider, PKSystem system, SystemConfig config, string[] prefixes, Guild guild, GuildConfig guildConfig)
     {
         _provider = provider;
         _metrics = provider.Resolve<IMetrics>();
@@ -33,6 +33,7 @@ public abstract class JointContext
         DefaultPrefix = prefixes[0];
         Repository = provider.Resolve<ModelRepository>();
         Guild = guild;
+        GuildConfig = guildConfig;
     }
 
     public readonly IDiscordCache Cache;
@@ -45,6 +46,7 @@ public abstract class JointContext
 
     public readonly PKSystem System;
     public readonly SystemConfig Config;
+    public readonly GuildConfig GuildConfig;
 
     public readonly string DefaultPrefix;
 

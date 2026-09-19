@@ -38,6 +38,8 @@ public static class Errors
 
     public static PKError NoSystemError(string prefix) =>
         new($"You do not have a system registered with PluralKit. To create one, type `{prefix}system new`.");
+    public static PKError NoSystemFoundError() =>
+        new($"Could not find system associated with specified account/ID.");
 
     public static PKError ExistingSystemError(string prefix) => new(
         $"You already have a system registered with PluralKit. To view it, type `{prefix}system{(prefix == "/" ? " info" : "")}`. If you'd like to delete your system and start anew, type `{prefix}system delete`, or if you'd like to unlink this account from it, type `{prefix}unlink`.");

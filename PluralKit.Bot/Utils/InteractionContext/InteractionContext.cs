@@ -12,7 +12,7 @@ namespace PluralKit.Bot;
 public class InteractionContext: JointContext
 {
 
-    public InteractionContext(ILifetimeScope provider, InteractionCreateEvent evt, PKSystem system, SystemConfig config) : base(provider, system, config, ["/"], evt.Guild)
+    public InteractionContext(ILifetimeScope provider, InteractionCreateEvent evt, PKSystem system, SystemConfig config, GuildConfig guildConfig) : base(provider, system, config, ["/"], evt.Guild, guildConfig)
     {
         Event = evt;
         Member = Event.Member;
@@ -59,6 +59,8 @@ public class InteractionContext: JointContext
         }
         return null;
     }
+
+    public ApplicationCommandInteractionDataOption Subcommand(bool skipGroup = false) => skipGroup ? Subcommand().Options[0] : Event.Data.Options[0];
 
     public async Task Execute<T>(ApplicationCommand? command, Func<T, Task> handler)
     {

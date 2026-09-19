@@ -24,11 +24,10 @@ public class Context: JointContext
     public Context(ILifetimeScope provider, int shardId, Guild? guild, Channel channel, MessageCreateEvent message,
                                                     int commandParseOffset, PKSystem senderSystem, SystemConfig config,
                                                     GuildConfig? guildConfig, string[] prefixes)
-                                                    : base(provider, senderSystem, config, prefixes, guild)
+                                                    : base(provider, senderSystem, config, prefixes, guild, guildConfig)
     {
         Message = (Message)message;
         ShardId = shardId;
-        GuildConfig = guildConfig;
         Channel = channel;
         Database = provider.Resolve<IDatabase>();
         Redis = provider.Resolve<RedisService>();
@@ -42,7 +41,6 @@ public class Context: JointContext
     public readonly Channel Channel;
 
     public readonly Message Message;
-    public readonly GuildConfig? GuildConfig;
     public readonly int ShardId;
     public readonly Cluster Cluster;
 

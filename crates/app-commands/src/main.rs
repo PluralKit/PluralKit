@@ -1,6 +1,7 @@
 use twilight_model::application::command::CommandType;
 use twilight_util::builder::command::{
-    CommandBuilder, StringBuilder, SubCommandBuilder, UserBuilder,
+    BooleanBuilder, CommandBuilder, StringBuilder, SubCommandBuilder, SubCommandGroupBuilder,
+    UserBuilder,
 };
 
 #[libpk::main]
@@ -12,6 +13,11 @@ async fn main() -> anyhow::Result<()> {
     let interaction = discord.interaction(twilight_model::id::Id::new(
         libpk::config.discord().client_id.clone().get(),
     ));
+
+    // These are the standard options for any subcommand that can target a different system
+    // Abstracted up here so that the summary text can be easily changed
+    let id_option = StringBuilder::new("id", "ID of system or discord account to fetch system of. Only use this *or* account.");
+    let account_option = UserBuilder::new("account", "Discord account to fetch the system of. Only use this *or* id.");
 
     let commands = vec![
         // message commands
@@ -36,10 +42,22 @@ async fn main() -> anyhow::Result<()> {
         .option(
             SubCommandBuilder::new(
                 "info",
-                "Show information about a PK system, defaults to the one on the current account if no info given"
+                "Show information about a PK system, defaults to the one on the current account if no target given"
             )
-            .option(StringBuilder::new("id", "ID of system or discord account to fetch system of"))
-            .option(UserBuilder::new("account", "Discord account to fetch the system of"))
+            .option(id_option.clone())
+            .option(account_option.clone())
+            .build()
+        )
+        .option(SubCommandGroupBuilder::new("tag", "Set, clear, or view a system's tag")
+            .subcommands([
+                SubCommandBuilder::new("show", "View a system's tag")
+                    .option(id_option.clone())
+                    .option(account_option.clone()),
+                    // TODO: Figure out how to make this and MaxSystemTagLength in PluralKit.Core use the same source of truth
+                SubCommandBuilder::new("set", "Set your system tag")
+                    .option(StringBuilder::new("tag", "New tag").required(true).min_length(1).max_length(79)),
+                SubCommandBuilder::new("clear", "Clear your system's tag"),
+            ])
             .build()
         )
         .build(),

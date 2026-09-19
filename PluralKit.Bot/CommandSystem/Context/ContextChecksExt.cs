@@ -9,57 +9,10 @@ namespace PluralKit.Bot;
 
 public static class ContextChecksExt
 {
-    public static Context CheckGuildContext(this Context ctx)
-    {
-        if (ctx.Channel.GuildId != null) return ctx;
-        throw new PKError("This command can not be run in a DM.");
-    }
-
-    public static Context CheckDMContext(this Context ctx)
-    {
-        if (ctx.Channel.GuildId == null) return ctx;
-        throw new PKError("This command must be run in a DM.");
-    }
-
     public static Context CheckSystemPrivacy(this Context ctx, SystemId target, PrivacyLevel level)
     {
         if (level.CanAccess(ctx.DirectLookupContextFor(target))) return ctx;
         throw Errors.LookupNotAllowed;
-    }
-
-    public static Context CheckOwnSystem(this Context ctx, PKSystem system)
-    {
-        if (system.Id != ctx.System?.Id)
-            throw Errors.NotOwnSystemError;
-        return ctx;
-    }
-
-    public static Context CheckOwnMember(this Context ctx, PKMember member)
-    {
-        if (member.System != ctx.System?.Id)
-            throw Errors.NotOwnMemberError;
-        return ctx;
-    }
-
-    public static Context CheckOwnGroup(this Context ctx, PKGroup group)
-    {
-        if (group.System != ctx.System?.Id)
-            throw Errors.NotOwnGroupError;
-        return ctx;
-    }
-
-    public static Context CheckSystem(this Context ctx)
-    {
-        if (ctx.System == null)
-            throw Errors.NoSystemError(ctx.DefaultPrefix);
-        return ctx;
-    }
-
-    public static Context CheckSystem(this Context ctx, PKSystem system)
-    {
-        if (system == null)
-            throw Errors.NoSystemError(ctx.DefaultPrefix);
-        return ctx;
     }
 
     public static async Task<Context> CheckAuthorPermission(this Context ctx, PermissionSet neededPerms,

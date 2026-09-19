@@ -227,28 +227,30 @@ public partial class CommandTree
         else
         {
             // try matching a system ID
-            var target = await ctx.MatchSystem();
+            var target = await ctx.MatchSystem() ?? ctx.System;
             var previousPtr = ctx.Parameters._ptr;
-
-            // if we have a parsed target and no more commands, don't bother with the command flow
-            // we skip the `target != null` check here since the argument isn't be popped if it's not a system
-            if (!ctx.HasNext())
-            {
-                await ctx.Execute<System>(SystemInfo, m => m.Query(ctx, target ?? ctx.System));
-                return;
-            }
 
             // hacky, but we need to CheckSystem(target) which throws a PKError
             // normally PKErrors are only handled in ctx.Execute
             try
             {
-                await HandleSystemCommandTargeted(ctx, target ?? ctx.System);
+                ctx.CheckSystem(target);
             }
             catch (PKError e)
             {
                 await ctx.Reply($"{Emojis.Error} {e.Message}");
                 return;
             }
+
+
+            // if we have a parsed target and no more commands, don't bother with the command flow
+            if (!ctx.HasNext())
+            {
+                await ctx.Execute<System>(SystemInfo, m => m.Query(ctx, target));
+                return;
+            }
+
+            await HandleSystemCommandTargeted(ctx, target);
 
             // if we *still* haven't matched anything, the user entered an invalid command name or system reference
             if (ctx.Parameters._ptr == previousPtr)
@@ -269,59 +271,59 @@ public partial class CommandTree
     private async Task HandleSystemCommandTargeted(Context ctx, PKSystem target)
     {
         if (ctx.Match("name", "rename", "changename", "rn"))
-            await ctx.CheckSystem(target).Execute<SystemEdit>(SystemRename, m => m.Name(ctx, target));
+            await ctx.Execute<SystemEdit>(SystemRename, m => m.Name(ctx, target));
         else if (ctx.Match("servername", "sn", "sname", "snick", "snickname", "servernick", "servernickname",
                      "serverdisplayname", "guildname", "guildnick", "guildnickname", "serverdn"))
             await ctx.Execute<SystemEdit>(SystemServerName, m => m.ServerName(ctx, target));
         else if (ctx.Match("tag", "t"))
-            await ctx.CheckSystem(target).Execute<SystemEdit>(SystemTag, m => m.Tag(ctx, target));
+            await ctx.Execute<SystemEdit>(SystemTag, m => m.Tag(ctx, target));
         else if (ctx.Match("servertag", "st", "stag", "deer"))
-            await ctx.CheckSystem(target).Execute<SystemEdit>(SystemServerTag, m => m.ServerTag(ctx, target));
+            await ctx.Execute<SystemEdit>(SystemServerTag, m => m.ServerTag(ctx, target));
         else if (ctx.Match("description", "desc", "describe", "d", "bio", "info", "text", "intro"))
-            await ctx.CheckSystem(target).Execute<SystemEdit>(SystemDesc, m => m.Description(ctx, target));
+            await ctx.Execute<SystemEdit>(SystemDesc, m => m.Description(ctx, target));
         else if (ctx.Match("pronouns", "pronoun", "prns", "pn"))
-            await ctx.CheckSystem(target).Execute<SystemEdit>(SystemPronouns, m => m.Pronouns(ctx, target));
+            await ctx.Execute<SystemEdit>(SystemPronouns, m => m.Pronouns(ctx, target));
         else if (ctx.Match("color", "colour"))
-            await ctx.CheckSystem(target).Execute<SystemEdit>(SystemColor, m => m.Color(ctx, target));
+            await ctx.Execute<SystemEdit>(SystemColor, m => m.Color(ctx, target));
         else if (ctx.Match("banner", "splash", "cover"))
-            await ctx.CheckSystem(target).Execute<SystemEdit>(SystemBannerImage, m => m.BannerImage(ctx, target));
+            await ctx.Execute<SystemEdit>(SystemBannerImage, m => m.BannerImage(ctx, target));
         else if (ctx.Match("avatar", "picture", "icon", "image", "pic", "pfp"))
-            await ctx.CheckSystem(target).Execute<SystemEdit>(SystemAvatar, m => m.Avatar(ctx, target));
+            await ctx.Execute<SystemEdit>(SystemAvatar, m => m.Avatar(ctx, target));
         else if (ctx.Match("serveravatar", "sa", "servericon", "serverimage", "serverpfp", "serverpic", "savatar", "spic",
                      "guildavatar", "guildpic", "guildicon", "sicon", "spfp"))
-            await ctx.CheckSystem(target).Execute<SystemEdit>(SystemServerAvatar, m => m.ServerAvatar(ctx, target));
+            await ctx.Execute<SystemEdit>(SystemServerAvatar, m => m.ServerAvatar(ctx, target));
         else if (ctx.Match("list", "l", "members", "ls"))
-            await ctx.CheckSystem(target).Execute<SystemList>(SystemList, m => m.MemberList(ctx, target));
+            await ctx.Execute<SystemList>(SystemList, m => m.MemberList(ctx, target));
         else if (ctx.Match("find", "search", "query", "fd", "s"))
-            await ctx.CheckSystem(target).Execute<SystemList>(SystemFind, m => m.MemberList(ctx, target));
+            await ctx.Execute<SystemList>(SystemFind, m => m.MemberList(ctx, target));
         else if (ctx.Match("f", "front", "fronter", "fronters"))
         {
             if (ctx.Match("h", "history"))
-                await ctx.CheckSystem(target).Execute<SystemFront>(SystemFrontHistory, m => m.SystemFrontHistory(ctx, target));
+                await ctx.Execute<SystemFront>(SystemFrontHistory, m => m.SystemFrontHistory(ctx, target));
             else if (ctx.Match("p", "percent", "%"))
-                await ctx.CheckSystem(target).Execute<SystemFront>(SystemFrontPercent, m => m.FrontPercent(ctx, system: target));
+                await ctx.Execute<SystemFront>(SystemFrontPercent, m => m.FrontPercent(ctx, system: target));
             else
-                await ctx.CheckSystem(target).Execute<SystemFront>(SystemFronter, m => m.SystemFronter(ctx, target));
+                await ctx.Execute<SystemFront>(SystemFronter, m => m.SystemFronter(ctx, target));
         }
         else if (ctx.Match("fh", "fronthistory", "history", "switches"))
-            await ctx.CheckSystem(target).Execute<SystemFront>(SystemFrontHistory, m => m.SystemFrontHistory(ctx, target));
+            await ctx.Execute<SystemFront>(SystemFrontHistory, m => m.SystemFrontHistory(ctx, target));
         else if (ctx.Match("fp", "frontpercent", "front%", "frontbreakdown"))
-            await ctx.CheckSystem(target).Execute<SystemFront>(SystemFrontPercent, m => m.FrontPercent(ctx, system: target));
+            await ctx.Execute<SystemFront>(SystemFrontPercent, m => m.FrontPercent(ctx, system: target));
         else if (ctx.Match("info", "view", "show"))
-            await ctx.CheckSystem(target).Execute<System>(SystemInfo, m => m.Query(ctx, target));
+            await ctx.Execute<System>(SystemInfo, m => m.Query(ctx, target));
         else if (ctx.Match("groups", "gs"))
-            await ctx.CheckSystem(target).Execute<Groups>(GroupList, g => g.ListSystemGroups(ctx, target));
+            await ctx.Execute<Groups>(GroupList, g => g.ListSystemGroups(ctx, target));
         else if (ctx.Match("privacy"))
-            await ctx.CheckSystem(target).Execute<SystemEdit>(SystemPrivacy, m => m.SystemPrivacy(ctx, target));
+            await ctx.Execute<SystemEdit>(SystemPrivacy, m => m.SystemPrivacy(ctx, target));
         else if (ctx.Match("delete", "remove", "destroy", "erase", "yeet"))
-            await ctx.CheckSystem(target).Execute<SystemEdit>(SystemDelete, m => m.Delete(ctx, target));
+            await ctx.Execute<SystemEdit>(SystemDelete, m => m.Delete(ctx, target));
         else if (ctx.Match("id"))
-            await ctx.CheckSystem(target).Execute<System>(SystemId, m => m.DisplayId(ctx, target));
+            await ctx.Execute<System>(SystemId, m => m.DisplayId(ctx, target));
         else if (ctx.Match("random", "rand", "r"))
             if (ctx.Match("group", "g") || ctx.MatchFlag("group", "g"))
-                await ctx.CheckSystem(target).Execute<Random>(GroupRandom, r => r.Group(ctx, target));
+                await ctx.Execute<Random>(GroupRandom, r => r.Group(ctx, target));
             else
-                await ctx.CheckSystem(target).Execute<Random>(MemberRandom, m => m.Member(ctx, target));
+                await ctx.Execute<Random>(MemberRandom, m => m.Member(ctx, target));
     }
 
     private async Task HandleMemberCommand(Context ctx)

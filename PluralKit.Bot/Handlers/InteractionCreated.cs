@@ -34,7 +34,8 @@ public class InteractionCreated: IEventHandler<InteractionCreateEvent>
     {
         var system = await _repo.GetSystemByAccount(evt.Member?.User.Id ?? evt.User!.Id);
         var config = system != null ? await _repo.GetSystemConfig(system!.Id) : null;
-        var ctx = new InteractionContext(_services, evt, system, config);
+        var guildConfig = evt.Guild != null ? await _repo.GetGuild(evt.Guild.Id) : null;
+        var ctx = new InteractionContext(_services, evt, system, config, guildConfig);
 
         switch (evt.Type)
         {

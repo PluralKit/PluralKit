@@ -23,7 +23,8 @@ public class ServerConfig
 
     public async Task ShowConfig(Context ctx)
     {
-        await ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
+        ctx.CheckGuildContext();
+        await ctx.CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
         var items = new List<PaginatedConfigItem>();
 
         items.Add(new(
@@ -112,7 +113,8 @@ public class ServerConfig
 
     public async Task SetLogChannel(Context ctx)
     {
-        await ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
+        ctx.CheckGuildContext();
+        await ctx.CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
         var settings = await ctx.Repository.GetGuild(ctx.Guild.Id);
 
         if (ctx.MatchClear() && await ctx.ConfirmClear("the server log channel"))
@@ -155,7 +157,8 @@ public class ServerConfig
     // new behaviour is add/remove from log blacklist (see #LogBlacklistNew)
     public async Task SetLogEnabled(Context ctx, bool enable)
     {
-        await ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
+        ctx.CheckGuildContext();
+        await ctx.CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
 
         var affectedChannels = new List<Channel>();
         if (ctx.Match("all"))
@@ -192,7 +195,8 @@ public class ServerConfig
 
     public async Task ShowProxyBlacklisted(Context ctx)
     {
-        await ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
+        ctx.CheckGuildContext();
+        await ctx.CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
 
         var blacklist = await ctx.Repository.GetGuild(ctx.Guild.Id);
 
@@ -242,7 +246,8 @@ public class ServerConfig
 
     public async Task ShowLogDisabledChannels(Context ctx)
     {
-        await ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
+        ctx.CheckGuildContext();
+        await ctx.CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
 
         var config = await ctx.Repository.GetGuild(ctx.Guild.Id);
 
@@ -295,7 +300,8 @@ public class ServerConfig
 
     public async Task SetProxyBlacklisted(Context ctx, bool shouldAdd)
     {
-        await ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
+        ctx.CheckGuildContext();
+        await ctx.CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
 
         var affectedChannels = new List<Channel>();
         if (ctx.Match("all"))
@@ -328,7 +334,8 @@ public class ServerConfig
 
     public async Task SetLogBlacklisted(Context ctx, bool shouldAdd)
     {
-        await ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
+        ctx.CheckGuildContext();
+        await ctx.CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
 
         var affectedChannels = new List<Channel>();
         if (ctx.Match("all"))
@@ -376,7 +383,8 @@ public class ServerConfig
             return;
         }
 
-        await ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
+        ctx.CheckGuildContext();
+        await ctx.CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
         bool? newValue = ctx.MatchToggleOrNull();
 
         if (newValue == null)
@@ -402,7 +410,8 @@ public class ServerConfig
 
     public async Task InvalidCommandResponse(Context ctx)
     {
-        await ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
+        ctx.CheckGuildContext();
+        await ctx.CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
 
         if (!ctx.HasNext())
         {
@@ -418,7 +427,8 @@ public class ServerConfig
 
     public async Task RequireSystemTag(Context ctx)
     {
-        await ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
+        ctx.CheckGuildContext();
+        await ctx.CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
 
         if (!ctx.HasNext())
         {
@@ -434,7 +444,8 @@ public class ServerConfig
 
     public async Task SuppressNotifications(Context ctx)
     {
-        await ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
+        ctx.CheckGuildContext();
+        await ctx.CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
 
         if (!ctx.HasNext())
         {

@@ -25,6 +25,8 @@ public partial class ApplicationCommandTree
                         return ctx.Execute<ApplicationCommandSystem>(SystemNew, m => m.New(ctx));
                     case "info":
                         return ctx.Execute<ApplicationCommandSystem>(SystemInfo, m => m.Query(ctx));
+                    case "tag":
+                        return ctx.Execute<ApplicationCommandSystemEdit>(SystemTag, m => m.Tag(ctx));
                     default:
                         // TODO error here?
                         break;
