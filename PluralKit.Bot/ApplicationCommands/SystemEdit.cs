@@ -39,4 +39,36 @@ public class ApplicationCommandSystemEdit
             await _logic.ShowTag(ctx, await ctx.MatchSystem());
         }
     }
+
+    public async Task Description(InteractionContext ctx)
+    {
+        switch (ctx.Subcommand(true).Name)
+        {
+            case "set":
+                await Set();
+                break;
+            case "clear":
+                await Clear();
+                break;
+            default:
+                await Show();
+                break;
+        }
+
+        async Task Set()
+        {
+            ctx.CheckSystem();
+            await _logic.SetDescription(ctx, ctx.OptionValue("description").ToString());
+        }
+        async Task Clear()
+        {
+            ctx.CheckSystem();
+            await _logic.ClearDescription(ctx);
+        }
+        async Task Show()
+        {
+            await _logic.ShowDescription(ctx, await ctx.MatchSystem());
+        }
+    }
+
 }

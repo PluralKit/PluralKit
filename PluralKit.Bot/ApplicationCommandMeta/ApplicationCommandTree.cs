@@ -1,4 +1,3 @@
-using ApplicationCommandType = Myriad.Types.ApplicationCommand.ApplicationCommandType;
 using InteractionType = Myriad.Types.Interaction.InteractionType;
 
 namespace PluralKit.Bot;
@@ -27,6 +26,8 @@ public partial class ApplicationCommandTree
                         return ctx.Execute<ApplicationCommandSystem>(SystemInfo, m => m.Query(ctx));
                     case "tag":
                         return ctx.Execute<ApplicationCommandSystemEdit>(SystemTag, m => m.Tag(ctx));
+                    case "description":
+                        return ctx.Execute<ApplicationCommandSystemEdit>(SystemDescription, m => m.Description(ctx));
                     default:
                         // TODO error here?
                         break;

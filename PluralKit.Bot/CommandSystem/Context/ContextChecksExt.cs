@@ -9,11 +9,6 @@ namespace PluralKit.Bot;
 
 public static class ContextChecksExt
 {
-    public static Context CheckSystemPrivacy(this Context ctx, SystemId target, PrivacyLevel level)
-    {
-        if (level.CanAccess(ctx.DirectLookupContextFor(target))) return ctx;
-        throw Errors.LookupNotAllowed;
-    }
 
     public static async Task<Context> CheckAuthorPermission(this Context ctx, PermissionSet neededPerms,
                                                             string permissionName)

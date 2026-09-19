@@ -4,6 +4,12 @@ namespace PluralKit.Bot;
 
 public static class JointContextChecksExt
 {
+    public static JointContext CheckSystemPrivacy(this JointContext ctx, SystemId target, PrivacyLevel level)
+    {
+        if (level.CanAccess(ctx.DirectLookupContextFor(target))) return ctx;
+        throw Errors.LookupNotAllowed;
+    }
+
     public static JointContext CheckGuildContext(this JointContext ctx)
     {
         if (ctx.Guild != null) return ctx;

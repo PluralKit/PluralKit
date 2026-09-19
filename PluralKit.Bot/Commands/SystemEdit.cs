@@ -10,7 +10,6 @@ using Myriad.Types;
 using Newtonsoft.Json;
 
 using PluralKit.Core;
-using SqlKata.Compilers;
 
 namespace PluralKit.Bot;
 
@@ -160,67 +159,24 @@ public class SystemEdit
 
     public async Task Description(Context ctx, PKSystem target)
     {
-        ctx.CheckSystemPrivacy(target.Id, target.DescriptionPrivacy);
-
-        var isOwnSystem = target.Id == ctx.System?.Id;
-
-        var noDescriptionSetMessage = "This system does not have a description set.";
-        if (isOwnSystem)
-            noDescriptionSetMessage += $" To set one, type `{ctx.DefaultPrefix}s description <description>`.";
 
         var format = ctx.MatchFormat();
 
         // if there's nothing next or what's next is "raw"/"plaintext" we're doing a query, so check for null
         if (!ctx.HasNext(false) || format != ReplyFormat.Standard)
-            if (target.Description == null)
-            {
-                await ctx.Reply(noDescriptionSetMessage);
-                return;
-            }
-
-        if (format == ReplyFormat.Raw)
-        {
-            await ctx.Reply($"```\n{target.Description}\n```");
-            return;
-        }
-        if (format == ReplyFormat.Plaintext)
-        {
-            var eb = new EmbedBuilder()
-                .Description($"Showing description for system `{target.DisplayHid(ctx.Config)}`");
-            await ctx.Reply(target.Description, embed: eb.Build());
-            return;
-        }
-
-        if (!ctx.HasNext(false))
-        {
-            await ctx.Reply(embed: new EmbedBuilder()
-                .Title("System description")
-                .Description(target.Description)
-                .Footer(new Embed.EmbedFooter(
-                    $"To print the description with formatting, type `{ctx.DefaultPrefix}s description -raw`."
-                        + (isOwnSystem ? $" To clear it, type `{ctx.DefaultPrefix}s description -clear`. To change it, type `{ctx.DefaultPrefix}s description <new description>`."
-                        + $" Using {target.Description.Length}/{Limits.MaxDescriptionLength} characters." : "")))
-                .Build());
-            return;
-        }
+            await _logic.ShowDescription(ctx, target, format);
 
         ctx.CheckSystem().CheckOwnSystem(target);
 
         if (ctx.MatchClear() && await ctx.ConfirmClear("your system's description"))
         {
-            await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { Description = null });
-
-            await ctx.Reply($"{Emojis.Success} System description cleared.");
+            await _logic.ClearDescription(ctx);
         }
         else
         {
             var newDescription = ctx.RemainderOrNull(false).NormalizeLineEndSpacing();
-            if (newDescription.Length > Limits.MaxDescriptionLength)
-                throw Errors.StringTooLongError("Description", newDescription.Length, Limits.MaxDescriptionLength);
 
-            await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { Description = newDescription });
-
-            await ctx.Reply($"{Emojis.Success} System description changed (using {newDescription.Length}/{Limits.MaxDescriptionLength} characters).");
+            await _logic.SetDescription(ctx, newDescription);
         }
     }
 

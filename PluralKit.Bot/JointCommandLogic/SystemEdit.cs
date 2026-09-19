@@ -1,4 +1,5 @@
 using Myriad.Builders;
+using Myriad.Types;
 
 using PluralKit.Core;
 
@@ -83,4 +84,61 @@ public class SystemEditLogic
                 return;
         }
     }
+
+    public async Task SetDescription(JointContext ctx, string newDescription)
+    {
+        if (newDescription.Length > Limits.MaxDescriptionLength)
+            throw Errors.StringTooLongError("Description", newDescription.Length, Limits.MaxDescriptionLength);
+
+        await ctx.Repository.UpdateSystem(ctx.System.Id, new SystemPatch { Description = newDescription });
+
+        await ctx.Reply($"{Emojis.Success} System description changed (using {newDescription.Length}/{Limits.MaxDescriptionLength} characters).");
+    }
+
+    public async Task ClearDescription(JointContext ctx)
+    {
+        await ctx.Repository.UpdateSystem(ctx.System.Id, new SystemPatch { Description = null });
+
+        await ctx.Reply($"{Emojis.Success} System description cleared.");
+    }
+
+    public async Task ShowDescription(JointContext ctx, PKSystem target, ReplyFormat format = ReplyFormat.Standard)
+    {
+        ctx.CheckSystemPrivacy(target.Id, target.DescriptionPrivacy);
+
+        var isOwnSystem = target.Id == ctx.System?.Id;
+
+        var noDescriptionSetMessage = "This system does not have a description set.";
+        if (isOwnSystem)
+            noDescriptionSetMessage += $" To set one, type `{ctx.DefaultPrefix}s description <description>`.";
+
+        if (target.Description == null)
+        {
+            await ctx.Reply(noDescriptionSetMessage);
+            return;
+        }
+
+        switch (format)
+        {
+            case ReplyFormat.Raw:
+                await ctx.Reply($"```\n{target.Description}\n```");
+                return;
+            case ReplyFormat.Plaintext:
+                var eb = new EmbedBuilder()
+                    .Description($"Showing description for system `{target.DisplayHid(ctx.Config)}`");
+                await ctx.Reply(target.Description, embed: eb.Build());
+                return;
+            default:
+                await ctx.Reply(embed: new EmbedBuilder()
+                .Title("System description")
+                .Description(target.Description)
+                .Footer(new Embed.EmbedFooter(
+                    $"To print the description with formatting, type `{ctx.DefaultPrefix}s description -raw`."
+                        + (isOwnSystem ? $" To clear it, type `{ctx.DefaultPrefix}s description -clear`. To change it, type `{ctx.DefaultPrefix}s description <new description>`."
+                        + $" Using {target.Description.Length}/{Limits.MaxDescriptionLength} characters." : "")))
+                .Build());
+                return;
+        }
+    }
+
 }

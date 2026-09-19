@@ -2,10 +2,11 @@ namespace PluralKit.Core;
 
 public static class Limits
 {
+    // Before changing any of these, check if they also need changed in the slash command definitions in the Rust code
+
     public static readonly int MaxProxyNameLength = 80;
 
     public static readonly int MaxSystemNameLength = 100;
-    // If you change this: Make sure it is also changed in the Rust slash command def
     public static readonly int MaxSystemTagLength = MaxProxyNameLength - 1;
     public static readonly int MaxMemberCount = 1000;
     public static readonly int MaxGroupCount = 250;
