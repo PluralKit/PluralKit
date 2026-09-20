@@ -38,8 +38,7 @@ public class ApplicationCommandSystemEdit
         }
         async Task Show()
         {
-            // TODO: Add other ReplyFormats
-            await showFunc(ctx, await ctx.MatchSystem(), ReplyFormat.Standard);
+            await showFunc(ctx, await ctx.MatchSystem(), ctx.MatchFormat());
         }
     }
     public async Task GuildSetShowClear(InteractionContext ctx, Func<InteractionContext, string, ulong, Task> setFunc, Func<InteractionContext, ulong, Task> clearFunc, Func<InteractionContext, PKSystem, ReplyFormat, ulong, Task> showFunc, string field)
@@ -72,8 +71,7 @@ public class ApplicationCommandSystemEdit
         }
         async Task Show()
         {
-            // TODO: Add other ReplyFormats
-            await showFunc(ctx, await ctx.MatchSystem(), ReplyFormat.Standard, serverId);
+            await showFunc(ctx, await ctx.MatchSystem(), ctx.MatchFormat(), serverId);
         }
     }
 

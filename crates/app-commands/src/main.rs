@@ -30,8 +30,19 @@ async fn main() -> anyhow::Result<()> {
     let guild_option = || {
         StringBuilder::new(
             "server-id",
-            "ID of a server to use instead of the current one (required if running command in a DM)",
+            "ID of a server to use instead of the current one (required if running command in a DM).",
         )
+    };
+    let format_option = || {
+        StringBuilder::new(
+            "format",
+            "The format to give your reply in. Defaults to Standard.",
+        )
+        .choices([
+            ("Raw", "raw"),
+            ("Plaintext", "plaintext"),
+            ("Standard", "standard"),
+        ])
     };
 
     // Show/set/clear is a very common set of subcommands
@@ -39,7 +50,8 @@ async fn main() -> anyhow::Result<()> {
         |field: &str, max_length: u16, guild_target: bool| -> CommandOption {
             let show = SubCommandBuilder::new("show", format!("Show a system's {}", field))
                 .option(id_option())
-                .option(account_option());
+                .option(account_option())
+                .option(format_option());
             let set = SubCommandBuilder::new("set", format!("Set your system {}", field)).option(
                 StringBuilder::new(field, format!("New {}", field))
                     .required(true)

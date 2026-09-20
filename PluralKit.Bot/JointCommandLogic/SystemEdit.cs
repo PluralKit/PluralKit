@@ -22,7 +22,7 @@ public class SystemEditLogic
 
         await ctx.Reply($"{Emojis.Success} System name cleared.");
     }
-    public async Task ShowName(JointContext ctx, PKSystem target, ReplyFormat format = ReplyFormat.Standard)
+    public async Task ShowName(JointContext ctx, PKSystem target, ReplyFormat format)
     {
         ctx.CheckSystemPrivacy(target.Id, target.NamePrivacy);
         var isOwnSystem = target.Id == ctx.System?.Id;
@@ -86,7 +86,7 @@ public class SystemEditLogic
 
         await ctx.Reply($"{Emojis.Success} System name for {(guildId == ctx.Guild?.Id ? "this server" : $"server \"{guild.Name}\"")} cleared.");
     }
-    public async Task ShowServerName(JointContext ctx, PKSystem target, ReplyFormat format = ReplyFormat.Standard, ulong guildId = 0)
+    public async Task ShowServerName(JointContext ctx, PKSystem target, ReplyFormat format, ulong guildId = 0)
     {
         if (guildId == 0)
         {
@@ -176,7 +176,7 @@ public class SystemEditLogic
 
         await ctx.Reply(replyStr);
     }
-    public async Task ShowTag(JointContext ctx, PKSystem target, ReplyFormat format = ReplyFormat.Standard)
+    public async Task ShowTag(JointContext ctx, PKSystem target, ReplyFormat format)
     {
         var isOwnSystem = ctx.System?.Id == target.Id;
 
@@ -222,7 +222,7 @@ public class SystemEditLogic
 
         await ctx.Reply($"{Emojis.Success} System description cleared.");
     }
-    public async Task ShowDescription(JointContext ctx, PKSystem target, ReplyFormat format = ReplyFormat.Standard)
+    public async Task ShowDescription(JointContext ctx, PKSystem target, ReplyFormat format)
     {
         ctx.CheckSystemPrivacy(target.Id, target.DescriptionPrivacy);
 
