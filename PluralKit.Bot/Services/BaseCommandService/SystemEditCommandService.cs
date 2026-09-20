@@ -5,7 +5,7 @@ using PluralKit.Core;
 
 namespace PluralKit.Bot;
 
-public class SystemEditLogic
+public class SystemEditCommandService
 {
     public async Task SetName(JointContext ctx, string name)
     {

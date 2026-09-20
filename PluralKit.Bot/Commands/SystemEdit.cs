@@ -15,19 +15,17 @@ namespace PluralKit.Bot;
 
 public class SystemEdit
 {
-    private readonly HttpClient _client;
     private readonly DataFileService _dataFiles;
     private readonly PrivateChannelService _dmCache;
     private readonly AvatarHostingService _avatarHosting;
-    private readonly SystemEditLogic _logic;
+    private readonly SystemEditCommandService _systemEditCommand;
 
-    public SystemEdit(DataFileService dataFiles, HttpClient client, PrivateChannelService dmCache, AvatarHostingService avatarHosting, SystemEditLogic logic)
+    public SystemEdit(DataFileService dataFiles, PrivateChannelService dmCache, AvatarHostingService avatarHosting, SystemEditCommandService systemEditCommand)
     {
         _dataFiles = dataFiles;
-        _client = client;
         _dmCache = dmCache;
         _avatarHosting = avatarHosting;
-        _logic = logic;
+        _systemEditCommand = systemEditCommand;
     }
 
     public async Task Name(Context ctx, PKSystem target)
@@ -36,17 +34,17 @@ public class SystemEdit
 
         // if there's nothing next or what's next is "raw"/"plaintext" we're doing a query, so check for null
         if (!ctx.HasNext(false) || format != ReplyFormat.Standard)
-            await _logic.ShowName(ctx, target, format);
+            await _systemEditCommand.ShowName(ctx, target, format);
 
         ctx.CheckSystem().CheckOwnSystem(target);
 
         if (ctx.MatchClear() && await ctx.ConfirmClear("your system's name"))
-            await _logic.ClearName(ctx);
+            await _systemEditCommand.ClearName(ctx);
         else
         {
             var newSystemName = ctx.RemainderOrNull(false).NormalizeLineEndSpacing();
 
-            await _logic.SetName(ctx, newSystemName);
+            await _systemEditCommand.SetName(ctx, newSystemName);
         }
     }
 
@@ -58,17 +56,17 @@ public class SystemEdit
 
         // if there's nothing next or what's next is "raw"/"plaintext" we're doing a query, so check for null
         if (!ctx.HasNext(false) || format != ReplyFormat.Standard)
-            await _logic.ShowServerName(ctx, target, format);
+            await _systemEditCommand.ShowServerName(ctx, target, format);
 
         ctx.CheckSystem().CheckOwnSystem(target);
 
         if (ctx.MatchClear() && await ctx.ConfirmClear("your system's name for this server"))
-            await _logic.ClearServerName(ctx);
+            await _systemEditCommand.ClearServerName(ctx);
         else
         {
             var newSystemGuildName = ctx.RemainderOrNull(false).NormalizeLineEndSpacing();
 
-            await _logic.SetServerName(ctx, newSystemGuildName);
+            await _systemEditCommand.SetServerName(ctx, newSystemGuildName);
         }
     }
 
@@ -79,19 +77,19 @@ public class SystemEdit
 
         // if there's nothing next or what's next is "raw"/"plaintext" we're doing a query, so check for null
         if (!ctx.HasNext(false) || format != ReplyFormat.Standard)
-            await _logic.ShowDescription(ctx, target, format);
+            await _systemEditCommand.ShowDescription(ctx, target, format);
 
         ctx.CheckSystem().CheckOwnSystem(target);
 
         if (ctx.MatchClear() && await ctx.ConfirmClear("your system's description"))
         {
-            await _logic.ClearDescription(ctx);
+            await _systemEditCommand.ClearDescription(ctx);
         }
         else
         {
             var newDescription = ctx.RemainderOrNull(false).NormalizeLineEndSpacing();
 
-            await _logic.SetDescription(ctx, newDescription);
+            await _systemEditCommand.SetDescription(ctx, newDescription);
         }
     }
 
@@ -155,18 +153,18 @@ public class SystemEdit
 
         // if there's nothing next or what's next is "raw"/"plaintext" we're doing a query
         if (!ctx.HasNext(false) || format != ReplyFormat.Standard)
-            await _logic.ShowTag(ctx, target, format);
+            await _systemEditCommand.ShowTag(ctx, target, format);
 
         ctx.CheckSystem().CheckOwnSystem(target);
 
         // Currently the slash command version doesn't confirm so the confirmation is here
         // It should move into the logic if that changes
         if (ctx.MatchClear() && await ctx.ConfirmClear("your system's tag"))
-            await _logic.ClearTag(ctx);
+            await _systemEditCommand.ClearTag(ctx);
         else
         {
             var newTag = ctx.RemainderOrNull(false).NormalizeLineEndSpacing();
-            await _logic.SetTag(ctx, newTag);
+            await _systemEditCommand.SetTag(ctx, newTag);
         }
     }
 

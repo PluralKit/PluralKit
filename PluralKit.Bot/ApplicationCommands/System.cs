@@ -2,23 +2,23 @@ namespace PluralKit.Bot;
 
 public class ApplicationCommandSystem
 {
-    private readonly SystemLogic _logic;
+    private readonly SystemCommandService _systemCommand;
 
-    public ApplicationCommandSystem(SystemLogic logic)
+    public ApplicationCommandSystem(SystemCommandService systemCommand)
     {
-        _logic = logic;
+        _systemCommand = systemCommand;
     }
 
     public async Task New(InteractionContext ctx)
     {
         var systemName = ctx.OptionValue("name")?.ToString();
 
-        await _logic.New(ctx, systemName, slashcommand: true);
+        await _systemCommand.New(ctx, systemName, slashcommand: true);
     }
 
     public async Task Query(InteractionContext ctx)
     {
-        await _logic.Query(ctx, await ctx.MatchSystem());
+        await _systemCommand.Query(ctx, await ctx.MatchSystem());
     }
 
 }

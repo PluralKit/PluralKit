@@ -135,8 +135,8 @@ public class BotModule: Module
         builder.RegisterType<ApplicationCommandSystemEdit>().AsSelf();
 
         // Joint command logic
-        builder.RegisterType<SystemLogic>().AsSelf();
-        builder.RegisterType<SystemEditLogic>().AsSelf();
+        builder.RegisterType<SystemCommandService>().AsSelf();
+        builder.RegisterType<SystemEditCommandService>().AsSelf();
 
         // Bot core
         builder.RegisterType<Bot>().AsSelf().SingleInstance();

@@ -4,11 +4,11 @@ namespace PluralKit.Bot;
 
 public class ApplicationCommandSystemEdit
 {
-    private readonly SystemEditLogic _logic;
+    private readonly SystemEditCommandService _systemEditCommand;
 
-    public ApplicationCommandSystemEdit(SystemEditLogic logic)
+    public ApplicationCommandSystemEdit(SystemEditCommandService systemEditCommand)
     {
-        _logic = logic;
+        _systemEditCommand = systemEditCommand;
     }
 
     public async Task SetShowClear(InteractionContext ctx, Func<InteractionContext, string, Task> setFunc, Func<InteractionContext, Task> clearFunc, Func<InteractionContext, PKSystem, ReplyFormat, Task> showFunc, string field)
@@ -76,15 +76,15 @@ public class ApplicationCommandSystemEdit
     }
 
     public async Task Name(InteractionContext ctx) =>
-        await SetShowClear(ctx, _logic.SetName, _logic.ClearName, _logic.ShowName, "name");
+        await SetShowClear(ctx, _systemEditCommand.SetName, _systemEditCommand.ClearName, _systemEditCommand.ShowName, "name");
 
     public async Task ServerName(InteractionContext ctx) =>
-        await GuildSetShowClear(ctx, _logic.SetServerName, _logic.ClearServerName, _logic.ShowServerName, "servername");
+        await GuildSetShowClear(ctx, _systemEditCommand.SetServerName, _systemEditCommand.ClearServerName, _systemEditCommand.ShowServerName, "servername");
 
     public async Task Tag(InteractionContext ctx) =>
-        await SetShowClear(ctx, _logic.SetTag, _logic.ClearTag, _logic.ShowTag, "tag");
+        await SetShowClear(ctx, _systemEditCommand.SetTag, _systemEditCommand.ClearTag, _systemEditCommand.ShowTag, "tag");
 
     public async Task Description(InteractionContext ctx) =>
-        await SetShowClear(ctx, _logic.SetDescription, _logic.ClearDescription, _logic.ShowDescription, "description");
+        await SetShowClear(ctx, _systemEditCommand.SetDescription, _systemEditCommand.ClearDescription, _systemEditCommand.ShowDescription, "description");
 
 }

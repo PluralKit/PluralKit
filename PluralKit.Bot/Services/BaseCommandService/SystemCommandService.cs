@@ -5,13 +5,13 @@ namespace PluralKit.Bot;
 using Myriad.Builders;
 using Myriad.Types;
 
-public class SystemLogic
+public class SystemCommandService
 {
 
     private readonly ModelRepository _repo;
     private readonly EmbedService _embeds;
 
-    public SystemLogic(ModelRepository repo, EmbedService embeds)
+    public SystemCommandService(ModelRepository repo, EmbedService embeds)
     {
         _repo = repo;
         _embeds = embeds;
