@@ -7,8 +7,132 @@ namespace PluralKit.Bot;
 
 public class SystemEditLogic
 {
+    public async Task SetName(JointContext ctx, string name)
+    {
+        if (name.Length > Limits.MaxSystemNameLength)
+            throw Errors.StringTooLongError("System name", name.Length, Limits.MaxSystemNameLength);
+
+        await ctx.Repository.UpdateSystem(ctx.System.Id, new SystemPatch { Name = name });
+
+        await ctx.Reply($"{Emojis.Success} System name changed (using {name.Length}/{Limits.MaxSystemNameLength} characters).");
+    }
+    public async Task ClearName(JointContext ctx)
+    {
+        await ctx.Repository.UpdateSystem(ctx.System.Id, new SystemPatch { Name = null });
+
+        await ctx.Reply($"{Emojis.Success} System name cleared.");
+    }
+    public async Task ShowName(JointContext ctx, PKSystem target, ReplyFormat format = ReplyFormat.Standard)
+    {
+        ctx.CheckSystemPrivacy(target.Id, target.NamePrivacy);
+        var isOwnSystem = target.Id == ctx.System?.Id;
+
+        var noNameSetMessage = $"{(isOwnSystem ? "Your" : "This")} system does not have a name set.";
+        if (isOwnSystem)
+            noNameSetMessage += $" Type `{ctx.DefaultPrefix}system name <name>` to set one.";
+        if (target.Name == null)
+        {
+            await ctx.Reply(noNameSetMessage);
+            return;
+        }
+
+        switch (format)
+        {
+            case ReplyFormat.Raw:
+                await ctx.Reply($"```\n{target.Name}\n```");
+                return;
+            case ReplyFormat.Plaintext:
+                var eb = new EmbedBuilder()
+                                .Description($"Showing name for system `{target.DisplayHid(ctx.Config)}`");
+                await ctx.Reply(target.Name, embed: eb.Build());
+                return;
+            default:
+                await ctx.Reply(
+                $"{(isOwnSystem ? "Your" : "This")} system's name is currently **{target.Name}**."
+                + (isOwnSystem ? $" Type `{ctx.DefaultPrefix}system name -clear` to clear it."
+                + $" Using {target.Name.Length}/{Limits.MaxSystemNameLength} characters." : ""));
+                return;
+        }
+    }
+
+    public async Task SetServerName(JointContext ctx, string name, ulong guildId = 0)
+    {
+        if (guildId == 0)
+        {
+            ctx.CheckGuildContext();
+            guildId = ctx.Guild.Id;
+        }
+
+        var guild = await ctx.Rest.GetGuildOrNull(guildId) ?? throw Errors.GuildNotFound(guildId);
+
+        if (name.Length > Limits.MaxSystemNameLength)
+            throw Errors.StringTooLongError("System name for this server", name.Length, Limits.MaxSystemNameLength);
+
+        await ctx.Repository.UpdateSystemGuild(ctx.System.Id, guildId, new SystemGuildPatch { DisplayName = name });
+
+        await ctx.Reply($"{Emojis.Success} System name for {(guildId == ctx.Guild?.Id ? "this server" : $"server \"{guild.Name}\"")} changed (using {name.Length}/{Limits.MaxSystemNameLength} characters).");
+    }
+    public async Task ClearServerName(JointContext ctx, ulong guildId = 0)
+    {
+        if (guildId == 0)
+        {
+            ctx.CheckGuildContext();
+            guildId = ctx.Guild.Id;
+        }
+
+        var guild = await ctx.Rest.GetGuildOrNull(guildId) ?? throw Errors.GuildNotFound(guildId);
+
+        await ctx.Repository.UpdateSystemGuild(ctx.System.Id, guildId, new SystemGuildPatch { DisplayName = null });
+
+        await ctx.Reply($"{Emojis.Success} System name for {(guildId == ctx.Guild?.Id ? "this server" : $"server \"{guild.Name}\"")} cleared.");
+    }
+    public async Task ShowServerName(JointContext ctx, PKSystem target, ReplyFormat format = ReplyFormat.Standard, ulong guildId = 0)
+    {
+        if (guildId == 0)
+        {
+            ctx.CheckGuildContext();
+            guildId = ctx.Guild.Id;
+        }
+
+        var guild = await ctx.Rest.GetGuildOrNull(guildId) ?? throw Errors.GuildNotFound(guildId);
+
+        var isOwnSystem = target.Id == ctx.System?.Id;
+
+        var noNameSetMessage = $"{(isOwnSystem ? "Your" : "This")} system does not have a name specific to this server.";
+        if (isOwnSystem)
+            noNameSetMessage += $" Type `{ctx.DefaultPrefix}system servername <name>` to set one.";
+
+        var settings = await ctx.Repository.GetSystemGuild(guildId, target.Id);
+
+        if (settings.DisplayName == null)
+        {
+            await ctx.Reply(noNameSetMessage);
+            return;
+        }
+
+        switch (format)
+        {
+            case ReplyFormat.Raw:
+                await ctx.Reply($"```\n{settings.DisplayName}\n```");
+                return;
+            case ReplyFormat.Plaintext:
+                var eb = new EmbedBuilder()
+                                .Description($"Showing servername for system `{target.DisplayHid(ctx.Config)}`{(guildId == ctx.Guild?.Id ? "" : $" in server \"{guild.Name}\"")}");
+                await ctx.Reply(settings.DisplayName, embed: eb.Build());
+                return;
+            default:
+                var clearMessage = $" Type `{ctx.DefaultPrefix}system servername {(ctx.DefaultPrefix == "/" ? $"clear{(guildId == ctx.Guild?.Id ? "" : $" server-id:{guildId}")}" : "-clear")}` to clear it.";
+                await ctx.Reply(
+                                $"{(isOwnSystem ? "Your" : "This")} system's name for {(guildId == ctx.Guild?.Id ? "this server" : $"server \"{guild.Name}\"")} is currently **{settings.DisplayName}**."
+                                + (isOwnSystem ? clearMessage
+                                + $" Using {settings.DisplayName.Length}/{Limits.MaxSystemNameLength} characters." : ""));
+                return;
+        }
+    }
+
     public async Task SetTag(JointContext ctx, string newTag)
     {
+        // I don't think this null check will ever actually get hit but I'm too scared to remove it
         if (newTag != null)
             if (newTag.Length > Limits.MaxSystemTagLength)
                 throw Errors.StringTooLongError("System tag", newTag.Length, Limits.MaxSystemTagLength);
@@ -34,7 +158,6 @@ public class SystemEditLogic
 
         await ctx.Reply(replyStr);
     }
-
     public async Task ClearTag(JointContext ctx)
     {
         await ctx.Repository.UpdateSystem(ctx.System.Id, new SystemPatch { Tag = null });
@@ -53,7 +176,6 @@ public class SystemEditLogic
 
         await ctx.Reply(replyStr);
     }
-
     public async Task ShowTag(JointContext ctx, PKSystem target, ReplyFormat format = ReplyFormat.Standard)
     {
         var isOwnSystem = ctx.System?.Id == target.Id;
@@ -94,14 +216,12 @@ public class SystemEditLogic
 
         await ctx.Reply($"{Emojis.Success} System description changed (using {newDescription.Length}/{Limits.MaxDescriptionLength} characters).");
     }
-
     public async Task ClearDescription(JointContext ctx)
     {
         await ctx.Repository.UpdateSystem(ctx.System.Id, new SystemPatch { Description = null });
 
         await ctx.Reply($"{Emojis.Success} System description cleared.");
     }
-
     public async Task ShowDescription(JointContext ctx, PKSystem target, ReplyFormat format = ReplyFormat.Standard)
     {
         ctx.CheckSystemPrivacy(target.Id, target.DescriptionPrivacy);
