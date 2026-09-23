@@ -142,20 +142,10 @@ public class MessageCreated: IEventHandler<MessageCreateEvent>
 
             var ctx = new Context(_services, shardId, guild, channel, evt, cmdStart, system, config, guildConfig, _config.Prefixes ?? BotConfig.DefaultPrefixes);
 
-            // If we're in a guild we need to check if this channel is on the command blacklist
-            if (guild is not null)
-            {
-                // If we're in a thread we want to check the root channel and the thread
-                var rootChannel = channel.IsThread() ? await _rest.GetChannelOrNull(channel.ParentId!.Value) : channel;
-                var msgCtx = await _repo.GetMessageContext(evt.Author.Id, guild.Id, rootChannel.Id, channel.Id != rootChannel.Id ? channel.Id : default);
-                // If the channel is in the command blacklist, then check if author has Manage Server
-                // If they do, we let the command run regardless
-                // If they don't a PK Error gets thrown here and caught in the catch
-                if (msgCtx.InCommandBlacklist)
-                    await ctx.CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server"); ;
-            }
+            var rootChannel = ctx.Channel.IsThread() ? ctx.Channel.ParentId!.Value : ctx.Channel.Id;
+            var msgCtx = await ctx.Repository.GetMessageContext(ctx.Author.Id, ctx.Guild.Id, rootChannel, ctx.Channel.Id != rootChannel ? ctx.Channel.Id : default);
 
-            await _tree.ExecuteCommand(ctx);
+            await _tree.ExecuteCommand(ctx, msgCtx, await ctx.UserPermissions);
         }
         catch (PKError)
         {
