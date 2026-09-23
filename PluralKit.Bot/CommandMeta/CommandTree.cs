@@ -1,11 +1,32 @@
+using Myriad.Types;
 using PluralKit.Core;
 
 namespace PluralKit.Bot;
 
 public partial class CommandTree
 {
-    public Task ExecuteCommand(Context ctx)
+    public Task ExecuteCommand(Context ctx, MessageContext msgCtx, PermissionSet authorPerms)
     {
+        if (ctx.Match("edit", "e"))
+            return ctx.Execute<ProxiedMessage>(MessageEdit, m => m.EditMessage(ctx, false));
+        if (ctx.Match("x"))
+            return ctx.Execute<ProxiedMessage>(MessageEdit, m => m.EditMessage(ctx, true));
+        if (ctx.Match("reproxy", "rp", "crimes", "crime"))
+            return ctx.Execute<ProxiedMessage>(MessageReproxy, m => m.ReproxyMessage(ctx));
+
+        // If we're in a guild we need to check if this channel is on the command blacklist
+        // The above three commands are exceptions and should always go through
+        // Since they get deleted anyway
+        if (ctx.Guild is not null)
+        {
+            // If the channel is in the command blacklist and the author doesn't have Manage Server
+            // we react to the message with :x: to show we saw it and do not proxy or respond
+            // If the author has Manage Server we let the command go through as normal
+            if (msgCtx.InCommandBlacklist && (authorPerms & PermissionSet.ManageGuild) != PermissionSet.ManageGuild)
+            {
+                return ctx.Rest.CreateReaction(ctx.Channel.Id, ctx.Message.Id, new Emoji { Name = Emojis.Error });
+            }
+        }
         if (ctx.Match("system", "s", "account", "acc"))
             return HandleSystemCommand(ctx);
         if (ctx.Match("member", "m"))
@@ -48,12 +69,6 @@ public partial class CommandTree
             return ctx.Execute<Help>(Explain, m => m.Explain(ctx));
         if (ctx.Match("message", "msg", "messageinfo"))
             return ctx.Execute<ProxiedMessage>(Message, m => m.GetMessage(ctx));
-        if (ctx.Match("edit", "e"))
-            return ctx.Execute<ProxiedMessage>(MessageEdit, m => m.EditMessage(ctx, false));
-        if (ctx.Match("x"))
-            return ctx.Execute<ProxiedMessage>(MessageEdit, m => m.EditMessage(ctx, true));
-        if (ctx.Match("reproxy", "rp", "crimes", "crime"))
-            return ctx.Execute<ProxiedMessage>(MessageReproxy, m => m.ReproxyMessage(ctx));
         if (ctx.Match("log"))
             if (ctx.Match("channel"))
                 return ctx.Execute<ServerConfig>(LogChannel, m => m.SetLogChannel(ctx), true);
