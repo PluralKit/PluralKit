@@ -183,7 +183,7 @@ public class EmbedService
             {
                 Type = ComponentType.Container,
                 AccentColor = system.Color?.ToDiscordColor(),
-                Components = [ ..header, ..switchComponent, linkedAccounts, ..descComponents ],
+                Components = [.. header, .. switchComponent, linkedAccounts, .. descComponents],
             },
             new MessageComponent()
             {
@@ -371,6 +371,21 @@ public class EmbedService
             headerText += $"\n**Message count:** {member.MessageCount}";
 
         List<MessageComponent> extraData = [];
+        if (member.Aliases.Count > 0 && member.AliasPrivacy.CanAccess(ctx))
+        {
+            var aliases = string.Join("\n", member.Aliases);
+            extraData.Add(new MessageComponent
+            {
+                Type = ComponentType.Separator,
+            });
+
+            extraData.Add(new MessageComponent
+            {
+                Type = ComponentType.Text,
+                Content = $"**Aliases:**\n{aliases.Truncate(1024)}",
+            });
+        }
+
         if (member.HasProxyTags && member.ProxyPrivacy.CanAccess(ctx))
         {
             extraData.Add(new MessageComponent
@@ -460,7 +475,7 @@ public class EmbedService
             {
                 Type = ComponentType.Container,
                 AccentColor = member.Color?.ToDiscordColor(),
-                Components = [ ..header, ..extraData, ..descComponents ],
+                Components = [.. header, .. extraData, .. descComponents],
             },
             new MessageComponent()
             {
@@ -537,6 +552,11 @@ public class EmbedService
             eb.Field(new Embed.Field("Pronouns", pronouns.Truncate(1024), true));
         if (member.MessageCountFor(ctx) is { } count && count > 0)
             eb.Field(new Embed.Field("Message Count", member.MessageCount.ToString(), true));
+        if (member.Aliases.Count > 0 && member.AliasPrivacy.CanAccess(ctx))
+        {
+            var aliases = string.Join("\n", member.Aliases);
+            eb.Field(new Embed.Field("Aliases", aliases.Truncate(1024), true));
+        }
         if (member.HasProxyTags && member.ProxyPrivacy.CanAccess(ctx))
             eb.Field(new Embed.Field("Proxy Tags", member.ProxyTagsString("\n").Truncate(1024), true));
         // --- For when this gets added to the member object itself or however they get added
@@ -650,7 +670,7 @@ public class EmbedService
             {
                 Type = ComponentType.Container,
                 AccentColor = target.Color?.ToDiscordColor(),
-                Components = [ ..header, ..descComponents ],
+                Components = [.. header, .. descComponents],
             },
             new MessageComponent()
             {
@@ -908,11 +928,11 @@ public class EmbedService
 
         return [
             new MessageComponent()
-    {
-        Type = ComponentType.Container,
+            {
+                Type = ComponentType.Container,
                 Components = [
                     header,
-                    ..body
+                    .. body
                 ]
             },
             footer
@@ -1095,10 +1115,11 @@ public class EmbedService
         };
 
         return [
-            new MessageComponent(){
+            new MessageComponent()
+            {
                 Type = ComponentType.Container,
                 Components = [
-                    ..body
+                    .. body
                 ]
             },
             footer

@@ -57,12 +57,13 @@ public class MemberEdit
         if (newName.Length > Limits.MaxMemberNameLength)
             throw Errors.StringTooLongError("Member name", newName.Length, Limits.MaxMemberNameLength);
 
-        // Warn if there's already a member by this name
-        var existingMember = await ctx.Repository.GetMemberByName(ctx.System.Id, newName);
-        if (existingMember != null && existingMember.Id != target.Id)
+        // Warn if this name is already set as a name, display name, or alias on another member
+        var conflicts = await ctx.FindConflictingMembers(target.Id, newName);
+        if (conflicts.Count > 0)
         {
+            var conflictList = conflicts.Select(m => $"- **{m.NameFor(ctx)}** (`{m.DisplayHid(ctx.Config)}`)");
             var msg =
-                $"{Emojis.Warn} You already have a member in your system with the name \"{existingMember.NameFor(ctx)}\" (`{existingMember.DisplayHid(ctx.Config)}`). Do you want to rename this member to that name too?";
+                $"{Emojis.Warn} The following members already have this set as a name, display name, or alias:\n{string.Join('\n', conflictList)}\nDo you want to rename this member to that name too?";
             if (!await ctx.PromptYesNo(msg, "Rename")) throw new PKError("Member renaming cancelled.");
         }
 
@@ -508,6 +509,16 @@ public class MemberEdit
             if (newDisplayName.Length > Limits.MaxMemberNameLength)
                 throw Errors.StringTooLongError("Member display name", newDisplayName.Length, Limits.MaxMemberNameLength);
 
+            // Warn if this display name is already set as a name, display name, or alias on another member
+            var conflicts = await ctx.FindConflictingMembers(target.Id, newDisplayName);
+            if (conflicts.Count > 0)
+            {
+                var conflictList = conflicts.Select(m => $"- **{m.NameFor(ctx)}** (`{m.DisplayHid(ctx.Config)}`)");
+                var msg =
+                    $"{Emojis.Warn} The following members already have this set as a name, display name, or alias:\n{string.Join('\n', conflictList)}\nDo you want to set this member's display name to that too?";
+                if (!await ctx.PromptYesNo(msg, "Set")) throw new PKError("Display name change cancelled.");
+            }
+
             var patch = new MemberPatch { DisplayName = Partial<string>.Present(newDisplayName) };
             await ctx.Repository.UpdateMember(target.Id, patch);
 
@@ -793,7 +804,7 @@ public class MemberEdit
         {
             await ctx.Reply(embed: new EmbedBuilder()
                 .Title($"Current privacy settings for {target.NameFor(ctx)}")
-                .Field(new Embed.Field("Name (replaces name with display name if member has one)",
+                .Field(new Embed.Field("Name (replaces name with display name if member has one; also covers aliases)",
                     target.NamePrivacy.Explanation()))
                 .Field(new Embed.Field("Description", target.DescriptionPrivacy.Explanation()))
                 .Field(new Embed.Field("Banner", target.BannerPrivacy.Explanation()))
@@ -801,11 +812,12 @@ public class MemberEdit
                 .Field(new Embed.Field("Birthday", target.BirthdayPrivacy.Explanation()))
                 .Field(new Embed.Field("Pronouns", target.PronounPrivacy.Explanation()))
                 .Field(new Embed.Field("Proxy Tags", target.ProxyPrivacy.Explanation()))
+                .Field(new Embed.Field("Aliases", target.AliasPrivacy.Explanation()))
                 .Field(new Embed.Field("Meta (creation date, message count, last front, last message)",
                     target.MetadataPrivacy.Explanation()))
                 .Field(new Embed.Field("Visibility", target.MemberVisibility.Explanation()))
                 .Description(
-                    $"To edit privacy settings, use the command:\n`{ctx.DefaultPrefix}member <member> privacy <subject> <level>`\n\n- `subject` is one of `name`, `description`, `banner`, `avatar`, `birthday`, `pronouns`, `proxies`, `metadata`, `visibility`, or `all`\n- `level` is either `public` or `private`.")
+                    $"To edit privacy settings, use the command:\n`{ctx.DefaultPrefix}member <member> privacy <subject> <level>`\n\n- `subject` is one of `name`, `description`, `banner`, `avatar`, `birthday`, `pronouns`, `proxies`, `metadata`, `aliases`, `visibility`, or `all`\n- `level` is either `public` or `private`.")
                 .Build());
             return;
         }
@@ -840,6 +852,7 @@ public class MemberEdit
                 MemberPrivacySubject.Pronouns => "pronoun privacy",
                 MemberPrivacySubject.Birthday => "birthday privacy",
                 MemberPrivacySubject.Proxy => "proxy tag privacy",
+                MemberPrivacySubject.Aliases => "alias privacy",
                 MemberPrivacySubject.Metadata => "metadata privacy",
                 MemberPrivacySubject.Visibility => "visibility",
                 _ => throw new ArgumentOutOfRangeException($"Unknown privacy subject {subject}")
@@ -861,6 +874,8 @@ public class MemberEdit
                     "This member's pronouns are now hidden from other systems.",
                 (MemberPrivacySubject.Proxy, PrivacyLevel.Private) =>
                     "This member's proxy tags are now hidden from other systems.",
+                (MemberPrivacySubject.Aliases, PrivacyLevel.Private) =>
+                    "This member's aliases are now hidden from other systems.",
                 (MemberPrivacySubject.Metadata, PrivacyLevel.Private) =>
                     "This member's metadata (eg. created timestamp, message count, etc) is now hidden from other systems.",
                 (MemberPrivacySubject.Visibility, PrivacyLevel.Private) =>
@@ -880,6 +895,8 @@ public class MemberEdit
                     "This member's pronouns are no longer hidden from other systems.",
                 (MemberPrivacySubject.Proxy, PrivacyLevel.Public) =>
                     "This member's proxy tags are no longer hidden from other systems.",
+                (MemberPrivacySubject.Aliases, PrivacyLevel.Public) =>
+                    "This member's aliases are no longer hidden from other systems.",
                 (MemberPrivacySubject.Metadata, PrivacyLevel.Public) =>
                     "This member's metadata (eg. created timestamp, message count, etc) is no longer hidden from other systems.",
                 (MemberPrivacySubject.Visibility, PrivacyLevel.Public) =>

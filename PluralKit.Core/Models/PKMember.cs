@@ -54,6 +54,7 @@ public class PKMember
     public string Pronouns { get; private set; }
     public string Description { get; private set; }
     public ICollection<ProxyTag> ProxyTags { get; private set; }
+    public ICollection<string> Aliases { get; private set; }
     public bool KeepProxy { get; private set; }
     public bool Tts { get; private set; }
     public Instant Created { get; private set; }
@@ -70,6 +71,7 @@ public class PKMember
     public PrivacyLevel PronounPrivacy { get; private set; }
     public PrivacyLevel MetadataPrivacy { get; private set; }
     public PrivacyLevel ProxyPrivacy { get; private set; }
+    public PrivacyLevel AliasPrivacy { get; private set; }
     // public PrivacyLevel ColorPrivacy { get; private set; }
 
     /// Returns a formatted string representing the member's birthday, taking into account that a year of "0001" or "0004" is hidden
@@ -160,6 +162,8 @@ public static class PKMemberExt
         }
         o.Add("proxy_tags", tagArray);
 
+        o.Add("aliases", member.AliasPrivacy.CanAccess(ctx) ? new JArray(member.Aliases) : null);
+
         if (includePrivacy)
         {
             var p = new JObject();
@@ -173,6 +177,7 @@ public static class PKMemberExt
             p.Add("avatar_privacy", member.AvatarPrivacy.ToJsonString());
             p.Add("metadata_privacy", member.MetadataPrivacy.ToJsonString());
             p.Add("proxy_privacy", member.ProxyPrivacy.ToJsonString());
+            p.Add("alias_privacy", member.AliasPrivacy.ToJsonString());
 
             o.Add("privacy", p);
         }

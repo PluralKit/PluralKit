@@ -60,9 +60,13 @@ public static class DatabaseViewsExt
         {
             static string Filter(string column) =>
                 $"(position(lower(@filter) in lower(coalesce({column}, ''))) > 0)";
+            static string AliasFilter(string col) =>
+                $"(exists (select 1 from unnest({col}) as alias where position(lower(@filter) in lower(alias)) > 0))";
 
             var nameColumn = opts.Context == LookupContext.ByOwner ? "name" : "public_name";
-            query.Append($" and ({Filter(nameColumn)} or {Filter("display_name")}");
+            var aliasColumn = opts.Context == LookupContext.ByOwner ? "aliases" : "public_aliases";
+
+            query.Append($" and ({Filter(nameColumn)} or {Filter("display_name")} or {AliasFilter(aliasColumn)}");
             if (opts.SearchDescription)
             {
                 // We need to account for the possibility of description privacy when searching
