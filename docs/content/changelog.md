@@ -9,6 +9,17 @@ the below is a lightly edited copy of the changelog messages posted on discord. 
 
 a more complete list of code changes can be found [in the git repo](https://github.com/pluralkit/pluralkit/commits/main)
 
+## 2026-10-05
+
+### new/updated
+- You can now give members aliases that can be used in place of their name/id in commands
+- Member Alias Privacy
+- (Server admin command) More options for when to make proxied messages silent. The options are now "Always", "Never", "Match" (proxied message is silent if trigger message was silent), and "Invert" (proxied message is silent if trigger message was *not* marked silent)
+# fixed
+- The user that initiated confirmation prompts can now always cancel them
+- PK no longer gives an internal error if the `pk;s delete` message gets proxied
+- Reproxy inherits silent status from the message being reproxied
+
 ## 2025-09-08
 
 ### new/updated

@@ -5,6 +5,9 @@ permalink: /api/changelog
 
 # Version history
 
+* 2026-10-05
+  * Added key `aliases` to member model (under alias privacy)
+  * Added member privacy key `alias_privacy`
 * 2024-08-04
   * Added ratelimit scopes (separate limits for different sets of endpoints)
 * 2024-05-01
