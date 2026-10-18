@@ -90,8 +90,10 @@ public class MemberEdit
     {
         ctx.CheckSystemPrivacy(target.System, target.DescriptionPrivacy);
 
+        var isOwnSystem = ctx.System?.Id == target.System;
+
         var noDescriptionSetMessage = "This member does not have a description set.";
-        if (ctx.System?.Id == target.System)
+        if (isOwnSystem)
             noDescriptionSetMessage +=
                 $" To set one, type `{ctx.DefaultPrefix}member {target.Reference(ctx)} description <description>`.";
 
@@ -124,8 +126,8 @@ public class MemberEdit
                 .Title("Member description")
                 .Description(target.Description)
                 .Field(new Embed.Field("\u200B",
-                    $"To print the description with formatting, type `{ctx.DefaultPrefix}member {target.Reference(ctx)} description -raw`."
-                    + (ctx.System?.Id == target.System
+                    $"To print the description with formatting, type `{ctx.DefaultPrefix}member {target.Reference(ctx, isOwnSystem)} description -raw`."
+                    + (isOwnSystem
                         ? $" To clear it, type `{ctx.DefaultPrefix}member {target.Reference(ctx)} description -clear`."
                         + $" Using {target.Description.Length}/{Limits.MaxDescriptionLength} characters."
                         : "")))
@@ -156,8 +158,9 @@ public class MemberEdit
 
     public async Task Pronouns(Context ctx, PKMember target)
     {
+        var isOwnSystem = ctx.System?.Id == target.System;
         var noPronounsSetMessage = "This member does not have pronouns set.";
-        if (ctx.System?.Id == target.System)
+        if (isOwnSystem)
             noPronounsSetMessage += $" To set some, type `{ctx.DefaultPrefix}member {target.Reference(ctx)} pronouns <pronouns>`.";
 
         ctx.CheckSystemPrivacy(target.System, target.PronounPrivacy);
@@ -188,8 +191,8 @@ public class MemberEdit
         if (!ctx.HasNext(false))
         {
             await ctx.Reply(
-                $"**{target.NameFor(ctx)}**'s pronouns are **{target.Pronouns}**.\nTo print the pronouns with formatting, type `{ctx.DefaultPrefix}member {target.Reference(ctx)} pronouns -raw`."
-                + (ctx.System?.Id == target.System
+                $"**{target.NameFor(ctx)}**'s pronouns are **{target.Pronouns}**.\nTo print the pronouns with formatting, type `{ctx.DefaultPrefix}member {target.Reference(ctx, isOwnSystem)} pronouns -raw`."
+                + (isOwnSystem
                     ? $" To clear them, type `{ctx.DefaultPrefix}member {target.Reference(ctx)} pronouns -clear`."
                     + $" Using {target.Pronouns.Length}/{Limits.MaxPronounsLength} characters."
                     : ""));
@@ -479,7 +482,7 @@ public class MemberEdit
         if (!ctx.HasNext(false))
         {
             var eb = await CreateMemberNameInfoEmbed(ctx, target);
-            var reference = target.Reference(ctx);
+            var reference = target.Reference(ctx, isOwner);
             if (ctx.System?.Id == target.System)
                 eb.Description(
                     $"To change display name, type `{ctx.DefaultPrefix}member {reference} displayname <display name>`.\n"

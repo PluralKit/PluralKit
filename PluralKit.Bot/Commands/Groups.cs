@@ -211,8 +211,10 @@ public class Groups
     {
         ctx.CheckSystemPrivacy(target.System, target.DescriptionPrivacy);
 
+        var isOwnSystem = ctx.System?.Id == target.System;
+
         var noDescriptionSetMessage = "This group does not have a description set.";
-        if (ctx.System?.Id == target.System)
+        if (isOwnSystem)
             noDescriptionSetMessage +=
                 $" To set one, type `{ctx.DefaultPrefix}group {target.Reference(ctx)} description <description>`.";
 
@@ -245,8 +247,8 @@ public class Groups
                 .Title("Group description")
                 .Description(target.Description)
                 .Field(new Embed.Field("\u200B",
-                    $"To print the description with formatting, type `{ctx.DefaultPrefix}group {target.Reference(ctx)} description -raw`."
-                    + (ctx.System?.Id == target.System
+                    $"To print the description with formatting, type `{ctx.DefaultPrefix}group {target.Reference(ctx, isOwnSystem)} description -raw`."
+                    + (isOwnSystem
                         ? $" To clear it, type `{ctx.DefaultPrefix}group {target.Reference(ctx)} description -clear`."
                         : "")
                         + $" Using {target.Description.Length}/{Limits.MaxDescriptionLength} characters."))

@@ -75,11 +75,11 @@ public class MemberAvatar
 
             if (location == MemberAvatarLocation.MemberWebhook)
                 throw new PKError(
-                    $"This member does not have a proxy avatar set. Type `{ctx.DefaultPrefix}member {target.Reference(ctx)} avatar` to see their global avatar.");
+                    $"This member does not have a proxy avatar set. Type `{ctx.DefaultPrefix}member {target.Reference(ctx, ctx.System?.Id == target.System)} avatar` to see their global avatar.");
 
             if (location == MemberAvatarLocation.Server)
                 throw new PKError(
-                    $"This member does not have a server avatar set. Type `{ctx.DefaultPrefix}member {target.Reference(ctx)} avatar` to see their global avatar.");
+                    $"This member does not have a server avatar set. Type `{ctx.DefaultPrefix}member {target.Reference(ctx, ctx.System?.Id == target.System)} avatar` to see their global avatar.");
         }
 
         var field = location.Name();

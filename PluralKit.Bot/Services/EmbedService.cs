@@ -611,7 +611,7 @@ public class EmbedService
             if (system.Id == ctx.System?.Id && memberCount == 0)
                 headerText += $" (add one with `{ctx.DefaultPrefix}group {target.Reference(ctx)} add <member>`!)";
             else if (memberCount > 0)
-                headerText += $" (see `{ctx.DefaultPrefix}group {target.Reference(ctx)} list`)";
+                headerText += $" (see `{ctx.DefaultPrefix}group {target.Reference(ctx, ctx.System?.Id == target.System)} list`)";
         }
 
         List<MessageComponent> descComponents = [];
@@ -739,10 +739,7 @@ public class EmbedService
                     $"Add one with `{ctx.DefaultPrefix}group {target.Reference(ctx)} add <member>`!"));
             else
             {
-                var name = pctx == LookupContext.ByOwner
-                    ? target.Reference(ctx)
-                    : target.DisplayHid(ctx.Config);
-                eb.Field(new Embed.Field($"Members ({memberCount})", $"(see `{ctx.DefaultPrefix}group {name} list`)"));
+                eb.Field(new Embed.Field($"Members ({memberCount})", $"(see `{ctx.DefaultPrefix}group {target.Reference(ctx, ctx.System?.Id == target.System)} list`)"));
             }
         }
 

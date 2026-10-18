@@ -24,8 +24,8 @@ public static class ModelUtils
     public static string DisplayName(this PKMember member) =>
         member.DisplayName ?? member.Name;
 
-    public static string Reference(this PKMember member, Context ctx) => EntityReference(member.DisplayHid(ctx.Config), member.NameFor(ctx));
-    public static string Reference(this PKGroup group, Context ctx) => EntityReference(group.DisplayHid(ctx.Config), group.NameFor(ctx));
+    public static string Reference(this PKMember member, Context ctx, bool isOwner = true) => EntityReference(member.DisplayHid(ctx.Config), member.NameFor(ctx), isOwner);
+    public static string Reference(this PKGroup group, Context ctx, bool isOwner = true) => EntityReference(group.DisplayHid(ctx.Config), group.NameFor(ctx), isOwner);
 
 
     public static string DisplayHid(this PKSystem system, SystemConfig? cfg = null, bool isList = false) => HidTransform(system.Hid, cfg, isList);
@@ -39,11 +39,15 @@ public static class ModelUtils
             isList && shouldPad ? (cfg?.HidListPadding ?? SystemConfig.HidPadFormat.None) : SystemConfig.HidPadFormat.None // padding only on lists
         );
 
-    private static string EntityReference(string hid, string name)
+    private static string EntityReference(string hid, string name, bool isOwner)
     {
         bool IsSimple(string s) =>
             // No spaces, no symbols, allow single quote but not at the start
             Regex.IsMatch(s, "^[\\w\\d\\-_'?]+$") && !s.StartsWith("'");
+
+        // If the one running the command doesn't own the entity they can only reference it with hid
+        if (!isOwner)
+            return hid;
 
         // If it's very long (>25 chars), always use hid
         if (name.Length >= 25)
