@@ -55,7 +55,7 @@ public class YesNoPrompt: BaseInteractive
         }
 
         Result = result;
-        await Finish(ctx);
+        await Finish(ctx, Message);
     }
 
     private bool MessagePredicate(MessageCreateEvent e)
@@ -82,7 +82,7 @@ public class YesNoPrompt: BaseInteractive
         return false;
     }
 
-    public new async Task Run()
+    public async Task Run()
     {
         // todo: can we split this up somehow so it doesn't need to be *completely* copied from BaseInteractive?
 
@@ -130,7 +130,7 @@ public class YesNoPrompt: BaseInteractive
         }
         finally
         {
-            await Finish();
+            await Finish(content: Message);
             Cleanup();
         }
     }

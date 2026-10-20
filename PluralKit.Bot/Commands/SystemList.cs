@@ -18,13 +18,27 @@ public class SystemList
         // - RenderMemberList checks the indivual privacy for each member (NameFor, etc)
         // the own system is always allowed to look up their list
         var opts = ctx.ParseListOptions(ctx.DirectLookupContextFor(target.Id), ctx.LookupContextFor(target.Id));
-        await ctx.RenderMemberList(
-            ctx.LookupContextFor(target.Id),
-            target.Id,
-            await GetEmbedTitle(target, opts, ctx),
-            target.Color,
-            opts
-        );
+
+        if (ctx.MatchFlag("show-embed", "se"))
+        {
+            await ctx.RenderMemberList(
+                ctx.LookupContextFor(target.Id),
+                target.Id,
+                await GetEmbedTitle(target, opts, ctx),
+                target.Color,
+                opts
+            );
+        }
+        else
+        {
+            await ctx.RenderCV2MemberList(
+                ctx.LookupContextFor(target.Id),
+                target.Id,
+                await GetEmbedTitle(target, opts, ctx),
+                target.Color,
+                opts
+            );
+        }
     }
 
     private async Task<string> GetEmbedTitle(PKSystem target, ListOptions opts, Context ctx)

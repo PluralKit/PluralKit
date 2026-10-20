@@ -17,4 +17,9 @@ public record MessageComponent
 
     public MessageComponent? Accessory { get; init; }
     public MessageComponent[]? Components { get; init; }
+    public string? Placeholder { get; init; }
+    public uint? MinLength { get; init; }
+    public uint? MaxLength { get; init; }
+    public MessageComponent? Component { get; init; }
+    public string? Value { get; init; }
 }

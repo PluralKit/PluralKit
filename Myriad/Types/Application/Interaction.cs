@@ -6,7 +6,8 @@ public record Interaction
     {
         Ping = 1,
         ApplicationCommand = 2,
-        MessageComponent = 3
+        MessageComponent = 3,
+        ModalSubmit = 5
     }
 
     public ulong Id { get; init; }

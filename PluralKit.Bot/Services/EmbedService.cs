@@ -15,7 +15,7 @@ namespace PluralKit.Bot;
 
 public class EmbedService
 {
-    public const string LEGACY_EMBED_WARNING = "\u26A0\uFE0F The \"legacy\" embeds for system/member/group cards are deprecated, and will be removed in future.";
+    public const string LEGACY_EMBED_WARNING = "\u26A0\uFE0F The \"legacy\" embed for this command is deprecated, and will be removed in future.";
 
     private readonly IDiscordCache _cache;
     private readonly IDatabase _db;

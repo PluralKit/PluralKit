@@ -42,10 +42,10 @@ public abstract class BaseInteractive
         return button;
     }
 
-    protected async Task Update(InteractionContext ctx)
+    protected async Task Update(InteractionContext ctx, string? content = null)
     {
         await ctx.Respond(InteractionResponse.ResponseType.UpdateMessage,
-            new InteractionApplicationCommandCallbackData { Components = GetComponents() });
+            new InteractionApplicationCommandCallbackData { Components = await GetComponents(content) });
     }
 
     protected async Task Error(InteractionContext ctx, PKError error)
@@ -53,42 +53,62 @@ public abstract class BaseInteractive
         await ctx.Reply(content: $"{Emojis.Error} {error.Message}");
     }
 
-    protected async Task Finish(InteractionContext? ctx = null)
+    protected async Task Finish(InteractionContext? ctx = null, string? content = null)
     {
         foreach (var button in _buttons)
             button.Disabled = true;
 
         if (ctx != null)
-            await Update(ctx);
+            await Update(ctx, content);
         else
             await _ctx.Rest.EditMessage(_message.ChannelId, _message.Id,
-                new MessageEditRequest { Components = GetComponents() });
+                new MessageEditRequest { Components = await GetComponents(content) });
 
         _tcs.TrySetResult();
     }
 
-    protected async Task Send(string? content = null, Embed? embed = null, AllowedMentions? mentions = null)
+    protected async Task Send(string? content = null, AllowedMentions? mentions = null)
     {
         _message = await _ctx.Rest.CreateMessage(_ctx.Channel.Id,
             new MessageRequest
             {
-                Content = content,
-                Embeds = embed != null ? new[] { embed } : null,
                 AllowedMentions = mentions,
-                Components = GetComponents()
+                Components = await GetComponents(content),
+                Flags = Message.MessageFlags.IsComponentsV2
+            });
+        if (_ctx.Guild != null)
+            await _ctx.Repository.AddCommandMessage(new Core.CommandMessage
+            {
+                Mid = _message.Id,
+                Guild = _ctx.Guild!.Id,
+                Channel = _ctx.Channel.Id,
+                Sender = _ctx.Author.Id,
+                OriginalMid = _ctx.Message.Id,
             });
     }
 
-    public MessageComponent[] GetComponents()
+    public virtual async Task<MessageComponent[]> GetComponents(string? content = null)
     {
-        return new MessageComponent[]
+        List<MessageComponent> components = [];
+        if (content != null)
         {
-            new()
+            components.Add(new()
+            {
+                Type = ComponentType.Text,
+                Content = content
+            });
+        }
+
+        foreach (var line in _buttons.Chunk(5))
+        {
+            components.Add(new()
             {
                 Type = ComponentType.ActionRow,
-                Components = _buttons.Select(b => b.ToMessageComponent()).ToArray()
-            }
-        };
+                Components = line.Select(b => b.ToMessageComponent()).ToArray()
+            });
+        }
+
+        return [.. components];
     }
 
     public void Setup(Context ctx)
@@ -100,7 +120,7 @@ public abstract class BaseInteractive
 
     public abstract Task Start();
 
-    public async Task Run()
+    public async Task Run(bool exceptionOnTimeout = true)
     {
         if (_running)
             throw new InvalidOperationException("Action is already running");
@@ -109,7 +129,7 @@ public abstract class BaseInteractive
         await Start();
 
         var cts = new CancellationTokenSource(Timeout.ToTimeSpan());
-        cts.Token.Register(() => _tcs.TrySetException(new TimeoutException("Action timed out")));
+        cts.Token.Register(exceptionOnTimeout ? () => _tcs.TrySetException(new TimeoutException("Action timed out")) : async () => await Finish());
 
         try
         {

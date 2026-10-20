@@ -39,6 +39,7 @@ public class InteractionCreated: IEventHandler<InteractionCreateEvent>
         switch (evt.Type)
         {
             case Interaction.InteractionType.MessageComponent:
+            case Interaction.InteractionType.ModalSubmit:
                 _logger.Information("Discord debug: got interaction with ID {id} from custom ID {custom_id}", evt.Id, evt.Data?.CustomId);
                 var customId = evt.Data?.CustomId;
                 if (customId == null) return;
@@ -46,7 +47,15 @@ public class InteractionCreated: IEventHandler<InteractionCreateEvent>
                 if (customId.Contains("help-menu"))
                     await Help.ButtonClick(ctx, (_config.Prefixes?[0] ?? BotConfig.DefaultPrefixes[0]));
                 else
-                    await _interactionDispatch.Dispatch(customId, ctx);
+                    try
+                    {
+                        await _interactionDispatch.Dispatch(customId, ctx);
+                    }
+                    catch (PKError e)
+                    {
+                        await ctx.Respond(InteractionResponse.ResponseType.ChannelMessageWithSource,
+                        new InteractionApplicationCommandCallbackData { Content = $"{Emojis.Error} {e.Message}", Flags = Message.MessageFlags.Ephemeral });
+                    }
 
                 break;
 

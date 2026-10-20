@@ -8,7 +8,8 @@ public record InteractionResponse
         ChannelMessageWithSource = 4,
         DeferredChannelMessageWithSource = 5,
         DeferredUpdateMessage = 6,
-        UpdateMessage = 7
+        UpdateMessage = 7,
+        Modal = 9,
     }
 
     public ResponseType Type { get; init; }

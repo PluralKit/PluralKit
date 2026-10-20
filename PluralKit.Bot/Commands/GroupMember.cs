@@ -78,8 +78,12 @@ public class GroupMember
         if (opts.Search != null)
             title.Append($" matching **{opts.Search.Truncate(100)}**");
 
-        await ctx.RenderGroupList(ctx.LookupContextFor(target.System), target.System, title.ToString(),
-            target.Color, opts);
+        if (ctx.MatchFlag("show-embed", "se"))
+            await ctx.RenderGroupList(ctx.LookupContextFor(target.System), target.System, title.ToString(),
+                target.Color, opts);
+        else
+            await ctx.RenderCV2GroupList(ctx.LookupContextFor(target.System), target.System, title.ToString(),
+                target.Color, opts);
     }
 
     public async Task AddRemoveMembers(Context ctx, PKGroup target, Groups.AddRemoveOperation op)
@@ -168,8 +172,12 @@ public class GroupMember
         if (opts.Search != null)
             title.Append($" matching **{opts.Search.Truncate(100)}**");
 
-        await ctx.RenderMemberList(ctx.LookupContextFor(target.System), target.System, title.ToString(),
-            target.Color, opts);
+        if (ctx.MatchFlag("show-embed", "se"))
+            await ctx.RenderMemberList(ctx.LookupContextFor(target.System), target.System, title.ToString(),
+                target.Color, opts);
+        else
+            await ctx.RenderCV2MemberList(ctx.LookupContextFor(target.System), target.System, title.ToString(),
+                target.Color, opts);
     }
 
     private async Task<PKSystem> GetGroupSystem(Context ctx, PKGroup target)

@@ -82,7 +82,8 @@ public static class ContextUtils
     }
 
     public static async Task Paginate<T>(this Context ctx, IAsyncEnumerable<T> items, int totalCount,
-        int itemsPerPage, string title, string color, Func<EmbedBuilder, IEnumerable<T>, Task> renderer)
+        int itemsPerPage, string title, string color, Func<EmbedBuilder, IEnumerable<T>, Task> renderer,
+        bool showDeprecatedWarning = false)
     {
         // TODO: make this generic enough we can use it in Choose<T> below
 
@@ -126,7 +127,7 @@ public static class ContextUtils
 
         try
         {
-            var msg = await ctx.Reply(embed: await MakeEmbedForPage(0));
+            var msg = await ctx.Reply(embed: await MakeEmbedForPage(0), text: showDeprecatedWarning ? EmbedService.LEGACY_EMBED_WARNING : null);
 
             // If we only have one (or no) page, don't bother with the reaction/pagination logic, lol
             if (pageCount <= 1) return;
@@ -220,6 +221,33 @@ public static class ContextUtils
         // which means we probably didn't add it in the first place, or permissions changed since then
         // either way, nothing to do here
         catch (ForbiddenException) { }
+    }
+
+    public static async Task PaginateCV2<T>(this Context ctx, IEnumerable<T> items, int totalCount,
+        int itemsPerPage, string title, string color, Func<IEnumerable<T>, List<MessageComponent>> renderer)
+    {
+
+        var pageCount = (int)Math.Ceiling(totalCount / (double)itemsPerPage);
+
+        async Task<MessageComponent[]> MakeComponentForPage(int page)
+        {
+
+            var titleField = new MessageComponent
+            {
+                Type = ComponentType.Text,
+                Content = "# " + (pageCount > 1 ? $"[{page + 1}/{pageCount}] {title}" : title),
+            };
+            return [titleField, .. renderer(items.Chunk(itemsPerPage).ElementAt(page))];
+        }
+
+        var list = new ListInteractive(ctx)
+        {
+            ContentBuilder = MakeComponentForPage,
+            Color = color,
+            PageCount = pageCount,
+        };
+
+        await list.Run(false);
     }
 
     public static async Task<T> Choose<T>(this Context ctx, string description, IList<T> items,

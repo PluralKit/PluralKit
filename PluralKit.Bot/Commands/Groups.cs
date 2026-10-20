@@ -495,13 +495,22 @@ public class Groups
         // - RenderGroupList checks the indivual privacy for each member (NameFor, etc)
         // the own system is always allowed to look up their list
         var opts = ctx.ParseListOptions(ctx.DirectLookupContextFor(system.Id), ctx.LookupContextFor(system.Id));
-        await ctx.RenderGroupList(
-            ctx.LookupContextFor(system.Id),
-            system.Id,
-            GetEmbedTitle(ctx, system, opts),
-            system.Color,
-            opts
-        );
+        if (ctx.MatchFlag("show-embed", "se"))
+            await ctx.RenderGroupList(
+                ctx.LookupContextFor(system.Id),
+                system.Id,
+                GetEmbedTitle(ctx, system, opts),
+                system.Color,
+                opts
+            );
+        else
+            await ctx.RenderCV2GroupList(
+                ctx.LookupContextFor(system.Id),
+                system.Id,
+                GetEmbedTitle(ctx, system, opts),
+                system.Color,
+                opts
+            );
     }
 
     private string GetEmbedTitle(Context ctx, PKSystem target, ListOptions opts)
