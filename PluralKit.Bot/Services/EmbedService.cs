@@ -378,7 +378,7 @@ public class EmbedService
             headerText += $"\n**Message count:** {count}";
 
         List<MessageComponent> extraData = [];
-        if (member.Aliases.Count > 0 && member.AliasPrivacy.CanAccess(ctx) && (opts == null || opts.IncludeAliases))
+        if (member.Aliases.Count > 0 && member.AliasPrivacy.CanAccess(ctx) && (opts == null || opts.IncludeValues[EntityField.Aliases]))
         {
             var aliases = string.Join("\n", member.Aliases);
 
@@ -396,7 +396,7 @@ public class EmbedService
             flattenedStr.Append($"**Aliases:**\n{aliases.Truncate(1024)}");
         }
 
-        if (member.HasProxyTags && member.ProxyPrivacy.CanAccess(ctx) && (opts == null || opts.IncludeProxyTags))
+        if (member.HasProxyTags && member.ProxyPrivacy.CanAccess(ctx) && (opts == null || opts.IncludeValues[EntityField.ProxyTags]))
         {
             extraData.Add(new MessageComponent
             {
@@ -412,7 +412,7 @@ public class EmbedService
             flattenedStr.Append($"\n**Proxy tags:**\n{member.ProxyTagsString("\n").Truncate(1024)}");
         }
 
-        if (groups.Count > 0 && (opts == null || opts.IncludeGroups))
+        if (groups.Count > 0 && (opts == null || opts.IncludeValues[EntityField.Groups]))
         {
             // More than 5 groups show in "compact" format without ID
             var content = groups.Count > 5
@@ -434,7 +434,7 @@ public class EmbedService
         }
 
         List<MessageComponent> descComponents = [];
-        if (member.DescriptionFor(ctx) is { } desc && !string.IsNullOrWhiteSpace(desc) && (opts == null || opts.IncludeDescription))
+        if (member.DescriptionFor(ctx) is { } desc && !string.IsNullOrWhiteSpace(desc) && (opts == null || opts.IncludeValues[EntityField.Description]))
         {
             descComponents.Add(new()
             {
@@ -477,7 +477,7 @@ public class EmbedService
             flattenedHeaderStr += "\n" + headerText;
         }
 
-        if (!string.IsNullOrWhiteSpace(avatar) && (opts == null || opts.IncludeAvatar))
+        if (!string.IsNullOrWhiteSpace(avatar) && (opts == null || opts.IncludeValues[EntityField.Avatar]))
             header = [
                 new MessageComponent()
                 {

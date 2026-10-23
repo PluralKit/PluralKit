@@ -63,33 +63,33 @@ public static class ContextListExt
 
         // Additional fields to include in the search results
         if (ctx.MatchFlag("with-last-switch", "with-last-fronted", "with-last-front", "wls", "wlf"))
-            p.IncludeLastSwitch = true;
+            p.IncludeValues[EntityField.LastSwitch] = true;
         if (ctx.MatchFlag("with-last-message", "with-last-proxy", "wlm", "wlp"))
-            p.IncludeLastMessage = true;
+            p.IncludeValues[EntityField.LastMessage] = true;
         if (ctx.MatchFlag("with-message-count", "wmc"))
-            p.IncludeMessageCount = true;
+            p.IncludeValues[EntityField.MessageCount] = true;
         if (ctx.MatchFlag("with-created", "wc"))
-            p.IncludeCreated = true;
+            p.IncludeValues[EntityField.CreationDate] = true;
         if (ctx.MatchFlag("with-avatar", "with-image", "with-icon", "wa", "wi", "ia", "ii", "img"))
-            p.IncludeAvatar = true;
+            p.IncludeValues[EntityField.Avatar] = true;
         if (ctx.MatchFlag("with-pronouns", "wp", "wprns"))
-            p.IncludePronouns = true;
+            p.IncludeValues[EntityField.Pronouns] = true;
         if (ctx.MatchFlag("with-displayname", "wdn"))
-            p.IncludeDisplayName = true;
+            p.IncludeValues[EntityField.Displayname] = true;
         if (ctx.MatchFlag("with-birthday", "wbd", "wb"))
-            p.IncludeBirthday = true;
+            p.IncludeValues[EntityField.Birthday] = true;
 
         // Always show the sort property, too (unless this is the short list and we are already showing something else)
-        if (p.Type != ListType.Short || p.includedCount == 0)
+        if (p.Type != ListType.Short || p.IncludedCount == 0)
         {
-            if (p.SortProperty == SortProperty.DisplayName) p.IncludeDisplayName = true;
-            if (p.SortProperty == SortProperty.MessageCount) p.IncludeMessageCount = true;
-            if (p.SortProperty == SortProperty.CreationDate) p.IncludeCreated = true;
-            if (p.SortProperty == SortProperty.LastSwitch) p.IncludeLastSwitch = true;
-            if (p.SortProperty == SortProperty.LastMessage) p.IncludeLastMessage = true;
-            if (p.SortProperty == SortProperty.Birthdate) p.IncludeBirthday = true;
+            if (p.SortProperty == SortProperty.DisplayName) p.IncludeValues[EntityField.Displayname] = true;
+            if (p.SortProperty == SortProperty.MessageCount) p.IncludeValues[EntityField.MessageCount] = true;
+            if (p.SortProperty == SortProperty.CreationDate) p.IncludeValues[EntityField.CreationDate] = true;
+            if (p.SortProperty == SortProperty.LastSwitch) p.IncludeValues[EntityField.LastSwitch] = true;
+            if (p.SortProperty == SortProperty.LastMessage) p.IncludeValues[EntityField.LastMessage] = true;
+            if (p.SortProperty == SortProperty.Birthdate) p.IncludeValues[EntityField.Birthday] = true;
             // If this is a short list and we went from 0 -> 1 included count here then we made the sort and includes match
-            if (p.Type == ListType.Short && p.includedCount == 1) p.SortIncludeMatch = true;
+            if (p.Type == ListType.Short && p.IncludedCount == 1) p.SortIncludeMatch = true;
         }
 
         // Make sure the options are valid
@@ -109,9 +109,9 @@ public static class ContextListExt
             .ToList();
 
         // Make the default match the behavior of the non-cv2 list
-        opts.IncludeProxyTags = true;
+        opts.IncludeValues[EntityField.ProxyTags] = true;
 
-        var footer = $"-# {opts.CreateFilterString()}. {"result".ToQuantity(members.Count)}.";
+        var footer = $"-# {opts.CreateFilterString()} {"result".ToQuantity(members.Count)}.";
 
         var itemsPerPage = opts.Type == ListType.Short ? 25 : 5;
         await ctx.PaginateCV2(title, color, Renderer, itemsPerPage, opts.Type == ListType.Short ? shortOptionsModal : longOptionsModal);
@@ -121,21 +121,11 @@ public static class ContextListExt
         {
             if (optsOverride != null)
             {
-                opts.ResetSortAndIncludes();
+                opts.ResetDynamicOptions();
 
                 var sortComponent = optsOverride.Components.First((x) => x.Component.CustomId == "sort_select").Component;
-                opts.SortProperty = sortComponent.Values[0] switch
-                {
-                    "displayname" => SortProperty.DisplayName,
-                    "id" => SortProperty.Hid,
-                    "count" => SortProperty.MessageCount,
-                    "created" => SortProperty.CreationDate,
-                    "switch" => SortProperty.LastSwitch,
-                    "message" => SortProperty.LastMessage,
-                    "birthday" => SortProperty.Birthdate,
-                    "random" => SortProperty.Random,
-                    _ => SortProperty.Name
-                };
+                if (Enum.TryParse<SortProperty>(sortComponent.Values[0], out var sortResult))
+                    opts.SortProperty = sortResult;
 
                 var infoComponent = optsOverride.Components.First((x) => x.Component.CustomId == "info_select").Component;
                 if (infoComponent?.Values?.Length > 0 && infoComponent.Values[0] == "default")
@@ -144,66 +134,37 @@ public static class ContextListExt
                     opts.SortIncludeMatch = true;
                 }
                 foreach (var include in infoComponent.Values)
-                    switch (include)
-                    {
-                        case "tags":
-                            opts.IncludeProxyTags = true;
-                            break;
-                        case "switch":
-                            opts.IncludeLastSwitch = true;
-                            break;
-                        case "message":
-                            opts.IncludeLastMessage = true;
-                            break;
-                        case "count":
-                            opts.IncludeMessageCount = true;
-                            break;
-                        case "created":
-                            opts.IncludeCreated = true;
-                            break;
-                        case "avatar":
-                            opts.IncludeAvatar = true;
-                            break;
-                        case "pronouns":
-                            opts.IncludePronouns = true;
-                            break;
-                        case "displayname":
-                            opts.IncludeDisplayName = true;
-                            break;
-                        case "birthday":
-                            opts.IncludeBirthday = true;
-                            break;
-                        case "groups":
-                            opts.IncludeGroups = true;
-                            break;
-                        case "aliases":
-                            opts.IncludeAliases = true;
-                            break;
-                        case "description":
-                            opts.IncludeDescription = true;
-                            break;
-                    }
-
-                var reverseComponent = optsOverride.Components.FirstOrDefault((x) => x.Component.CustomId == "reverse_radio").Component;
-                if (bool.TryParse(reverseComponent.Value, out var val))
-                    opts.Reverse = val;
+                    if (Enum.TryParse<EntityField>(include, out var infoResult) && opts.IncludeValues.ContainsKey(infoResult))
+                        opts.IncludeValues[infoResult] = true;
 
                 var extraCheckboxesComponent = optsOverride.Components.FirstOrDefault((x) => x.Component.CustomId == "extra_checkboxes")?.Component;
                 opts.ShowIds = extraCheckboxesComponent?.Values.FirstOrDefault(x => x == "id") != null;
                 opts.NumberItems = extraCheckboxesComponent?.Values.FirstOrDefault(x => x == "number") != null;
+                opts.Reverse = extraCheckboxesComponent?.Values.FirstOrDefault(x => x == "reverse") != null;
+
+                var withFilterComponent = optsOverride.Components.FirstOrDefault(x => x.Component.CustomId == "filter_with")?.Component;
+                foreach (var withFilterEntryStr in withFilterComponent?.Values ?? [])
+                    if (Enum.TryParse<EntityField>(withFilterEntryStr, out var withFilterEntry) && opts.WithFilter.ContainsKey(withFilterEntry))
+                        opts.WithFilter[withFilterEntry] = true;
+
+                var withOutFilterComponent = optsOverride.Components.FirstOrDefault(x => x.Component.CustomId == "filter_without")?.Component;
+                foreach (var withOutFilterEntryStr in withOutFilterComponent?.Values ?? [])
+                    if (Enum.TryParse<EntityField>(withOutFilterEntryStr, out var withOutFilterEntry) && opts.WithOutFilter.ContainsKey(withOutFilterEntry))
+                        opts.WithOutFilter[withOutFilterEntry] = true;
 
                 opts.AssertIsValid();
 
                 members = members.SortByMemberListOptions(opts, lookupCtx).ToList();
             }
 
-            footer = $"-# {opts.CreateFilterString()}. {"result".ToQuantity(members.Count)}.";
+            var filteredMembers = members.FilterByMemberListOptions(opts, lookupCtx);
+
+            footer = $"-# {opts.CreateFilterString()} {"result".ToQuantity(filteredMembers.Count())}.";
 
             if (opts.Type == ListType.Short)
-                return (footer, ShortRenderer(members).ToList());
+                return (footer, ShortRenderer(filteredMembers).ToList());
             else
-                return (footer, await LongRenderer(members));
-            // return (new string(JsonSerializer.Serialize((await LongRenderer(members))[0]).Chunk(3000).ElementAt(0)), []);
+                return (footer, await LongRenderer(filteredMembers));
         }
 
         IEnumerable<ContextUtils.PageItem> ShortRenderer(IEnumerable<ListedMember> members)
@@ -220,23 +181,23 @@ public static class ContextListExt
                         ret += $"[`{m.DisplayHid(ctx.Config, isList: true, shouldPad: shouldPad)}`] ";
                     ret += $"**{m.NameFor(ctx)}** ";
 
-                    if (opts.IncludeMessageCount && m.MessageCountFor(lookupCtx) is { } count)
+                    if (opts.IncludeValues[EntityField.MessageCount] && m.MessageCountFor(lookupCtx) is { } count)
                         ret += $"({count} messages)";
-                    else if (opts.IncludeLastSwitch && m.MetadataPrivacy.TryGet(lookupCtx, m.LastSwitchTime, out var lastSw))
+                    else if (opts.IncludeValues[EntityField.LastSwitch] && m.MetadataPrivacy.TryGet(lookupCtx, m.LastSwitchTime, out var lastSw))
                         ret += $"(last switched in: <t:{lastSw.Value.ToUnixTimeSeconds()}>)";
-                    else if (opts.IncludeLastMessage && m.MetadataPrivacy.TryGet(lookupCtx, m.LastMessageTimestamp, out var lastMsg))
+                    else if (opts.IncludeValues[EntityField.LastMessage] && m.MetadataPrivacy.TryGet(lookupCtx, m.LastMessageTimestamp, out var lastMsg))
                         ret += $"(last message: <t:{m.LastMessageTimestamp.Value.ToUnixTimeSeconds()}>)";
-                    else if (opts.IncludeCreated && m.MetadataPrivacy.TryGet(lookupCtx, m.Created, out var created))
+                    else if (opts.IncludeValues[EntityField.CreationDate] && m.MetadataPrivacy.TryGet(lookupCtx, m.Created, out var created))
                         ret += $"(created at <t:{created.ToUnixTimeSeconds()}>)";
-                    else if (opts.IncludeAvatar && m.AvatarFor(lookupCtx) is { } avatarUrl)
+                    else if (opts.IncludeValues[EntityField.Avatar] && m.AvatarFor(lookupCtx) is { } avatarUrl)
                         ret += $"([avatar URL]({avatarUrl}))";
-                    else if (opts.IncludePronouns && m.PronounsFor(lookupCtx) is { } pronouns)
+                    else if (opts.IncludeValues[EntityField.Pronouns] && m.PronounsFor(lookupCtx) is { } pronouns)
                         ret += $"({pronouns})";
-                    else if (opts.IncludeDisplayName && m.DisplayName != null && m.NamePrivacy.CanAccess(lookupCtx))
+                    else if (opts.IncludeValues[EntityField.Displayname] && m.DisplayName != null && m.NamePrivacy.CanAccess(lookupCtx))
                         ret += $"({m.DisplayName})";
-                    else if (opts.IncludeBirthday && m.BirthdayFor(lookupCtx) is { } birthday)
+                    else if (opts.IncludeValues[EntityField.Birthday] && m.BirthdayFor(lookupCtx) is { } birthday)
                         ret += $"(birthday: {m.BirthdayString})";
-                    else if (opts.IncludeProxyTags && m.HasProxyTags && m.ProxyPrivacy.CanAccess(lookupCtx))
+                    else if (opts.IncludeValues[EntityField.ProxyTags] && m.HasProxyTags && m.ProxyPrivacy.CanAccess(lookupCtx))
                     {
                         var proxyTagsString = m.ProxyTagsString();
                         if (proxyTagsString.Length > 100) // arbitrary threshold for now, tweak?
@@ -278,95 +239,60 @@ public static class ContextListExt
                         new()
                         {
                             Label = "Name (Default)",
-                            Value = "name",
+                            Value = SortProperty.Name.ToString(),
                             Default = opts.SortProperty == SortProperty.Name
                         },
                         new()
                         {
                             Label = "Displayname",
-                            Value = "displayname",
+                            Value = SortProperty.DisplayName.ToString(),
                             Default = opts.SortProperty == SortProperty.DisplayName
                         },
                         new()
                         {
                             Label = "ID",
-                            Value = "id",
+                            Value = SortProperty.Hid.ToString(),
                             Default = opts.SortProperty == SortProperty.Hid
                         },
                         new()
                         {
                             Label = "Message Count",
-                            Value = "count",
+                            Value = SortProperty.MessageCount.ToString(),
                             Default = opts.SortProperty == SortProperty.MessageCount
                         },
                         new()
                         {
                             Label = "Creation Date",
-                            Value = "created",
+                            Value = SortProperty.CreationDate.ToString(),
                             Default = opts.SortProperty == SortProperty.CreationDate
                         },
                         new()
                         {
                             Label = "Last Switch",
-                            Value = "switch",
+                            Value = SortProperty.LastSwitch.ToString(),
                             Default = opts.SortProperty == SortProperty.LastSwitch
                         },
                         new()
                         {
                             Label = "Last Message",
-                            Value = "message",
+                            Value = SortProperty.LastMessage.ToString(),
                             Default = opts.SortProperty == SortProperty.LastMessage
                         },
                         new()
                         {
                             Label = "Birthday",
-                            Value = "birthday",
+                            Value = SortProperty.Birthdate.ToString(),
                             Default = opts.SortProperty == SortProperty.Birthdate
                         },
                         new()
                         {
                             Label = "Random",
-                            Value = "random",
+                            Value = SortProperty.Random.ToString(),
                             Default = opts.SortProperty == SortProperty.Random
                         },
                     ]
                 }
             },
-            // Ideally this would be a checkbox
-            // But I cannot get checkboxes to work for the life of me
-            new()
-            {
-                Type = ComponentType.Label,
-                Label = "Reverse Sort?",
-                Component = new()
-                {
-                    Type = ComponentType.RadioGroup,
-                    CustomId = "reverse_radio",
-                    Options = [
-                        new()
-                        {
-                            Label = "Yes",
-                            Value = "true",
-                            Default = opts.Reverse
-                        },
-                        new()
-                        {
-                            Label = "No",
-                            Value = "false",
-                            Default = !opts.Reverse,
-                        }
-                    ]
-                }
-            },
-            // new () {
-            //     Type = ComponentType.Label,
-            //     Label = "Reverse Sort?",
-            //     CustomId = "reverse_label",
-            //     Component = new () {
-            //         Type = ComponentType.Checkbox,
-            //         CustomId = "reverse_checkbox",
-            //     }
-            // },
             new()
             {
                 Type = ComponentType.Label,
@@ -386,63 +312,199 @@ public static class ContextListExt
                         new()
                         {
                             Label = "Proxy Tags",
-                            Value = "tags",
-                            Default = !opts.SortIncludeMatch && opts.IncludeProxyTags
+                            Value = EntityField.ProxyTags.ToString(),
+                            Default = !opts.SortIncludeMatch && opts.IncludeValues[EntityField.ProxyTags]
                         },
                         new()
                         {
                             Label = "Last Switch",
-                            Value = "switch",
-                            Default = !opts.SortIncludeMatch && opts.IncludeLastSwitch
+                            Value = EntityField.LastSwitch.ToString(),
+                            Default = !opts.SortIncludeMatch && opts.IncludeValues[EntityField.LastSwitch]
                         },
                         new()
                         {
                             Label = "Last Message",
-                            Value = "message",
-                            Default = !opts.SortIncludeMatch && opts.IncludeLastMessage
+                            Value = EntityField.LastMessage.ToString(),
+                            Default = !opts.SortIncludeMatch && opts.IncludeValues[EntityField.LastMessage]
                         },
                         new()
                         {
                             Label = "Message Count",
-                            Value = "count",
-                            Default = !opts.SortIncludeMatch && opts.IncludeMessageCount
+                            Value = EntityField.MessageCount.ToString(),
+                            Default = !opts.SortIncludeMatch && opts.IncludeValues[EntityField.MessageCount]
                         },
                         new()
                         {
                             Label = "Creation Date",
-                            Value = "created",
-                            Default = !opts.SortIncludeMatch && opts.IncludeCreated
+                            Value = EntityField.CreationDate.ToString(),
+                            Default = !opts.SortIncludeMatch && opts.IncludeValues[EntityField.CreationDate]
                         },
                         new()
                         {
                             Label = "Avatar Link",
-                            Value = "avatar",
-                            Default = !opts.SortIncludeMatch && opts.IncludeAvatar
+                            Value = EntityField.Avatar.ToString(),
+                            Default = !opts.SortIncludeMatch && opts.IncludeValues[EntityField.Avatar]
                         },
                         new()
                         {
                             Label = "Pronouns",
-                            Value = "pronouns",
-                            Default = !opts.SortIncludeMatch && opts.IncludePronouns
+                            Value = EntityField.Pronouns.ToString(),
+                            Default = !opts.SortIncludeMatch && opts.IncludeValues[EntityField.Pronouns]
                         },
                         new()
                         {
                             Label = "Displayname",
-                            Value = "displayname",
-                            Default = !opts.SortIncludeMatch && opts.IncludeDisplayName
+                            Value = EntityField.Displayname.ToString(),
+                            Default = !opts.SortIncludeMatch && opts.IncludeValues[EntityField.Displayname]
                         },
                         new()
                         {
                             Label = "Birthday",
-                            Value = "birthday",
-                            Default = !opts.SortIncludeMatch && opts.IncludeBirthday
+                            Value = EntityField.Birthday.ToString(),
+                            Default = !opts.SortIncludeMatch && opts.IncludeValues[EntityField.Birthday]
                         },
                         new()
                         {
                             Label = "No Extra Info",
                             Value = "none",
-                            Default = !opts.SortIncludeMatch && opts.includedCount == 0
+                            Default = !opts.SortIncludeMatch && opts.IncludedCount == 0
                         }
+                    ]
+                }
+            },
+            new()
+            {
+                Type = ComponentType.Label,
+                Label = "Show only members with:",
+                Component = new()
+                {
+                    Type = ComponentType.StringSelect,
+                    CustomId = "filter_with",
+                    Required = false,
+                    MaxValues = 8,
+                    Options = [
+                        new()
+                        {
+                            Label = "Displayname",
+                            Value = EntityField.Displayname.ToString(),
+                            Default = opts.WithFilter[EntityField.Displayname]
+                        },
+                        new()
+                        {
+                            Label = "Description",
+                            Value = EntityField.Description.ToString(),
+                            Default = opts.WithFilter[EntityField.Description]
+                        },
+                        new()
+                        {
+                            Label = "Avatar",
+                            Value = EntityField.Avatar.ToString(),
+                            Default = opts.WithFilter[EntityField.Avatar]
+                        },
+                        new()
+                        {
+                            Label = "Proxy Tags",
+                            Value = EntityField.ProxyTags.ToString(),
+                            Default = opts.WithFilter[EntityField.ProxyTags]
+                        },
+                        new()
+                        {
+                            Label = "Aliases",
+                            Value = EntityField.Aliases.ToString(),
+                            Default = opts.WithFilter[EntityField.Aliases]
+                        },
+                        new()
+                        {
+                            Label = "Pronouns",
+                            Value = EntityField.Pronouns.ToString(),
+                            Default = opts.WithFilter[EntityField.Pronouns]
+                        },
+                        new()
+                        {
+                            Label = "Color",
+                            Value = EntityField.Color.ToString(),
+                            Default = opts.WithFilter[EntityField.Color]
+                        },
+                        new()
+                        {
+                            Label = "Birthday",
+                            Value = EntityField.Birthday.ToString(),
+                            Default = opts.WithFilter[EntityField.Birthday]
+                        },
+                        // new()
+                        // {
+                        //     Label = "Groups",
+                        //     Value = EntityField.Groups.ToString(),
+                        //     Default = opts.WithFilter[EntityField.Groups]
+                        // },
+                    ]
+                }
+            },
+            new()
+            {
+                Type = ComponentType.Label,
+                Label = "Show only members without:",
+                Component = new()
+                {
+                    Type = ComponentType.StringSelect,
+                    CustomId = "filter_without",
+                    Required = false,
+                    MaxValues = 8,
+                    Options = [
+                        new()
+                        {
+                            Label = "Displayname",
+                            Value = EntityField.Displayname.ToString(),
+                            Default = opts.WithOutFilter[EntityField.Displayname]
+                        },
+                        new()
+                        {
+                            Label = "Description",
+                            Value = EntityField.Description.ToString(),
+                            Default = opts.WithOutFilter[EntityField.Description]
+                        },
+                        new()
+                        {
+                            Label = "Avatar",
+                            Value = EntityField.Avatar.ToString(),
+                            Default = opts.WithOutFilter[EntityField.Avatar]
+                        },
+                        new()
+                        {
+                            Label = "Proxy Tags",
+                            Value = EntityField.ProxyTags.ToString(),
+                            Default = opts.WithOutFilter[EntityField.ProxyTags]
+                        },
+                        new()
+                        {
+                            Label = "Aliases",
+                            Value = EntityField.Aliases.ToString(),
+                            Default = opts.WithOutFilter[EntityField.Aliases]
+                        },
+                        new()
+                        {
+                            Label = "Pronouns",
+                            Value = EntityField.Pronouns.ToString(),
+                            Default = opts.WithOutFilter[EntityField.Pronouns]
+                        },
+                        new()
+                        {
+                            Label = "Color",
+                            Value = EntityField.Color.ToString(),
+                            Default = opts.WithOutFilter[EntityField.Color]
+                        },
+                        new()
+                        {
+                            Label = "Birthday",
+                            Value = EntityField.Birthday.ToString(),
+                            Default = opts.WithOutFilter[EntityField.Birthday]
+                        },
+                        // new()
+                        // {
+                        //     Label = "Groups",
+                        //     Value = EntityField.Groups.ToString(),
+                        //     Default = opts.WithOutFilter[EntityField.Groups]
+                        // },
                     ]
                 }
             },
@@ -456,6 +518,12 @@ public static class ContextListExt
                     CustomId = "extra_checkboxes",
                     Required = false,
                     Options = [
+                        new()
+                        {
+                            Label = "Reverse Sort",
+                            Value = "reverse",
+                            Default = opts.Reverse
+                        },
                         new()
                         {
                             Label = "Show IDs",
@@ -487,95 +555,60 @@ public static class ContextListExt
                         new()
                         {
                             Label = "Name (Default)",
-                            Value = "name",
+                            Value = SortProperty.Name.ToString(),
                             Default = opts.SortProperty == SortProperty.Name
                         },
                         new()
                         {
                             Label = "Displayname",
-                            Value = "displayname",
+                            Value = SortProperty.DisplayName.ToString(),
                             Default = opts.SortProperty == SortProperty.DisplayName
                         },
                         new()
                         {
                             Label = "ID",
-                            Value = "id",
+                            Value = SortProperty.Hid.ToString(),
                             Default = opts.SortProperty == SortProperty.Hid
                         },
                         new()
                         {
                             Label = "Message Count",
-                            Value = "count",
+                            Value = SortProperty.MessageCount.ToString(),
                             Default = opts.SortProperty == SortProperty.MessageCount
                         },
                         new()
                         {
                             Label = "Creation Date",
-                            Value = "created",
+                            Value = SortProperty.CreationDate.ToString(),
                             Default = opts.SortProperty == SortProperty.CreationDate
                         },
                         new()
                         {
                             Label = "Last Switch",
-                            Value = "switch",
+                            Value = SortProperty.LastSwitch.ToString(),
                             Default = opts.SortProperty == SortProperty.LastSwitch
                         },
                         new()
                         {
                             Label = "Last Message",
-                            Value = "message",
+                            Value = SortProperty.LastMessage.ToString(),
                             Default = opts.SortProperty == SortProperty.LastMessage
                         },
                         new()
                         {
                             Label = "Birthday",
-                            Value = "birthday",
+                            Value = SortProperty.Birthdate.ToString(),
                             Default = opts.SortProperty == SortProperty.Birthdate
                         },
                         new()
                         {
                             Label = "Random",
-                            Value = "random",
+                            Value = SortProperty.Random.ToString(),
                             Default = opts.SortProperty == SortProperty.Random
                         },
                     ]
                 }
             },
-            // Ideally this would be a checkbox
-            // But I cannot get checkboxes to work for the life of me
-            new()
-            {
-                Type = ComponentType.Label,
-                Label = "Reverse Sort?",
-                Component = new()
-                {
-                    Type = ComponentType.RadioGroup,
-                    CustomId = "reverse_radio",
-                    Options = [
-                        new()
-                        {
-                            Label = "Yes",
-                            Value = "true",
-                            Default = opts.Reverse
-                        },
-                        new()
-                        {
-                            Label = "No",
-                            Value = "false",
-                            Default = !opts.Reverse,
-                        }
-                    ]
-                }
-            },
-            // new () {
-            //     Type = ComponentType.Label,
-            //     Label = "Reverse Sort?",
-            //     CustomId = "reverse_label",
-            //     Component = new () {
-            //         Type = ComponentType.Checkbox,
-            //         CustomId = "reverse_checkbox",
-            //     }
-            // },
             new()
             {
                 Type = ComponentType.Label,
@@ -589,32 +622,51 @@ public static class ContextListExt
                         new()
                         {
                             Label = "Proxy Tags",
-                            Value = "tags",
-                            Default = opts.IncludeProxyTags
+                            Value = EntityField.ProxyTags.ToString(),
+                            Default = opts.IncludeValues[EntityField.ProxyTags]
                         },
                         new()
                         {
                             Label = "Aliases",
-                            Value = "aliases",
-                            Default = opts.IncludeAliases
+                            Value = EntityField.Aliases.ToString(),
+                            Default = opts.IncludeValues[EntityField.Aliases]
                         },
                         new()
                         {
                             Label = "Avatar",
-                            Value = "avatar",
-                            Default = opts.IncludeAvatar
+                            Value = EntityField.Avatar.ToString(),
+                            Default = opts.IncludeValues[EntityField.Avatar]
                         },
                         new()
                         {
                             Label = "Groups",
-                            Value = "groups",
-                            Default = opts.IncludeGroups
+                            Value = EntityField.Groups.ToString(),
+                            Default = opts.IncludeValues[EntityField.Groups]
                         },
                         new()
                         {
                             Label = "Description",
-                            Value = "description",
-                            Default = opts.IncludeDescription
+                            Value = EntityField.Description.ToString(),
+                            Default = opts.IncludeValues[EntityField.Description]
+                        }
+                    ]
+                }
+            },
+            new()
+            {
+                Type = ComponentType.Label,
+                Label = "Extra Options",
+                Component = new()
+                {
+                    Type = ComponentType.CheckboxGroup,
+                    CustomId = "extra_checkboxes",
+                    Required = false,
+                    Options = [
+                        new()
+                        {
+                            Label = "Reverse Sort",
+                            Value = "reverse",
+                            Default = opts.Reverse
                         }
                     ]
                 }
@@ -649,7 +701,7 @@ public static class ContextListExt
         Task Renderer(EmbedBuilder eb, IEnumerable<ListedMember> page)
         {
             // Add a global footer with the filter/sort string + result count
-            eb.Footer(new Embed.EmbedFooter($"{opts.CreateFilterString()}. {"result".ToQuantity(members.Count)}."));
+            eb.Footer(new Embed.EmbedFooter($"{opts.CreateFilterString()} {"result".ToQuantity(members.Count)}."));
 
             // Then call the specific renderers
             if (opts.Type == ListType.Short)
@@ -671,21 +723,21 @@ public static class ContextListExt
             {
                 var ret = $"[`{m.DisplayHid(ctx.Config, isList: true, shouldPad: shouldPad)}`] **{m.NameFor(ctx)}** ";
 
-                if (opts.IncludeMessageCount && m.MessageCountFor(lookupCtx) is { } count)
+                if (opts.IncludeValues[EntityField.MessageCount] && m.MessageCountFor(lookupCtx) is { } count)
                     ret += $"({count} messages)";
-                else if (opts.IncludeLastSwitch && m.MetadataPrivacy.TryGet(lookupCtx, m.LastSwitchTime, out var lastSw))
+                else if (opts.IncludeValues[EntityField.LastSwitch] && m.MetadataPrivacy.TryGet(lookupCtx, m.LastSwitchTime, out var lastSw))
                     ret += $"(last switched in: <t:{lastSw.Value.ToUnixTimeSeconds()}>)";
-                else if (opts.IncludeLastMessage && m.MetadataPrivacy.TryGet(lookupCtx, m.LastMessageTimestamp, out var lastMsg))
+                else if (opts.IncludeValues[EntityField.LastMessage] && m.MetadataPrivacy.TryGet(lookupCtx, m.LastMessageTimestamp, out var lastMsg))
                     ret += $"(last message: <t:{m.LastMessageTimestamp.Value.ToUnixTimeSeconds()}>)";
-                else if (opts.IncludeCreated && m.MetadataPrivacy.TryGet(lookupCtx, m.Created, out var created))
+                else if (opts.IncludeValues[EntityField.CreationDate] && m.MetadataPrivacy.TryGet(lookupCtx, m.Created, out var created))
                     ret += $"(created at <t:{created.ToUnixTimeSeconds()}>)";
-                else if (opts.IncludeAvatar && m.AvatarFor(lookupCtx) is { } avatarUrl)
+                else if (opts.IncludeValues[EntityField.Avatar] && m.AvatarFor(lookupCtx) is { } avatarUrl)
                     ret += $"([avatar URL]({avatarUrl}))";
-                else if (opts.IncludePronouns && m.PronounsFor(lookupCtx) is { } pronouns)
+                else if (opts.IncludeValues[EntityField.Pronouns] && m.PronounsFor(lookupCtx) is { } pronouns)
                     ret += $"({pronouns})";
-                else if (opts.IncludeDisplayName && m.DisplayName != null && m.NamePrivacy.CanAccess(lookupCtx))
+                else if (opts.IncludeValues[EntityField.Displayname] && m.DisplayName != null && m.NamePrivacy.CanAccess(lookupCtx))
                     ret += $"({m.DisplayName})";
-                else if (opts.IncludeBirthday && m.BirthdayFor(lookupCtx) is { } birthday)
+                else if (opts.IncludeValues[EntityField.Birthday] && m.BirthdayFor(lookupCtx) is { } birthday)
                     ret += $"(birthday: {m.BirthdayString})";
                 else if (m.HasProxyTags && m.ProxyPrivacy.CanAccess(lookupCtx))
                 {
@@ -717,22 +769,22 @@ public static class ContextListExt
                 if (m.ProxyTags.Count > 0 && m.ProxyPrivacy.CanAccess(lookupCtx))
                     profile.Append($"\n**Proxy tags**: {m.ProxyTagsString()}");
 
-                if ((opts.IncludeMessageCount || opts.SortProperty == SortProperty.MessageCount) &&
+                if ((opts.IncludeValues[EntityField.MessageCount] || opts.SortProperty == SortProperty.MessageCount) &&
                     m.MessageCountFor(lookupCtx) is { } count && m.MessageCount > 0)
                     profile.Append($"\n**Message count:** {count}");
 
-                if ((opts.IncludeLastMessage || opts.SortProperty == SortProperty.LastMessage) && m.MetadataPrivacy.TryGet(lookupCtx, m.LastMessageTimestamp, out var lastMsg))
+                if ((opts.IncludeValues[EntityField.LastMessage] || opts.SortProperty == SortProperty.LastMessage) && m.MetadataPrivacy.TryGet(lookupCtx, m.LastMessageTimestamp, out var lastMsg))
                     profile.Append($"\n**Last message:** {m.LastMessageTimestamp.Value.FormatZoned(ctx.Zone)}");
 
-                if ((opts.IncludeLastSwitch || opts.SortProperty == SortProperty.LastSwitch) &&
+                if ((opts.IncludeValues[EntityField.LastSwitch] || opts.SortProperty == SortProperty.LastSwitch) &&
                     m.MetadataPrivacy.TryGet(lookupCtx, m.LastSwitchTime, out var lastSw))
                     profile.Append($"\n**Last switched in:** {lastSw.Value.FormatZoned(ctx.Zone)}");
 
-                if ((opts.IncludeCreated || opts.SortProperty == SortProperty.CreationDate) &&
+                if ((opts.IncludeValues[EntityField.CreationDate] || opts.SortProperty == SortProperty.CreationDate) &&
                     m.MetadataPrivacy.TryGet(lookupCtx, m.Created, out var created))
                     profile.Append($"\n**Created on:** {created.FormatZoned(ctx.Zone)}");
 
-                if (opts.IncludeAvatar && m.AvatarFor(lookupCtx) is { } avatar)
+                if (opts.IncludeValues[EntityField.Avatar] && m.AvatarFor(lookupCtx) is { } avatar)
                     profile.Append($"\n**Avatar URL:** {avatar.TryGetCleanCdnUrl()}");
 
                 if (m.DescriptionFor(lookupCtx) is { } desc)
@@ -755,7 +807,7 @@ public static class ContextListExt
             .SortByGroupListOptions(opts, lookupCtx)
             .ToList();
 
-        var footer = $"-# {opts.CreateFilterString()}. {"result".ToQuantity(groups.Count)}.";
+        var footer = $"-# {opts.CreateFilterString()} {"result".ToQuantity(groups.Count)}.";
         var itemsPerPage = opts.Type == ListType.Short ? 25 : 5;
 
         await ctx.PaginateCV2(embedTitle, color, Renderer, itemsPerPage);
@@ -794,16 +846,16 @@ public static class ContextListExt
                         }
                     default:
                         {
-                            if (opts.IncludeCreated &&
+                            if (opts.IncludeValues[EntityField.CreationDate] &&
                                      g.MetadataPrivacy.TryGet(lookupCtx, g.Created, out var created))
                             {
                                 ret += $"(created at <t:{created.ToUnixTimeSeconds()}>)";
                             }
-                            else if (opts.IncludeDisplayName && g.DisplayName != null && g.NamePrivacy.CanAccess(lookupCtx))
+                            else if (opts.IncludeValues[EntityField.Displayname] && g.DisplayName != null && g.NamePrivacy.CanAccess(lookupCtx))
                             {
                                 ret += $"({g.DisplayName})";
                             }
-                            else if (opts.IncludeAvatar && g.IconFor(lookupCtx) is { } avatarUrl)
+                            else if (opts.IncludeValues[EntityField.Avatar] && g.IconFor(lookupCtx) is { } avatarUrl)
                             {
                                 ret += $"([avatar URL]({avatarUrl}))";
                             }
@@ -859,11 +911,11 @@ public static class ContextListExt
                         profile.Append($"\n**Member Count:** {g.PublicMemberCount}");
                 }
 
-                if ((opts.IncludeCreated || opts.SortProperty == SortProperty.CreationDate) &&
+                if ((opts.IncludeValues[EntityField.CreationDate] || opts.SortProperty == SortProperty.CreationDate) &&
                     g.MetadataPrivacy.TryGet(lookupCtx, g.Created, out var created))
                     profile.Append($"\n**Created on:** {created.FormatZoned(ctx.Zone)}");
 
-                if (opts.IncludeAvatar && g.IconFor(lookupCtx) is { } avatar)
+                if (opts.IncludeValues[EntityField.Avatar] && g.IconFor(lookupCtx) is { } avatar)
                     profile.Append($"\n**Avatar URL:** {avatar.TryGetCleanCdnUrl()}");
 
                 if (g.DescriptionFor(lookupCtx) is { } desc)
@@ -901,7 +953,7 @@ public static class ContextListExt
         Task Renderer(EmbedBuilder eb, IEnumerable<ListedGroup> page)
         {
             // Add a global footer with the filter/sort string + result count
-            eb.Footer(new Embed.EmbedFooter($"{opts.CreateFilterString()}. {"result".ToQuantity(groups.Count)}."));
+            eb.Footer(new Embed.EmbedFooter($"{opts.CreateFilterString()} {"result".ToQuantity(groups.Count)}."));
 
             // Then call the specific renderers
             if (opts.Type == ListType.Short)
@@ -939,16 +991,16 @@ public static class ContextListExt
                         }
                     default:
                         {
-                            if (opts.IncludeCreated &&
+                            if (opts.IncludeValues[EntityField.CreationDate] &&
                                      g.MetadataPrivacy.TryGet(lookupCtx, g.Created, out var created))
                             {
                                 ret += $"(created at <t:{created.ToUnixTimeSeconds()}>)";
                             }
-                            else if (opts.IncludeDisplayName && g.DisplayName != null && g.NamePrivacy.CanAccess(lookupCtx))
+                            else if (opts.IncludeValues[EntityField.Displayname] && g.DisplayName != null && g.NamePrivacy.CanAccess(lookupCtx))
                             {
                                 ret += $"({g.DisplayName})";
                             }
-                            else if (opts.IncludeAvatar && g.IconFor(lookupCtx) is { } avatarUrl)
+                            else if (opts.IncludeValues[EntityField.Avatar] && g.IconFor(lookupCtx) is { } avatarUrl)
                             {
                                 ret += $"([avatar URL]({avatarUrl}))";
                             }
@@ -1004,11 +1056,11 @@ public static class ContextListExt
                         profile.Append($"\n**Member Count:** {g.PublicMemberCount}");
                 }
 
-                if ((opts.IncludeCreated || opts.SortProperty == SortProperty.CreationDate) &&
+                if ((opts.IncludeValues[EntityField.CreationDate] || opts.SortProperty == SortProperty.CreationDate) &&
                     g.MetadataPrivacy.TryGet(lookupCtx, g.Created, out var created))
                     profile.Append($"\n**Created on:** {created.FormatZoned(ctx.Zone)}");
 
-                if (opts.IncludeAvatar && g.IconFor(lookupCtx) is { } avatar)
+                if (opts.IncludeValues[EntityField.Avatar] && g.IconFor(lookupCtx) is { } avatar)
                     profile.Append($"\n**Avatar URL:** {avatar.TryGetCleanCdnUrl()}");
 
                 if (g.DescriptionFor(lookupCtx) is { } desc)

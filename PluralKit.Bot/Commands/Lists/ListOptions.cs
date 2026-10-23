@@ -34,56 +34,65 @@ public class ListOptions
     public bool SearchDescription { get; set; }
 
     public ListType Type { get; set; }
-    public bool IncludeMessageCount { get; set; }
-    public bool IncludeLastSwitch { get; set; }
-    public bool IncludeLastMessage { get; set; }
-    public bool IncludeCreated { get; set; }
-    public bool IncludeAvatar { get; set; }
-    public bool IncludePronouns { get; set; }
-    public bool IncludeDisplayName { get; set; }
-    public bool IncludeBirthday { get; set; }
-    public bool IncludeProxyTags { get; set; }
-    public bool IncludeGroups { get; set; }
-    public bool IncludeAliases { get; set; }
-    public bool IncludeDescription { get; set; }
+
+    public Dictionary<EntityField, bool> IncludeValues { get; } = new()
+    {
+        {EntityField.MessageCount, default},
+        {EntityField.LastSwitch, default},
+        {EntityField.LastMessage, default},
+        {EntityField.CreationDate, default},
+        {EntityField.Avatar, default},
+        {EntityField.Pronouns, default},
+        {EntityField.Displayname, default},
+        {EntityField.Birthday, default},
+        {EntityField.ProxyTags, default},
+        {EntityField.Groups, default},
+        {EntityField.Aliases, default},
+        {EntityField.Description, default},
+    };
+
+    public Dictionary<EntityField, bool> WithFilter { get; } = new()
+    {
+        {EntityField.Avatar, default},
+        {EntityField.Pronouns, default},
+        {EntityField.Displayname, default},
+        {EntityField.Birthday, default},
+        {EntityField.ProxyTags, default},
+        // {EntityField.Groups, default},
+        {EntityField.Aliases, default},
+        {EntityField.Description, default},
+        {EntityField.Color, default},
+    };
+    public Dictionary<EntityField, bool> WithOutFilter { get; } = new()
+    {
+        {EntityField.Avatar, default},
+        {EntityField.Pronouns, default},
+        {EntityField.Displayname, default},
+        {EntityField.Birthday, default},
+        {EntityField.ProxyTags, default},
+        // {EntityField.Groups, default},
+        {EntityField.Aliases, default},
+        {EntityField.Description, default},
+        {EntityField.Color, default},
+    };
+
 
     public bool ShowIds { get; set; } = true;
     public bool NumberItems { get; set; } = false;
 
     public bool SortIncludeMatch { get; set; } = false;
 
-    // hacky but works, remember to update this when more include flags are added
-    public int includedCount => new[] {
-        IncludeMessageCount,
-        IncludeLastSwitch,
-        IncludeLastMessage,
-        IncludeCreated,
-        IncludeAvatar,
-        IncludePronouns,
-        IncludeDisplayName,
-        IncludeBirthday,
-        IncludeProxyTags,
-        IncludeGroups,
-        IncludeAliases,
-        IncludeDescription
-    }.Sum(x => Convert.ToInt32(x));
+    public int IncludedCount => IncludeValues.Sum(x => Convert.ToInt32(x.Value));
 
-    // Reset the sort and includes values without resetting the search terms and privacy filters
-    // Also update this when more include flags are added
-    public void ResetSortAndIncludes()
+    // Reset the options that can change while the list is pulled up without resetting the ones that don't
+    public void ResetDynamicOptions()
     {
-        IncludeMessageCount =
-        IncludeLastSwitch =
-        IncludeLastMessage =
-        IncludeCreated =
-        IncludeAvatar =
-        IncludePronouns =
-        IncludeDisplayName =
-        IncludeBirthday =
-        IncludeProxyTags =
-        IncludeGroups =
-        IncludeAliases =
-        IncludeDescription = false;
+        foreach (var key in IncludeValues.Keys)
+            IncludeValues[key] = false;
+        foreach (var key in WithFilter.Keys)
+            WithFilter[key] = false;
+        foreach (var key in WithOutFilter.Keys)
+            WithOutFilter[key] = false;
 
         _sortProperty = null;
         SortIncludeMatch = false;
@@ -116,12 +125,28 @@ public class ListOptions
 
         str.Append(PrivacyFilter switch
         {
-            null => ", showing all items",
-            PrivacyLevel.Private => ", showing only private items",
-            PrivacyLevel.Public => "", // (default, no extra line needed)
+            null => ", showing public and private items.",
+            PrivacyLevel.Private => ", showing only private items.",
+            PrivacyLevel.Public => ".", // (default, no extra line needed)
             _ => new ArgumentOutOfRangeException(
                 $"Couldn't find readable string for privacy filter {PrivacyFilter}")
         });
+
+        if (WithOutFilter.Count(x => x.Value) > 1)
+        {
+            str.Append($" Excluding members with {string.Join(", ", WithOutFilter.Where(x => x.Value).SkipLast(1).Select(x => x.Key.ToString()))}");
+            str.Append($"{(WithOutFilter.Count(x => x.Value) == 2 ? "" : ",")} or {WithOutFilter.Last(x => x.Value).Key}.");
+        }
+        else if (WithOutFilter.Any(x => x.Value))
+            str.Append($" Excluding members with {WithOutFilter.First(x => x.Value).Key}.");
+
+        if (WithFilter.Count(x => x.Value) > 1)
+        {
+            str.Append($" Excluding members without {string.Join(", ", WithFilter.Where(x => x.Value).SkipLast(1).Select(x => x.Key.ToString()))}");
+            str.Append($"{(WithFilter.Count(x => x.Value) == 2 ? "" : ",")} or {WithFilter.Last(x => x.Value).Key}.");
+        }
+        else if (WithFilter.Any(x => x.Value))
+            str.Append($" Excluding members without {WithFilter.First(x => x.Value).Key}.");
 
         return str.ToString();
     }
@@ -181,6 +206,90 @@ public static class ListOptionsExt
             .ThenBy(m => m.NameFor(ctx), culture).Select((m, i) => { m.Order = i + 1; return m; });
     }
 
+    public static IEnumerable<ListedMember> FilterByMemberListOptions(this IEnumerable<ListedMember> input,
+                                                                    ListOptions opts, LookupContext ctx) =>
+        input.Where(m =>
+        {
+            foreach (var with in opts.WithFilter.Where(x => x.Value))
+            {
+                switch (with.Key)
+                {
+                    case EntityField.Avatar:
+                        if (!(m.AvatarFor(ctx) is { }))
+                            return false;
+                        break;
+                    case EntityField.Pronouns:
+                        if (!(m.PronounsFor(ctx) is { }))
+                            return false;
+                        break;
+                    case EntityField.Displayname:
+                        if (m.DisplayName == null)
+                            return false;
+                        break;
+                    case EntityField.Birthday:
+                        if (!(m.BirthdayFor(ctx) is { }))
+                            return false;
+                        break;
+                    case EntityField.ProxyTags:
+                        if (!(m.ProxyTagsFor(ctx) is { } tags) || tags.Count == 0)
+                            return false;
+                        break;
+                    case EntityField.Aliases:
+                        if (!(m.AliasesFor(ctx) is { } aliases) || aliases.Count == 0)
+                            return false;
+                        break;
+                    case EntityField.Description:
+                        if (!(m.DescriptionFor(ctx) is { }))
+                            return false;
+                        break;
+                    case EntityField.Color:
+                        if (m.Color == null)
+                            return false;
+                        break;
+                }
+            }
+            foreach (var without in opts.WithOutFilter.Where(x => x.Value))
+            {
+                switch (without.Key)
+                {
+                    case EntityField.Avatar:
+                        if (m.AvatarFor(ctx) is { })
+                            return false;
+                        break;
+                    case EntityField.Pronouns:
+                        if (m.PronounsFor(ctx) is { })
+                            return false;
+                        break;
+                    case EntityField.Displayname:
+                        if (m.DisplayName != null)
+                            return false;
+                        break;
+                    case EntityField.Birthday:
+                        if (m.BirthdayFor(ctx) is { })
+                            return false;
+                        break;
+                    case EntityField.ProxyTags:
+                        if (m.ProxyTagsFor(ctx) is { } tags && tags.Count > 0)
+                            return false;
+                        break;
+                    case EntityField.Aliases:
+                        if (m.AliasesFor(ctx) is { } aliases && aliases.Count > 0)
+                            return false;
+                        break;
+                    case EntityField.Description:
+                        if (m.DescriptionFor(ctx) is { })
+                            return false;
+                        break;
+                    case EntityField.Color:
+                        if (m.Color != null)
+                            return false;
+                        break;
+                }
+            }
+            return true;
+        });
+
+
     public static IEnumerable<ListedGroup> SortByGroupListOptions(this IEnumerable<ListedGroup> input,
                                                                     ListOptions opts, LookupContext ctx)
     {
@@ -212,10 +321,18 @@ public static class ListOptionsExt
 
     public static void AssertIsValid(this ListOptions opts)
     {
-        if (opts.Type == ListType.Short && opts.includedCount > 1)
+        if (opts.Type == ListType.Short && opts.IncludedCount > 1)
             throw new PKError("The short list does not support showing information from multiple flags. Try using the full list instead.");
 
+        foreach (var with in opts.WithFilter)
+            if (with.Value && opts.WithOutFilter[with.Key])
+                throw new PKError($"Cannot include both \"only members with {ArticleMaybe(with.Key)}\" and \"only members without {ArticleMaybe(with.Key)}\". " +
+                $"To show members both with and without {ArticleMaybe(with.Key)}, select neither option.");
+
         // the check for multiple *sorting* property flags is done in SortProperty setter
+
+        static string ArticleMaybe(EntityField e) =>
+            (e.ToString().Last() == 's' ? "" : "a ") + e;
     }
 }
 
@@ -230,6 +347,23 @@ public enum SortProperty
     LastMessage,
     Birthdate,
     Random
+}
+
+public enum EntityField
+{
+    MessageCount,
+    LastSwitch,
+    LastMessage,
+    CreationDate,
+    Avatar,
+    Pronouns,
+    Displayname,
+    Birthday,
+    ProxyTags,
+    Groups,
+    Aliases,
+    Description,
+    Color
 }
 
 public enum ListType { Short, Long }

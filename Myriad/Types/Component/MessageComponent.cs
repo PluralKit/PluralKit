@@ -25,8 +25,14 @@ public record MessageComponent
     public MessageComponent? Component { get; init; }
     public string? Value { get; init; }
     public string[]? Values { get; init; }
-    public bool? Default { get; init; }
     public bool? Required { get; init; }
 
-    public MessageComponent[]? Options { get; init; }
+    public MessageComponentOption[]? Options { get; init; }
+
+    public record MessageComponentOption
+    {
+        public string? Label { get; init; }
+        public string? Value { get; init; }
+        public bool? Default { get; init; }
+    }
 }

@@ -122,6 +122,12 @@ public static class PKMemberExt
     public static Instant? LastMessageTimestampFor(this PKMember member, LookupContext ctx) =>
         member.MetadataPrivacy.Get(ctx, member.LastMessageTimestamp);
 
+    public static ICollection<ProxyTag> ProxyTagsFor(this PKMember member, LookupContext ctx) =>
+        member.ProxyPrivacy.Get(ctx, member.ProxyTags);
+
+    public static ICollection<string> AliasesFor(this PKMember member, LookupContext ctx) =>
+        member.AliasPrivacy.Get(ctx, member.Aliases);
+
     public static JObject ToJson(this PKMember member, LookupContext ctx, bool needsLegacyProxyTags = false,
                                  string systemStr = null)
     {
