@@ -47,6 +47,9 @@ public class ListOptions
     public bool IncludeAliases { get; set; }
     public bool IncludeDescription { get; set; }
 
+    public bool ShowIds { get; set; } = true;
+    public bool NumberItems { get; set; } = false;
+
     public bool SortIncludeMatch { get; set; } = false;
 
     // hacky but works, remember to update this when more include flags are added
@@ -175,7 +178,7 @@ public static class ListOptionsExt
             _ => throw new ArgumentOutOfRangeException($"Unknown sort property {opts.SortProperty}")
         })
             // Lastly, add a by-name fallback order for collisions (generally hits w/ lots of null values)
-            .ThenBy(m => m.NameFor(ctx), culture);
+            .ThenBy(m => m.NameFor(ctx), culture).Select((m, i) => { m.Order = i + 1; return m; });
     }
 
     public static IEnumerable<ListedGroup> SortByGroupListOptions(this IEnumerable<ListedGroup> input,

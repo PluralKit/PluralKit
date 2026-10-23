@@ -12,4 +12,6 @@ public class ListedMember: PKMember
         Birthday != null
             ? new AnnualDate(Birthday.Value.Month, Birthday.Value.Day)
             : null;
+
+    public int? Order { get; set; }
 }

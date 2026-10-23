@@ -188,6 +188,10 @@ public static class ContextListExt
                 if (bool.TryParse(reverseComponent.Value, out var val))
                     opts.Reverse = val;
 
+                var extraCheckboxesComponent = optsOverride.Components.FirstOrDefault((x) => x.Component.CustomId == "extra_checkboxes")?.Component;
+                opts.ShowIds = extraCheckboxesComponent?.Values.FirstOrDefault(x => x == "id") != null;
+                opts.NumberItems = extraCheckboxesComponent?.Values.FirstOrDefault(x => x == "number") != null;
+
                 opts.AssertIsValid();
 
                 members = members.SortByMemberListOptions(opts, lookupCtx).ToList();
@@ -209,7 +213,12 @@ public static class ContextListExt
 
             return members.Select(m =>
                 {
-                    var ret = $"[`{m.DisplayHid(ctx.Config, isList: true, shouldPad: shouldPad)}`] **{m.NameFor(ctx)}** ";
+                    var ret = "";
+                    if (opts.NumberItems)
+                        ret += $"{m.Order}. ";
+                    if (opts.ShowIds)
+                        ret += $"[`{m.DisplayHid(ctx.Config, isList: true, shouldPad: shouldPad)}`] ";
+                    ret += $"**{m.NameFor(ctx)}** ";
 
                     if (opts.IncludeMessageCount && m.MessageCountFor(lookupCtx) is { } count)
                         ret += $"({count} messages)";
@@ -433,6 +442,31 @@ public static class ContextListExt
                             Label = "No Extra Info",
                             Value = "none",
                             Default = !opts.SortIncludeMatch && opts.includedCount == 0
+                        }
+                    ]
+                }
+            },
+            new()
+            {
+                Type = ComponentType.Label,
+                Label = "Extra Options",
+                Component = new()
+                {
+                    Type = ComponentType.CheckboxGroup,
+                    CustomId = "extra_checkboxes",
+                    Required = false,
+                    Options = [
+                        new()
+                        {
+                            Label = "Show IDs",
+                            Value = "id",
+                            Default = opts.ShowIds
+                        },
+                        new()
+                        {
+                            Label = "Number Lines",
+                            Value = "number",
+                            Default = opts.NumberItems
                         }
                     ]
                 }
