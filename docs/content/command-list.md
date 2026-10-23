@@ -38,6 +38,7 @@ Some bot commands do not use the `pk;` prefix:
 - `[tag]` e.g. `S: message` - if `pk;system proxy` is on, proxy this message, based on configured member proxy tags
 - `\` - if autoproxy is enabled: as a one-off exception, don't proxy this message, without changing latch/switch/autoproxy
 - `\\` - if autoproxy latch is enabled: don't proxy this message, and clear latch status, without disabling autoproxy
+- `\\\` - Disable autoproxy
 
 # Commands
 

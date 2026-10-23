@@ -483,6 +483,8 @@ To disable autoproxying for the current server, use the command:
 To disable autoproxy for a single message, add a backslash (`\`) to the beginning of your message.
 <br>
 In latch-mode autoproxy, to clear the currently latched member, add a double backslash (`\\`) to the beginning of your message.
+<br>
+To turn off autoproxy, add a triple backslash (`\\\`) to the beginning of your message.
 :::
 
 #### Front mode
