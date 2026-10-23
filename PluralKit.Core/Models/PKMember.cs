@@ -116,8 +116,8 @@ public static class PKMemberExt
     public static Instant? CreatedFor(this PKMember member, LookupContext ctx) =>
         member.MetadataPrivacy.Get(ctx, (Instant?)member.Created);
 
-    public static int? MessageCountFor(this PKMember member, LookupContext ctx) =>
-        member.MetadataPrivacy.Get<int?>(ctx, member.MessageCount, fallback: null);
+    public static string? MessageCountFor(this PKMember member, LookupContext ctx) =>
+        member.MetadataPrivacy.Get<int?>(ctx, member.MessageCount, fallback: null)?.ToString("n0");
 
     public static Instant? LastMessageTimestampFor(this PKMember member, LookupContext ctx) =>
         member.MetadataPrivacy.Get(ctx, member.LastMessageTimestamp);

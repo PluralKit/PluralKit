@@ -374,8 +374,8 @@ public class EmbedService
             headerText += $"\n**Pronouns:** {pronouns}";
         if (member.BirthdayFor(ctx) != null)
             headerText += $"\n**Birthday:** {member.BirthdayString}";
-        if (member.MessageCountFor(ctx) is { } count && count > 0)
-            headerText += $"\n**Message count:** {member.MessageCount}";
+        if (member.MessageCountFor(ctx) is { } count && member.MessageCount > 0)
+            headerText += $"\n**Message count:** {count}";
 
         List<MessageComponent> extraData = [];
         if (member.Aliases.Count > 0 && member.AliasPrivacy.CanAccess(ctx) && (opts == null || opts.IncludeAliases))
@@ -583,8 +583,8 @@ public class EmbedService
         if (member.BirthdayFor(ctx) != null) eb.Field(new Embed.Field("Birthdate", member.BirthdayString, true));
         if (member.PronounsFor(ctx) is { } pronouns && !string.IsNullOrWhiteSpace(pronouns))
             eb.Field(new Embed.Field("Pronouns", pronouns.Truncate(1024), true));
-        if (member.MessageCountFor(ctx) is { } count && count > 0)
-            eb.Field(new Embed.Field("Message Count", member.MessageCount.ToString(), true));
+        if (member.MessageCountFor(ctx) is { } count && member.MessageCount > 0)
+            eb.Field(new Embed.Field("Message Count", count, true));
         if (member.Aliases.Count > 0 && member.AliasPrivacy.CanAccess(ctx))
         {
             var aliases = string.Join("\n", member.Aliases);

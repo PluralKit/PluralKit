@@ -718,7 +718,7 @@ public static class ContextListExt
                     profile.Append($"\n**Proxy tags**: {m.ProxyTagsString()}");
 
                 if ((opts.IncludeMessageCount || opts.SortProperty == SortProperty.MessageCount) &&
-                    m.MessageCountFor(lookupCtx) is { } count && count > 0)
+                    m.MessageCountFor(lookupCtx) is { } count && m.MessageCount > 0)
                     profile.Append($"\n**Message count:** {count}");
 
                 if ((opts.IncludeLastMessage || opts.SortProperty == SortProperty.LastMessage) && m.MetadataPrivacy.TryGet(lookupCtx, m.LastMessageTimestamp, out var lastMsg))
