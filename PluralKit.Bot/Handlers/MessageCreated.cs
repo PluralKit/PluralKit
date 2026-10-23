@@ -140,7 +140,12 @@ public class MessageCreated: IEventHandler<MessageCreateEvent>
             var config = system != null ? await _repo.GetSystemConfig(system.Id) : null;
             var guildConfig = guild != null ? await _repo.GetGuild(guild.Id) : null;
 
-            await _tree.ExecuteCommand(new Context(_services, shardId, guild, channel, evt, cmdStart, system, config, guildConfig, _config.Prefixes ?? BotConfig.DefaultPrefixes));
+            var ctx = new Context(_services, shardId, guild, channel, evt, cmdStart, system, config, guildConfig, _config.Prefixes ?? BotConfig.DefaultPrefixes);
+
+            var rootChannel = ctx.Channel.IsThread() ? ctx.Channel.ParentId!.Value : ctx.Channel.Id;
+            var msgCtx = await ctx.Repository.GetMessageContext(ctx.Author.Id, ctx.Guild?.Id ?? default, rootChannel, ctx.Channel.Id != rootChannel ? ctx.Channel.Id : default);
+
+            await _tree.ExecuteCommand(ctx, msgCtx, await ctx.UserPermissions);
         }
         catch (PKError)
         {
