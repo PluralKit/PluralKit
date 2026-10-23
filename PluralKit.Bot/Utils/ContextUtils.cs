@@ -223,31 +223,97 @@ public static class ContextUtils
         catch (ForbiddenException) { }
     }
 
-    public static async Task PaginateCV2<T>(this Context ctx, IEnumerable<T> items, int totalCount,
-        int itemsPerPage, string title, string color, Func<IEnumerable<T>, List<MessageComponent>> renderer)
+    public static async Task PaginateCV2(this Context ctx, string title, string color,
+        Func<ApplicationCommandInteractionData?, Task<(string, List<PageItem>)>> renderer,
+        int? maxItemsPage = null, Func<MessageComponent[]> optionsModal = null)
     {
+        List<List<PageItem>> pages = [];
+        List<PageItem> currentPage = [];
 
-        var pageCount = (int)Math.Ceiling(totalCount / (double)itemsPerPage);
+        string footer = "";
 
-        async Task<MessageComponent[]> MakeComponentForPage(int page)
+        async Task<int> MakePages(ApplicationCommandInteractionData? optsOverride = null)
         {
+            const int MAX_CHARACTERS = 4000;
+            // 16 is an estimate based on a max page number of 5 digits
+            // # [XXXXX/XXXXX] {title}
+            var maxTitleLength = 16 + title.Length;
+            var leftoverCharacters = MAX_CHARACTERS - maxTitleLength - footer.Length;
 
-            var titleField = new MessageComponent
+            pages = [];
+            currentPage = [];
+            var currentPageLength = 0;
+
+            var (newFooter, renderedItems) = await renderer(optsOverride);
+            footer = newFooter;
+
+            foreach (var item in renderedItems)
+            {
+                if (item.CharacterCount > leftoverCharacters)
+                    throw new PKError("Item in list too long, overfills one page");
+                if (currentPageLength + item.CharacterCount > leftoverCharacters || (maxItemsPage != null && currentPage.Count >= maxItemsPage))
+                {
+                    pages.Add(currentPage);
+                    currentPage = [];
+                    currentPageLength = 0;
+                }
+                currentPage.Add(item);
+                currentPageLength += item.CharacterCount;
+            }
+            if (currentPage.Count > 0 || pages.Count == 0) pages.Add(currentPage);
+
+            return pages.Count;
+
+
+        }
+
+        await MakePages();
+
+        (MessageComponent, MessageComponent, List<MessageComponent>) MakeComponentForPage(int pageNumber)
+        {
+            var page = pages.ElementAt(pageNumber);
+            var header = new MessageComponent()
             {
                 Type = ComponentType.Text,
-                Content = "# " + (pageCount > 1 ? $"[{page + 1}/{pageCount}] {title}" : title),
+                Content = "# " + (pages.Count > 1 ? $"[{pageNumber + 1}/{pages.Count}] {title}" : title)
             };
-            return [titleField, .. renderer(items.Chunk(itemsPerPage).ElementAt(page))];
+            var footerCom = new MessageComponent()
+            {
+                Type = ComponentType.Text,
+                Content = footer
+            };
+
+            if (page.Count == 0)
+                return (header, footerCom, []);
+
+            if (page.ElementAt(0).Components == null)
+                return (header, footerCom, [new MessageComponent()
+                {
+                    Type = ComponentType.Text,
+                    Content = string.Join('\n', page.Select(x => x.Text))
+                },
+                    new() { Type = ComponentType.Separator }]);
+            else
+                return (header, footerCom, page.SelectMany(a => a.Components.Append(new() { Type = ComponentType.Separator })).ToList());
         }
 
         var list = new ListInteractive(ctx)
         {
             ContentBuilder = MakeComponentForPage,
+            Renderer = MakePages,
             Color = color,
-            PageCount = pageCount,
+            PageCount = pages.Count,
+            OptionsModal = optionsModal
         };
 
         await list.Run(false);
+    }
+
+    public record PageItem
+    {
+        public int CharacterCount { get; init; }
+        public string? Text { get; init; }
+        public MessageComponent[]? Components { get; init; }
     }
 
     public static async Task<T> Choose<T>(this Context ctx, string description, IList<T> items,

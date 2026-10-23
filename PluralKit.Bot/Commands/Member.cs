@@ -132,7 +132,7 @@ public class Member
         }
 
         await ctx.Reply(
-            components: await _embeds.CreateMemberMessageComponents(system, target, ctx.Guild, ctx.Config, ctx.LookupContextFor(system.Id), ctx.Zone));
+            components: await _embeds.CreateMemberMessageComponents(system, target, ctx.Guild, ctx.Config, ctx.LookupContextFor(system.Id)));
     }
 
     public async Task Soulscream(Context ctx, PKMember target)

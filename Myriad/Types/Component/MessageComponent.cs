@@ -20,6 +20,13 @@ public record MessageComponent
     public string? Placeholder { get; init; }
     public uint? MinLength { get; init; }
     public uint? MaxLength { get; init; }
+    public uint? MinValues { get; init; }
+    public uint? MaxValues { get; init; }
     public MessageComponent? Component { get; init; }
     public string? Value { get; init; }
+    public string[]? Values { get; init; }
+    public bool? Default { get; init; }
+    public bool? Required { get; init; }
+
+    public MessageComponent[]? Options { get; init; }
 }

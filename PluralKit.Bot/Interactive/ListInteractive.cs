@@ -1,27 +1,20 @@
-using System.Reflection.Emit;
-using System.Text.Json;
 using Autofac;
-using Microsoft.Extensions.Logging;
-using Myriad.Types;
 
-using PluralKit.Core;
+using Myriad.Types;
 
 namespace PluralKit.Bot.Interactive;
 
-public class ListInteractive: BaseInteractive
+public class ListInteractive(Context ctx): BaseInteractive(ctx)
 {
-    public ListInteractive(Context ctx) : base(ctx)
-    {
-        User = ctx.Author.Id;
-    }
-
     public bool? Result { get; private set; }
-    public ulong? User { get; set; }
+    public ulong? User { get; set; } = ctx.Author.Id;
     public ButtonStyle Style { get; set; } = ButtonStyle.Primary;
     public int Page { get; set; } = 0;
     public int PageCount { get; set; } = 1;
-    public Func<int, Task<MessageComponent[]>> ContentBuilder { get; set; }
+    public Func<int, (MessageComponent, MessageComponent, List<MessageComponent>)> ContentBuilder { get; init; }
+    public Func<ApplicationCommandInteractionData?, Task<int>> Renderer { get; init; }
     public string? Color { get; set; }
+    public Func<MessageComponent[]>? OptionsModal { get; init; }
 
     public override async Task Start()
     {
@@ -34,6 +27,8 @@ public class ListInteractive: BaseInteractive
             AddButton(ctx => OnButtonClick(ctx, "input_page"), "\uD83D\uDD22", Style); // 1234
         }
 
+        if (OptionsModal != null)
+            AddButton(ctx => OnButtonClick(ctx, "options"), "List Options", ButtonStyle.Secondary);
         AddButton(ctx => OnButtonClick(ctx, "finish"), "\u2714  Done with List", ButtonStyle.Success);
         AddButton(ctx => OnButtonClick(ctx, "delete"), "\u2716  Delete List Message", ButtonStyle.Danger);
 
@@ -78,6 +73,9 @@ public class ListInteractive: BaseInteractive
             case "input_page":
                 await InputPage(ctx);
                 break;
+            case "options":
+                await CreateOptionsModal(ctx);
+                break;
         }
     }
 
@@ -87,25 +85,21 @@ public class ListInteractive: BaseInteractive
     {
         List<MessageComponent> components = [];
 
-        var generatedComponents = await ContentBuilder(Page);
+        var (header, footer, generatedComponents) = ContentBuilder(Page);
 
-        var separator = new MessageComponent { Type = ComponentType.Separator };
-
-        components.Add(generatedComponents[0]);
-
-        foreach (var component in generatedComponents.Skip(2))
-            components.AddRange([component, separator]);
+        components.Add(header);
+        components.AddRange(generatedComponents);
 
         foreach (var line in _buttons.Chunk(5))
         {
             components.Add(new()
             {
                 Type = ComponentType.ActionRow,
-                Components = line.Select(b => b.ToMessageComponent()).ToArray()
+                Components = [.. line.Select(b => b.ToMessageComponent())]
             });
         }
 
-        components.Add(generatedComponents[1]);
+        components.Add(footer);
 
         return
         [
@@ -116,6 +110,22 @@ public class ListInteractive: BaseInteractive
                 Components = components.ToArray()
             },
         ];
+    }
+
+    private async Task CreateOptionsModal(InteractionContext ctx)
+    {
+        async Task OptionsModalHandler(InteractionContext ctx)
+        {
+            PageCount = await Renderer(ctx.Event.Data);
+            if (Page > PageCount) Page = 0;
+            await Update(ctx);
+        }
+
+        var dispatch = _ctx.Services.Resolve<InteractionDispatchService>();
+        var customId = dispatch.Register(_ctx.ShardId, OptionsModalHandler, Timeout);
+
+        await ctx.Respond(InteractionResponse.ResponseType.Modal,
+        new InteractionApplicationCommandCallbackData { Title = "List Options", CustomId = customId, Components = OptionsModal() });
     }
 
     private async Task InputPage(InteractionContext ctx)

@@ -6,8 +6,6 @@ using Myriad.Rest;
 using Myriad.Rest.Types;
 using Myriad.Types;
 
-using NodaTime;
-
 using PluralKit.Core;
 
 namespace PluralKit.Bot;
@@ -51,8 +49,7 @@ public class ApplicationCommandProxiedMessage
                 msg.Member,
                 guild,
                 ctx.Config,
-                LookupContext.ByNonOwner,
-                DateTimeZone.Utc
+                LookupContext.ByNonOwner
             ));
         components.Add(new MessageComponent()
         {

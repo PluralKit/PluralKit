@@ -1,3 +1,4 @@
+using System.Text;
 using Humanizer;
 
 using Myriad.Builders;
@@ -331,8 +332,10 @@ public class EmbedService
         return embed.Build();
     }
 
-    public async Task<MessageComponent[]> CreateMemberMessageComponents(PKSystem system, PKMember member, Guild guild, SystemConfig? ccfg, LookupContext ctx, DateTimeZone zone)
+    public async Task<MessageComponent[]> CreateMemberMessageComponents(PKSystem? system, PKMember member, Guild? guild, SystemConfig? ccfg, LookupContext ctx, ListOptions? opts = null, bool flattenComponents = false)
     {
+        system ??= await _repo.GetSystem(member.System);
+
         var name = member.NameFor(ctx);
         var systemGuildSettings = guild != null ? await _repo.GetSystemGuild(guild.Id, system.Id) : null;
         var systemName = (guild != null && systemGuildSettings?.DisplayName != null) ? systemGuildSettings?.DisplayName! : system.NameFor(ctx);
@@ -346,6 +349,10 @@ public class EmbedService
             .Where(g => g.Visibility.CanAccess(ctx))
             .OrderBy(g => g.Name, StringComparer.InvariantCultureIgnoreCase)
             .ToListAsync();
+
+        // Used if flattenComponents is true
+        // Mainly for the long list
+        var flattenedStr = new StringBuilder();
 
         var headerText = "";
         if (member.MemberVisibility == PrivacyLevel.Private)
@@ -371,9 +378,10 @@ public class EmbedService
             headerText += $"\n**Message count:** {member.MessageCount}";
 
         List<MessageComponent> extraData = [];
-        if (member.Aliases.Count > 0 && member.AliasPrivacy.CanAccess(ctx))
+        if (member.Aliases.Count > 0 && member.AliasPrivacy.CanAccess(ctx) && (opts == null || opts.IncludeAliases))
         {
             var aliases = string.Join("\n", member.Aliases);
+
             extraData.Add(new MessageComponent
             {
                 Type = ComponentType.Separator,
@@ -384,9 +392,11 @@ public class EmbedService
                 Type = ComponentType.Text,
                 Content = $"**Aliases:**\n{aliases.Truncate(1024)}",
             });
+
+            flattenedStr.Append($"**Aliases:**\n{aliases.Truncate(1024)}");
         }
 
-        if (member.HasProxyTags && member.ProxyPrivacy.CanAccess(ctx))
+        if (member.HasProxyTags && member.ProxyPrivacy.CanAccess(ctx) && (opts == null || opts.IncludeProxyTags))
         {
             extraData.Add(new MessageComponent
             {
@@ -398,9 +408,11 @@ public class EmbedService
                 Type = ComponentType.Text,
                 Content = $"**Proxy tags:**\n{member.ProxyTagsString("\n").Truncate(1024)}",
             });
+
+            flattenedStr.Append($"\n**Proxy tags:**\n{member.ProxyTagsString("\n").Truncate(1024)}");
         }
 
-        if (groups.Count > 0)
+        if (groups.Count > 0 && (opts == null || opts.IncludeGroups))
         {
             // More than 5 groups show in "compact" format without ID
             var content = groups.Count > 5
@@ -417,10 +429,12 @@ public class EmbedService
                 Type = ComponentType.Text,
                 Content = $"**Groups ({groups.Count}):**\n{content.Truncate(1000)}",
             });
+
+            flattenedStr.Append($"\n**Groups ({groups.Count}):**\n{content.Truncate(1000)}");
         }
 
         List<MessageComponent> descComponents = [];
-        if (member.DescriptionFor(ctx) is { } desc && !string.IsNullOrWhiteSpace(desc))
+        if (member.DescriptionFor(ctx) is { } desc && !string.IsNullOrWhiteSpace(desc) && (opts == null || opts.IncludeDescription))
         {
             descComponents.Add(new()
             {
@@ -432,6 +446,8 @@ public class EmbedService
                 Type = ComponentType.Text,
                 Content = desc.NormalizeLineEndSpacing().Truncate(1024),
             });
+
+            flattenedStr.Append($"\n\n{desc.NormalizeLineEndSpacing().Truncate(1024)}");
         }
 
         if (member.BannerPrivacy.CanAccess(ctx) && !string.IsNullOrWhiteSpace(member.BannerImage))
@@ -449,19 +465,25 @@ public class EmbedService
             },
         ];
 
+        var flattenedHeaderStr = $"# {name}";
+
         if (!string.IsNullOrWhiteSpace(headerText))
+        {
             header.Add(new MessageComponent()
             {
                 Type = ComponentType.Text,
                 Content = headerText,
             });
+            flattenedHeaderStr += "\n" + headerText;
+        }
 
-        if (!string.IsNullOrWhiteSpace(avatar))
+        if (!string.IsNullOrWhiteSpace(avatar) && (opts == null || opts.IncludeAvatar))
             header = [
                 new MessageComponent()
                 {
                     Type = ComponentType.Section,
-                    Components = [.. header],
+                    Components = !flattenComponents ? [.. header] :
+                            [new() { Type = ComponentType.Text, Content = flattenedHeaderStr }],
                     Accessory = new MessageComponent()
                     {
                         Type = ComponentType.Thumbnail,
@@ -469,33 +491,44 @@ public class EmbedService
                     },
                 },
             ];
-
-        return [
-            new MessageComponent()
-            {
-                Type = ComponentType.Container,
-                AccentColor = member.Color?.ToDiscordColor(),
-                Components = [.. header, .. extraData, .. descComponents],
-            },
-            new MessageComponent()
-            {
-                Type = ComponentType.Section,
-                Components = [
-                    new MessageComponent()
-                    {
-                        Type = ComponentType.Text,
-                        Content = $"-# System ID: `{system.DisplayHid(ccfg)}` \u2219 Member ID: `{member.DisplayHid(ccfg)}`{(member.MetadataPrivacy.CanAccess(ctx) ? $"\n-# Created: {DiscordUtils.InstantToTimestampString(member.Created)}" : "")}",
-                    },
-                ],
-                Accessory = new MessageComponent()
+        if (!flattenComponents)
+            return [
+                new MessageComponent()
                 {
-                    Type = ComponentType.Button,
-                    Style = ButtonStyle.Link,
-                    Label = "View on dashboard",
-                    Url = $"{_coreConfig.DashboardBaseUrl}/profile/m/{member.Hid}",
+                    Type = ComponentType.Container,
+                    AccentColor = member.Color?.ToDiscordColor(),
+                    Components = [.. header, .. extraData, .. descComponents],
                 },
-            },
-        ];
+                new MessageComponent()
+                {
+                    Type = ComponentType.Section,
+                    Components = [
+                        new MessageComponent()
+                        {
+                            Type = ComponentType.Text,
+                            Content = $"-# System ID: `{system.DisplayHid(ccfg)}` \u2219 Member ID: `{member.DisplayHid(ccfg)}`{(member.MetadataPrivacy.CanAccess(ctx) ? $"\n-# Created: {DiscordUtils.InstantToTimestampString(member.Created)}" : "")}",
+                        },
+                    ],
+                    Accessory = new MessageComponent()
+                    {
+                        Type = ComponentType.Button,
+                        Style = ButtonStyle.Link,
+                        Label = "View on dashboard",
+                        Url = $"{_coreConfig.DashboardBaseUrl}/profile/m/{member.Hid}",
+                    },
+                },
+            ];
+        else if (flattenedStr.Length == 0)
+            return [.. header];
+        else
+            return [
+                .. header,
+                new MessageComponent()
+                {
+                    Type = ComponentType.Text,
+                    Content = flattenedStr.ToString()
+                }
+            ];
     }
 
     public async Task<Embed> CreateMemberEmbed(PKSystem system, PKMember member, Guild guild, SystemConfig? ccfg, LookupContext ctx, DateTimeZone zone)

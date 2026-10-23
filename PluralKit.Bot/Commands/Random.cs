@@ -46,7 +46,7 @@ public class Random
         }
 
         await ctx.Reply(
-            components: await _embeds.CreateMemberMessageComponents(target, members[randInt], ctx.Guild, ctx.Config, ctx.LookupContextFor(target.Id), ctx.Zone));
+            components: await _embeds.CreateMemberMessageComponents(target, members[randInt], ctx.Guild, ctx.Config, ctx.LookupContextFor(target.Id)));
     }
 
     public async Task Group(Context ctx, PKSystem target)
@@ -121,6 +121,6 @@ public class Random
         }
 
         await ctx.Reply(
-            components: await _embeds.CreateMemberMessageComponents(system, ms[randInt], ctx.Guild, ctx.Config, ctx.LookupContextFor(system.Id), ctx.Zone));
+            components: await _embeds.CreateMemberMessageComponents(system, ms[randInt], ctx.Guild, ctx.Config, ctx.LookupContextFor(system.Id)));
     }
 }

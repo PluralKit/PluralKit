@@ -1,13 +1,19 @@
 using System.Text;
 
 using Humanizer;
-
 using PluralKit.Core;
 
 namespace PluralKit.Bot;
 
 public class SystemList
 {
+    private readonly EmbedService _embeds;
+
+    public SystemList(EmbedService embeds)
+    {
+        _embeds = embeds;
+    }
+
     public async Task MemberList(Context ctx, PKSystem target)
     {
         if (target == null) throw Errors.NoSystemError(ctx.DefaultPrefix);
@@ -36,7 +42,8 @@ public class SystemList
                 target.Id,
                 await GetEmbedTitle(target, opts, ctx),
                 target.Color,
-                opts
+                opts,
+                _embeds
             );
         }
     }

@@ -24,7 +24,6 @@ public class ListOptions
         }
     }
 
-
     public bool Reverse { get; set; }
 
     public PrivacyLevel? PrivacyFilter { get; set; } = PrivacyLevel.Public;
@@ -43,8 +42,14 @@ public class ListOptions
     public bool IncludePronouns { get; set; }
     public bool IncludeDisplayName { get; set; }
     public bool IncludeBirthday { get; set; }
+    public bool IncludeProxyTags { get; set; }
+    public bool IncludeGroups { get; set; }
+    public bool IncludeAliases { get; set; }
+    public bool IncludeDescription { get; set; }
 
-    // hacky but works, remember to update this when more include flags are added 
+    public bool SortIncludeMatch { get; set; } = false;
+
+    // hacky but works, remember to update this when more include flags are added
     public int includedCount => new[] {
         IncludeMessageCount,
         IncludeLastSwitch,
@@ -54,7 +59,32 @@ public class ListOptions
         IncludePronouns,
         IncludeDisplayName,
         IncludeBirthday,
+        IncludeProxyTags,
+        IncludeGroups,
+        IncludeAliases,
+        IncludeDescription
     }.Sum(x => Convert.ToInt32(x));
+
+    // Reset the sort and includes values without resetting the search terms and privacy filters
+    // Also update this when more include flags are added
+    public void ResetSortAndIncludes()
+    {
+        IncludeMessageCount =
+        IncludeLastSwitch =
+        IncludeLastMessage =
+        IncludeCreated =
+        IncludeAvatar =
+        IncludePronouns =
+        IncludeDisplayName =
+        IncludeBirthday =
+        IncludeProxyTags =
+        IncludeGroups =
+        IncludeAliases =
+        IncludeDescription = false;
+
+        _sortProperty = null;
+        SortIncludeMatch = false;
+    }
 
     public string CreateFilterString()
     {

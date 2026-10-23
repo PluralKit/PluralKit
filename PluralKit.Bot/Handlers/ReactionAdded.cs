@@ -9,8 +9,6 @@ using Myriad.Types;
 
 using PluralKit.Core;
 
-using NodaTime;
-
 using Serilog;
 
 namespace PluralKit.Bot;
@@ -193,8 +191,7 @@ public class ReactionAdded: IEventHandler<MessageReactionAddEvent>
                     msg.Member,
                     guild,
                     config,
-                    LookupContext.ByNonOwner,
-                    DateTimeZone.Utc
+                    LookupContext.ByNonOwner
                 ));
             components.Add(new MessageComponent()
             {

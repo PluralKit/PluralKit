@@ -2,14 +2,19 @@ using System.Text;
 
 using Humanizer;
 
-using Myriad.Builders;
-
 using PluralKit.Core;
 
 namespace PluralKit.Bot;
 
 public class GroupMember
 {
+    private readonly EmbedService _embeds;
+
+    public GroupMember(EmbedService embeds)
+    {
+        _embeds = embeds;
+    }
+
     public async Task AddRemoveGroups(Context ctx, PKMember target, Groups.AddRemoveOperation op)
     {
         ctx.CheckSystem().CheckOwnMember(target);
@@ -177,7 +182,7 @@ public class GroupMember
                 target.Color, opts);
         else
             await ctx.RenderCV2MemberList(ctx.LookupContextFor(target.System), target.System, title.ToString(),
-                target.Color, opts);
+                target.Color, opts, _embeds);
     }
 
     private async Task<PKSystem> GetGroupSystem(Context ctx, PKGroup target)

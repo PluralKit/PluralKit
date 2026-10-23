@@ -1,6 +1,4 @@
-using System.ComponentModel;
 using System.Text;
-
 using Humanizer;
 
 using Myriad.Builders;
@@ -90,6 +88,8 @@ public static class ContextListExt
             if (p.SortProperty == SortProperty.LastSwitch) p.IncludeLastSwitch = true;
             if (p.SortProperty == SortProperty.LastMessage) p.IncludeLastMessage = true;
             if (p.SortProperty == SortProperty.Birthdate) p.IncludeBirthday = true;
+            // If this is a short list and we went from 0 -> 1 included count here then we made the sort and includes match
+            if (p.Type == ListType.Short && p.includedCount == 1) p.SortIncludeMatch = true;
         }
 
         // Make sure the options are valid
@@ -99,8 +99,8 @@ public static class ContextListExt
         return p;
     }
 
-    public static async Task RenderCV2MemberList(this Context ctx, LookupContext lookupCtx,
-                                SystemId system, string title, string color, ListOptions opts)
+    public static async Task RenderCV2MemberList(this Context ctx, LookupContext lookupCtx, SystemId system,
+                                string title, string color, ListOptions opts, EmbedService embeds)
     {
         // We take an IDatabase instead of a IPKConnection so we don't keep the handle open for the entire runtime
         // We wanna release it as soon as the member list is actually *fetched*, instead of potentially minutes later (paginate timeout)
@@ -108,41 +108,106 @@ public static class ContextListExt
             .SortByMemberListOptions(opts, lookupCtx)
             .ToList();
 
+        // Make the default match the behavior of the non-cv2 list
+        opts.IncludeProxyTags = true;
+
+        var footer = $"-# {opts.CreateFilterString()}. {"result".ToQuantity(members.Count)}.";
+
         var itemsPerPage = opts.Type == ListType.Short ? 25 : 5;
-        await ctx.PaginateCV2(members, members.Count, itemsPerPage, title, color, Renderer);
+        await ctx.PaginateCV2(title, color, Renderer, itemsPerPage, opts.Type == ListType.Short ? shortOptionsModal : longOptionsModal);
 
         // Base renderer, dispatches based on type
-        List<MessageComponent> Renderer(IEnumerable<ListedMember> page)
+        async Task<(string, List<ContextUtils.PageItem>)> Renderer(ApplicationCommandInteractionData? optsOverride)
         {
-            List<MessageComponent> components = [];
+            if (optsOverride != null)
+            {
+                opts.ResetSortAndIncludes();
 
-            // Add a global footer with the filter/sort string + result count
-            components.Add(
-                new()
+                var sortComponent = optsOverride.Components.First((x) => x.Component.CustomId == "sort_select").Component;
+                opts.SortProperty = sortComponent.Values[0] switch
                 {
-                    Type = ComponentType.Text,
-                    Content = $"-# {opts.CreateFilterString()}. {"result".ToQuantity(members.Count)}."
+                    "displayname" => SortProperty.DisplayName,
+                    "id" => SortProperty.Hid,
+                    "count" => SortProperty.MessageCount,
+                    "created" => SortProperty.CreationDate,
+                    "switch" => SortProperty.LastSwitch,
+                    "message" => SortProperty.LastMessage,
+                    "birthday" => SortProperty.Birthdate,
+                    "random" => SortProperty.Random,
+                    _ => SortProperty.Name
+                };
+
+                var infoComponent = optsOverride.Components.First((x) => x.Component.CustomId == "info_select").Component;
+                if (infoComponent?.Values?.Length > 0 && infoComponent.Values[0] == "default")
+                {
+                    infoComponent.Values[0] = sortComponent.Values[0];
+                    opts.SortIncludeMatch = true;
                 }
-            );
+                foreach (var include in infoComponent.Values)
+                    switch (include)
+                    {
+                        case "tags":
+                            opts.IncludeProxyTags = true;
+                            break;
+                        case "switch":
+                            opts.IncludeLastSwitch = true;
+                            break;
+                        case "message":
+                            opts.IncludeLastMessage = true;
+                            break;
+                        case "count":
+                            opts.IncludeMessageCount = true;
+                            break;
+                        case "created":
+                            opts.IncludeCreated = true;
+                            break;
+                        case "avatar":
+                            opts.IncludeAvatar = true;
+                            break;
+                        case "pronouns":
+                            opts.IncludePronouns = true;
+                            break;
+                        case "displayname":
+                            opts.IncludeDisplayName = true;
+                            break;
+                        case "birthday":
+                            opts.IncludeBirthday = true;
+                            break;
+                        case "groups":
+                            opts.IncludeGroups = true;
+                            break;
+                        case "aliases":
+                            opts.IncludeAliases = true;
+                            break;
+                        case "description":
+                            opts.IncludeDescription = true;
+                            break;
+                    }
 
-            // Then call the specific renderers
+                var reverseComponent = optsOverride.Components.FirstOrDefault((x) => x.Component.CustomId == "reverse_radio").Component;
+                if (bool.TryParse(reverseComponent.Value, out var val))
+                    opts.Reverse = val;
+
+                opts.AssertIsValid();
+
+                members = members.SortByMemberListOptions(opts, lookupCtx).ToList();
+            }
+
+            footer = $"-# {opts.CreateFilterString()}. {"result".ToQuantity(members.Count)}.";
+
             if (opts.Type == ListType.Short)
-                components.Add(ShortRenderer(page));
+                return (footer, ShortRenderer(members).ToList());
             else
-                components.AddRange(LongRenderer(page));
-
-            return components;
+                return (footer, await LongRenderer(members));
+            // return (new string(JsonSerializer.Serialize((await LongRenderer(members))[0]).Chunk(3000).ElementAt(0)), []);
         }
 
-        MessageComponent ShortRenderer(IEnumerable<ListedMember> page)
+        IEnumerable<ContextUtils.PageItem> ShortRenderer(IEnumerable<ListedMember> members)
         {
             // if there are both 5 and 6 character Hids they should be padded to align correctly.
-            var shouldPad = page.Any(x => x.Hid.Length > 5);
+            var shouldPad = members.Any(x => x.Hid.Length > 5);
 
-            return new MessageComponent
-            {
-                Type = ComponentType.Text,
-                Content = string.Join('\n', page.Select(m =>
+            return members.Select(m =>
                 {
                     var ret = $"[`{m.DisplayHid(ctx.Config, isList: true, shouldPad: shouldPad)}`] **{m.NameFor(ctx)}** ";
 
@@ -162,7 +227,7 @@ public static class ContextListExt
                         ret += $"({m.DisplayName})";
                     else if (opts.IncludeBirthday && m.BirthdayFor(lookupCtx) is { } birthday)
                         ret += $"(birthday: {m.BirthdayString})";
-                    else if (m.HasProxyTags && m.ProxyPrivacy.CanAccess(lookupCtx))
+                    else if (opts.IncludeProxyTags && m.HasProxyTags && m.ProxyPrivacy.CanAccess(lookupCtx))
                     {
                         var proxyTagsString = m.ProxyTagsString();
                         if (proxyTagsString.Length > 100) // arbitrary threshold for now, tweak?
@@ -170,63 +235,368 @@ public static class ContextListExt
                         ret += $"*(*{proxyTagsString}*)*";
                     }
 
-                    return ret;
-                }))
-            }
-            ;
+                    return new ContextUtils.PageItem() { CharacterCount = ret.Length, Text = ret };
+                });
         }
 
-        IEnumerable<MessageComponent> LongRenderer(IEnumerable<ListedMember> page)
+        async Task<List<ContextUtils.PageItem>> LongRenderer(IEnumerable<ListedMember> page)
         {
-            return page.Select(m =>
+            List<ContextUtils.PageItem> components = [];
+            await foreach (var m in page.ToAsyncEnumerable())
             {
-                var profile = new StringBuilder($"## {m.NameFor(ctx)}\n**ID**: {m.DisplayHid(ctx.Config)}");
-
-                if (m.DisplayName != null && m.NamePrivacy.CanAccess(lookupCtx))
-                    profile.Append($"\n**Display name**: {m.DisplayName}");
-
-                if (m.PronounsFor(lookupCtx) is { } pronouns)
-                    profile.Append($"\n**Pronouns**: {pronouns}");
-
-                if (m.BirthdayFor(lookupCtx) != null)
-                    profile.Append($"\n**Birthdate**: {m.BirthdayString}");
-
-                if (m.ProxyTags.Count > 0 && m.ProxyPrivacy.CanAccess(lookupCtx))
-                    profile.Append($"\n**Proxy tags**: {m.ProxyTagsString()}");
-
-                if ((opts.IncludeMessageCount || opts.SortProperty == SortProperty.MessageCount) &&
-                    m.MessageCountFor(lookupCtx) is { } count && count > 0)
-                    profile.Append($"\n**Message count:** {count}");
-
-                if ((opts.IncludeLastMessage || opts.SortProperty == SortProperty.LastMessage) && m.MetadataPrivacy.TryGet(lookupCtx, m.LastMessageTimestamp, out var lastMsg))
-                    profile.Append($"\n**Last message:** {m.LastMessageTimestamp.Value.FormatZoned(ctx.Zone)}");
-
-                if ((opts.IncludeLastSwitch || opts.SortProperty == SortProperty.LastSwitch) &&
-                    m.MetadataPrivacy.TryGet(lookupCtx, m.LastSwitchTime, out var lastSw))
-                    profile.Append($"\n**Last switched in:** {lastSw.Value.FormatZoned(ctx.Zone)}");
-
-                if ((opts.IncludeCreated || opts.SortProperty == SortProperty.CreationDate) &&
-                    m.MetadataPrivacy.TryGet(lookupCtx, m.Created, out var created))
-                    profile.Append($"\n**Created on:** {created.FormatZoned(ctx.Zone)}");
-
-                if (opts.IncludeAvatar && m.AvatarFor(lookupCtx) is { } avatar)
-                    profile.Append($"\n**Avatar URL:** {avatar.TryGetCleanCdnUrl()}");
-
-                if (m.DescriptionFor(lookupCtx) is { } desc)
-                    profile.Append($"\n\n{desc}");
-
-                if (m.MemberVisibility == PrivacyLevel.Private)
-                    profile.Append("\n*(this member is hidden)*");
-
-                return new MessageComponent()
+                var container = await embeds.CreateMemberMessageComponents(null, m, null, ctx.Config, lookupCtx, opts, true);
+                components.Add(new()
                 {
-                    Type = ComponentType.Text,
-                    Content = profile.ToString().Truncate(1024)
-                };
-            });
+                    CharacterCount = countCharacters(container),
+                    Components = container
+                });
+            }
+
+            return components;
         }
 
+        MessageComponent[] shortOptionsModal() => [
+            new()
+            {
+                Type = ComponentType.Label,
+                Label = "Sort By",
+                Component = new()
+                {
+                    Type = ComponentType.StringSelect,
+                    CustomId = "sort_select",
+                    MaxValues = 1,
+                    Options = [
+                        new()
+                        {
+                            Label = "Name (Default)",
+                            Value = "name",
+                            Default = opts.SortProperty == SortProperty.Name
+                        },
+                        new()
+                        {
+                            Label = "Displayname",
+                            Value = "displayname",
+                            Default = opts.SortProperty == SortProperty.DisplayName
+                        },
+                        new()
+                        {
+                            Label = "ID",
+                            Value = "id",
+                            Default = opts.SortProperty == SortProperty.Hid
+                        },
+                        new()
+                        {
+                            Label = "Message Count",
+                            Value = "count",
+                            Default = opts.SortProperty == SortProperty.MessageCount
+                        },
+                        new()
+                        {
+                            Label = "Creation Date",
+                            Value = "created",
+                            Default = opts.SortProperty == SortProperty.CreationDate
+                        },
+                        new()
+                        {
+                            Label = "Last Switch",
+                            Value = "switch",
+                            Default = opts.SortProperty == SortProperty.LastSwitch
+                        },
+                        new()
+                        {
+                            Label = "Last Message",
+                            Value = "message",
+                            Default = opts.SortProperty == SortProperty.LastMessage
+                        },
+                        new()
+                        {
+                            Label = "Birthday",
+                            Value = "birthday",
+                            Default = opts.SortProperty == SortProperty.Birthdate
+                        },
+                        new()
+                        {
+                            Label = "Random",
+                            Value = "random",
+                            Default = opts.SortProperty == SortProperty.Random
+                        },
+                    ]
+                }
+            },
+            // Ideally this would be a checkbox
+            // But I cannot get checkboxes to work for the life of me
+            new()
+            {
+                Type = ComponentType.Label,
+                Label = "Reverse Sort?",
+                Component = new()
+                {
+                    Type = ComponentType.RadioGroup,
+                    CustomId = "reverse_radio",
+                    Options = [
+                        new()
+                        {
+                            Label = "Yes",
+                            Value = "true",
+                            Default = opts.Reverse
+                        },
+                        new()
+                        {
+                            Label = "No",
+                            Value = "false",
+                            Default = !opts.Reverse,
+                        }
+                    ]
+                }
+            },
+            // new () {
+            //     Type = ComponentType.Label,
+            //     Label = "Reverse Sort?",
+            //     CustomId = "reverse_label",
+            //     Component = new () {
+            //         Type = ComponentType.Checkbox,
+            //         CustomId = "reverse_checkbox",
+            //     }
+            // },
+            new()
+            {
+                Type = ComponentType.Label,
+                Label = "Extra Info",
+                Component = new()
+                {
+                    Type = ComponentType.StringSelect,
+                    CustomId = "info_select",
+                    MaxValues = 1,
+                    Options = [
+                        new()
+                        {
+                            Label = "Same as Sort",
+                            Value = "default",
+                            Default = opts.SortIncludeMatch
+                        },
+                        new()
+                        {
+                            Label = "Proxy Tags",
+                            Value = "tags",
+                            Default = !opts.SortIncludeMatch && opts.IncludeProxyTags
+                        },
+                        new()
+                        {
+                            Label = "Last Switch",
+                            Value = "switch",
+                            Default = !opts.SortIncludeMatch && opts.IncludeLastSwitch
+                        },
+                        new()
+                        {
+                            Label = "Last Message",
+                            Value = "message",
+                            Default = !opts.SortIncludeMatch && opts.IncludeLastMessage
+                        },
+                        new()
+                        {
+                            Label = "Message Count",
+                            Value = "count",
+                            Default = !opts.SortIncludeMatch && opts.IncludeMessageCount
+                        },
+                        new()
+                        {
+                            Label = "Creation Date",
+                            Value = "created",
+                            Default = !opts.SortIncludeMatch && opts.IncludeCreated
+                        },
+                        new()
+                        {
+                            Label = "Avatar Link",
+                            Value = "avatar",
+                            Default = !opts.SortIncludeMatch && opts.IncludeAvatar
+                        },
+                        new()
+                        {
+                            Label = "Pronouns",
+                            Value = "pronouns",
+                            Default = !opts.SortIncludeMatch && opts.IncludePronouns
+                        },
+                        new()
+                        {
+                            Label = "Displayname",
+                            Value = "displayname",
+                            Default = !opts.SortIncludeMatch && opts.IncludeDisplayName
+                        },
+                        new()
+                        {
+                            Label = "Birthday",
+                            Value = "birthday",
+                            Default = !opts.SortIncludeMatch && opts.IncludeBirthday
+                        },
+                        new()
+                        {
+                            Label = "No Extra Info",
+                            Value = "none",
+                            Default = !opts.SortIncludeMatch && opts.includedCount == 0
+                        }
+                    ]
+                }
+            }
+        ];
 
+        MessageComponent[] longOptionsModal() => [
+            new()
+            {
+                Type = ComponentType.Label,
+                Label = "Sort By",
+                Component = new()
+                {
+                    Type = ComponentType.StringSelect,
+                    CustomId = "sort_select",
+                    MaxValues = 1,
+                    Options = [
+                        new()
+                        {
+                            Label = "Name (Default)",
+                            Value = "name",
+                            Default = opts.SortProperty == SortProperty.Name
+                        },
+                        new()
+                        {
+                            Label = "Displayname",
+                            Value = "displayname",
+                            Default = opts.SortProperty == SortProperty.DisplayName
+                        },
+                        new()
+                        {
+                            Label = "ID",
+                            Value = "id",
+                            Default = opts.SortProperty == SortProperty.Hid
+                        },
+                        new()
+                        {
+                            Label = "Message Count",
+                            Value = "count",
+                            Default = opts.SortProperty == SortProperty.MessageCount
+                        },
+                        new()
+                        {
+                            Label = "Creation Date",
+                            Value = "created",
+                            Default = opts.SortProperty == SortProperty.CreationDate
+                        },
+                        new()
+                        {
+                            Label = "Last Switch",
+                            Value = "switch",
+                            Default = opts.SortProperty == SortProperty.LastSwitch
+                        },
+                        new()
+                        {
+                            Label = "Last Message",
+                            Value = "message",
+                            Default = opts.SortProperty == SortProperty.LastMessage
+                        },
+                        new()
+                        {
+                            Label = "Birthday",
+                            Value = "birthday",
+                            Default = opts.SortProperty == SortProperty.Birthdate
+                        },
+                        new()
+                        {
+                            Label = "Random",
+                            Value = "random",
+                            Default = opts.SortProperty == SortProperty.Random
+                        },
+                    ]
+                }
+            },
+            // Ideally this would be a checkbox
+            // But I cannot get checkboxes to work for the life of me
+            new()
+            {
+                Type = ComponentType.Label,
+                Label = "Reverse Sort?",
+                Component = new()
+                {
+                    Type = ComponentType.RadioGroup,
+                    CustomId = "reverse_radio",
+                    Options = [
+                        new()
+                        {
+                            Label = "Yes",
+                            Value = "true",
+                            Default = opts.Reverse
+                        },
+                        new()
+                        {
+                            Label = "No",
+                            Value = "false",
+                            Default = !opts.Reverse,
+                        }
+                    ]
+                }
+            },
+            // new () {
+            //     Type = ComponentType.Label,
+            //     Label = "Reverse Sort?",
+            //     CustomId = "reverse_label",
+            //     Component = new () {
+            //         Type = ComponentType.Checkbox,
+            //         CustomId = "reverse_checkbox",
+            //     }
+            // },
+            new()
+            {
+                Type = ComponentType.Label,
+                Label = "Extra Info",
+                Component = new()
+                {
+                    Type = ComponentType.CheckboxGroup,
+                    CustomId = "info_select",
+                    Required = false,
+                    Options = [
+                        new()
+                        {
+                            Label = "Proxy Tags",
+                            Value = "tags",
+                            Default = opts.IncludeProxyTags
+                        },
+                        new()
+                        {
+                            Label = "Aliases",
+                            Value = "aliases",
+                            Default = opts.IncludeAliases
+                        },
+                        new()
+                        {
+                            Label = "Avatar",
+                            Value = "avatar",
+                            Default = opts.IncludeAvatar
+                        },
+                        new()
+                        {
+                            Label = "Groups",
+                            Value = "groups",
+                            Default = opts.IncludeGroups
+                        },
+                        new()
+                        {
+                            Label = "Description",
+                            Value = "description",
+                            Default = opts.IncludeDescription
+                        }
+                    ]
+                }
+            }
+        ];
+
+
+        int countCharacters(MessageComponent[] components) =>
+            components.Sum(com =>
+                com.Type switch
+                {
+                    ComponentType.Text => (com.Content ?? "").Length,
+                    ComponentType.Section => countCharacters(com.Components ?? []),
+                    _ => 0,
+                }
+            );
     }
 
     public static async Task RenderMemberList(this Context ctx, LookupContext lookupCtx,
@@ -351,41 +721,26 @@ public static class ContextListExt
             .SortByGroupListOptions(opts, lookupCtx)
             .ToList();
 
+        var footer = $"-# {opts.CreateFilterString()}. {"result".ToQuantity(groups.Count)}.";
         var itemsPerPage = opts.Type == ListType.Short ? 25 : 5;
-        await ctx.PaginateCV2(groups, groups.Count, itemsPerPage, embedTitle, color, Renderer);
+
+        await ctx.PaginateCV2(embedTitle, color, Renderer, itemsPerPage);
 
         // Base renderer, dispatches based on type
-        List<MessageComponent> Renderer(IEnumerable<ListedGroup> page)
+        async Task<(string, List<ContextUtils.PageItem>)> Renderer(ApplicationCommandInteractionData? optsOverride)
         {
-            List<MessageComponent> components = [];
-
-            // Add a global footer with the filter/sort string + result count
-            components.Add(
-                new()
-                {
-                    Type = ComponentType.Text,
-                    Content = $"-# {opts.CreateFilterString()}. {"result".ToQuantity(groups.Count)}."
-                }
-            );
-
-            // Then call the specific renderers
             if (opts.Type == ListType.Short)
-                components.Add(ShortRenderer(page));
+                return (footer, ShortRenderer(groups).ToList());
             else
-                components.AddRange(LongRenderer(page));
-
-            return components;
+                return (footer, LongRenderer(groups).ToList());
         }
 
-        MessageComponent ShortRenderer(IEnumerable<ListedGroup> page)
+        IEnumerable<ContextUtils.PageItem> ShortRenderer(IEnumerable<ListedGroup> groups)
         {
             // if there are both 5 and 6 character Hids they should be padded to align correctly.
-            var shouldPad = page.Any(x => x.Hid.Length > 5);
+            var shouldPad = groups.Any(x => x.Hid.Length > 5);
 
-            return new MessageComponent
-            {
-                Type = ComponentType.Text,
-                Content = string.Join('\n', page.Select(g =>
+            return groups.Select(g =>
             {
                 var ret = $"[`{g.DisplayHid(ctx.Config, isList: true, shouldPad: shouldPad)}`] **{g.NameFor(ctx)}** ";
 
@@ -449,12 +804,11 @@ public static class ContextListExt
                         }
                 }
 
-                return ret;
-            }))
-            };
+                return new ContextUtils.PageItem() { CharacterCount = ret.Length, Text = ret };
+            });
         }
 
-        IEnumerable<MessageComponent> LongRenderer(IEnumerable<ListedGroup> page)
+        IEnumerable<ContextUtils.PageItem> LongRenderer(IEnumerable<ListedGroup> page)
         {
             return page.Select(g =>
             {
@@ -484,10 +838,14 @@ public static class ContextListExt
                 if (g.Visibility == PrivacyLevel.Private)
                     profile.Append("\n*(this group is hidden)*");
 
-                return new MessageComponent()
+                return new ContextUtils.PageItem()
                 {
-                    Type = ComponentType.Text,
-                    Content = profile.ToString().Truncate(1024)
+                    CharacterCount = profile.ToString().Length,
+                    Components = [new MessageComponent()
+                    {
+                        Type = ComponentType.Text,
+                        Content = profile.ToString()
+                    }]
                 };
             });
         }
