@@ -106,7 +106,7 @@ public class ListInteractive(Context ctx): BaseInteractive(ctx)
             new MessageComponent()
             {
                 Type = ComponentType.Container,
-                AccentColor = Color.ToDiscordColor() ?? null,
+                AccentColor = Color?.ToDiscordColor(),
                 Components = components.ToArray()
             },
         ];
