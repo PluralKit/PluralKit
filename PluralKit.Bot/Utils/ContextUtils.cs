@@ -235,8 +235,8 @@ public static class ContextUtils
         async Task<int> MakePages(ApplicationCommandInteractionData? optsOverride = null)
         {
             const int MAX_CHARACTERS = 4000;
-            // 16 is an estimate based on a max page number of 5 digits
-            // # [XXXXX/XXXXX] {title}
+            // 17 is an estimate based on a max page number of 5 digits
+            // ## [XXXXX/XXXXX] {title}
             var maxTitleLength = 16 + title.Length;
             var leftoverCharacters = MAX_CHARACTERS - maxTitleLength - footer.Length;
 
@@ -275,7 +275,7 @@ public static class ContextUtils
             var header = new MessageComponent()
             {
                 Type = ComponentType.Text,
-                Content = "# " + (pages.Count > 1 ? $"[{pageNumber + 1}/{pages.Count}] {title}" : title)
+                Content = "## " + (pages.Count > 1 ? $"[{pageNumber + 1}/{pages.Count}] {title}" : title)
             };
             var footerCom = new MessageComponent()
             {

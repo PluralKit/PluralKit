@@ -11,7 +11,7 @@ namespace PluralKit.Bot.Interactive;
 
 public abstract class BaseInteractive
 {
-    protected readonly List<Button> _buttons = new();
+    protected readonly List<ListButton> _buttons = new();
     protected readonly Context _ctx;
     protected readonly TaskCompletionSource _tcs = new();
     protected bool _running;
@@ -26,17 +26,18 @@ public abstract class BaseInteractive
     public Duration Timeout { get; set; } = Duration.FromMinutes(5);
 
     protected Button AddButton(Func<InteractionContext, Task> handler, string? label = null,
-                               ButtonStyle style = ButtonStyle.Secondary, bool disabled = false)
+                               ButtonStyle style = ButtonStyle.Secondary, bool disabled = false, bool innerButton = true)
     {
         var dispatch = _ctx.Services.Resolve<InteractionDispatchService>();
         var customId = dispatch.Register(_ctx.ShardId, handler, Timeout);
 
-        var button = new Button
+        var button = new ListButton
         {
             Label = label,
             Style = style,
             Disabled = disabled,
             CustomId = customId,
+            InnerButton = innerButton,
         };
         _buttons.Add(button);
         return button;
@@ -99,16 +100,49 @@ public abstract class BaseInteractive
             });
         }
 
-        foreach (var line in _buttons.Chunk(5))
+        components = AddInnerButtons(components);
+
+        return AddOuterButtons(components).ToArray();
+    }
+
+    protected List<MessageComponent> AddInnerButtons(List<MessageComponent> components)
+    {
+        foreach (var line in _buttons.Where(x => x.InnerButton).Chunk(5))
         {
             components.Add(new()
             {
                 Type = ComponentType.ActionRow,
-                Components = line.Select(b => b.ToMessageComponent()).ToArray()
+                Components = [.. line.Select(b => b.ToMessageComponent())]
             });
         }
+        return components;
+    }
 
-        return [.. components];
+    protected List<MessageComponent> AddOuterButtons(List<MessageComponent> components, string? color = null)
+    {
+        components =
+        [
+            new MessageComponent()
+            {
+                Type = ComponentType.Container,
+                AccentColor = color?.ToDiscordColor(),
+                Components = components.ToArray()
+            },
+        ];
+
+        if (_buttons.Any(x => !x.InnerButton && !x.Disabled))
+        {
+            foreach (var line in _buttons.Where(x => !x.InnerButton && !x.Disabled).Chunk(5))
+            {
+                components.Add(new()
+                {
+                    Type = ComponentType.ActionRow,
+                    Components = [.. line.Select(b => b.ToMessageComponent())]
+                });
+            }
+        }
+
+        return components;
     }
 
     public void Setup(Context ctx)
@@ -147,4 +181,9 @@ public abstract class BaseInteractive
         foreach (var button in _buttons)
             dispatch.Unregister(button.CustomId!);
     }
+}
+
+public class ListButton: Button
+{
+    public bool InnerButton { get; set; } = true;
 }

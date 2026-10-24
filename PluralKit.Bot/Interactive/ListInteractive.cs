@@ -8,7 +8,7 @@ public class ListInteractive(Context ctx): BaseInteractive(ctx)
 {
     public bool? Result { get; private set; }
     public ulong? User { get; set; } = ctx.Author.Id;
-    public ButtonStyle Style { get; set; } = ButtonStyle.Primary;
+    public ButtonStyle Style { get; set; } = ButtonStyle.Secondary;
     public int Page { get; set; } = 0;
     public int PageCount { get; set; } = 1;
     public Func<int, (MessageComponent, MessageComponent, List<MessageComponent>)> ContentBuilder { get; init; }
@@ -20,17 +20,17 @@ public class ListInteractive(Context ctx): BaseInteractive(ctx)
     {
         if (PageCount > 1)
         {
-            AddButton(ctx => OnButtonClick(ctx, "first"), "\u23EA", Style); // <<
-            AddButton(ctx => OnButtonClick(ctx, "previous"), "\u2B05", Style); // <
-            AddButton(ctx => OnButtonClick(ctx, "next"), "\u27A1", Style); // >
-            AddButton(ctx => OnButtonClick(ctx, "last"), "\u23E9", Style); // >>
-            AddButton(ctx => OnButtonClick(ctx, "input_page"), "\uD83D\uDD22", Style); // 1234
+            AddButton(ctx => OnButtonClick(ctx, "first"), "\u23EA", Style, innerButton: false); // <<
+            AddButton(ctx => OnButtonClick(ctx, "previous"), "\u2B05", Style, innerButton: false); // <
+            AddButton(ctx => OnButtonClick(ctx, "next"), "\u27A1", Style, innerButton: false); // >
+            AddButton(ctx => OnButtonClick(ctx, "last"), "\u23E9", Style, innerButton: false); // >>
+            AddButton(ctx => OnButtonClick(ctx, "input_page"), "\uD83D\uDD22", Style, innerButton: false); // 1234
         }
 
         if (OptionsModal != null)
             AddButton(ctx => OnButtonClick(ctx, "options"), "List Options", ButtonStyle.Secondary);
-        AddButton(ctx => OnButtonClick(ctx, "finish"), "\u2714  Done with List", ButtonStyle.Success);
-        AddButton(ctx => OnButtonClick(ctx, "delete"), "\u2716  Delete List Message", ButtonStyle.Danger);
+        // AddButton(ctx => OnButtonClick(ctx, "finish"), "\u2714  Done with List", ButtonStyle.Success);
+        // AddButton(ctx => OnButtonClick(ctx, "delete"), "\u2716  Delete List Message", ButtonStyle.Danger);
 
         await Send();
     }
@@ -90,26 +90,11 @@ public class ListInteractive(Context ctx): BaseInteractive(ctx)
         components.Add(header);
         components.AddRange(generatedComponents);
 
-        foreach (var line in _buttons.Chunk(5))
-        {
-            components.Add(new()
-            {
-                Type = ComponentType.ActionRow,
-                Components = [.. line.Select(b => b.ToMessageComponent())]
-            });
-        }
+        components = AddInnerButtons(components);
 
         components.Add(footer);
 
-        return
-        [
-            new MessageComponent()
-            {
-                Type = ComponentType.Container,
-                AccentColor = Color?.ToDiscordColor(),
-                Components = components.ToArray()
-            },
-        ];
+        return AddOuterButtons(components, Color).ToArray();
     }
 
     private async Task CreateOptionsModal(InteractionContext ctx)
