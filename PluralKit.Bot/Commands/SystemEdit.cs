@@ -820,6 +820,8 @@ public class SystemEdit
             throw new PKError(
                 $"System deletion cancelled. Note that you must reply with your system ID (`{target.DisplayHid(ctx.Config)}`) *verbatim*.");
 
+        var deletionSuccessMsg = $"{Emojis.Success} System deleted.";
+
         // If the user confirms the deletion, export their system and send them the export file before actually
         // deleting their system, unless they specifically tell us not to do an export.
         if (!noExport)
@@ -837,13 +839,17 @@ public class SystemEdit
             {
                 var dm = await _dmCache.GetOrCreateDmChannel(ctx.Author.Id);
                 var msg = await ctx.Rest.CreateMessage(dm,
-                    new MessageRequest { Content = $"{Emojis.Success} System deleted. If you want to set up your PluralKit system again, you can import the file below with `{ctx.DefaultPrefix}import`." },
+                    new MessageRequest { Content = $"Here is your PluralKit export. You can import the file below with `{ctx.DefaultPrefix}import`." },
                     new[] { new MultipartFile("system.json", stream, null, null, null) });
                 await ctx.Rest.CreateMessage(dm, new MessageRequest { Content = $"<{msg.Attachments[0].Url}>" });
 
+
+                // Now that we've sent the export data
+                await ctx.Repository.DeleteSystem(target.Id);
+
                 // If the original message wasn't posted in DMs, send a public reminder
                 if (ctx.Channel.Type != Channel.ChannelType.Dm)
-                    await ctx.Reply($"{Emojis.Success} System deleted. Check your DMs for a copy of your system's data!");
+                    deletionSuccessMsg += "Check your DMs for a copy of your system's data!";
             }
             catch (ForbiddenException)
             {
@@ -852,14 +858,10 @@ public class SystemEdit
                     $"I couldn't send you a DM with your system's data before deleting your system. Either make sure your DMs are open, or use `{ctx.DefaultPrefix}s delete -no-export` to delete your system without exporting first.");
             }
         }
-        else
-        {
-            await ctx.Reply($"{Emojis.Success} System deleted.");
-        }
 
-        // Now that we've sent the export data (or been told not to), we can safely delete the system
-
-        await ctx.Repository.DeleteSystem(target.Id);
+        await ctx.BusyIndicator(async () =>
+            await ctx.Repository.DeleteSystem(target.Id));
+        await ctx.Reply(deletionSuccessMsg);
     }
 
     public async Task SystemProxy(Context ctx)
