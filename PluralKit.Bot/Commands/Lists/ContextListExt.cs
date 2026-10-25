@@ -75,19 +75,19 @@ public static class ContextListExt
         if (ctx.MatchFlag("with-pronouns", "wp", "wprns"))
             p.IncludeValues[EntityField.Pronouns] = true;
         if (ctx.MatchFlag("with-displayname", "wdn"))
-            p.IncludeValues[EntityField.Displayname] = true;
+            p.IncludeValues[EntityField.DisplayName] = true;
         if (ctx.MatchFlag("with-birthday", "wbd", "wb"))
-            p.IncludeValues[EntityField.Birthday] = true;
+            p.IncludeValues[EntityField.Birthdate] = true;
 
         // Always show the sort property, too (unless this is the short list and we are already showing something else)
         if (p.Type != ListType.Short || p.IncludedCount == 0)
         {
-            if (p.SortProperty == SortProperty.DisplayName) p.IncludeValues[EntityField.Displayname] = true;
+            if (p.SortProperty == SortProperty.DisplayName) p.IncludeValues[EntityField.DisplayName] = true;
             if (p.SortProperty == SortProperty.MessageCount) p.IncludeValues[EntityField.MessageCount] = true;
             if (p.SortProperty == SortProperty.CreationDate) p.IncludeValues[EntityField.CreationDate] = true;
             if (p.SortProperty == SortProperty.LastSwitch) p.IncludeValues[EntityField.LastSwitch] = true;
             if (p.SortProperty == SortProperty.LastMessage) p.IncludeValues[EntityField.LastMessage] = true;
-            if (p.SortProperty == SortProperty.Birthdate) p.IncludeValues[EntityField.Birthday] = true;
+            if (p.SortProperty == SortProperty.Birthdate) p.IncludeValues[EntityField.Birthdate] = true;
             // If this is a short list and we went from 0 -> 1 included count here then we made the sort and includes match
             if (p.Type == ListType.Short && p.IncludedCount == 1) p.SortIncludeMatch = true;
         }
@@ -193,9 +193,9 @@ public static class ContextListExt
                         ret += $"([avatar URL]({avatarUrl}))";
                     else if (opts.IncludeValues[EntityField.Pronouns] && m.PronounsFor(lookupCtx) is { } pronouns)
                         ret += $"({pronouns})";
-                    else if (opts.IncludeValues[EntityField.Displayname] && m.DisplayName != null && m.NamePrivacy.CanAccess(lookupCtx))
+                    else if (opts.IncludeValues[EntityField.DisplayName] && m.DisplayName != null && m.NamePrivacy.CanAccess(lookupCtx))
                         ret += $"({m.DisplayName})";
-                    else if (opts.IncludeValues[EntityField.Birthday] && m.BirthdayFor(lookupCtx) is { } birthday)
+                    else if (opts.IncludeValues[EntityField.Birthdate] && m.BirthdayFor(lookupCtx) is { } birthday)
                         ret += $"(birthday: {m.BirthdayString})";
                     else if (opts.IncludeValues[EntityField.ProxyTags] && m.HasProxyTags && m.ProxyPrivacy.CanAccess(lookupCtx))
                     {
@@ -354,14 +354,14 @@ public static class ContextListExt
                         new()
                         {
                             Label = "Displayname",
-                            Value = EntityField.Displayname.ToString(),
-                            Default = !opts.SortIncludeMatch && opts.IncludeValues[EntityField.Displayname]
+                            Value = EntityField.DisplayName.ToString(),
+                            Default = !opts.SortIncludeMatch && opts.IncludeValues[EntityField.DisplayName]
                         },
                         new()
                         {
                             Label = "Birthday",
-                            Value = EntityField.Birthday.ToString(),
-                            Default = !opts.SortIncludeMatch && opts.IncludeValues[EntityField.Birthday]
+                            Value = EntityField.Birthdate.ToString(),
+                            Default = !opts.SortIncludeMatch && opts.IncludeValues[EntityField.Birthdate]
                         },
                         new()
                         {
@@ -386,8 +386,8 @@ public static class ContextListExt
                         new()
                         {
                             Label = "Displayname",
-                            Value = EntityField.Displayname.ToString(),
-                            Default = opts.WithFilter[EntityField.Displayname]
+                            Value = EntityField.DisplayName.ToString(),
+                            Default = opts.WithFilter[EntityField.DisplayName]
                         },
                         new()
                         {
@@ -428,8 +428,8 @@ public static class ContextListExt
                         new()
                         {
                             Label = "Birthday",
-                            Value = EntityField.Birthday.ToString(),
-                            Default = opts.WithFilter[EntityField.Birthday]
+                            Value = EntityField.Birthdate.ToString(),
+                            Default = opts.WithFilter[EntityField.Birthdate]
                         },
                         // new()
                         // {
@@ -454,8 +454,8 @@ public static class ContextListExt
                         new()
                         {
                             Label = "Displayname",
-                            Value = EntityField.Displayname.ToString(),
-                            Default = opts.WithOutFilter[EntityField.Displayname]
+                            Value = EntityField.DisplayName.ToString(),
+                            Default = opts.WithOutFilter[EntityField.DisplayName]
                         },
                         new()
                         {
@@ -496,8 +496,8 @@ public static class ContextListExt
                         new()
                         {
                             Label = "Birthday",
-                            Value = EntityField.Birthday.ToString(),
-                            Default = opts.WithOutFilter[EntityField.Birthday]
+                            Value = EntityField.Birthdate.ToString(),
+                            Default = opts.WithOutFilter[EntityField.Birthdate]
                         },
                         // new()
                         // {
@@ -735,9 +735,9 @@ public static class ContextListExt
                     ret += $"([avatar URL]({avatarUrl}))";
                 else if (opts.IncludeValues[EntityField.Pronouns] && m.PronounsFor(lookupCtx) is { } pronouns)
                     ret += $"({pronouns})";
-                else if (opts.IncludeValues[EntityField.Displayname] && m.DisplayName != null && m.NamePrivacy.CanAccess(lookupCtx))
+                else if (opts.IncludeValues[EntityField.DisplayName] && m.DisplayName != null && m.NamePrivacy.CanAccess(lookupCtx))
                     ret += $"({m.DisplayName})";
-                else if (opts.IncludeValues[EntityField.Birthday] && m.BirthdayFor(lookupCtx) is { } birthday)
+                else if (opts.IncludeValues[EntityField.Birthdate] && m.BirthdayFor(lookupCtx) is { } birthday)
                     ret += $"(birthday: {m.BirthdayString})";
                 else if (m.HasProxyTags && m.ProxyPrivacy.CanAccess(lookupCtx))
                 {
@@ -851,7 +851,7 @@ public static class ContextListExt
                             {
                                 ret += $"(created at <t:{created.ToUnixTimeSeconds()}>)";
                             }
-                            else if (opts.IncludeValues[EntityField.Displayname] && g.DisplayName != null && g.NamePrivacy.CanAccess(lookupCtx))
+                            else if (opts.IncludeValues[EntityField.DisplayName] && g.DisplayName != null && g.NamePrivacy.CanAccess(lookupCtx))
                             {
                                 ret += $"({g.DisplayName})";
                             }
@@ -996,7 +996,7 @@ public static class ContextListExt
                             {
                                 ret += $"(created at <t:{created.ToUnixTimeSeconds()}>)";
                             }
-                            else if (opts.IncludeValues[EntityField.Displayname] && g.DisplayName != null && g.NamePrivacy.CanAccess(lookupCtx))
+                            else if (opts.IncludeValues[EntityField.DisplayName] && g.DisplayName != null && g.NamePrivacy.CanAccess(lookupCtx))
                             {
                                 ret += $"({g.DisplayName})";
                             }

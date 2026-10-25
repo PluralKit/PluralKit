@@ -43,8 +43,8 @@ public class ListOptions
         {EntityField.CreationDate, default},
         {EntityField.Avatar, default},
         {EntityField.Pronouns, default},
-        {EntityField.Displayname, default},
-        {EntityField.Birthday, default},
+        {EntityField.DisplayName, default},
+        {EntityField.Birthdate, default},
         {EntityField.ProxyTags, default},
         {EntityField.Groups, default},
         {EntityField.Aliases, default},
@@ -55,8 +55,8 @@ public class ListOptions
     {
         {EntityField.Avatar, default},
         {EntityField.Pronouns, default},
-        {EntityField.Displayname, default},
-        {EntityField.Birthday, default},
+        {EntityField.DisplayName, default},
+        {EntityField.Birthdate, default},
         {EntityField.ProxyTags, default},
         // {EntityField.Groups, default},
         {EntityField.Aliases, default},
@@ -67,8 +67,8 @@ public class ListOptions
     {
         {EntityField.Avatar, default},
         {EntityField.Pronouns, default},
-        {EntityField.Displayname, default},
-        {EntityField.Birthday, default},
+        {EntityField.DisplayName, default},
+        {EntityField.Birthdate, default},
         {EntityField.ProxyTags, default},
         // {EntityField.Groups, default},
         {EntityField.Aliases, default},
@@ -222,11 +222,11 @@ public static class ListOptionsExt
                         if (!(m.PronounsFor(ctx) is { }))
                             return false;
                         break;
-                    case EntityField.Displayname:
+                    case EntityField.DisplayName:
                         if (m.DisplayName == null)
                             return false;
                         break;
-                    case EntityField.Birthday:
+                    case EntityField.Birthdate:
                         if (!(m.BirthdayFor(ctx) is { }))
                             return false;
                         break;
@@ -260,11 +260,11 @@ public static class ListOptionsExt
                         if (m.PronounsFor(ctx) is { })
                             return false;
                         break;
-                    case EntityField.Displayname:
+                    case EntityField.DisplayName:
                         if (m.DisplayName != null)
                             return false;
                         break;
-                    case EntityField.Birthday:
+                    case EntityField.Birthdate:
                         if (m.BirthdayFor(ctx) is { })
                             return false;
                         break;
@@ -336,6 +336,9 @@ public static class ListOptionsExt
     }
 }
 
+// Enums cannot have inheritance so this can't be a child of EntityField
+// Make sure if changing keys/adding keys the key is named the same in both SortProperty and EntityField
+// Or the "Same as Sort" info option in the short lists won't work
 public enum SortProperty
 {
     Name,
@@ -351,14 +354,14 @@ public enum SortProperty
 
 public enum EntityField
 {
+    DisplayName,
     MessageCount,
+    CreationDate,
     LastSwitch,
     LastMessage,
-    CreationDate,
+    Birthdate,
     Avatar,
     Pronouns,
-    Displayname,
-    Birthday,
     ProxyTags,
     Groups,
     Aliases,
