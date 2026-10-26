@@ -332,23 +332,28 @@ public class EmbedService
         return embed.Build();
     }
 
-    public async Task<MessageComponent[]> CreateMemberMessageComponents(PKSystem? system, PKMember member, Guild? guild, SystemConfig? ccfg, LookupContext ctx, ListOptions? opts = null, bool flattenComponents = false)
+    public async Task<MessageComponent[]> CreateMemberMessageComponents(PKSystem system, PKMember member, Guild? guild, SystemConfig? ccfg, LookupContext ctx, ListOptions? opts = null, bool flattenComponents = false)
     {
-        system ??= await _repo.GetSystem(member.System);
-
-        var name = member.NameFor(ctx);
-        var systemGuildSettings = guild != null ? await _repo.GetSystemGuild(guild.Id, system.Id) : null;
-        var systemName = (guild != null && systemGuildSettings?.DisplayName != null) ? systemGuildSettings?.DisplayName! : system.NameFor(ctx);
-
-        var guildSettings = guild != null ? await _repo.GetMemberGuild(guild.Id, member.Id) : null;
-        var guildDisplayName = guildSettings?.DisplayName;
-        var webhook_avatar = guildSettings?.AvatarUrl ?? member.WebhookAvatarFor(ctx) ?? member.AvatarFor(ctx);
-        var avatar = guildSettings?.AvatarUrl ?? member.AvatarFor(ctx);
-
         var groups = await _repo.GetMemberGroups(member.Id)
             .Where(g => g.Visibility.CanAccess(ctx))
             .OrderBy(g => g.Name, StringComparer.InvariantCultureIgnoreCase)
             .ToListAsync();
+        var systemGuildSettings = guild != null ? await _repo.GetSystemGuild(guild.Id, system.Id) : null;
+        var guildSettings = guild != null ? await _repo.GetMemberGuild(guild.Id, member.Id) : null;
+
+        return CreateMemberMessageComponents(system, member, guild, ccfg, ctx, groups, opts, flattenComponents);
+    }
+
+    public MessageComponent[] CreateMemberMessageComponents(PKSystem system, PKMember member, Guild? guild, SystemConfig? ccfg, LookupContext ctx,
+            List<PKGroup>? groups, ListOptions? opts = null, bool flattenComponents = false, SystemGuildSettings? systemGuildSettings = null,
+            MemberGuildSettings? guildSettings = null)
+    {
+        var name = member.NameFor(ctx);
+        var systemName = (guild != null && systemGuildSettings?.DisplayName != null) ? systemGuildSettings?.DisplayName! : system?.NameFor(ctx);
+
+        var guildDisplayName = guildSettings?.DisplayName;
+        var webhook_avatar = guildSettings?.AvatarUrl ?? member.WebhookAvatarFor(ctx) ?? member.AvatarFor(ctx);
+        var avatar = guildSettings?.AvatarUrl ?? member.AvatarFor(ctx);
 
         // Used if flattenComponents is true
         // Mainly for the long list
@@ -412,7 +417,7 @@ public class EmbedService
             flattenedStr.Append($"\n**Proxy tags:**\n{member.ProxyTagsString("\n").Truncate(1024)}");
         }
 
-        if (groups.Count > 0 && (opts == null || opts.IncludeValues[EntityField.Groups]))
+        if (groups?.Count > 0 && (opts == null || opts.IncludeValues[EntityField.Groups]))
         {
             // More than 5 groups show in "compact" format without ID
             var content = groups.Count > 5
@@ -491,6 +496,7 @@ public class EmbedService
                     },
                 },
             ];
+
         if (!flattenComponents)
             return [
                 new MessageComponent()

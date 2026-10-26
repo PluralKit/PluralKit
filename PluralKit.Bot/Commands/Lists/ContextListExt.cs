@@ -117,7 +117,7 @@ public static class ContextListExt
         await ctx.PaginateCV2(title, color, Renderer, itemsPerPage, opts.Type == ListType.Short ? shortOptionsModal : longOptionsModal);
 
         // Base renderer, dispatches based on type
-        async Task<(string, List<ContextUtils.PageItem>)> Renderer(ApplicationCommandInteractionData? optsOverride)
+        (string, List<ContextUtils.PageItem>) Renderer(ApplicationCommandInteractionData? optsOverride)
         {
             if (optsOverride != null)
             {
@@ -164,7 +164,7 @@ public static class ContextListExt
             if (opts.Type == ListType.Short)
                 return (footer, ShortRenderer(filteredMembers).ToList());
             else
-                return (footer, await LongRenderer(filteredMembers));
+                return (footer, LongRenderer(filteredMembers));
         }
 
         IEnumerable<ContextUtils.PageItem> ShortRenderer(IEnumerable<ListedMember> members)
@@ -209,12 +209,12 @@ public static class ContextListExt
                 });
         }
 
-        async Task<List<ContextUtils.PageItem>> LongRenderer(IEnumerable<ListedMember> page)
+        List<ContextUtils.PageItem> LongRenderer(IEnumerable<ListedMember> page)
         {
             List<ContextUtils.PageItem> components = [];
-            await foreach (var m in page.ToAsyncEnumerable())
+            foreach (var m in page)
             {
-                var container = await embeds.CreateMemberMessageComponents(null, m, null, ctx.Config, lookupCtx, opts, true);
+                var container = embeds.CreateMemberMessageComponents(null, m, null, ctx.Config, lookupCtx, null, opts, true);
                 components.Add(new()
                 {
                     CharacterCount = countCharacters(container),
@@ -637,12 +637,12 @@ public static class ContextListExt
                             Value = EntityField.Avatar.ToString(),
                             Default = opts.IncludeValues[EntityField.Avatar]
                         },
-                        new()
-                        {
-                            Label = "Groups",
-                            Value = EntityField.Groups.ToString(),
-                            Default = opts.IncludeValues[EntityField.Groups]
-                        },
+                        // new()
+                        // {
+                        //     Label = "Groups",
+                        //     Value = EntityField.Groups.ToString(),
+                        //     Default = opts.IncludeValues[EntityField.Groups]
+                        // },
                         new()
                         {
                             Label = "Description",
@@ -813,7 +813,7 @@ public static class ContextListExt
         await ctx.PaginateCV2(embedTitle, color, Renderer, itemsPerPage);
 
         // Base renderer, dispatches based on type
-        async Task<(string, List<ContextUtils.PageItem>)> Renderer(ApplicationCommandInteractionData? optsOverride)
+        (string, List<ContextUtils.PageItem>) Renderer(ApplicationCommandInteractionData? optsOverride)
         {
             if (opts.Type == ListType.Short)
                 return (footer, ShortRenderer(groups).ToList());

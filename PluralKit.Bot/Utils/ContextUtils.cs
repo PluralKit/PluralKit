@@ -224,7 +224,7 @@ public static class ContextUtils
     }
 
     public static async Task PaginateCV2(this Context ctx, string title, string color,
-        Func<ApplicationCommandInteractionData?, Task<(string, List<PageItem>)>> renderer,
+        Func<ApplicationCommandInteractionData?, (string, List<PageItem>)> renderer,
         int? maxItemsPage = null, Func<MessageComponent[]> optionsModal = null)
     {
         List<List<PageItem>> pages = [];
@@ -232,7 +232,7 @@ public static class ContextUtils
 
         string footer = "";
 
-        async Task<int> MakePages(ApplicationCommandInteractionData? optsOverride = null)
+        int MakePages(ApplicationCommandInteractionData? optsOverride = null)
         {
             const int MAX_CHARACTERS = 4000;
             // 17 is an estimate based on a max page number of 5 digits
@@ -244,7 +244,7 @@ public static class ContextUtils
             currentPage = [];
             var currentPageLength = 0;
 
-            var (newFooter, renderedItems) = await renderer(optsOverride);
+            var (newFooter, renderedItems) = renderer(optsOverride);
             footer = newFooter;
 
             foreach (var item in renderedItems)
@@ -267,7 +267,7 @@ public static class ContextUtils
 
         }
 
-        await MakePages();
+        MakePages();
 
         (MessageComponent, MessageComponent, List<MessageComponent>) MakeComponentForPage(int pageNumber)
         {

@@ -12,7 +12,7 @@ public class ListInteractive(Context ctx): BaseInteractive(ctx)
     public int Page { get; set; } = 0;
     public int PageCount { get; set; } = 1;
     public Func<int, (MessageComponent, MessageComponent, List<MessageComponent>)> ContentBuilder { get; init; }
-    public Func<ApplicationCommandInteractionData?, Task<int>> Renderer { get; init; }
+    public Func<ApplicationCommandInteractionData?, int> Renderer { get; init; }
     public string? Color { get; set; }
     public Func<MessageComponent[]>? OptionsModal { get; init; }
 
@@ -101,7 +101,7 @@ public class ListInteractive(Context ctx): BaseInteractive(ctx)
     {
         async Task OptionsModalHandler(InteractionContext ctx)
         {
-            PageCount = await Renderer(ctx.Event.Data);
+            PageCount = Renderer(ctx.Event.Data);
             if (Page > PageCount) Page = 0;
             await Update(ctx);
         }
