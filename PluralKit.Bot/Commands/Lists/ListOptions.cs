@@ -37,18 +37,18 @@ public class ListOptions
 
     public Dictionary<EntityField, bool> IncludeValues { get; } = new()
     {
-        {EntityField.MessageCount, default},
-        {EntityField.LastSwitch, default},
-        {EntityField.LastMessage, default},
-        {EntityField.CreationDate, default},
-        {EntityField.Avatar, default},
-        {EntityField.Pronouns, default},
         {EntityField.DisplayName, default},
+        {EntityField.Pronouns, default},
         {EntityField.Birthdate, default},
         {EntityField.ProxyTags, default},
+        {EntityField.MessageCount, default},
+        {EntityField.LastMessage, default},
+        {EntityField.LastSwitch, default},
+        {EntityField.CreationDate, default},
+        {EntityField.Avatar, default},
+        {EntityField.Description, default},
         {EntityField.Groups, default},
         {EntityField.Aliases, default},
-        {EntityField.Description, default},
     };
 
     public Dictionary<EntityField, bool> WithFilter { get; } = new()

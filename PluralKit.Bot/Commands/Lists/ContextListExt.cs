@@ -108,8 +108,16 @@ public static class ContextListExt
             .SortByMemberListOptions(opts, lookupCtx)
             .ToList();
 
-        // Make the default match the behavior of the non-cv2 list
-        opts.IncludeValues[EntityField.ProxyTags] = true;
+        // Make the defaults match the behavior of the non-cv2 list
+        if (opts.IncludedCount == 0 || opts.Type == ListType.Long)
+            opts.IncludeValues[EntityField.ProxyTags] = true;
+        if (opts.Type == ListType.Long)
+        {
+            opts.IncludeValues[EntityField.DisplayName] = true;
+            opts.IncludeValues[EntityField.Pronouns] = true;
+            opts.IncludeValues[EntityField.Birthdate] = true;
+            opts.IncludeValues[EntityField.Description] = true;
+        }
 
         var footer = $"-# {opts.CreateFilterString()} {"result".ToQuantity(members.Count)}.";
 
@@ -621,21 +629,45 @@ public static class ContextListExt
                     Options = [
                         new()
                         {
+                            Label = "Pronouns",
+                            Value = EntityField.Pronouns.ToString(),
+                            Default = opts.IncludeValues[EntityField.Pronouns]
+                        },
+                        new()
+                        {
+                            Label = "Birthdate",
+                            Value = EntityField.Birthdate.ToString(),
+                            Default = opts.IncludeValues[EntityField.Birthdate]
+                        },
+                        new()
+                        {
                             Label = "Proxy Tags",
                             Value = EntityField.ProxyTags.ToString(),
                             Default = opts.IncludeValues[EntityField.ProxyTags]
                         },
                         new()
                         {
-                            Label = "Aliases",
-                            Value = EntityField.Aliases.ToString(),
-                            Default = opts.IncludeValues[EntityField.Aliases]
+                            Label = "Message Count",
+                            Value = EntityField.MessageCount.ToString(),
+                            Default = opts.IncludeValues[EntityField.MessageCount]
+                        },
+                        new()
+                        {
+                            Label = "Creation Date",
+                            Value = EntityField.CreationDate.ToString(),
+                            Default = opts.IncludeValues[EntityField.CreationDate]
                         },
                         new()
                         {
                             Label = "Avatar",
                             Value = EntityField.Avatar.ToString(),
                             Default = opts.IncludeValues[EntityField.Avatar]
+                        },
+                        new()
+                        {
+                            Label = "Description",
+                            Value = EntityField.Description.ToString(),
+                            Default = opts.IncludeValues[EntityField.Description]
                         },
                         // new()
                         // {
@@ -645,10 +677,10 @@ public static class ContextListExt
                         // },
                         new()
                         {
-                            Label = "Description",
-                            Value = EntityField.Description.ToString(),
-                            Default = opts.IncludeValues[EntityField.Description]
-                        }
+                            Label = "Aliases",
+                            Value = EntityField.Aliases.ToString(),
+                            Default = opts.IncludeValues[EntityField.Aliases]
+                        },
                     ]
                 }
             },
@@ -667,6 +699,12 @@ public static class ContextListExt
                             Label = "Reverse Sort",
                             Value = "reverse",
                             Default = opts.Reverse
+                        },
+                        new()
+                        {
+                            Label = "Show IDs",
+                            Value = "id",
+                            Default = opts.ShowIds
                         }
                     ]
                 }

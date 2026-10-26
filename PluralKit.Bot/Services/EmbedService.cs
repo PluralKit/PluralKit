@@ -369,18 +369,22 @@ public class EmbedService
             else
                 headerText += "*(this member has a server-specific avatar set)*\n";
 
+        if (flattenComponents && (opts == null || opts.ShowIds))
+            headerText += $"\n**ID:** {member.DisplayHid(ccfg)}";
         if (!member.DisplayName.EmptyOrNull() && member.NamePrivacy.CanAccess(ctx))
             headerText += $"\n**Display name:** {member.DisplayName.Truncate(1024)}";
         if (guild != null && guildDisplayName != null)
             headerText += $"\n**Server nickname (for '{guild.Name}'):** {guildDisplayName.Truncate(1024)}";
-        if (ccfg != null && ccfg.CardShowColorHex && !member.Color.EmptyOrNull())
+        if (ccfg != null && ccfg.CardShowColorHex && !member.Color.EmptyOrNull() && (opts == null || opts.IncludeValues[EntityField.Color]))
             headerText += $"\n**Color:** #{member.Color}";
-        if (member.PronounsFor(ctx) is { } pronouns && !string.IsNullOrWhiteSpace(pronouns))
+        if (member.PronounsFor(ctx) is { } pronouns && !string.IsNullOrWhiteSpace(pronouns) && (opts == null || opts.IncludeValues[EntityField.Pronouns]))
             headerText += $"\n**Pronouns:** {pronouns}";
-        if (member.BirthdayFor(ctx) != null)
+        if (member.BirthdayFor(ctx) != null && (opts == null || opts.IncludeValues[EntityField.Birthdate]))
             headerText += $"\n**Birthday:** {member.BirthdayString}";
-        if (member.MessageCountFor(ctx) is { } count && member.MessageCount > 0)
+        if (member.MessageCountFor(ctx) is { } count && member.MessageCount > 0 && (opts == null || opts.IncludeValues[EntityField.MessageCount]))
             headerText += $"\n**Message count:** {count}";
+        if (flattenComponents && member.CreatedFor(ctx) is { } created && (opts == null || opts.IncludeValues[EntityField.CreationDate]))
+            headerText += $"\n**Created:** {DiscordUtils.InstantToTimestampString(member.Created)}";
 
         List<MessageComponent> extraData = [];
         if (member.Aliases.Count > 0 && member.AliasPrivacy.CanAccess(ctx) && (opts == null || opts.IncludeValues[EntityField.Aliases]))
@@ -466,11 +470,11 @@ public class EmbedService
             new MessageComponent()
             {
                 Type = ComponentType.Text,
-                Content = $"### {name}{(systemName != null ? $" ({systemName})" : "")}",
+                Content = $"#{(flattenComponents ? "#" : "")} {name}{(systemName != null ? $" ({systemName})" : "")}",
             },
         ];
 
-        var flattenedHeaderStr = $"# {name}";
+        var flattenedHeaderStr = $"## {name}";
 
         if (!string.IsNullOrWhiteSpace(headerText))
         {
@@ -512,7 +516,7 @@ public class EmbedService
                         new MessageComponent()
                         {
                             Type = ComponentType.Text,
-                            Content = $"-# System ID: `{system.DisplayHid(ccfg)}` \u2219 Member ID: `{member.DisplayHid(ccfg)}`{(member.MetadataPrivacy.CanAccess(ctx) ? $"\n-# Created: {DiscordUtils.InstantToTimestampString(member.Created)}" : "")}",
+                            Content = $"-# System ID: `{system.DisplayHid(ccfg)}` \u2219 Member ID: `{member.DisplayHid(ccfg)}`{(member.CreatedFor(ctx) is { } ? $"\n-# Created: {DiscordUtils.InstantToTimestampString(member.Created)}" : "")}",
                         },
                     ],
                     Accessory = new MessageComponent()
