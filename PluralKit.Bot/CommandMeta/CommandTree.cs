@@ -1,11 +1,32 @@
+using Myriad.Types;
 using PluralKit.Core;
 
 namespace PluralKit.Bot;
 
 public partial class CommandTree
 {
-    public Task ExecuteCommand(Context ctx)
+    public Task ExecuteCommand(Context ctx, MessageContext msgCtx, PermissionSet authorPerms)
     {
+        if (ctx.Match("edit", "e"))
+            return ctx.Execute<ProxiedMessage>(MessageEdit, m => m.EditMessage(ctx, false));
+        if (ctx.Match("x"))
+            return ctx.Execute<ProxiedMessage>(MessageEdit, m => m.EditMessage(ctx, true));
+        if (ctx.Match("reproxy", "rp", "crimes", "crime"))
+            return ctx.Execute<ProxiedMessage>(MessageReproxy, m => m.ReproxyMessage(ctx));
+
+        // If we're in a guild we need to check if this channel is on the command blacklist
+        // The above three commands are exceptions and should always go through
+        // Since they get deleted anyway
+        if (ctx.Guild is not null)
+        {
+            // If the channel is in the command blacklist and the author doesn't have Manage Server
+            // we react to the message with :x: to show we saw it and do not proxy or respond
+            // If the author has Manage Server we let the command go through as normal
+            if (msgCtx.InCommandBlacklist && (authorPerms & PermissionSet.ManageGuild) != PermissionSet.ManageGuild)
+            {
+                return ctx.Rest.CreateReaction(ctx.Channel.Id, ctx.Message.Id, new Emoji { Name = Emojis.Error });
+            }
+        }
         if (ctx.Match("system", "s", "account", "acc"))
             return HandleSystemCommand(ctx);
         if (ctx.Match("member", "m"))
@@ -48,12 +69,6 @@ public partial class CommandTree
             return ctx.Execute<Help>(Explain, m => m.Explain(ctx));
         if (ctx.Match("message", "msg", "messageinfo"))
             return ctx.Execute<ProxiedMessage>(Message, m => m.GetMessage(ctx));
-        if (ctx.Match("edit", "e"))
-            return ctx.Execute<ProxiedMessage>(MessageEdit, m => m.EditMessage(ctx, false));
-        if (ctx.Match("x"))
-            return ctx.Execute<ProxiedMessage>(MessageEdit, m => m.EditMessage(ctx, true));
-        if (ctx.Match("reproxy", "rp", "crimes", "crime"))
-            return ctx.Execute<ProxiedMessage>(MessageReproxy, m => m.ReproxyMessage(ctx));
         if (ctx.Match("log"))
             if (ctx.Match("channel"))
                 return ctx.Execute<ServerConfig>(LogChannel, m => m.SetLogChannel(ctx), true);
@@ -69,11 +84,11 @@ public partial class CommandTree
             return ctx.Execute<ServerConfig>(ServerConfigLogClean, m => m.SetLogCleanup(ctx), true);
         if (ctx.Match("blacklist", "bl"))
             if (ctx.Match("enable", "on", "add", "deny"))
-                return ctx.Execute<ServerConfig>(BlacklistAdd, m => m.SetProxyBlacklisted(ctx, true), true);
+                return ctx.Execute<ServerConfig>(ProxyBlacklistAdd, m => m.SetProxyBlacklisted(ctx, true), true);
             else if (ctx.Match("disable", "off", "remove", "allow"))
-                return ctx.Execute<ServerConfig>(BlacklistRemove, m => m.SetProxyBlacklisted(ctx, false), true);
+                return ctx.Execute<ServerConfig>(ProxyBlacklistRemove, m => m.SetProxyBlacklisted(ctx, false), true);
             else if (ctx.Match("list", "show"))
-                return ctx.Execute<ServerConfig>(BlacklistShow, m => m.ShowProxyBlacklisted(ctx), true);
+                return ctx.Execute<ServerConfig>(ProxyBlacklistShow, m => m.ShowProxyBlacklisted(ctx), true);
             else
                 return ctx.Reply($"{Emojis.Warn} Blacklist commands have moved to `{ctx.DefaultPrefix}serverconfig`.");
         if (ctx.Match("proxy"))
@@ -532,7 +547,7 @@ public partial class CommandTree
                 break;
             case "blacklist":
             case "bl":
-                await PrintCommandList(ctx, "channel blacklisting", BlacklistCommands);
+                await PrintCommandList(ctx, "channel proxy blacklisting", ProxyBlacklistCommands);
                 break;
             case "config":
             case "cfg":
@@ -643,6 +658,15 @@ public partial class CommandTree
                 return ctx.Execute<ServerConfig>(null, m => m.SetProxyBlacklisted(ctx, false));
             else
                 return ctx.Execute<ServerConfig>(null, m => m.ShowProxyBlacklisted(ctx));
+        }
+        if (ctx.MatchMultiple(new[] { "command" }, new[] { "blacklist" }))
+        {
+            if (ctx.Match("enable", "on", "add", "deny"))
+                return ctx.Execute<ServerConfig>(null, m => m.SetCommandBlacklisted(ctx, true));
+            else if (ctx.Match("disable", "off", "remove", "allow"))
+                return ctx.Execute<ServerConfig>(null, m => m.SetCommandBlacklisted(ctx, false));
+            else
+                return ctx.Execute<ServerConfig>(null, m => m.ShowCommandBlacklisted(ctx));
         }
 
         // todo: maybe add the list of configuration keys here?
