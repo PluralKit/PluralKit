@@ -45,7 +45,7 @@ impl RatelimitType {
             RatelimitType::GenericGet => 10,
             RatelimitType::GenericUpdate => 3,
             RatelimitType::Message => 10,
-            RatelimitType::TempCustom => 20,
+            RatelimitType::TempCustom => 150,
         }
     }
 }
@@ -72,13 +72,13 @@ pub async fn do_request_ratelimited(
             .expect("should always have AuthState");
 
         // looks like this chooses the tokens/sec by app_id or endpoint
-        // then chooses the key by system_id or source_ip
-        // todo: key should probably be chosen by app_id when it's present
+        // then chooses the key by app_id, system_id or source_ip
         // todo: make x-ratelimit-scope actually meaningful
 
         // hack: for now, we only have one "registered app", so we hardcode the app id
         let limit_type = if let Some(app_id) = auth.app_id()
             && app_id == 1
+            && endpoint == "/v2/messages/:message_id"
         {
             RatelimitType::TempCustom
         } else if endpoint == "/v2/messages/:message_id" {
@@ -89,22 +89,20 @@ pub async fn do_request_ratelimited(
             RatelimitType::GenericUpdate
         };
 
-        // use system id if target entity is owned by the currently authenticated system
-        // otherwise, use source ip
-        let own_system_request = auth
-            .system_id()
-            .and_then(|auth_id| {
-                request
-                    .extensions()
-                    .get::<RequestAbout>()
-                    .map(|about| auth_id == about.system_id())
-            })
-            .unwrap_or(false);
+        let system_id_if_own_system_request = auth.system_id().filter(|auth_id| {
+            request
+                .extensions()
+                .get::<RequestAbout>()
+                .is_some_and(|about| *auth_id == about.system_id())
+        });
 
-        let limit_key = if own_system_request {
-            // i don't like using unwrap but this is safe
-            // if the request is for the current system, we must have a current system
-            auth.system_id().unwrap().to_string()
+        let mut scope = limit_type.key();
+
+        let limit_key = if let Some(app_id) = auth.app_id() {
+            format!("app:{app_id}")
+        } else if let Some(system_id) = system_id_if_own_system_request {
+            scope = scope.replace("generic", "own_system");
+            system_id.to_string()
         } else {
             source_ip.to_string()
         };
@@ -167,7 +165,7 @@ pub async fn do_request_ratelimited(
                         StatusCode::TOO_MANY_REQUESTS,
                         format!(
                             r#"{{"message":"429: too many requests","retry_after":{retry_after},"scope":"{}","code":0}}"#,
-                            limit_type.key(),
+                            scope,
                         ),
                     )
                 };
@@ -182,15 +180,7 @@ pub async fn do_request_ratelimited(
                 let headers = response.headers_mut();
                 headers.insert(
                     "X-RateLimit-Scope",
-                    HeaderValue::from_str(
-                        if own_system_request {
-                            limit_type.key().replace("generic", "own_system")
-                        } else {
-                            limit_type.key()
-                        }
-                        .as_str(),
-                    )
-                    .expect("invalid header value"),
+                    HeaderValue::from_str(scope.as_str()).expect("invalid header value"),
                 );
                 headers.insert(
                     "X-RateLimit-Limit",
