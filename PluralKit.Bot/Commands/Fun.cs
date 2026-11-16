@@ -12,21 +12,21 @@ public class Fun
     public Task Mn(Context ctx) => ctx.Reply("Gotta catch 'em all!");
 
     public Task Fire(Context ctx) =>
-        ctx.Reply("*A giant lightning bolt promptly erupts into a pillar of fire as it hits your opponent.*");
+        ctx.Reply("*Fire bursts from the fingers and a row of enemies take about 320 points of damage each.*");
 
     public Task Thunder(Context ctx) =>
-        ctx.Reply("*A giant ball of lightning is conjured and fired directly at your opponent, vanquishing them.*");
+        ctx.Reply("*The enemy is thunder struck for about 200 points of damage four separate times.*");
 
     public Task Freeze(Context ctx) =>
         ctx.Reply(
-            "*A giant crystal ball of ice is charged and hurled toward your opponent, bursting open and freezing them solid on contact.*");
+            "*Causes a very cold wind to swirl around one enemy, inflicting about 720 points of damage.*");
 
     public Task Starstorm(Context ctx) =>
-        ctx.Reply("*Vibrant colours burst forth from the sky as meteors rain down upon your opponent.*");
+        ctx.Reply("*The method of \"shaking off the stars\" which Poo learned in his training. It deals about 720 points of damage to each enemy.*");
 
     public Task Flash(Context ctx) =>
         ctx.Reply(
-            "*A ball of green light appears above your head and flies towards your enemy, exploding on contact.*");
+            "*It generates glorious rays that have a high probability of destroying all the enemies on the scene in a single strike.*");
 
     public Task Rool(Context ctx) =>
         ctx.Reply("*\"What the fuck is a Pokémon?\"*");
