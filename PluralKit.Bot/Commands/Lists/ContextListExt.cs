@@ -100,6 +100,294 @@ public static class ContextListExt
         return p;
     }
 
+    public static void ParseListOptionUpdates(ListOptions opts, ApplicationCommandInteractionData optsOverride)
+    {
+        opts.ResetDynamicOptions();
+
+        var sortComponent = optsOverride.Components.First((x) => x.Component.CustomId == "sort_select").Component;
+        if (Enum.TryParse<ListEntityField>(sortComponent.Values[0], out var sortResult))
+            opts.SortProperty = sortResult;
+        else if (sortComponent.Values[0] == SortOption.Random.ToString())
+            opts.SortProperty = SortOption.Random;
+
+        var infoComponent = optsOverride.Components.First((x) => x.Component.CustomId == "info_select").Component;
+        if (infoComponent?.Values?.Length > 0 && infoComponent.Values[0] == "default")
+        {
+            infoComponent.Values[0] = sortComponent.Values[0];
+            opts.SortIncludeMatch = true;
+        }
+        foreach (var include in infoComponent.Values)
+            if (Enum.TryParse<ListEntityField>(include, out var infoResult))
+                opts.IncludedFields[infoResult] = true;
+
+        var extraCheckboxesComponent = optsOverride.Components.FirstOrDefault((x) => x.Component.CustomId == "extra_checkboxes")?.Component;
+        opts.ShowIds = extraCheckboxesComponent?.Values.FirstOrDefault(x => x == "id") != null;
+        opts.NumberItems = extraCheckboxesComponent?.Values.FirstOrDefault(x => x == "number") != null;
+        opts.Reverse = extraCheckboxesComponent?.Values.FirstOrDefault(x => x == "reverse") != null;
+
+        var withFilterComponent = optsOverride.Components.FirstOrDefault(x => x.Component.CustomId == "filter_with")?.Component;
+        foreach (var withFilterEntryStr in withFilterComponent?.Values ?? [])
+            if (Enum.TryParse<ListEntityField>(withFilterEntryStr, out var withFilterEntry) && opts.WithFilter.ContainsKey(withFilterEntry))
+                opts.WithFilter[withFilterEntry] = true;
+
+        var withOutFilterComponent = optsOverride.Components.FirstOrDefault(x => x.Component.CustomId == "filter_without")?.Component;
+        foreach (var withOutFilterEntryStr in withOutFilterComponent?.Values ?? [])
+            if (Enum.TryParse<ListEntityField>(withOutFilterEntryStr, out var withOutFilterEntry) && opts.WithOutFilter.ContainsKey(withOutFilterEntry))
+                opts.WithOutFilter[withOutFilterEntry] = true;
+
+        opts.AssertIsValid();
+    }
+
+    public static MessageComponent[] shortOptionsModal(ListOptions opts, string entity) => [
+            new()
+            {
+                Type = ComponentType.Label,
+                Label = "Sort By",
+                Component = new()
+                {
+                    Type = ComponentType.StringSelect,
+                    CustomId = "sort_select",
+                    MaxValues = 1,
+                    Options = [
+                        new()
+                        {
+                            Label = "Name (Default)",
+                            Value = ListEntityField.Name.ToString(),
+                            Default = opts.SortProperty == ListEntityField.Name
+                        },
+                        .. opts.SortOptions.Where(x => x != ListEntityField.Name).Select(x =>
+                            new MessageComponentOption()
+                            {
+                                Label = x.ToLabel(),
+                                Value = x.ToString(),
+                                Default = opts.SortProperty == x
+                            }),
+                    ]
+                }
+            },
+        new()
+        {
+            Type = ComponentType.Label,
+            Label = "Extra Info",
+            Component = new()
+            {
+                Type = ComponentType.StringSelect,
+                CustomId = "info_select",
+                MaxValues = 1,
+                Options = [
+                        new()
+                        {
+                            Label = "Same as Sort",
+                            Value = "default",
+                            Default = opts.SortIncludeMatch
+                        },
+                    .. opts.IncludedFields.AsEnumerable().Where(f => !new List<ListEntityField>(){
+                            ListEntityField.Description, ListEntityField.Groups, ListEntityField.Aliases
+                        }.Any(except => except == f.Key)).Select(field =>
+                            new MessageComponentOption()
+                            {
+                                Label = field.Key.ToLabel(),
+                                Value = field.Key.ToString(),
+                                Default = !opts.SortIncludeMatch && field.Value
+                            }
+                        ),
+                    new()
+                    {
+                        Label = "No Extra Info",
+                        Value = "none",
+                        Default = !opts.SortIncludeMatch && opts.IncludedCount == 0
+                    }
+                    ]
+            }
+        },
+        new()
+        {
+            Type = ComponentType.Label,
+            Label = $"Show only {entity}s with:",
+            Component = new()
+            {
+                Type = ComponentType.StringSelect,
+                CustomId = "filter_with",
+                Required = false,
+                MaxValues = (uint?)opts.WithFilter.Count,
+                Options = [
+                        .. opts.WithFilter.AsEnumerable().Select(field =>
+                        new MessageComponentOption()
+                        {
+                            Label = field.Key.ToLabel(),
+                            Value = field.Key.ToString(),
+                            Default = !opts.SortIncludeMatch && field.Value
+                        }
+                        )],
+            }
+        },
+        new()
+        {
+            Type = ComponentType.Label,
+            Label = $"Show only {entity}s without:",
+            Component = new()
+            {
+                Type = ComponentType.StringSelect,
+                CustomId = "filter_without",
+                Required = false,
+                MaxValues = (uint?)opts.WithOutFilter.Count,
+                Options = [
+                        .. opts.WithOutFilter.AsEnumerable().Select(field =>
+                        new MessageComponentOption()
+                        {
+                            Label = field.Key.ToLabel(),
+                            Value = field.Key.ToString(),
+                            Default = !opts.SortIncludeMatch && field.Value
+                        })
+                    ],
+            }
+        },
+        new()
+        {
+            Type = ComponentType.Label,
+            Label = "Extra Options",
+            Component = new()
+            {
+                Type = ComponentType.CheckboxGroup,
+                CustomId = "extra_checkboxes",
+                Required = false,
+                Options = [
+
+                        new()
+                        {
+                            Label = "Reverse Sort",
+                            Value = "reverse",
+                            Default = opts.Reverse
+                        },
+                    new()
+                    {
+                        Label = "Show IDs",
+                        Value = "id",
+                        Default = opts.ShowIds
+                    },
+                    new()
+                    {
+                        Label = "Number Lines",
+                        Value = "number",
+                        Default = opts.NumberItems
+                    }
+                    ]
+            }
+        }
+        ];
+
+    public static MessageComponent[] longOptionsModal(ListOptions opts, string entity) => [
+        new()
+        {
+            Type = ComponentType.Label,
+            Label = "Sort By",
+            Component = new()
+            {
+                Type = ComponentType.StringSelect,
+                CustomId = "sort_select",
+                MaxValues = 1,
+                Options = [
+                        .. opts.SortOptions.Select(field =>
+                        new MessageComponentOption()
+                        {
+                            Label = field.ToLabel(),
+                            Value = field.ToString(),
+                            Default = opts.SortProperty == field
+                        })
+                    ]
+            }
+        },
+        new()
+        {
+            Type = ComponentType.Label,
+            Label = "Extra Info",
+            Component = new()
+            {
+                Type = ComponentType.StringSelect,
+                CustomId = "info_select",
+                Required = false,
+                MaxValues = (uint?)opts.IncludedFields.Count,
+                Options = [
+                        .. opts.IncludedFields.AsEnumerable().Select(field =>
+                            new MessageComponentOption()
+                            {
+                                Label = field.Key.ToLabel(),
+                                Value = field.Key.ToString(),
+                                Default = field.Value
+                            }
+                        )
+                    ]
+            }
+        },
+        new()
+        {
+            Type = ComponentType.Label,
+            Label = $"Show only {entity}s with:",
+            Component = new()
+            {
+                Type = ComponentType.StringSelect,
+                CustomId = "filter_with",
+                Required = false,
+                MaxValues = (uint?)opts.WithFilter.Count,
+                Options = [
+                        .. opts.WithFilter.AsEnumerable().Select(field =>
+                        new MessageComponentOption()
+                        {
+                            Label = field.Key.ToLabel(),
+                            Value = field.Key.ToString(),
+                            Default = !opts.SortIncludeMatch && field.Value
+                        }
+                        )],
+            }
+        },
+        new()
+        {
+            Type = ComponentType.Label,
+            Label = $"Show only {entity}s without:",
+            Component = new()
+            {
+                Type = ComponentType.StringSelect,
+                CustomId = "filter_without",
+                Required = false,
+                MaxValues = (uint?)opts.WithOutFilter.Count,
+                Options = [
+                        .. opts.WithOutFilter.AsEnumerable().Select(field =>
+                        new MessageComponentOption()
+                        {
+                            Label = field.Key.ToLabel(),
+                            Value = field.Key.ToString(),
+                            Default = !opts.SortIncludeMatch && field.Value
+                        })
+                    ],
+            }
+        },
+        new()
+        {
+            Type = ComponentType.Label,
+            Label = "Extra Options",
+            Component = new()
+            {
+                Type = ComponentType.CheckboxGroup,
+                CustomId = "extra_checkboxes",
+                Required = false,
+                Options = [
+                        new()
+                        {
+                            Label = "Reverse Sort",
+                            Value = "reverse",
+                            Default = opts.Reverse
+                        },
+                    new()
+                    {
+                        Label = "Show IDs",
+                        Value = "id",
+                        Default = opts.ShowIds
+                    }
+                    ]
+            }
+        }
+    ];
+
     public static async Task RenderCV2MemberList(this Context ctx, LookupContext lookupCtx, SystemId system,
                                 string title, string color, ListOptions opts, EmbedService embeds)
     {
@@ -122,49 +410,15 @@ public static class ContextListExt
 
         var footer = $"-# {opts.CreateFilterString()} {"result".ToQuantity(members.Count)}.";
 
-        var itemsPerPage = opts.Type == ListType.Short ? 25 : 25;
-        await ctx.PaginateCV2(title, color, Renderer, itemsPerPage, opts.Type == ListType.Short ? shortOptionsModal : longOptionsModal);
+        var itemsPerPage = 25;
+        await ctx.PaginateCV2(title, color, Renderer, itemsPerPage, opts.Type == ListType.Short ? memberShortOptionsModal : memberLongOptionsModal);
 
         // Base renderer, dispatches based on type
         (string, List<ContextUtils.PageItem>) Renderer(ApplicationCommandInteractionData? optsOverride)
         {
             if (optsOverride != null)
             {
-                opts.ResetDynamicOptions();
-
-                var sortComponent = optsOverride.Components.First((x) => x.Component.CustomId == "sort_select").Component;
-                if (Enum.TryParse<ListEntityField>(sortComponent.Values[0], out var sortResult))
-                    opts.SortProperty = sortResult;
-                else if (sortComponent.Values[0] == SortOption.Random.ToString())
-                    opts.SortProperty = SortOption.Random;
-
-                var infoComponent = optsOverride.Components.First((x) => x.Component.CustomId == "info_select").Component;
-                if (infoComponent?.Values?.Length > 0 && infoComponent.Values[0] == "default")
-                {
-                    infoComponent.Values[0] = sortComponent.Values[0];
-                    opts.SortIncludeMatch = true;
-                }
-                foreach (var include in infoComponent.Values)
-                    if (Enum.TryParse<ListEntityField>(include, out var infoResult))
-                        opts.IncludedFields[infoResult] = true;
-
-                var extraCheckboxesComponent = optsOverride.Components.FirstOrDefault((x) => x.Component.CustomId == "extra_checkboxes")?.Component;
-                opts.ShowIds = extraCheckboxesComponent?.Values.FirstOrDefault(x => x == "id") != null;
-                opts.NumberItems = extraCheckboxesComponent?.Values.FirstOrDefault(x => x == "number") != null;
-                opts.Reverse = extraCheckboxesComponent?.Values.FirstOrDefault(x => x == "reverse") != null;
-
-                var withFilterComponent = optsOverride.Components.FirstOrDefault(x => x.Component.CustomId == "filter_with")?.Component;
-                foreach (var withFilterEntryStr in withFilterComponent?.Values ?? [])
-                    if (Enum.TryParse<ListEntityField>(withFilterEntryStr, out var withFilterEntry) && opts.WithFilter.ContainsKey(withFilterEntry))
-                        opts.WithFilter[withFilterEntry] = true;
-
-                var withOutFilterComponent = optsOverride.Components.FirstOrDefault(x => x.Component.CustomId == "filter_without")?.Component;
-                foreach (var withOutFilterEntryStr in withOutFilterComponent?.Values ?? [])
-                    if (Enum.TryParse<ListEntityField>(withOutFilterEntryStr, out var withOutFilterEntry) && opts.WithOutFilter.ContainsKey(withOutFilterEntry))
-                        opts.WithOutFilter[withOutFilterEntry] = true;
-
-                opts.AssertIsValid();
-
+                ParseListOptionUpdates(opts, optsOverride);
                 members = members.SortByMemberListOptions(opts, lookupCtx).ToList();
             }
 
@@ -175,7 +429,7 @@ public static class ContextListExt
             if (opts.Type == ListType.Short)
                 return (footer, ShortRenderer(filteredMembers).ToList());
             else
-                return (footer, LongRenderer(filteredMembers));
+                return (footer, LongRenderer(filteredMembers).ToList());
         }
 
         IEnumerable<ContextUtils.PageItem> ShortRenderer(IEnumerable<ListedMember> members)
@@ -186,8 +440,7 @@ public static class ContextListExt
             return members.Select((m, i) =>
                 {
                     var ret = "";
-                    if (opts.NumberItems)
-                        ret += $"{i + 1}. ";
+                    if (opts.NumberItems) ret += $"{i + 1}. ";
                     if (opts.ShowIds)
                         ret += $"[`{m.DisplayHid(ctx.Config, isList: true, shouldPad: shouldPad)}`] ";
                     ret += $"**{m.NameFor(ctx)}** ";
@@ -220,282 +473,20 @@ public static class ContextListExt
                 });
         }
 
-        List<ContextUtils.PageItem> LongRenderer(IEnumerable<ListedMember> page)
-        {
-            List<ContextUtils.PageItem> components = [];
-            foreach (var m in page)
+        IEnumerable<ContextUtils.PageItem> LongRenderer(IEnumerable<ListedMember> page) =>
+            page.Select(m =>
             {
                 var container = embeds.CreateMemberMessageComponents(null, m, null, ctx.Config, lookupCtx, m.Groups.ToList(), opts, true);
-                components.Add(new()
+                return new ContextUtils.PageItem()
                 {
-                    CharacterCount = countCharacters(container),
+                    CharacterCount = MiscUtils.CountCharacters(container),
                     Components = container
-                });
-            }
+                };
+            });
 
-            return components;
-        }
+        MessageComponent[] memberShortOptionsModal() => shortOptionsModal(opts, "member");
+        MessageComponent[] memberLongOptionsModal() => longOptionsModal(opts, "member");
 
-        MessageComponent[] shortOptionsModal() => [
-            new()
-            {
-                Type = ComponentType.Label,
-                Label = "Sort By",
-                Component = new()
-                {
-                    Type = ComponentType.StringSelect,
-                    CustomId = "sort_select",
-                    MaxValues = 1,
-                    Options = [
-                        new()
-                        {
-                            Label = "Name (Default)",
-                            Value = ListEntityField.Name.ToString(),
-                            Default = opts.SortProperty == ListEntityField.Name
-                        },
-                        .. opts.SortOptions.Where(x => x != ListEntityField.Name).Select(x =>
-                            new MessageComponentOption()
-                            {
-                                Label = x.ToLabel(),
-                                Value = x.ToString(),
-                                Default = opts.SortProperty == x
-                            }),
-                    ]
-                }
-            },
-            new()
-            {
-                Type = ComponentType.Label,
-                Label = "Extra Info",
-                Component = new()
-                {
-                    Type = ComponentType.StringSelect,
-                    CustomId = "info_select",
-                    MaxValues = 1,
-                    Options = [
-                        new()
-                        {
-                            Label = "Same as Sort",
-                            Value = "default",
-                            Default = opts.SortIncludeMatch
-                        },
-                        .. opts.IncludedFields.AsEnumerable().Select(field =>
-                        new MessageComponentOption()
-                        {
-                            Label = field.Key.ToLabel(),
-                            Value = field.Key.ToString(),
-                            Default = !opts.SortIncludeMatch && field.Value
-                        }
-                        ),
-                        new()
-                        {
-                            Label = "No Extra Info",
-                            Value = "none",
-                            Default = !opts.SortIncludeMatch && opts.IncludedCount == 0
-                        }
-                    ]
-                }
-            },
-            new()
-            {
-                Type = ComponentType.Label,
-                Label = "Show only members with:",
-                Component = new()
-                {
-                    Type = ComponentType.StringSelect,
-                    CustomId = "filter_with",
-                    Required = false,
-                    MaxValues = 8,
-                    Options = [
-                        .. opts.WithFilter.AsEnumerable().Select(field =>
-                        new MessageComponentOption()
-                        {
-                            Label = field.Key.ToLabel(),
-                            Value = field.Key.ToString(),
-                            Default = !opts.SortIncludeMatch && field.Value
-                        }
-                        )],
-                }
-            },
-            new()
-            {
-                Type = ComponentType.Label,
-                Label = "Show only members without:",
-                Component = new()
-                {
-                    Type = ComponentType.StringSelect,
-                    CustomId = "filter_without",
-                    Required = false,
-                    MaxValues = 8,
-                    Options = [
-                        .. opts.WithOutFilter.AsEnumerable().Select(field =>
-                        new MessageComponentOption()
-                        {
-                            Label = field.Key.ToLabel(),
-                            Value = field.Key.ToString(),
-                            Default = !opts.SortIncludeMatch && field.Value
-                        })
-                    ],
-                }
-            },
-            new()
-            {
-                Type = ComponentType.Label,
-                Label = "Extra Options",
-                Component = new()
-                {
-                    Type = ComponentType.CheckboxGroup,
-                    CustomId = "extra_checkboxes",
-                    Required = false,
-                    Options = [
-                        new()
-                        {
-                            Label = "Reverse Sort",
-                            Value = "reverse",
-                            Default = opts.Reverse
-                        },
-                        new()
-                        {
-                            Label = "Show IDs",
-                            Value = "id",
-                            Default = opts.ShowIds
-                        },
-                        new()
-                        {
-                            Label = "Number Lines",
-                            Value = "number",
-                            Default = opts.NumberItems
-                        }
-                    ]
-                }
-            }
-        ];
-
-        MessageComponent[] longOptionsModal() => [
-            new()
-            {
-                Type = ComponentType.Label,
-                Label = "Sort By",
-                Component = new()
-                {
-                    Type = ComponentType.StringSelect,
-                    CustomId = "sort_select",
-                    MaxValues = 1,
-                    Options = [
-                        .. opts.SortOptions.Select(field =>
-                        new MessageComponentOption()
-                        {
-                            Label = field.ToLabel(),
-                            Value = field.ToString(),
-                            Default = opts.SortProperty == field
-                        })
-                    ]
-                }
-            },
-            new()
-            {
-                Type = ComponentType.Label,
-                Label = "Extra Info",
-                Component = new()
-                {
-                    Type = ComponentType.CheckboxGroup,
-                    CustomId = "info_select",
-                    Required = false,
-                    Options = [
-                        new()
-                        {
-                            Label = "Pronouns",
-                            Value = ListEntityField.Pronouns.ToString(),
-                            Default = opts.IncludedFields[ListEntityField.Pronouns]
-                        },
-                        new()
-                        {
-                            Label = "Birthdate",
-                            Value = ListEntityField.Birthdate.ToString(),
-                            Default = opts.IncludedFields[ListEntityField.Birthdate]
-                        },
-                        new()
-                        {
-                            Label = "Proxy Tags",
-                            Value = ListEntityField.ProxyTags.ToString(),
-                            Default = opts.IncludedFields[ListEntityField.ProxyTags]
-                        },
-                        new()
-                        {
-                            Label = "Message Count",
-                            Value = ListEntityField.MessageCount.ToString(),
-                            Default = opts.IncludedFields[ListEntityField.MessageCount]
-                        },
-                        new()
-                        {
-                            Label = "Creation Date",
-                            Value = ListEntityField.CreationDate.ToString(),
-                            Default = opts.IncludedFields[ListEntityField.CreationDate]
-                        },
-                        new()
-                        {
-                            Label = "Avatar",
-                            Value = ListEntityField.Avatar.ToString(),
-                            Default = opts.IncludedFields[ListEntityField.Avatar]
-                        },
-                        new()
-                        {
-                            Label = "Description",
-                            Value = ListEntityField.Description.ToString(),
-                            Default = opts.IncludedFields[ListEntityField.Description]
-                        },
-                        new()
-                        {
-                            Label = "Groups",
-                            Value = ListEntityField.Groups.ToString(),
-                            Default = opts.IncludedFields[ListEntityField.Groups]
-                        },
-                        new()
-                        {
-                            Label = "Aliases",
-                            Value = ListEntityField.Aliases.ToString(),
-                            Default = opts.IncludedFields[ListEntityField.Aliases]
-                        },
-                    ]
-                }
-            },
-            new()
-            {
-                Type = ComponentType.Label,
-                Label = "Extra Options",
-                Component = new()
-                {
-                    Type = ComponentType.CheckboxGroup,
-                    CustomId = "extra_checkboxes",
-                    Required = false,
-                    Options = [
-                        new()
-                        {
-                            Label = "Reverse Sort",
-                            Value = "reverse",
-                            Default = opts.Reverse
-                        },
-                        new()
-                        {
-                            Label = "Show IDs",
-                            Value = "id",
-                            Default = opts.ShowIds
-                        }
-                    ]
-                }
-            }
-        ];
-
-
-        int countCharacters(MessageComponent[] components) =>
-            components.Sum(com =>
-                com.Type switch
-                {
-                    ComponentType.Text => (com.Content ?? "").Length,
-                    ComponentType.Section => countCharacters(com.Components ?? []),
-                    _ => 0,
-                }
-            );
     }
 
     public static async Task RenderMemberList(this Context ctx, LookupContext lookupCtx,
@@ -611,8 +602,8 @@ public static class ContextListExt
         }
     }
 
-    public static async Task RenderCV2GroupList(this Context ctx, LookupContext lookupCtx,
-                                SystemId system, string embedTitle, string color, ListOptions opts)
+    public static async Task RenderCV2GroupList(this Context ctx, LookupContext lookupCtx, SystemId system,
+                                string title, string color, ListOptions opts, EmbedService embeds)
     {
         // We take an IDatabase instead of a IPKConnection so we don't keep the handle open for the entire runtime
         // We wanna release it as soon as the member list is actually *fetched*, instead of potentially minutes later (paginate timeout)
@@ -620,18 +611,36 @@ public static class ContextListExt
             .SortByGroupListOptions(opts, lookupCtx)
             .ToList();
 
-        var footer = $"-# {opts.CreateFilterString()} {"result".ToQuantity(groups.Count)}.";
-        var itemsPerPage = opts.Type == ListType.Short ? 25 : 5;
+        // Make the defaults match the behavior of the non-cv2 list
+        if (opts.IncludedCount == 0 || opts.Type == ListType.Long)
+            opts.IncludedFields[ListEntityField.MemberCount] = true;
+        if (opts.Type == ListType.Long)
+        {
+            opts.IncludedFields[ListEntityField.DisplayName] = true;
+            opts.IncludedFields[ListEntityField.MemberCount] = true;
+            opts.IncludedFields[ListEntityField.Description] = true;
+        }
 
-        await ctx.PaginateCV2(embedTitle, color, Renderer, itemsPerPage);
+        var footer = $"-# {opts.CreateFilterString()} {"result".ToQuantity(groups.Count)}.";
+        var itemsPerPage = 25;
+
+        await ctx.PaginateCV2(title, color, Renderer, itemsPerPage, opts.Type == ListType.Short ? groupShortOptionsModal : groupLongOptionsModal);
 
         // Base renderer, dispatches based on type
         (string, List<ContextUtils.PageItem>) Renderer(ApplicationCommandInteractionData? optsOverride)
         {
+            if (optsOverride != null)
+            {
+                ParseListOptionUpdates(opts, optsOverride);
+                groups = groups.SortByGroupListOptions(opts, lookupCtx).ToList();
+            }
+
+            var filteredGroups = groups.FilterByGroupListOptions(opts, lookupCtx);
+
             if (opts.Type == ListType.Short)
-                return (footer, ShortRenderer(groups).ToList());
+                return (footer, ShortRenderer(filteredGroups).ToList());
             else
-                return (footer, LongRenderer(groups).ToList());
+                return (footer, LongRenderer(filteredGroups).ToList());
         }
 
         IEnumerable<ContextUtils.PageItem> ShortRenderer(IEnumerable<ListedGroup> groups)
@@ -639,103 +648,64 @@ public static class ContextListExt
             // if there are both 5 and 6 character Hids they should be padded to align correctly.
             var shouldPad = groups.Any(x => x.Hid.Length > 5);
 
-            return groups.Select(g =>
+            return groups.Select((g, i) =>
             {
-                var ret = $"[`{g.DisplayHid(ctx.Config, isList: true, shouldPad: shouldPad)}`] **{g.NameFor(ctx)}** ";
+                var ret = "";
+                if (opts.NumberItems) ret += $"{i + 1}. ";
+                if (opts.ShowIds)
+                    ret += $"[`{g.DisplayHid(ctx.Config, isList: true, shouldPad: shouldPad)}`] ";
+                ret += $"**{g.NameFor(ctx)}** ";
 
-                switch (opts.SortProperty.Field)
-                {
-                    case ListEntityField.DisplayName:
-                        {
-                            if (g.NamePrivacy.CanAccess(lookupCtx) && g.DisplayName != null)
-                                ret += $"({g.DisplayName})";
-                            break;
-                        }
-                    case ListEntityField.CreationDate:
-                        {
-                            if (g.MetadataPrivacy.TryGet(lookupCtx, g.Created, out var created))
-                                ret += $"(created at <t:{created.ToUnixTimeSeconds()}>)";
-                            break;
-                        }
-                    default:
-                        {
-                            if (opts.IncludedFields[ListEntityField.CreationDate] &&
-                                     g.MetadataPrivacy.TryGet(lookupCtx, g.Created, out var created))
-                                ret += $"(created at <t:{created.ToUnixTimeSeconds()}>)";
-                            else if (opts.IncludedFields[ListEntityField.DisplayName] && g.DisplayName != null && g.NamePrivacy.CanAccess(lookupCtx))
-                                ret += $"({g.DisplayName})";
-                            else if (opts.IncludedFields[ListEntityField.Avatar] && g.IconFor(lookupCtx) is { } avatarUrl)
-                                ret += $"([avatar URL]({avatarUrl}))";
+                if (opts.IncludedFields[ListEntityField.DisplayName] && g.DisplayName != null && g.NamePrivacy.CanAccess(lookupCtx))
+                    ret += $"({g.DisplayName})";
+                else if (opts.IncludedFields[ListEntityField.CreationDate] &&
+                         g.MetadataPrivacy.TryGet(lookupCtx, g.Created, out var created))
+                    ret += $"(created at <t:{created.ToUnixTimeSeconds()}>)";
+                else if (opts.IncludedFields[ListEntityField.Avatar] && g.IconFor(lookupCtx) is { } avatarUrl)
+                    ret += $"([avatar URL]({avatarUrl}))";
+                else if (opts.IncludedFields[ListEntityField.MemberCount])
+                    // -priv/-pub and listprivacy affects whether count is shown
+                    // -all and visibility affects what the count is
+                    if (ctx.DirectLookupContextFor(system) == LookupContext.ByOwner)
+                    {
+                        if (g.ListPrivacy == PrivacyLevel.Public || lookupCtx == LookupContext.ByOwner)
+                            if (ctx.MatchFlag("all", "a"))
+                                ret += $"({"member".ToQuantity(g.MemberIds.Count)})";
                             else
-                            {
-                                // -priv/-pub and listprivacy affects whether count is shown
-                                // -all and visibility affects what the count is
-                                if (ctx.DirectLookupContextFor(system) == LookupContext.ByOwner)
-                                {
-                                    if (g.ListPrivacy == PrivacyLevel.Public || lookupCtx == LookupContext.ByOwner)
-                                    {
-                                        if (ctx.MatchFlag("all", "a"))
-                                            ret += $"({"member".ToQuantity(g.TotalMemberCount)})";
-                                        else
-                                            ret += $"({"member".ToQuantity(g.PublicMemberCount)})";
-                                    }
-                                }
-                                else
-                                {
-                                    if (g.ListPrivacy == PrivacyLevel.Public)
-                                        ret += $"({"member".ToQuantity(g.PublicMemberCount)})";
-                                }
-                            }
-
-                            break;
-                        }
-                }
-
+                                ret += $"({"member".ToQuantity(g.PublicMemberCount)})";
+                    }
+                    else
+                        if (g.ListPrivacy == PrivacyLevel.Public)
+                        ret += $"({"member".ToQuantity(g.PublicMemberCount)})";
                 return new ContextUtils.PageItem() { CharacterCount = ret.Length, Text = ret };
             });
         }
 
         IEnumerable<ContextUtils.PageItem> LongRenderer(IEnumerable<ListedGroup> page)
         {
+            var countctx = LookupContext.ByNonOwner;
+            if (ctx.MatchFlag("a", "all"))
+            {
+                if (system == ctx.System?.Id)
+                    countctx = LookupContext.ByOwner;
+                else
+                    throw Errors.LookupNotAllowed;
+            }
             return page.Select(g =>
             {
-                var profile = new StringBuilder($"## {g.NameFor(ctx)}\n**ID**: {g.DisplayHid(ctx.Config)}");
-
-                if (g.DisplayName != null && g.NamePrivacy.CanAccess(lookupCtx))
-                    profile.Append($"\n**Display name**: {g.DisplayName}");
-
-                if (g.ListPrivacy == PrivacyLevel.Public || lookupCtx == LookupContext.ByOwner)
-                {
-                    if (ctx.MatchFlag("all", "a") && ctx.DirectLookupContextFor(system) == LookupContext.ByOwner)
-                        profile.Append($"\n**Member Count:** {g.TotalMemberCount}");
-                    else
-                        profile.Append($"\n**Member Count:** {g.PublicMemberCount}");
-                }
-
-                if ((opts.IncludedFields[ListEntityField.CreationDate] || opts.SortProperty == ListEntityField.CreationDate) &&
-                    g.MetadataPrivacy.TryGet(lookupCtx, g.Created, out var created))
-                    profile.Append($"\n**Created on:** {created.FormatZoned(ctx.Zone)}");
-
-                if (opts.IncludedFields[ListEntityField.Avatar] && g.IconFor(lookupCtx) is { } avatar)
-                    profile.Append($"\n**Avatar URL:** {avatar.TryGetCleanCdnUrl()}");
-
-                if (g.DescriptionFor(lookupCtx) is { } desc)
-                    profile.Append($"\n\n{desc}");
-
-                if (g.Visibility == PrivacyLevel.Private)
-                    profile.Append("\n*(this group is hidden)*");
-
+                var memberCount = countctx == LookupContext.ByOwner ? g.MemberIds.Count : g.PublicMemberCount;
+                var components = embeds.CreateGroupMessageComponents(ctx, null, g, memberCount, lookupCtx, null, opts, true);
                 return new ContextUtils.PageItem()
                 {
-                    CharacterCount = profile.ToString().Length,
-                    Components = [new MessageComponent()
-                    {
-                        Type = ComponentType.Text,
-                        Content = profile.ToString()
-                    }]
+                    CharacterCount = MiscUtils.CountCharacters(components),
+                    Components = components
                 };
             });
         }
+
+        MessageComponent[] groupShortOptionsModal() => shortOptionsModal(opts, "group");
+        MessageComponent[] groupLongOptionsModal() => longOptionsModal(opts, "group");
+
     }
 
     public static async Task RenderGroupList(this Context ctx, LookupContext lookupCtx,
@@ -815,7 +785,7 @@ public static class ContextListExt
                                     {
                                         if (ctx.MatchFlag("all", "a"))
                                         {
-                                            ret += $"({"member".ToQuantity(g.TotalMemberCount)})";
+                                            ret += $"({"member".ToQuantity(g.MemberIds.Count)})";
                                         }
                                         else
                                         {
@@ -852,7 +822,7 @@ public static class ContextListExt
                 if (g.ListPrivacy == PrivacyLevel.Public || lookupCtx == LookupContext.ByOwner)
                 {
                     if (ctx.MatchFlag("all", "a") && ctx.DirectLookupContextFor(system) == LookupContext.ByOwner)
-                        profile.Append($"\n**Member Count:** {g.TotalMemberCount}");
+                        profile.Append($"\n**Member Count:** {g.MemberIds.Count}");
                     else
                         profile.Append($"\n**Member Count:** {g.PublicMemberCount}");
                 }

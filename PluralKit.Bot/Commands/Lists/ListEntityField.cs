@@ -44,6 +44,28 @@ public static class ListEntityFieldExtensions
         ListEntityField.MemberCount => "Member Count",
         _ => throw new ArgumentOutOfRangeException(nameof(field))
     };
+
+    public static string ReadableString(this ListEntityField field, bool plural = false) => field switch
+    {
+        ListEntityField.Name => plural ? "names" : "name",
+        ListEntityField.DisplayName => plural ? "display names" : "display name",
+        ListEntityField.Hid => plural ? "IDs" : "ID",
+        ListEntityField.MessageCount => plural ? "message counts" : "message count",
+        ListEntityField.CreationDate => plural ? "creation dates" : "creation date",
+        ListEntityField.LastSwitch => plural ? "last switches" : "last switch",
+        ListEntityField.LastMessage => plural ? "last messages" : "last message",
+        ListEntityField.Birthdate => plural ? "birthdays" : "birthday",
+        ListEntityField.Avatar => plural ? "avatars" : "avatar",
+        ListEntityField.Pronouns => "pronouns",
+        ListEntityField.ProxyTags => "proxy tags",
+        ListEntityField.Groups => "groups",
+        ListEntityField.Members => "members",
+        ListEntityField.Aliases => "aliases",
+        ListEntityField.Description => plural ? "descriptions" : "description",
+        ListEntityField.Color => plural ? "colors" : "color",
+        ListEntityField.MemberCount => plural ? "member counts" : "member count",
+        _ => throw new ArgumentOutOfRangeException($"Couldn't find readable string for sort property {field}")
+    };
 }
 
 // Enums can't have inheritence so this is the alternative

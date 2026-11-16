@@ -88,7 +88,7 @@ public class GroupMember
                 target.Color, opts);
         else
             await ctx.RenderCV2GroupList(ctx.LookupContextFor(target.System), target.System, title.ToString(),
-                target.Color, opts);
+                target.Color, opts, _embeds);
     }
 
     public async Task AddRemoveMembers(Context ctx, PKGroup target, Groups.AddRemoveOperation op)

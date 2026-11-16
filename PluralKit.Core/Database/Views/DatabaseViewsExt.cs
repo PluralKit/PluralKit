@@ -9,8 +9,8 @@ namespace PluralKit.Core;
 
 public static class DatabaseViewsExt
 {
-    public static Task<IEnumerable<ListedGroup>> QueryGroupList(this IPKConnection conn, SystemId system,
-                                                                  ListQueryOptions opts)
+    public static async Task<IEnumerable<ListedGroup>> QueryGroupList(this IPKConnection conn, SystemId system,
+                                                                  ListQueryOptions opts, bool withMembers = false)
     {
         PostgresCompiler compiler = new();
 
@@ -49,8 +49,18 @@ public static class DatabaseViewsExt
         }
 
         var q = compiler.Compile(query);
+        var groups = await conn.QueryAsync<ListedGroup>(q.Sql, q.NamedBindings);
 
-        return conn.QueryAsync<ListedGroup>(q.Sql, q.NamedBindings);
+        if (!withMembers) return groups;
+
+        var memberQuery = compiler.Compile(new Query("members").Where("system", system));
+        var members = await conn.QueryAsync<PKMember>(memberQuery.Sql, memberQuery.NamedBindings);
+
+        return groups.Select(g =>
+        {
+            g.Members = g.MemberIds?.Select(mId => members.First(m => m.Id.Value == mId)) ?? [];
+            return g;
+        });
     }
     public static async Task<IEnumerable<ListedMember>> QueryMemberList(this IPKConnection conn, SystemId system,
                                                                   ListQueryOptions opts, bool withGroups = false)
@@ -106,10 +116,7 @@ public static class DatabaseViewsExt
 
         return members.Select(m =>
         {
-            m.Groups = m.GroupIds?.Select(gId =>
-            {
-                return groups.First(g => g.Id.Value == gId);
-            }) ?? [];
+            m.Groups = m.GroupIds?.Select(gId => groups.First(g => g.Id.Value == gId)) ?? [];
             return m;
         });
     }

@@ -67,13 +67,14 @@ select groups.*,
         where
             group_members.group_id = groups.id and members.member_visibility = 1
     ) as public_member_count,
-    -- Find private group member count
+
+    -- Aggregate list of group ids attached to each member
     (
-        select count(*) from group_members
-            inner join members on group_members.member_id = members.id
-        where
-            group_members.group_id = groups.id
-    ) as total_member_count,
+        select array_agg(members.id)
+        from group_members
+            left join members on members.id = group_members.member_id
+        where group_members.group_id = groups.id
+    ) as member_ids,
 
     -- Extract group description as seen by "the public"
     case

@@ -55,11 +55,10 @@ public class ListOptions(ListEntity entityType)
         ListEntity.Group => new()
         {
             {ListEntityField.DisplayName, default},
-            {ListEntityField.Pronouns, default},
-            {ListEntityField.Birthdate, default},
             {ListEntityField.CreationDate, default},
             {ListEntityField.Avatar, default},
             {ListEntityField.Description, default},
+            {ListEntityField.MemberCount, default},
         },
         _ => []
     };
@@ -131,6 +130,7 @@ public class ListOptions(ListEntity entityType)
             ListEntityField.DisplayName,
             ListEntityField.Hid,
             ListEntityField.CreationDate,
+            ListEntityField.MemberCount,
             SortOption.Random,
         ],
         _ => []
@@ -159,37 +159,12 @@ public class ListOptions(ListEntity entityType)
 
     public string CreateFilterString()
     {
-        string readableString(ListEntityField? field, bool plural = false)
-        {
-            return field switch
-            {
-                ListEntityField.Name => plural ? "names" : "name",
-                ListEntityField.DisplayName => plural ? "display names" : "display name",
-                ListEntityField.Hid => plural ? "IDs" : "ID",
-                ListEntityField.MessageCount => plural ? "message counts" : "message count",
-                ListEntityField.CreationDate => plural ? "creation dates" : "creation date",
-                ListEntityField.LastSwitch => plural ? "last switches" : "last switch",
-                ListEntityField.LastMessage => plural ? "last messages" : "last message",
-                ListEntityField.Birthdate => plural ? "birthdays" : "birthday",
-                ListEntityField.Avatar => plural ? "avatars" : "avatar",
-                ListEntityField.Pronouns => "pronouns",
-                ListEntityField.ProxyTags => "proxy tags",
-                ListEntityField.Groups => "groups",
-                ListEntityField.Members => "members",
-                ListEntityField.Aliases => "aliases",
-                ListEntityField.Description => plural ? "descriptions" : "description",
-                ListEntityField.Color => plural ? "colors" : "color",
-                ListEntityField.MemberCount => plural ? "member counts" : "member count",
-                _ => throw new ArgumentOutOfRangeException($"Couldn't find readable string for sort property {SortProperty}")
-            };
-        }
-
         var str = new StringBuilder();
         str.Append("Sorting ");
         if (SortProperty == SortOption.Random) str.Append("randomly");
         else
         {
-            str.Append($"by {readableString(SortProperty.Field)}");
+            str.Append($"by {SortProperty.Field?.ReadableString()}");
         }
 
         if (Search != null)
@@ -209,19 +184,19 @@ public class ListOptions(ListEntity entityType)
 
         if (WithOutFilter.Count(x => x.Value) > 1)
         {
-            str.Append($" Excluding members with {string.Join(", ", WithOutFilter.Where(x => x.Value).SkipLast(1).Select(x => readableString(x.Key, true)))}");
-            str.Append($"{(WithOutFilter.Count(x => x.Value) == 2 ? "" : ",")} or {readableString(WithOutFilter.Last(x => x.Value).Key, true)}.");
+            str.Append($" Excluding members with {string.Join(", ", WithOutFilter.Where(x => x.Value).SkipLast(1).Select(x => x.Key.ReadableString(true)))}");
+            str.Append($"{(WithOutFilter.Count(x => x.Value) == 2 ? "" : ",")} or {WithOutFilter.Last(x => x.Value).Key.ReadableString(true)}.");
         }
         else if (WithOutFilter.Any(x => x.Value))
-            str.Append($" Excluding members with {readableString(WithOutFilter.First(x => x.Value).Key, true)}.");
+            str.Append($" Excluding members with {WithOutFilter.First(x => x.Value).Key.ReadableString(true)}.");
 
         if (WithFilter.Count(x => x.Value) > 1)
         {
-            str.Append($" Excluding members without {string.Join(", ", WithFilter.Where(x => x.Value).SkipLast(1).Select(x => readableString(x.Key, true)))}");
-            str.Append($"{(WithFilter.Count(x => x.Value) == 2 ? "" : ",")} or {readableString(WithFilter.Last(x => x.Value).Key, true)}.");
+            str.Append($" Excluding members without {string.Join(", ", WithFilter.Where(x => x.Value).SkipLast(1).Select(x => x.Key.ReadableString(true)))}");
+            str.Append($"{(WithFilter.Count(x => x.Value) == 2 ? "" : ",")} or {WithFilter.Last(x => x.Value).Key.ReadableString(true)}.");
         }
         else if (WithFilter.Any(x => x.Value))
-            str.Append($" Excluding members without {readableString(WithFilter.First(x => x.Value).Key, true)}.");
+            str.Append($" Excluding members without {WithFilter.First(x => x.Value).Key.ReadableString(true)}.");
 
         return str.ToString();
     }
@@ -375,6 +350,65 @@ public static class ListOptionsExt
             return true;
         });
 
+    public static IEnumerable<ListedGroup> FilterByGroupListOptions(this IEnumerable<ListedGroup> input,
+                                                                ListOptions opts, LookupContext ctx) =>
+    input.Where(g =>
+    {
+        foreach (var with in opts.WithFilter.Where(x => x.Value))
+        {
+            switch (with.Key)
+            {
+                case ListEntityField.Avatar:
+                    if (!(g.IconFor(ctx) is { }))
+                        return false;
+                    break;
+                case ListEntityField.DisplayName:
+                    if (g.DisplayName == null)
+                        return false;
+                    break;
+                case ListEntityField.Description:
+                    if (!(g.DescriptionFor(ctx) is { }))
+                        return false;
+                    break;
+                case ListEntityField.Color:
+                    if (g.Color == null)
+                        return false;
+                    break;
+                case ListEntityField.Members:
+                    if (!(g.MemberIds is { } members) || members.Count == 0)
+                        return false;
+                    break;
+            }
+        }
+        foreach (var without in opts.WithOutFilter.Where(x => x.Value))
+        {
+            switch (without.Key)
+            {
+                case ListEntityField.Avatar:
+                    if (g.IconFor(ctx) is { })
+                        return false;
+                    break;
+                case ListEntityField.DisplayName:
+                    if (g.DisplayName != null)
+                        return false;
+                    break;
+                case ListEntityField.Description:
+                    if (g.DescriptionFor(ctx) is { })
+                        return false;
+                    break;
+                case ListEntityField.Color:
+                    if (g.Color != null)
+                        return false;
+                    break;
+                case ListEntityField.Members:
+                    if (g.MemberIds is { } members && members.Count > 0)
+                        return false;
+                    break;
+            }
+        }
+        return true;
+    });
+
 
     public static IEnumerable<ListedGroup> SortByGroupListOptions(this IEnumerable<ListedGroup> input,
                                                                     ListOptions opts, LookupContext ctx)
@@ -415,13 +449,10 @@ public static class ListOptionsExt
 
         foreach (var with in opts.WithFilter)
             if (with.Value && opts.WithOutFilter[with.Key])
-                throw new PKError($"Cannot include both \"only members with {ArticleMaybe(with.Key)}\" and \"only members without {ArticleMaybe(with.Key)}\". " +
-                $"To show members both with and without {ArticleMaybe(with.Key)}, select neither option.");
+                throw new PKError($"Cannot include both \"only members with {with.Key.ReadableString(true)}\" and \"only members without {with.Key.ReadableString(true)}\". " +
+                $"To show members both with and without {with.Key.ReadableString(true)}, select neither option.");
 
         // the check for multiple *sorting* property flags is done in SortProperty setter
-
-        static string ArticleMaybe(ListEntityField e) =>
-            (e.ToString().Last() == 's' ? "" : "a ") + e;
     }
 }
 

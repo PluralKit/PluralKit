@@ -509,7 +509,8 @@ public class Groups
                 system.Id,
                 GetEmbedTitle(ctx, system, opts),
                 system.Color,
-                opts
+                opts,
+                _embeds
             );
     }
 

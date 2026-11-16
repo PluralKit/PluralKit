@@ -12,6 +12,7 @@ using Npgsql;
 using PluralKit.Core;
 
 using Polly.Timeout;
+using Myriad.Types;
 
 namespace PluralKit.Bot;
 
@@ -19,6 +20,16 @@ public static class MiscUtils
 {
     public static string ProxyTagsString(this PKMember member, string separator = ", ") =>
         string.Join(separator, member.ProxyTags.Select(t => t.ProxyString.AsCode()));
+
+    public static int CountCharacters(MessageComponent[] components) =>
+        components.Sum(com =>
+            com.Type switch
+            {
+                ComponentType.Text => (com.Content ?? "").Length,
+                ComponentType.Section => CountCharacters(com.Components ?? []),
+                _ => 0,
+            }
+        );
 
     public static bool IsOurProblem(this Exception e)
     {
