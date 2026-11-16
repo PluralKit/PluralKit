@@ -1,4 +1,4 @@
--- database version 55
+-- database version 56
 -- add member alias privacy
 
 alter table members add column alias_privacy int not null default 1 check (alias_privacy = ANY (ARRAY[1,2]));
