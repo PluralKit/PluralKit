@@ -257,7 +257,6 @@ public class ProxyService
 
         var avatarUrl = AvatarUtils.TryRewriteCdnUrl(match.Member.ProxyAvatar(ctx));
         // encode context hints for bridges into avatar URL (reduces message API usage)
-        AvatarUtils.TryRewriteCdnUrl(match.Member.ProxyAvatar(ctx));
         avatarUrl += "&user=" + trigger.Author.Id;
         avatarUrl += "&system=" + ctx.SystemId;
         avatarUrl += "&member=" + match.Member.Id;
