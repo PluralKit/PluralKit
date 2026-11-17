@@ -616,7 +616,7 @@ public static class ContextListExt
 
         // We take an IDatabase instead of a IPKConnection so we don't keep the handle open for the entire runtime
         // We wanna release it as soon as the member list is actually *fetched*, instead of potentially minutes later (paginate timeout)
-        var groups = (await ctx.Database.Execute(conn => conn.QueryGroupList(system, opts.ToQueryOptions())))
+        var groups = (await ctx.Database.Execute(conn => conn.QueryGroupList(system, opts.ToQueryOptions(), true)))
             .SortByGroupListOptions(opts, lookupCtx, countctx)
             .ToList();
 
@@ -644,7 +644,7 @@ public static class ContextListExt
                 groups = groups.SortByGroupListOptions(opts, lookupCtx, countctx).ToList();
             }
 
-            var filteredGroups = groups.FilterByGroupListOptions(opts, lookupCtx);
+            var filteredGroups = groups.FilterByGroupListOptions(opts, lookupCtx, countctx);
 
             if (opts.Type == ListType.Short)
                 return (footer, ShortRenderer(filteredGroups).ToList());
@@ -672,22 +672,13 @@ public static class ContextListExt
                     ret += $"(created at <t:{created.ToUnixTimeSeconds()}>)";
                 else if (opts.IncludedFields[ListEntityField.Avatar] && g.IconFor(lookupCtx) is { } avatarUrl)
                     ret += $"([avatar URL]({avatarUrl}))";
-                else if (opts.IncludedFields[ListEntityField.MemberCount])
+                else if (opts.IncludedFields[ListEntityField.MemberCount] && g.ListPrivacy.CanAccess(lookupCtx))
                     // -priv/-pub and listprivacy affects whether count is shown
                     // -all and visibility affects what the count is
-                    if (ctx.DirectLookupContextFor(system) == LookupContext.ByOwner)
-                    {
-                        if (g.ListPrivacy == PrivacyLevel.Public || lookupCtx == LookupContext.ByOwner)
-                            if (ctx.MatchFlag("all", "a"))
-                                ret += $"({"member".ToQuantity(g.MemberIds.Count)})";
-                            else
-                                ret += $"({"member".ToQuantity(g.PublicMemberCount)})";
-                    }
-                    else
-                    {
-                        if (g.ListPrivacy == PrivacyLevel.Public)
-                            ret += $"({"member".ToQuantity(g.PublicMemberCount)})";
-                    }
+                    ret += $"({"member".ToQuantity(g.MemberCount(countctx), "n0")})";
+                else if (opts.IncludedFields[ListEntityField.MessageCount] && g.ListPrivacy.CanAccess(lookupCtx))
+                    ret += $"({"message".ToQuantity(g.MessageCount(lookupCtx, countctx), "n0")})";
+
                 return new ContextUtils.PageItem() { CharacterCount = ret.Length, Text = ret };
             });
         }
@@ -695,8 +686,7 @@ public static class ContextListExt
         IEnumerable<ContextUtils.PageItem> LongRenderer(IEnumerable<ListedGroup> page) =>
             page.Select(g =>
                 {
-                    var memberCount = countctx == LookupContext.ByOwner ? g.MemberIds.Count : g.PublicMemberCount;
-                    var components = embeds.CreateGroupMessageComponents(ctx, null, g, memberCount, lookupCtx, null, opts, true);
+                    var components = embeds.CreateGroupMessageComponents(ctx, null, g, g.MemberCount(countctx), lookupCtx, null, opts, true);
                     return new ContextUtils.PageItem()
                     {
                         CharacterCount = MiscUtils.CountCharacters(components),
@@ -789,26 +779,12 @@ public static class ContextListExt
                             {
                                 // -priv/-pub and listprivacy affects whether count is shown
                                 // -all and visibility affects what the count is
-                                if (ctx.DirectLookupContextFor(system) == LookupContext.ByOwner)
+                                if (g.ListPrivacy.CanAccess(lookupCtx))
                                 {
-                                    if (g.ListPrivacy == PrivacyLevel.Public || lookupCtx == LookupContext.ByOwner)
-                                    {
-                                        if (ctx.MatchFlag("all", "a"))
-                                        {
-                                            ret += $"({"member".ToQuantity(g.MemberIds.Count)})";
-                                        }
-                                        else
-                                        {
-                                            ret += $"({"member".ToQuantity(g.PublicMemberCount)})";
-                                        }
-                                    }
-                                }
-                                else
-                                {
-                                    if (g.ListPrivacy == PrivacyLevel.Public)
-                                    {
-                                        ret += $"({"member".ToQuantity(g.PublicMemberCount)})";
-                                    }
+                                    if (ctx.MatchFlag("all", "a") && ctx.DirectLookupContextFor(system) == LookupContext.ByOwner)
+                                        ret += $"({"member".ToQuantity(g.MemberCount(LookupContext.ByOwner))})";
+                                    else
+                                        ret += $"({"member".ToQuantity(g.MemberCount(LookupContext.ByNonOwner))})";
                                 }
                             }
 
@@ -829,12 +805,12 @@ public static class ContextListExt
                 if (g.DisplayName != null && g.NamePrivacy.CanAccess(lookupCtx))
                     profile.Append($"\n**Display name**: {g.DisplayName}");
 
-                if (g.ListPrivacy == PrivacyLevel.Public || lookupCtx == LookupContext.ByOwner)
+                if (g.ListPrivacy.CanAccess(lookupCtx))
                 {
                     if (ctx.MatchFlag("all", "a") && ctx.DirectLookupContextFor(system) == LookupContext.ByOwner)
-                        profile.Append($"\n**Member Count:** {g.MemberIds.Count}");
+                        profile.Append($"\n**Member Count:** {g.MemberCount(LookupContext.ByOwner)}");
                     else
-                        profile.Append($"\n**Member Count:** {g.PublicMemberCount}");
+                        profile.Append($"\n**Member Count:** {g.MemberCount(LookupContext.ByNonOwner)}");
                 }
 
                 if ((opts.IncludedFields[ListEntityField.CreationDate] || opts.SortProperty == ListEntityField.CreationDate) &&

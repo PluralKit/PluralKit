@@ -281,7 +281,7 @@ public static class ListOptionsExt
                             return false;
                         break;
                     case ListEntityField.DisplayName:
-                        if (m.DisplayName == null)
+                        if (!m.NamePrivacy.CanAccess(ctx) || m.DisplayName == null)
                             return false;
                         break;
                     case ListEntityField.Birthdate:
@@ -323,7 +323,7 @@ public static class ListOptionsExt
                             return false;
                         break;
                     case ListEntityField.DisplayName:
-                        if (m.DisplayName != null)
+                        if (m.NamePrivacy.CanAccess(ctx) && m.DisplayName != null)
                             return false;
                         break;
                     case ListEntityField.Birthdate:
@@ -356,7 +356,7 @@ public static class ListOptionsExt
         });
 
     public static IEnumerable<ListedGroup> FilterByGroupListOptions(this IEnumerable<ListedGroup> input,
-                                                                ListOptions opts, LookupContext ctx) =>
+                                                                ListOptions opts, LookupContext ctx, LookupContext cctx) =>
     input.Where(g =>
     {
         foreach (var with in opts.WithFilter.Where(x => x.Value))
@@ -368,7 +368,7 @@ public static class ListOptionsExt
                         return false;
                     break;
                 case ListEntityField.DisplayName:
-                    if (g.DisplayName == null)
+                    if (!g.NamePrivacy.CanAccess(ctx) || g.DisplayName == null)
                         return false;
                     break;
                 case ListEntityField.Description:
@@ -380,7 +380,7 @@ public static class ListOptionsExt
                         return false;
                     break;
                 case ListEntityField.Members:
-                    if (!(g.MemberIds is { } members) || members.Count == 0)
+                    if (!g.ListPrivacy.CanAccess(ctx) || g.MemberCount(cctx) == 0)
                         return false;
                     break;
             }
@@ -394,7 +394,7 @@ public static class ListOptionsExt
                         return false;
                     break;
                 case ListEntityField.DisplayName:
-                    if (g.DisplayName != null)
+                    if (g.NamePrivacy.CanAccess(ctx) && g.DisplayName != null)
                         return false;
                     break;
                 case ListEntityField.Description:
@@ -406,7 +406,7 @@ public static class ListOptionsExt
                         return false;
                     break;
                 case ListEntityField.Members:
-                    if (g.MemberIds is { } members && members.Count > 0)
+                    if (g.ListPrivacy.CanAccess(ctx) && g.MemberCount(cctx) != 0)
                         return false;
                     break;
             }
@@ -441,8 +441,8 @@ public static class ListOptionsExt
             ListEntityField.DisplayName => input
                 .OrderByDescending(g => g.DisplayName != null && g.NamePrivacy.CanAccess(ctx))
                 .ThenBy(g => g.NamePrivacy.Get(ctx, g.DisplayName), ReverseMaybe(culture)),
-            ListEntityField.MemberCount => input.OrderByDescending(g => cctx == LookupContext.ByOwner ? (g.MemberIds?.Count ?? 0) : g.PublicMemberCount,
-                    ReverseMaybe(Comparer<int>.Default)),
+            ListEntityField.MemberCount => input.OrderByDescending(g => g.MemberCount(cctx), ReverseMaybe(Comparer<int>.Default)),
+            ListEntityField.MessageCount => input.OrderByDescending(g => g.MessageCount(ctx, cctx), ReverseMaybe(Comparer<int>.Default)),
             _ => throw new PKError($"Unknown or invalid sort property {opts.SortProperty}")
         })
                 // Lastly, add a by-name fallback order for collisions (generally hits w/ lots of null values)

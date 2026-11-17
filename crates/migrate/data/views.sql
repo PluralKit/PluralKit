@@ -60,14 +60,6 @@ from members;
 
 create view group_list as
 select groups.*,
-    -- Find public group member count
-    (
-        select count(*) from group_members
-            inner join members on group_members.member_id = members.id
-        where
-            group_members.group_id = groups.id and members.member_visibility = 1
-    ) as public_member_count,
-
     -- Aggregate list of group ids attached to each member
     (
         select array_agg(members.id)
