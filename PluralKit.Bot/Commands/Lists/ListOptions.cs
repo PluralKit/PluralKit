@@ -62,6 +62,7 @@ public class ListOptions(ListEntity entityType)
             {ListEntityField.Avatar, default},
             {ListEntityField.Description, default},
             {ListEntityField.MemberCount, default},
+            {ListEntityField.MessageCount, default}
         },
         _ => []
     };
@@ -134,6 +135,7 @@ public class ListOptions(ListEntity entityType)
             ListEntityField.Hid,
             ListEntityField.CreationDate,
             ListEntityField.MemberCount,
+            ListEntityField.MessageCount,
             SortOption.Random,
         ],
         _ => []

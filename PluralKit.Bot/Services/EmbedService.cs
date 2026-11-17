@@ -382,7 +382,7 @@ public class EmbedService
         if (member.BirthdayFor(ctx) != null && (opts == null || opts.IncludedFields[ListEntityField.Birthdate]))
             headerText += $"\n**Birthday:** {member.BirthdayString}";
         if (member.MessageCountFor(ctx) is { } count && member.MessageCount > 0 && (opts == null || opts.IncludedFields[ListEntityField.MessageCount]))
-            headerText += $"\n**Message count:** {count}";
+            headerText += $"\n**Message count:** {count:n0}";
         if (flattenComponents && member.CreatedFor(ctx) is { } created && (opts == null || opts.IncludedFields[ListEntityField.CreationDate]))
             headerText += $"\n**Created:** {DiscordUtils.InstantToTimestampString(created)}";
 
@@ -594,7 +594,7 @@ public class EmbedService
         if (member.PronounsFor(ctx) is { } pronouns && !string.IsNullOrWhiteSpace(pronouns))
             eb.Field(new Embed.Field("Pronouns", pronouns.Truncate(1024), true));
         if (member.MessageCountFor(ctx) is { } count && member.MessageCount > 0)
-            eb.Field(new Embed.Field("Message Count", count, true));
+            eb.Field(new Embed.Field("Message Count", count.ToString("n0"), true));
         if (member.Aliases.Count > 0 && member.AliasPrivacy.CanAccess(ctx))
         {
             var aliases = string.Join("\n", member.Aliases);

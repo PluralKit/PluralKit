@@ -446,7 +446,7 @@ public static class ContextListExt
                     ret += $"**{m.NameFor(ctx)}** ";
 
                     if (opts.IncludedFields[ListEntityField.MessageCount] && m.MessageCountFor(lookupCtx) is { } count)
-                        ret += $"({count} messages)";
+                        ret += $"({"message".ToQuantity(count, "n0")})";
                     else if (opts.IncludedFields[ListEntityField.LastSwitch] && m.MetadataPrivacy.TryGet(lookupCtx, m.LastSwitchTime, out var lastSw))
                         ret += $"(last switched in: <t:{lastSw.Value.ToUnixTimeSeconds()}>)";
                     else if (opts.IncludedFields[ListEntityField.LastMessage] && m.MetadataPrivacy.TryGet(lookupCtx, m.LastMessageTimestamp, out var lastMsg))
@@ -528,7 +528,7 @@ public static class ContextListExt
                 var ret = $"[`{m.DisplayHid(ctx.Config, isList: true, shouldPad: shouldPad)}`] **{m.NameFor(ctx)}** ";
 
                 if (opts.IncludedFields[ListEntityField.MessageCount] && m.MessageCountFor(lookupCtx) is { } count)
-                    ret += $"({count} messages)";
+                    ret += $"({"message".ToQuantity(count, "n0")})";
                 else if (opts.IncludedFields[ListEntityField.LastSwitch] && m.MetadataPrivacy.TryGet(lookupCtx, m.LastSwitchTime, out var lastSw))
                     ret += $"(last switched in: <t:{lastSw.Value.ToUnixTimeSeconds()}>)";
                 else if (opts.IncludedFields[ListEntityField.LastMessage] && m.MetadataPrivacy.TryGet(lookupCtx, m.LastMessageTimestamp, out var lastMsg))
@@ -575,7 +575,7 @@ public static class ContextListExt
 
                 if ((opts.IncludedFields[ListEntityField.MessageCount] || opts.SortProperty == ListEntityField.MessageCount) &&
                     m.MessageCountFor(lookupCtx) is { } count && m.MessageCount > 0)
-                    profile.Append($"\n**Message count:** {count}");
+                    profile.Append($"\n**Message count:** {count:n0}");
 
                 if ((opts.IncludedFields[ListEntityField.LastMessage] || opts.SortProperty == ListEntityField.LastMessage) && m.MetadataPrivacy.TryGet(lookupCtx, m.LastMessageTimestamp, out var lastMsg))
                     profile.Append($"\n**Last message:** {m.LastMessageTimestamp.Value.FormatZoned(ctx.Zone)}");
@@ -684,8 +684,10 @@ public static class ContextListExt
                                 ret += $"({"member".ToQuantity(g.PublicMemberCount)})";
                     }
                     else
+                    {
                         if (g.ListPrivacy == PrivacyLevel.Public)
                             ret += $"({"member".ToQuantity(g.PublicMemberCount)})";
+                    }
                 return new ContextUtils.PageItem() { CharacterCount = ret.Length, Text = ret };
             });
         }

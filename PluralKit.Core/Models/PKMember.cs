@@ -116,8 +116,12 @@ public static class PKMemberExt
     public static Instant? CreatedFor(this PKMember member, LookupContext ctx) =>
         member.MetadataPrivacy.Get(ctx, (Instant?)member.Created);
 
-    public static string? MessageCountFor(this PKMember member, LookupContext ctx) =>
-        member.MetadataPrivacy.Get<int?>(ctx, member.MessageCount, fallback: null)?.ToString("n0");
+    /// <summary>
+    /// If MessageCount is accessible, returns it as an int.
+    /// Format the integer as a string using the format type "n0".
+    /// </summary>
+    public static int? MessageCountFor(this PKMember member, LookupContext ctx) =>
+        member.MetadataPrivacy.Get<int?>(ctx, member.MessageCount, fallback: null);
 
     public static Instant? LastMessageTimestampFor(this PKMember member, LookupContext ctx) =>
         member.MetadataPrivacy.Get(ctx, member.LastMessageTimestamp);
