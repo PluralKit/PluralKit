@@ -605,10 +605,19 @@ public static class ContextListExt
     public static async Task RenderCV2GroupList(this Context ctx, LookupContext lookupCtx, SystemId system,
                                 string title, string color, ListOptions opts, EmbedService embeds)
     {
+        var countctx = LookupContext.ByNonOwner;
+        if (ctx.MatchFlag("a", "all"))
+        {
+            if (system == ctx.System?.Id)
+                countctx = LookupContext.ByOwner;
+            else
+                throw Errors.LookupNotAllowed;
+        }
+
         // We take an IDatabase instead of a IPKConnection so we don't keep the handle open for the entire runtime
         // We wanna release it as soon as the member list is actually *fetched*, instead of potentially minutes later (paginate timeout)
         var groups = (await ctx.Database.Execute(conn => conn.QueryGroupList(system, opts.ToQueryOptions())))
-            .SortByGroupListOptions(opts, lookupCtx)
+            .SortByGroupListOptions(opts, lookupCtx, countctx)
             .ToList();
 
         // Make the defaults match the behavior of the non-cv2 list
@@ -632,7 +641,7 @@ public static class ContextListExt
             if (optsOverride != null)
             {
                 ParseListOptionUpdates(opts, optsOverride);
-                groups = groups.SortByGroupListOptions(opts, lookupCtx).ToList();
+                groups = groups.SortByGroupListOptions(opts, lookupCtx, countctx).ToList();
             }
 
             var filteredGroups = groups.FilterByGroupListOptions(opts, lookupCtx);
@@ -676,32 +685,22 @@ public static class ContextListExt
                     }
                     else
                         if (g.ListPrivacy == PrivacyLevel.Public)
-                        ret += $"({"member".ToQuantity(g.PublicMemberCount)})";
+                            ret += $"({"member".ToQuantity(g.PublicMemberCount)})";
                 return new ContextUtils.PageItem() { CharacterCount = ret.Length, Text = ret };
             });
         }
 
-        IEnumerable<ContextUtils.PageItem> LongRenderer(IEnumerable<ListedGroup> page)
-        {
-            var countctx = LookupContext.ByNonOwner;
-            if (ctx.MatchFlag("a", "all"))
-            {
-                if (system == ctx.System?.Id)
-                    countctx = LookupContext.ByOwner;
-                else
-                    throw Errors.LookupNotAllowed;
-            }
-            return page.Select(g =>
-            {
-                var memberCount = countctx == LookupContext.ByOwner ? g.MemberIds.Count : g.PublicMemberCount;
-                var components = embeds.CreateGroupMessageComponents(ctx, null, g, memberCount, lookupCtx, null, opts, true);
-                return new ContextUtils.PageItem()
+        IEnumerable<ContextUtils.PageItem> LongRenderer(IEnumerable<ListedGroup> page) =>
+            page.Select(g =>
                 {
-                    CharacterCount = MiscUtils.CountCharacters(components),
-                    Components = components
-                };
-            });
-        }
+                    var memberCount = countctx == LookupContext.ByOwner ? g.MemberIds.Count : g.PublicMemberCount;
+                    var components = embeds.CreateGroupMessageComponents(ctx, null, g, memberCount, lookupCtx, null, opts, true);
+                    return new ContextUtils.PageItem()
+                    {
+                        CharacterCount = MiscUtils.CountCharacters(components),
+                        Components = components
+                    };
+                });
 
         MessageComponent[] groupShortOptionsModal() => shortOptionsModal(opts, "group");
         MessageComponent[] groupLongOptionsModal() => longOptionsModal(opts, "group");
@@ -711,10 +710,19 @@ public static class ContextListExt
     public static async Task RenderGroupList(this Context ctx, LookupContext lookupCtx,
                                 SystemId system, string embedTitle, string color, ListOptions opts)
     {
+        var countctx = LookupContext.ByNonOwner;
+        if (ctx.MatchFlag("a", "all"))
+        {
+            if (system == ctx.System?.Id)
+                countctx = LookupContext.ByOwner;
+            else
+                throw Errors.LookupNotAllowed;
+        }
+
         // We take an IDatabase instead of a IPKConnection so we don't keep the handle open for the entire runtime
         // We wanna release it as soon as the member list is actually *fetched*, instead of potentially minutes later (paginate timeout)
         var groups = (await ctx.Database.Execute(conn => conn.QueryGroupList(system, opts.ToQueryOptions())))
-            .SortByGroupListOptions(opts, lookupCtx)
+            .SortByGroupListOptions(opts, lookupCtx, countctx)
             .ToList();
 
         var itemsPerPage = opts.Type == ListType.Short ? 25 : 5;

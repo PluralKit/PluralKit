@@ -20,6 +20,9 @@ public class ListOptions(ListEntity entityType)
             if (_sortProperty != null)
                 throw new PKError("Cannot sort in multiple ways at the same time. Please choose only one sorting method.");
 
+            if (!SortOptions.Any(x => x == value))
+                throw new PKError($"Sort option \"{value.ToReadableString()}\" is not valid for {entityType.ToString().ToLowerInvariant()} lists.");
+
             _sortProperty = value;
         }
     }
@@ -164,7 +167,7 @@ public class ListOptions(ListEntity entityType)
         if (SortProperty == SortOption.Random) str.Append("randomly");
         else
         {
-            str.Append($"by {SortProperty.Field?.ReadableString()}");
+            str.Append($"by {SortProperty.Field?.ToReadableString()}");
         }
 
         if (Search != null)
@@ -184,19 +187,19 @@ public class ListOptions(ListEntity entityType)
 
         if (WithOutFilter.Count(x => x.Value) > 1)
         {
-            str.Append($" Excluding members with {string.Join(", ", WithOutFilter.Where(x => x.Value).SkipLast(1).Select(x => x.Key.ReadableString(true)))}");
-            str.Append($"{(WithOutFilter.Count(x => x.Value) == 2 ? "" : ",")} or {WithOutFilter.Last(x => x.Value).Key.ReadableString(true)}.");
+            str.Append($" Excluding members with {string.Join(", ", WithOutFilter.Where(x => x.Value).SkipLast(1).Select(x => x.Key.ToReadableString(true)))}");
+            str.Append($"{(WithOutFilter.Count(x => x.Value) == 2 ? "" : ",")} or {WithOutFilter.Last(x => x.Value).Key.ToReadableString(true)}.");
         }
         else if (WithOutFilter.Any(x => x.Value))
-            str.Append($" Excluding members with {WithOutFilter.First(x => x.Value).Key.ReadableString(true)}.");
+            str.Append($" Excluding members with {WithOutFilter.First(x => x.Value).Key.ToReadableString(true)}.");
 
         if (WithFilter.Count(x => x.Value) > 1)
         {
-            str.Append($" Excluding members without {string.Join(", ", WithFilter.Where(x => x.Value).SkipLast(1).Select(x => x.Key.ReadableString(true)))}");
-            str.Append($"{(WithFilter.Count(x => x.Value) == 2 ? "" : ",")} or {WithFilter.Last(x => x.Value).Key.ReadableString(true)}.");
+            str.Append($" Excluding members without {string.Join(", ", WithFilter.Where(x => x.Value).SkipLast(1).Select(x => x.Key.ToReadableString(true)))}");
+            str.Append($"{(WithFilter.Count(x => x.Value) == 2 ? "" : ",")} or {WithFilter.Last(x => x.Value).Key.ToReadableString(true)}.");
         }
         else if (WithFilter.Any(x => x.Value))
-            str.Append($" Excluding members without {WithFilter.First(x => x.Value).Key.ReadableString(true)}.");
+            str.Append($" Excluding members without {WithFilter.First(x => x.Value).Key.ToReadableString(true)}.");
 
         return str.ToString();
     }
@@ -253,7 +256,7 @@ public static class ListOptionsExt
             ListEntityField.LastSwitch => input
                 .OrderByDescending(m => m.LastSwitchTime.HasValue && m.MetadataPrivacy.CanAccess(ctx))
                 .ThenByDescending(m => m.MetadataPrivacy.Get(ctx, m.LastSwitchTime), ReverseMaybe(Comparer<Instant?>.Default)),
-            _ => throw new ArgumentOutOfRangeException($"Unknown sort property {opts.SortProperty}")
+            _ => throw new PKError($"Unknown or invalid sort property {opts.SortProperty}")
         })
             // Lastly, add a by-name fallback order for collisions (generally hits w/ lots of null values)
             .ThenBy(m => m.NameFor(ctx), culture);
@@ -411,7 +414,7 @@ public static class ListOptionsExt
 
 
     public static IEnumerable<ListedGroup> SortByGroupListOptions(this IEnumerable<ListedGroup> input,
-                                                                    ListOptions opts, LookupContext ctx)
+                                                                    ListOptions opts, LookupContext ctx, LookupContext cctx)
     {
         IComparer<T> ReverseMaybe<T>(IComparer<T> c) =>
             opts.Reverse ? Comparer<T>.Create((a, b) => c.Compare(b, a)) : c;
@@ -436,7 +439,9 @@ public static class ListOptionsExt
             ListEntityField.DisplayName => input
                 .OrderByDescending(g => g.DisplayName != null && g.NamePrivacy.CanAccess(ctx))
                 .ThenBy(g => g.NamePrivacy.Get(ctx, g.DisplayName), ReverseMaybe(culture)),
-            _ => throw new ArgumentOutOfRangeException($"Unknown or Invalid sort property {opts.SortProperty}")
+            ListEntityField.MemberCount => input.OrderByDescending(g => cctx == LookupContext.ByOwner ? (g.MemberIds?.Count ?? 0) : g.PublicMemberCount,
+                    ReverseMaybe(Comparer<int>.Default)),
+            _ => throw new PKError($"Unknown or invalid sort property {opts.SortProperty}")
         })
                 // Lastly, add a by-name fallback order for collisions (generally hits w/ lots of null values)
                 .ThenBy(g => g.NameFor(ctx), culture);
@@ -449,8 +454,8 @@ public static class ListOptionsExt
 
         foreach (var with in opts.WithFilter)
             if (with.Value && opts.WithOutFilter[with.Key])
-                throw new PKError($"Cannot include both \"only members with {with.Key.ReadableString(true)}\" and \"only members without {with.Key.ReadableString(true)}\". " +
-                $"To show members both with and without {with.Key.ReadableString(true)}, select neither option.");
+                throw new PKError($"Cannot include both \"only members with {with.Key.ToReadableString(true)}\" and \"only members without {with.Key.ToReadableString(true)}\". " +
+                $"To show members both with and without {with.Key.ToReadableString(true)}, select neither option.");
 
         // the check for multiple *sorting* property flags is done in SortProperty setter
     }

@@ -45,7 +45,7 @@ public static class ListEntityFieldExtensions
         _ => throw new ArgumentOutOfRangeException(nameof(field))
     };
 
-    public static string ReadableString(this ListEntityField field, bool plural = false) => field switch
+    public static string ToReadableString(this ListEntityField field, bool plural = false) => field switch
     {
         ListEntityField.Name => plural ? "names" : "name",
         ListEntityField.DisplayName => plural ? "display names" : "display name",
@@ -88,4 +88,5 @@ public readonly struct SortOption(ListEntityField entityField): IEquatable<SortO
     // If more SortOptions that are not EntityFields get added also change these
     public string ToLabel() => Field == null ? "Random" : Field?.ToLabel();
     public override string ToString() => Field == null ? "Random" : Field.ToString();
+    public string ToReadableString() => Field == null ? "random" : Field?.ToReadableString();
 }
