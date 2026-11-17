@@ -255,6 +255,15 @@ public class ProxyService
         if (trigger.Flags.HasFlag(Message.MessageFlags.VoiceMessage))
             flags |= Message.MessageFlags.VoiceMessage;
 
+        var avatarUrl = AvatarUtils.TryRewriteCdnUrl(match.Member.ProxyAvatar(ctx));
+        // encode context hints for bridges into avatar URL (reduces message API usage)
+        AvatarUtils.TryRewriteCdnUrl(match.Member.ProxyAvatar(ctx));
+        avatarUrl += "&user=" + trigger.Author.Id;
+        avatarUrl += "&system=" + ctx.SystemId;
+        avatarUrl += "&member=" + match.Member.Id;
+        if (match.Member.Color != null)
+            avatarUrl += "&color=" + match.Member.Color;
+
         try
         {
             var proxyMessage = await _webhookExecutor.ExecuteWebhook(new ProxyRequest
@@ -264,7 +273,7 @@ public class ProxyService
                 ThreadId = threadId,
                 MessageId = trigger.Id,
                 Name = await FixSameName(trigger.GuildId!.Value, messageChannel.Id, ctx, match.Member),
-                AvatarUrl = AvatarUtils.TryRewriteCdnUrl(match.Member.ProxyAvatar(ctx)),
+                AvatarUrl = avatarUrl,
                 Content = content,
                 Attachments = trigger.Attachments,
                 FileSizeLimit = guild.FileSizeLimit(),
