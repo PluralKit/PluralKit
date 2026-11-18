@@ -73,6 +73,7 @@ public readonly struct SortOption(ListEntityField entityField): IEquatable<SortO
 {
     // Add SortOptions that are not also EntityFields here
     public static readonly SortOption Random = new((ListEntityField)(-1));
+    public static readonly SortOption FullBirthdate = new((ListEntityField)(-2));
 
     private readonly ListEntityField entityField = entityField;
     public ListEntityField? Field => Enum.IsDefined(entityField) ? entityField : null;
@@ -85,8 +86,38 @@ public readonly struct SortOption(ListEntityField entityField): IEquatable<SortO
 
     public override int GetHashCode() => entityField.GetHashCode();
 
+    public static bool TryParse(string value, out SortOption result)
+    {
+        if (value == Random.ToString())
+        {
+            result = Random;
+            return true;
+        }
+        if (value == FullBirthdate.ToString())
+        {
+            result = FullBirthdate;
+            return true;
+        }
+        if (Enum.TryParse<ListEntityField>(value, out var sortResult))
+        {
+            result = sortResult;
+            return true;
+        }
+        result = new();
+        return false;
+    }
+
     // If more SortOptions that are not EntityFields get added also change these
-    public string ToLabel() => Field == null ? "Random" : Field?.ToLabel();
-    public override string ToString() => Field == null ? "Random" : Field.ToString();
-    public string ToReadableString() => Field == null ? "random" : Field?.ToReadableString();
+    public string ToLabel() => Field?.ToLabel() ?? (
+        Equals(Random) ? "Random" :
+        Equals(FullBirthdate) ? "Birthdate (including year)" :
+        throw new ArgumentException());
+    public override string ToString() => Field?.ToString() ?? (
+        Equals(Random) ? nameof(Random) :
+        Equals(FullBirthdate) ? nameof(FullBirthdate) :
+        throw new ArgumentException());
+    public string ToReadableString(bool plural = false) => Field?.ToReadableString(plural) ?? (
+        Equals(Random) ? "random" :
+        Equals(FullBirthdate) ? (plural ? "birthdates (including year)" : "birthdate (including year)") :
+        throw new ArgumentException());
 }

@@ -17,14 +17,6 @@ select members.*,
            where switch_members.member = members.id
        ) as last_switch_time,
 
-       -- Extract month/day from birthday and "force" the year identical (just using 4) -> month/day only sorting! 
-        case when members.birthday is not null then
-            make_date(
-                4,
-                extract(month from members.birthday)::integer,
-                extract(day from members.birthday)::integer
-            ) end as birthday_md,
-
         -- Extract member description as seen by "the public"
         case
            -- Privacy '1' = public; just return description as normal

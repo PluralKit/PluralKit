@@ -105,15 +105,16 @@ public static class ContextListExt
         opts.ResetDynamicOptions();
 
         var sortComponent = optsOverride.Components.First((x) => x.Component.CustomId == "sort_select").Component;
-        if (Enum.TryParse<ListEntityField>(sortComponent.Values[0], out var sortResult))
+        if (SortOption.TryParse(sortComponent.Values[0], out var sortResult))
             opts.SortProperty = sortResult;
-        else if (sortComponent.Values[0] == SortOption.Random.ToString())
-            opts.SortProperty = SortOption.Random;
 
         var infoComponent = optsOverride.Components.First((x) => x.Component.CustomId == "info_select").Component;
         if (infoComponent?.Values?.Length > 0 && infoComponent.Values[0] == "default")
         {
-            infoComponent.Values[0] = sortComponent.Values[0];
+            if (opts.SortProperty == SortOption.FullBirthdate)
+                infoComponent.Values[0] = ListEntityField.Birthdate.ToString();
+            else
+                infoComponent.Values[0] = sortComponent.Values[0];
             opts.SortIncludeMatch = true;
         }
         foreach (var include in infoComponent.Values)
@@ -337,7 +338,7 @@ public static class ContextListExt
                             Value = field.Key.ToString(),
                             Default = !opts.SortIncludeMatch && field.Value
                         }
-                        )],
+                    )],
             }
         },
         new()
@@ -377,12 +378,12 @@ public static class ContextListExt
                             Value = "reverse",
                             Default = opts.Reverse
                         },
-                    new()
-                    {
-                        Label = "Show IDs",
-                        Value = "id",
-                        Default = opts.ShowIds
-                    }
+                        new()
+                        {
+                            Label = "Show IDs",
+                            Value = "id",
+                            Default = opts.ShowIds
+                        }
                     ]
             }
         }

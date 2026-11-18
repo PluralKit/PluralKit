@@ -127,6 +127,7 @@ public class ListOptions(ListEntity entityType)
             ListEntityField.LastSwitch,
             ListEntityField.LastMessage,
             ListEntityField.Birthdate,
+            SortOption.FullBirthdate,
             SortOption.Random,
         ],
         ListEntity.Group => [
@@ -169,7 +170,7 @@ public class ListOptions(ListEntity entityType)
         if (SortProperty == SortOption.Random) str.Append("randomly");
         else
         {
-            str.Append($"by {SortProperty.Field?.ToReadableString()}");
+            str.Append($"by {SortProperty.ToReadableString()}");
         }
 
         if (Search != null)
@@ -232,6 +233,10 @@ public static class ListOptionsExt
             var randGen = new global::System.Random();
             return input.OrderBy(m => randGen.Next());
         }
+        else if (opts.SortProperty == SortOption.FullBirthdate)
+            // Sort: Birthdays with year -> Birthdays without year -> No Birthdays
+            return input.OrderBy(m => m.BirthdayFor(ctx) is { } bday ? (bday.Year == 0 || bday.Year == 4 ? 1 : 0) : 2)
+                        .ThenBy(m => m.BirthdayFor(ctx), ReverseMaybe(Comparer<LocalDate?>.Default));
 
         var culture = StringComparer.InvariantCultureIgnoreCase;
         return (opts.SortProperty.Field switch
