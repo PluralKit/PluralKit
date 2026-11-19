@@ -84,11 +84,9 @@ public class GroupMember
             title.Append($" matching **{opts.Search.Truncate(100)}**");
 
         if (ctx.MatchFlag("show-embed", "se"))
-            await ctx.RenderGroupList(ctx.LookupContextFor(target.System), target.System, title.ToString(),
-                target.Color, opts);
+            await ctx.RenderGroupList(target.System, title.ToString(), target.Color, opts);
         else
-            await ctx.RenderCV2GroupList(ctx.LookupContextFor(target.System), target.System, title.ToString(),
-                target.Color, opts, _embeds);
+            await ctx.RenderCV2GroupList(target.System, title.ToString(), target.Color, opts, _embeds);
     }
 
     public async Task AddRemoveMembers(Context ctx, PKGroup target, Groups.AddRemoveOperation op)
@@ -98,8 +96,7 @@ public class GroupMember
         List<MemberId> members;
         if (ctx.MatchFlag("all", "a"))
         {
-            members = (await ctx.Database.Execute(conn => conn.QueryMemberList(target.System,
-                    new DatabaseViewsExt.ListQueryOptions { })))
+            members = (await ctx.Database.Execute(conn => conn.QueryMemberList(target.System, null)))
                 .Select(m => m.Id)
                 .Distinct()
                 .ToList();
@@ -112,8 +109,7 @@ public class GroupMember
             .ToList();
         }
 
-        var existingMembersInGroup = (await ctx.Database.Execute(conn => conn.QueryMemberList(target.System,
-                new DatabaseViewsExt.ListQueryOptions { GroupFilter = target.Id })))
+        var existingMembersInGroup = (await ctx.Database.Execute(conn => conn.QueryMemberList(target.System, target.Id)))
             .Select(m => m.Id.Value)
             .Distinct()
             .ToHashSet();
@@ -178,11 +174,9 @@ public class GroupMember
             title.Append($" matching **{opts.Search.Truncate(100)}**");
 
         if (ctx.MatchFlag("show-embed", "se"))
-            await ctx.RenderMemberList(ctx.LookupContextFor(target.System), target.System, title.ToString(),
-                target.Color, opts);
+            await ctx.RenderMemberList(target.System, title.ToString(), target.Color, opts);
         else
-            await ctx.RenderCV2MemberList(ctx.LookupContextFor(target.System), target.System, title.ToString(),
-                target.Color, opts, _embeds);
+            await ctx.RenderCV2MemberList(target.System, title.ToString(), target.Color, opts, _embeds);
     }
 
     private async Task<PKSystem> GetGroupSystem(Context ctx, PKGroup target)

@@ -17,29 +17,6 @@ select members.*,
            where switch_members.member = members.id
        ) as last_switch_time,
 
-        -- Extract member description as seen by "the public"
-        case
-           -- Privacy '1' = public; just return description as normal
-           when members.description_privacy = 1 then members.description
-           -- Any other privacy (rn just '2'), return null description (missing case = null in SQL)
-        end as public_description,
-        
-        -- Extract member name as seen by "the public"
-        case
-            -- Privacy '1' = public; just return name as normal
-            when members.name_privacy = 1 then members.name
-            -- Any other privacy (rn just '2'), return display name
-            else coalesce(members.display_name, members.name)
-        end as public_name,
-
-        -- Extract member aliases as seen by "the public"
-        case
-           -- Privacy '1' = public; just return aliases as normal
-           when members.alias_privacy = 1 then members.aliases
-            -- Any other privacy (rn just '2'), return empty array
-           else ARRAY[]::text[]
-        end as public_aliases,
-
         -- Aggregate list of group ids attached to each member
        (
            select array_agg(groups.id)
@@ -47,7 +24,6 @@ select members.*,
                 left join groups on groups.id = group_members.group_id
             where group_members.member_id = members.id
        ) as group_ids
-
 from members;
 
 create view group_list as
@@ -58,20 +34,5 @@ select groups.*,
         from group_members
             left join members on members.id = group_members.member_id
         where group_members.group_id = groups.id
-    ) as member_ids,
-
-    -- Extract group description as seen by "the public"
-    case
-        -- Privacy '1' = public; just return description as normal
-        when groups.description_privacy = 1 then groups.description
-        -- Any other privacy (rn just '2'), return null description (missing case = null in SQL)
-    end as public_description,
-    
-    -- Extract member name as seen by "the public"
-    case
-        -- Privacy '1' = public; just return name as normal
-        when groups.name_privacy = 1 then groups.name
-        -- Any other privacy (rn just '2'), return display name
-        else coalesce(groups.display_name, groups.name)
-    end as public_name
+    ) as member_ids
 from groups;

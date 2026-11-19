@@ -14,7 +14,7 @@ public class ListInteractive(Context ctx): BaseInteractive(ctx)
     public Func<int, (MessageComponent, MessageComponent, List<MessageComponent>)> ContentBuilder { get; init; }
     public Func<int, int, ApplicationCommandInteractionData?, int> Renderer { get; init; }
     public string? Color { get; set; }
-    public Func<MessageComponent[]>? OptionsModal { get; init; }
+    public (string Label, Func<MessageComponent[]> Modal)[]? OptionsModal { get; init; }
 
     private int _additionalCharacters;
     // TODO: Figure out how to assign this dynamically
@@ -33,8 +33,9 @@ public class ListInteractive(Context ctx): BaseInteractive(ctx)
         pendingButtons.Add(("last", "\u23E9")); // >>
         pendingButtons.Add(("input_page", "\uD83D\uDD22")); // 1234
 
-        if (OptionsModal != null)
-            AddButton(ctx => OnButtonClick(ctx, "options"), "List Options", ButtonStyle.Secondary);
+        if (OptionsModal != null && OptionsModal.Length > 0)
+            foreach (var (Label, Modal) in OptionsModal)
+                AddButton(ctx => OnButtonClick(ctx, $"options-{Label}"), Label, ButtonStyle.Secondary);
         // AddButton(ctx => OnButtonClick(ctx, "finish"), "\u2714  Done with List", ButtonStyle.Success);
         // AddButton(ctx => OnButtonClick(ctx, "delete"), "\u2716  Delete List Message", ButtonStyle.Danger);
 
@@ -86,8 +87,8 @@ public class ListInteractive(Context ctx): BaseInteractive(ctx)
             case "input_page":
                 await InputPage(ctx);
                 break;
-            case "options":
-                await CreateOptionsModal(ctx);
+            case { } s when s.StartsWith("options"):
+                await CreateOptionsModal(ctx, OptionsModal.First(x => x.Label == string.Concat(buttonAction.Skip("options-".Length))).Modal);
                 break;
         }
     }
@@ -110,7 +111,7 @@ public class ListInteractive(Context ctx): BaseInteractive(ctx)
         return AddOuterButtons(components, Color).ToArray();
     }
 
-    private async Task CreateOptionsModal(InteractionContext ctx)
+    private async Task CreateOptionsModal(InteractionContext ctx, Func<MessageComponent[]> modal)
     {
         async Task OptionsModalHandler(InteractionContext ctx)
         {
@@ -123,7 +124,7 @@ public class ListInteractive(Context ctx): BaseInteractive(ctx)
         var customId = dispatch.Register(_ctx.ShardId, OptionsModalHandler, Timeout);
 
         await ctx.Respond(InteractionResponse.ResponseType.Modal,
-        new InteractionApplicationCommandCallbackData { Title = "List Options", CustomId = customId, Components = OptionsModal() });
+        new InteractionApplicationCommandCallbackData { Title = "List Options", CustomId = customId, Components = modal() });
     }
 
     private async Task InputPage(InteractionContext ctx)

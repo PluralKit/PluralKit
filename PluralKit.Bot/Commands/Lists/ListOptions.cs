@@ -9,7 +9,7 @@ using PluralKit.Core;
 #nullable enable
 namespace PluralKit.Bot;
 
-public class ListOptions(ListEntity entityType)
+public class ListOptions(ListEntity entityType, bool isOwner)
 {
     private SortOption? _sortProperty { get; set; }
     public SortOption SortProperty
@@ -31,6 +31,7 @@ public class ListOptions(ListEntity entityType)
 
     public PrivacyLevel? PrivacyFilter { get; set; } = PrivacyLevel.Public;
     public LookupContext Context { get; set; } = LookupContext.ByNonOwner;
+    public bool IsOwner { get; } = isOwner;
     public GroupId? GroupFilter { get; set; }
     public MemberId? MemberFilter { get; set; }
     public string? Search { get; set; }
@@ -149,18 +150,26 @@ public class ListOptions(ListEntity entityType)
 
     public int IncludedCount => IncludedFields.Sum(x => Convert.ToInt32(x.Value));
 
-    // Reset the options that can change while the list is pulled up without resetting the ones that don't
-    public void ResetDynamicOptions()
+    // Reset the options that can change while the list is pulled up
+    public void ResetSort()
+    {
+        _sortProperty = null;
+    }
+    public void ResetIncludes()
     {
         foreach (var key in IncludedFields.Keys)
             IncludedFields[key] = false;
+        SortIncludeMatch = false;
+    }
+    public void ResetWithFilter()
+    {
         foreach (var key in WithFilter.Keys)
             WithFilter[key] = false;
+    }
+    public void ResetWithOutFilter()
+    {
         foreach (var key in WithOutFilter.Keys)
             WithOutFilter[key] = false;
-
-        _sortProperty = null;
-        SortIncludeMatch = false;
     }
 
     public string CreateFilterString()
@@ -206,99 +215,45 @@ public class ListOptions(ListEntity entityType)
 
         return str.ToString();
     }
-
-    public DatabaseViewsExt.ListQueryOptions ToQueryOptions() =>
-        new()
-        {
-            PrivacyFilter = PrivacyFilter,
-            GroupFilter = GroupFilter,
-            MemberFilter = MemberFilter,
-            Search = Search,
-            SearchDescription = SearchDescription,
-            Context = Context
-        };
 }
 
 public static class ListOptionsExt
 {
-    public static IEnumerable<ListedMember> SortByMemberListOptions(this IEnumerable<ListedMember> input,
-                                                                    ListOptions opts, LookupContext ctx)
+    public static IEnumerable<ListedMember> SortAndFilterByListOptions(this IEnumerable<ListedMember> input,
+                                                                    ListOptions opts)
     {
-        IComparer<T> ReverseMaybe<T>(IComparer<T> c) =>
-            opts.Reverse ? Comparer<T>.Create((a, b) => c.Compare(b, a)) : c;
-
-        var randGen = new global::System.Random();
-
-        var culture = StringComparer.InvariantCultureIgnoreCase;
-        return (opts.SortProperty.value switch
-        {
-            // As for the OrderByDescending HasValue calls: https://www.jerriepelser.com/blog/orderby-with-null-values/
-            // We want nulls last no matter what, even if orders are reversed
-            (ListEntityField)ExtraSortOption.Random => input.OrderBy(m => randGen.Next()),
-            (ListEntityField)ExtraSortOption.FullBirthdate => input
-                // Sort: Birthdays with year -> Birthdays without year -> No Birthdays
-                .OrderBy(m => m.BirthdayFor(ctx) is { } bday ? (bday.Year == 0 || bday.Year == 4 ? 1 : 0) : 2)
-                .ThenBy(m => m.BirthdayFor(ctx), ReverseMaybe(Comparer<LocalDate?>.Default)),
-            ListEntityField.Hid => input.OrderBy(m => m.Hid, ReverseMaybe(culture)),
-            ListEntityField.Name => input.OrderBy(m => m.NameFor(ctx), ReverseMaybe(culture)),
-            ListEntityField.CreationDate => input
-                .OrderByDescending(m => m.MetadataPrivacy.CanAccess(ctx))
-                .ThenBy(m => m.MetadataPrivacy.Get(ctx, m.Created, default), ReverseMaybe(Comparer<Instant>.Default)),
-            ListEntityField.MessageCount => input
-                .OrderByDescending(m => m.MetadataPrivacy.CanAccess(ctx))
-                .ThenByDescending(m => m.MetadataPrivacy.Get(ctx, m.MessageCount, 0), ReverseMaybe(Comparer<int>.Default)),
-            ListEntityField.DisplayName => input
-                .OrderByDescending(m => m.DisplayName != null && m.NamePrivacy.CanAccess(ctx))
-                .ThenBy(m => m.NamePrivacy.Get(ctx, m.DisplayName), ReverseMaybe(culture)),
-            ListEntityField.Birthdate => input
-                .OrderByDescending(m => m.AnnualBirthday.HasValue && m.BirthdayPrivacy.CanAccess(ctx))
-                .ThenBy(m => m.BirthdayPrivacy.Get(ctx, m.AnnualBirthday), ReverseMaybe(Comparer<AnnualDate?>.Default)),
-            ListEntityField.LastMessage => input
-                .OrderByDescending(m => m.LastMessageTimestamp.HasValue)
-                .ThenByDescending(m => m.LastMessageTimestamp, ReverseMaybe(Comparer<Instant?>.Default)),
-            ListEntityField.LastSwitch => input
-                .OrderByDescending(m => m.LastSwitchTime.HasValue && m.MetadataPrivacy.CanAccess(ctx))
-                .ThenByDescending(m => m.MetadataPrivacy.Get(ctx, m.LastSwitchTime), ReverseMaybe(Comparer<Instant?>.Default)),
-            _ => throw new PKError($"Unknown or invalid sort property {opts.SortProperty}")
-        })
-            // Lastly, add a by-name fallback order for collisions (generally hits w/ lots of null values)
-            .ThenBy(m => m.NameFor(ctx), culture);
-    }
-
-    public static IEnumerable<ListedMember> FilterByMemberListOptions(this IEnumerable<ListedMember> input,
-                                                                    ListOptions opts, LookupContext ctx) =>
-        input.Where(m =>
+        input = input.Where(m =>
         {
             foreach (var with in opts.WithFilter.Where(x => x.Value))
             {
                 switch (with.Key)
                 {
                     case ListEntityField.Avatar:
-                        if (!(m.AvatarFor(ctx) is { }))
+                        if (!(m.AvatarFor(opts.Context) is { }))
                             return false;
                         break;
                     case ListEntityField.Pronouns:
-                        if (!(m.PronounsFor(ctx) is { }))
+                        if (!(m.PronounsFor(opts.Context) is { }))
                             return false;
                         break;
                     case ListEntityField.DisplayName:
-                        if (!m.NamePrivacy.CanAccess(ctx) || m.DisplayName == null)
+                        if (!m.NamePrivacy.CanAccess(opts.Context) || m.DisplayName == null)
                             return false;
                         break;
                     case ListEntityField.Birthdate:
-                        if (!(m.BirthdayFor(ctx) is { }))
+                        if (!(m.BirthdayFor(opts.Context) is { }))
                             return false;
                         break;
                     case ListEntityField.ProxyTags:
-                        if (!(m.ProxyTagsFor(ctx) is { } tags) || tags.Count == 0)
+                        if (!(m.ProxyTagsFor(opts.Context) is { } tags) || tags.Count == 0)
                             return false;
                         break;
                     case ListEntityField.Aliases:
-                        if (!(m.AliasesFor(ctx) is { } aliases) || aliases.Count == 0)
+                        if (!(m.AliasesFor(opts.Context) is { } aliases) || aliases.Count == 0)
                             return false;
                         break;
                     case ListEntityField.Description:
-                        if (!(m.DescriptionFor(ctx) is { }))
+                        if (!(m.DescriptionFor(opts.Context) is { }))
                             return false;
                         break;
                     case ListEntityField.Color:
@@ -316,31 +271,31 @@ public static class ListOptionsExt
                 switch (without.Key)
                 {
                     case ListEntityField.Avatar:
-                        if (m.AvatarFor(ctx) is { })
+                        if (m.AvatarFor(opts.Context) is { })
                             return false;
                         break;
                     case ListEntityField.Pronouns:
-                        if (m.PronounsFor(ctx) is { })
+                        if (m.PronounsFor(opts.Context) is { })
                             return false;
                         break;
                     case ListEntityField.DisplayName:
-                        if (m.NamePrivacy.CanAccess(ctx) && m.DisplayName != null)
+                        if (m.NamePrivacy.CanAccess(opts.Context) && m.DisplayName != null)
                             return false;
                         break;
                     case ListEntityField.Birthdate:
-                        if (m.BirthdayFor(ctx) is { })
+                        if (m.BirthdayFor(opts.Context) is { })
                             return false;
                         break;
                     case ListEntityField.ProxyTags:
-                        if (m.ProxyTagsFor(ctx) is { } tags && tags.Count > 0)
+                        if (m.ProxyTagsFor(opts.Context) is { } tags && tags.Count > 0)
                             return false;
                         break;
                     case ListEntityField.Aliases:
-                        if (m.AliasesFor(ctx) is { } aliases && aliases.Count > 0)
+                        if (m.AliasesFor(opts.Context) is { } aliases && aliases.Count > 0)
                             return false;
                         break;
                     case ListEntityField.Description:
-                        if (m.DescriptionFor(ctx) is { })
+                        if (m.DescriptionFor(opts.Context) is { })
                             return false;
                         break;
                     case ListEntityField.Color:
@@ -353,72 +308,140 @@ public static class ListOptionsExt
                         break;
                 }
             }
-            return true;
+            if (opts.PrivacyFilter != null && m.MemberVisibility != opts.PrivacyFilter)
+                return false;
+
+
+            if (opts.Search == null)
+                return true;
+
+            var comparer = StringComparison.InvariantCultureIgnoreCase;
+            if (m.NameFor(opts.Context).Contains(opts.Search, comparer))
+                return true;
+            if (m.DisplayName != null && m.DisplayName.Contains(opts.Search, comparer))
+                return true;
+            if (opts.SearchDescription && m.DescriptionFor(opts.Context) is { } desc && desc.Contains(opts.Search, comparer))
+                return true;
+            foreach (var alias in m.AliasesFor(opts.Context) ?? [])
+                if (alias.Contains(opts.Search, comparer))
+                    return true;
+            return false;
         });
 
-    public static IEnumerable<ListedGroup> FilterByGroupListOptions(this IEnumerable<ListedGroup> input,
-                                                                ListOptions opts, LookupContext ctx, LookupContext cctx) =>
-    input.Where(g =>
+        IComparer<T> ReverseMaybe<T>(IComparer<T> c) =>
+            opts.Reverse ? Comparer<T>.Create((a, b) => c.Compare(b, a)) : c;
+
+        var randGen = new global::System.Random();
+        var culture = StringComparer.InvariantCultureIgnoreCase;
+        return (opts.SortProperty.value switch
+        {
+            // As for the OrderByDescending HasValue calls: https://www.jerriepelser.com/blog/orderby-with-null-values/
+            // We want nulls last no matter what, even if orders are reversed
+            (ListEntityField)ExtraSortOption.Random => input.OrderBy(m => randGen.Next()),
+            (ListEntityField)ExtraSortOption.FullBirthdate => input
+                // Sort: Birthdays with year -> Birthdays without year -> No Birthdays
+                .OrderBy(m => m.BirthdayFor(opts.Context) is { } bday ? (bday.Year == 0 || bday.Year == 4 ? 1 : 0) : 2)
+                .ThenBy(m => m.BirthdayFor(opts.Context), ReverseMaybe(Comparer<LocalDate?>.Default)),
+            ListEntityField.Hid => input.OrderBy(m => m.Hid, ReverseMaybe(culture)),
+            ListEntityField.Name => input.OrderBy(m => m.NameFor(opts.Context), ReverseMaybe(culture)),
+            ListEntityField.CreationDate => input
+                .OrderByDescending(m => m.MetadataPrivacy.CanAccess(opts.Context))
+                .ThenBy(m => m.MetadataPrivacy.Get(opts.Context, m.Created, default), ReverseMaybe(Comparer<Instant>.Default)),
+            ListEntityField.MessageCount => input
+                .OrderByDescending(m => m.MetadataPrivacy.CanAccess(opts.Context))
+                .ThenByDescending(m => m.MetadataPrivacy.Get(opts.Context, m.MessageCount, 0), ReverseMaybe(Comparer<int>.Default)),
+            ListEntityField.DisplayName => input
+                .OrderByDescending(m => m.DisplayName != null && m.NamePrivacy.CanAccess(opts.Context))
+                .ThenBy(m => m.NamePrivacy.Get(opts.Context, m.DisplayName), ReverseMaybe(culture)),
+            ListEntityField.Birthdate => input
+                .OrderByDescending(m => m.AnnualBirthday.HasValue && m.BirthdayPrivacy.CanAccess(opts.Context))
+                .ThenBy(m => m.BirthdayPrivacy.Get(opts.Context, m.AnnualBirthday), ReverseMaybe(Comparer<AnnualDate?>.Default)),
+            ListEntityField.LastMessage => input
+                .OrderByDescending(m => m.LastMessageTimestamp.HasValue)
+                .ThenByDescending(m => m.LastMessageTimestamp, ReverseMaybe(Comparer<Instant?>.Default)),
+            ListEntityField.LastSwitch => input
+                .OrderByDescending(m => m.LastSwitchTime.HasValue && m.MetadataPrivacy.CanAccess(opts.Context))
+                .ThenByDescending(m => m.MetadataPrivacy.Get(opts.Context, m.LastSwitchTime), ReverseMaybe(Comparer<Instant?>.Default)),
+            _ => throw new PKError($"Unknown or invalid sort property {opts.SortProperty}")
+        })
+            // Lastly, add a by-name fallback order for collisions (generally hits w/ lots of null values)
+            .ThenBy(m => m.NameFor(opts.Context), culture);
+    }
+
+    public static IEnumerable<ListedGroup> SortAndFilterByListOptions(this IEnumerable<ListedGroup> input,
+                                                                ListOptions opts)
     {
-        foreach (var with in opts.WithFilter.Where(x => x.Value))
+        input = input.Where(g =>
         {
-            switch (with.Key)
+            foreach (var with in opts.WithFilter.Where(x => x.Value))
             {
-                case ListEntityField.Avatar:
-                    if (!(g.IconFor(ctx) is { }))
-                        return false;
-                    break;
-                case ListEntityField.DisplayName:
-                    if (!g.NamePrivacy.CanAccess(ctx) || g.DisplayName == null)
-                        return false;
-                    break;
-                case ListEntityField.Description:
-                    if (!(g.DescriptionFor(ctx) is { }))
-                        return false;
-                    break;
-                case ListEntityField.Color:
-                    if (g.Color == null)
-                        return false;
-                    break;
-                case ListEntityField.Members:
-                    if (!g.ListPrivacy.CanAccess(ctx) || g.MemberCount(cctx) == 0)
-                        return false;
-                    break;
+                switch (with.Key)
+                {
+                    case ListEntityField.Avatar:
+                        if (!(g.IconFor(opts.Context) is { }))
+                            return false;
+                        break;
+                    case ListEntityField.DisplayName:
+                        if (!g.NamePrivacy.CanAccess(opts.Context) || g.DisplayName == null)
+                            return false;
+                        break;
+                    case ListEntityField.Description:
+                        if (!(g.DescriptionFor(opts.Context) is { }))
+                            return false;
+                        break;
+                    case ListEntityField.Color:
+                        if (g.Color == null)
+                            return false;
+                        break;
+                    case ListEntityField.Members:
+                        if (!g.ListPrivacy.CanAccess(opts.Context) || g.MemberCount(opts.PrivacyFilter) == 0)
+                            return false;
+                        break;
+                }
             }
-        }
-        foreach (var without in opts.WithOutFilter.Where(x => x.Value))
-        {
-            switch (without.Key)
+            foreach (var without in opts.WithOutFilter.Where(x => x.Value))
             {
-                case ListEntityField.Avatar:
-                    if (g.IconFor(ctx) is { })
-                        return false;
-                    break;
-                case ListEntityField.DisplayName:
-                    if (g.NamePrivacy.CanAccess(ctx) && g.DisplayName != null)
-                        return false;
-                    break;
-                case ListEntityField.Description:
-                    if (g.DescriptionFor(ctx) is { })
-                        return false;
-                    break;
-                case ListEntityField.Color:
-                    if (g.Color != null)
-                        return false;
-                    break;
-                case ListEntityField.Members:
-                    if (g.ListPrivacy.CanAccess(ctx) && g.MemberCount(cctx) != 0)
-                        return false;
-                    break;
+                switch (without.Key)
+                {
+                    case ListEntityField.Avatar:
+                        if (g.IconFor(opts.Context) is { })
+                            return false;
+                        break;
+                    case ListEntityField.DisplayName:
+                        if (g.NamePrivacy.CanAccess(opts.Context) && g.DisplayName != null)
+                            return false;
+                        break;
+                    case ListEntityField.Description:
+                        if (g.DescriptionFor(opts.Context) is { })
+                            return false;
+                        break;
+                    case ListEntityField.Color:
+                        if (g.Color != null)
+                            return false;
+                        break;
+                    case ListEntityField.Members:
+                        if (g.ListPrivacy.CanAccess(opts.Context) && g.MemberCount(opts.PrivacyFilter) != 0)
+                            return false;
+                        break;
+                }
             }
-        }
-        return true;
-    });
+            if (opts.PrivacyFilter != null && g.Visibility != opts.PrivacyFilter)
+                return false;
 
 
-    public static IEnumerable<ListedGroup> SortByGroupListOptions(this IEnumerable<ListedGroup> input,
-                                                                    ListOptions opts, LookupContext ctx, LookupContext cctx)
-    {
+            if (opts.Search == null)
+                return true;
+
+            var comparer = StringComparison.InvariantCultureIgnoreCase;
+            if (g.NameFor(opts.Context).Contains(opts.Search, comparer))
+                return true;
+            if (g.DisplayName != null && g.DisplayName.Contains(opts.Search, comparer))
+                return true;
+            if (opts.SearchDescription && g.DescriptionFor(opts.Context) is { } desc && desc.Contains(opts.Search, comparer))
+                return true;
+            return false;
+        });
+
         IComparer<T> ReverseMaybe<T>(IComparer<T> c) =>
             opts.Reverse ? Comparer<T>.Create((a, b) => c.Compare(b, a)) : c;
 
@@ -432,19 +455,19 @@ public static class ListOptionsExt
             (ListEntityField)ExtraSortOption.Random => input
                 .OrderBy(g => randGen.Next()),
             ListEntityField.Hid => input.OrderBy(g => g.Hid, ReverseMaybe(culture)),
-            ListEntityField.Name => input.OrderBy(g => g.NameFor(ctx), ReverseMaybe(culture)),
+            ListEntityField.Name => input.OrderBy(g => g.NameFor(opts.Context), ReverseMaybe(culture)),
             ListEntityField.CreationDate => input
-                .OrderByDescending(g => g.MetadataPrivacy.CanAccess(ctx))
-                .ThenBy(g => g.MetadataPrivacy.Get(ctx, g.Created, default), ReverseMaybe(Comparer<Instant>.Default)),
+                .OrderByDescending(g => g.MetadataPrivacy.CanAccess(opts.Context))
+                .ThenBy(g => g.MetadataPrivacy.Get(opts.Context, g.Created, default), ReverseMaybe(Comparer<Instant>.Default)),
             ListEntityField.DisplayName => input
-                .OrderByDescending(g => g.DisplayName != null && g.NamePrivacy.CanAccess(ctx))
-                .ThenBy(g => g.NamePrivacy.Get(ctx, g.DisplayName), ReverseMaybe(culture)),
-            ListEntityField.MemberCount => input.OrderByDescending(g => g.MemberCount(cctx), ReverseMaybe(Comparer<int>.Default)),
-            ListEntityField.MessageCount => input.OrderByDescending(g => g.MessageCount(ctx, cctx), ReverseMaybe(Comparer<int>.Default)),
+                .OrderByDescending(g => g.DisplayName != null && g.NamePrivacy.CanAccess(opts.Context))
+                .ThenBy(g => g.NamePrivacy.Get(opts.Context, g.DisplayName), ReverseMaybe(culture)),
+            ListEntityField.MemberCount => input.OrderByDescending(g => g.MemberCount(opts.PrivacyFilter), ReverseMaybe(Comparer<int>.Default)),
+            ListEntityField.MessageCount => input.OrderByDescending(g => g.MessageCount(opts.Context, opts.PrivacyFilter), ReverseMaybe(Comparer<int>.Default)),
             _ => throw new PKError($"Unknown or invalid sort property {opts.SortProperty}")
         })
                 // Lastly, add a by-name fallback order for collisions (generally hits w/ lots of null values)
-                .ThenBy(g => g.NameFor(ctx), culture);
+                .ThenBy(g => g.NameFor(opts.Context), culture);
     }
 
     public static void AssertIsValid(this ListOptions opts)
@@ -456,6 +479,9 @@ public static class ListOptionsExt
             if (with.Value && opts.WithOutFilter[with.Key])
                 throw new PKError($"Cannot include both \"only members with {with.Key.ToReadableString(true)}\" and \"only members without {with.Key.ToReadableString(true)}\". " +
                 $"To show members both with and without {with.Key.ToReadableString(true)}, select neither option.");
+
+        if (!opts.IsOwner && (opts.Context == LookupContext.ByOwner || opts.PrivacyFilter != PrivacyLevel.Public))
+            throw Errors.NotOwnInfo;
 
         // the check for multiple *sorting* property flags is done in SortProperty setter
     }

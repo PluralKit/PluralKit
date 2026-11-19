@@ -497,7 +497,6 @@ public class Groups
         var opts = ctx.ParseListOptions(ctx.DirectLookupContextFor(system.Id), ctx.LookupContextFor(system.Id), ListEntity.Group);
         if (ctx.MatchFlag("show-embed", "se"))
             await ctx.RenderGroupList(
-                ctx.LookupContextFor(system.Id),
                 system.Id,
                 GetEmbedTitle(ctx, system, opts),
                 system.Color,
@@ -505,7 +504,6 @@ public class Groups
             );
         else
             await ctx.RenderCV2GroupList(
-                ctx.LookupContextFor(system.Id),
                 system.Id,
                 GetEmbedTitle(ctx, system, opts),
                 system.Color,

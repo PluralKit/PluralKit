@@ -89,7 +89,7 @@ public class Random
         var opts = ctx.ParseListOptions(ctx.DirectLookupContextFor(group.System), ctx.LookupContextFor(group.System), ListEntity.Member);
         opts.GroupFilter = group.Id;
 
-        var members = await ctx.Database.Execute(conn => conn.QueryMemberList(group.System, opts.ToQueryOptions()));
+        var members = await ctx.Database.Execute(conn => conn.QueryMemberList(group.System, opts.GroupFilter));
 
         if (members == null || !members.Any())
             throw new PKError(

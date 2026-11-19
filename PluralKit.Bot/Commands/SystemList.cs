@@ -28,7 +28,6 @@ public class SystemList
         if (ctx.MatchFlag("show-embed", "se"))
         {
             await ctx.RenderMemberList(
-                ctx.LookupContextFor(target.Id),
                 target.Id,
                 await GetEmbedTitle(target, opts, ctx),
                 target.Color,
@@ -38,7 +37,6 @@ public class SystemList
         else
         {
             await ctx.RenderCV2MemberList(
-                ctx.LookupContextFor(target.Id),
                 target.Id,
                 await GetEmbedTitle(target, opts, ctx),
                 target.Color,

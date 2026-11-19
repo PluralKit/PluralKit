@@ -62,7 +62,7 @@ public class PKGroup
 
 public static class PKGroupExt
 {
-    public static string? NameFor(this PKGroup group, LookupContext ctx) =>
+    public static string NameFor(this PKGroup group, LookupContext ctx) =>
         group.NamePrivacy.Get(ctx, group.Name, group.DisplayName ?? group.Name);
 
     public static string? DescriptionFor(this PKGroup group, LookupContext ctx) =>

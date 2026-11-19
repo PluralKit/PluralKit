@@ -225,7 +225,7 @@ public static class ContextUtils
 
     public static async Task PaginateCV2(this Context ctx, string title, string color,
         Func<ApplicationCommandInteractionData?, (string, List<PageItem>)> renderer,
-        int? maxItemsPage = null, Func<MessageComponent[]> optionsModal = null)
+        int? maxItemsPage = null, (string, Func<MessageComponent[]>)[] optionsModal = null)
     {
         List<List<PageItem>> pages = [];
         List<PageItem> currentPage = [];

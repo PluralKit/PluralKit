@@ -13,7 +13,7 @@ public static class ContextListExt
 {
     public static ListOptions ParseListOptions(this Context ctx, LookupContext directLookupCtx, LookupContext lookupContext, ListEntity entityType)
     {
-        var p = new ListOptions(entityType);
+        var p = new ListOptions(entityType, directLookupCtx == LookupContext.ByOwner);
 
         // Short or long list? (parse this first, as it can potentially take a positional argument)
         var isFull = ctx.Match("f", "full", "big", "details", "long") || ctx.MatchFlag("f", "full");
@@ -102,44 +102,92 @@ public static class ContextListExt
 
     public static void ParseListOptionUpdates(ListOptions opts, ApplicationCommandInteractionData optsOverride)
     {
-        opts.ResetDynamicOptions();
+        var components = optsOverride.Components;
 
-        var sortComponent = optsOverride.Components.First((x) => x.Component.CustomId == "sort_select").Component;
-        if (SortOption.TryParse(sortComponent.Values[0], out var sortResult))
-            opts.SortProperty = sortResult;
-
-        var infoComponent = optsOverride.Components.First((x) => x.Component.CustomId == "info_select").Component;
-        if (infoComponent?.Values?.Length > 0 && infoComponent.Values[0] == "default")
+        var sortComponent = components.FirstOrDefault(x => x.Component.CustomId == "sort_select")?.Component;
+        if (sortComponent != null)
         {
-            if (opts.SortProperty == ExtraSortOption.FullBirthdate)
-                infoComponent.Values[0] = ListEntityField.Birthdate.ToString();
-            else
-                infoComponent.Values[0] = sortComponent.Values[0];
-            opts.SortIncludeMatch = true;
+            opts.ResetSort();
+            if (SortOption.TryParse(sortComponent.Values[0], out var sortResult))
+                opts.SortProperty = sortResult;
         }
-        foreach (var include in infoComponent.Values)
-            if (Enum.TryParse<ListEntityField>(include, out var infoResult))
-                opts.IncludedFields[infoResult] = true;
 
-        var extraCheckboxesComponent = optsOverride.Components.FirstOrDefault((x) => x.Component.CustomId == "extra_checkboxes")?.Component;
-        opts.ShowIds = extraCheckboxesComponent?.Values.FirstOrDefault(x => x == "id") != null;
-        opts.NumberItems = extraCheckboxesComponent?.Values.FirstOrDefault(x => x == "number") != null;
-        opts.Reverse = extraCheckboxesComponent?.Values.FirstOrDefault(x => x == "reverse") != null;
+        var infoComponent = components.FirstOrDefault((x) => x.Component.CustomId == "info_select")?.Component;
+        if (infoComponent != null)
+        {
+            opts.ResetIncludes();
+            if (infoComponent.Values?[0] == "default")
+            {
+                if (opts.SortProperty == ExtraSortOption.FullBirthdate)
+                    infoComponent.Values[0] = ListEntityField.Birthdate.ToString();
+                else
+                    infoComponent.Values[0] = opts.SortProperty.ToString();
+                opts.SortIncludeMatch = true;
+            }
+            foreach (var include in infoComponent.Values)
+                if (Enum.TryParse<ListEntityField>(include, out var infoResult))
+                    opts.IncludedFields[infoResult] = true;
+        }
 
-        var withFilterComponent = optsOverride.Components.FirstOrDefault(x => x.Component.CustomId == "filter_with")?.Component;
-        foreach (var withFilterEntryStr in withFilterComponent?.Values ?? [])
-            if (Enum.TryParse<ListEntityField>(withFilterEntryStr, out var withFilterEntry) && opts.WithFilter.ContainsKey(withFilterEntry))
-                opts.WithFilter[withFilterEntry] = true;
+        var extraDisplayComponent = components.FirstOrDefault((x) => x.Component.CustomId == "extra_checkboxes_display")?.Component;
+        if (extraDisplayComponent != null)
+        {
+            opts.ShowIds = extraDisplayComponent?.Values.FirstOrDefault(x => x == "id") != null;
+            opts.NumberItems = extraDisplayComponent?.Values.FirstOrDefault(x => x == "number") != null;
+            opts.Reverse = extraDisplayComponent?.Values.FirstOrDefault(x => x == "reverse") != null;
+        }
 
-        var withOutFilterComponent = optsOverride.Components.FirstOrDefault(x => x.Component.CustomId == "filter_without")?.Component;
-        foreach (var withOutFilterEntryStr in withOutFilterComponent?.Values ?? [])
-            if (Enum.TryParse<ListEntityField>(withOutFilterEntryStr, out var withOutFilterEntry) && opts.WithOutFilter.ContainsKey(withOutFilterEntry))
-                opts.WithOutFilter[withOutFilterEntry] = true;
+        var extraFilterComponent = components.FirstOrDefault((x) => x.Component.CustomId == "extra_checkboxes_filter")?.Component;
+        if (extraFilterComponent != null)
+        {
+            opts.SearchDescription = extraFilterComponent?.Values.FirstOrDefault(x => x == "description") != null;
+        }
+
+        var withFilterComponent = components.FirstOrDefault(x => x.Component.CustomId == "filter_with")?.Component;
+        if (withFilterComponent != null)
+        {
+            opts.ResetWithFilter();
+            foreach (var withFilterEntryStr in withFilterComponent?.Values ?? [])
+                if (Enum.TryParse<ListEntityField>(withFilterEntryStr, out var withFilterEntry) && opts.WithFilter.ContainsKey(withFilterEntry))
+                    opts.WithFilter[withFilterEntry] = true;
+        }
+
+        var withOutFilterComponent = components.FirstOrDefault(x => x.Component.CustomId == "filter_without")?.Component;
+        if (withOutFilterComponent != null)
+        {
+            opts.ResetWithOutFilter();
+            foreach (var withOutFilterEntryStr in withOutFilterComponent?.Values ?? [])
+                if (Enum.TryParse<ListEntityField>(withOutFilterEntryStr, out var withOutFilterEntry) && opts.WithOutFilter.ContainsKey(withOutFilterEntry))
+                    opts.WithOutFilter[withOutFilterEntry] = true;
+        }
+
+        var entityPrivacyFilterComponent = components.FirstOrDefault(x => x.Component.CustomId == "entity_privacy_filter")?.Component;
+        if (entityPrivacyFilterComponent != null)
+            opts.PrivacyFilter = entityPrivacyFilterComponent.Values?[0] switch
+            {
+                "public" => PrivacyLevel.Public,
+                "private" => PrivacyLevel.Private,
+                "all" => null,
+                _ => throw new ArgumentException()
+            };
+
+        var infoPrivacyFilterComponent = components.FirstOrDefault(x => x.Component.CustomId == "info_privacy_filter")?.Component;
+        if (infoPrivacyFilterComponent != null)
+            opts.Context = infoPrivacyFilterComponent.Values?[0] switch
+            {
+                "public" => LookupContext.ByNonOwner,
+                "all" => LookupContext.ByOwner,
+                _ => throw new ArgumentException()
+            };
+
+        var searchComponent = components.FirstOrDefault(x => x.Component.CustomId == "search")?.Component;
+        if (searchComponent != null)
+            opts.Search = searchComponent.Value != "" ? searchComponent.Value : null;
 
         opts.AssertIsValid();
     }
 
-    public static MessageComponent[] ShortOptionsModal(ListOptions opts, string entity) => [
+    public static MessageComponent[] ShortDisplayOptionsModal(ListOptions opts, bool isOwner) => ((IEnumerable<MessageComponent>)[
         new()
         {
             Type = ComponentType.Label,
@@ -201,48 +249,30 @@ public static class ContextListExt
                 ]
             }
         },
-        new()
+        isOwner ? new()
         {
             Type = ComponentType.Label,
-            Label = $"Show only {entity}s with:",
+            Label = "Show What Information (not which members):",
             Component = new()
             {
                 Type = ComponentType.StringSelect,
-                CustomId = "filter_with",
-                Required = false,
-                MaxValues = (uint?)opts.WithFilter.Count,
+                CustomId = "info_privacy_filter",
                 Options = [
-                    .. opts.WithFilter.AsEnumerable().Select(field =>
-                    new MessageComponentOption()
+                    new()
                     {
-                        Label = field.Key.ToLabel(),
-                        Value = field.Key.ToString(),
-                        Default = !opts.SortIncludeMatch && field.Value
+                        Label = "Public Information Only",
+                        Value = "public",
+                        Default = opts.Context == LookupContext.ByNonOwner
+                    },
+                    new()
+                    {
+                        Label = "All Information",
+                        Value = "all",
+                        Default = opts.Context == LookupContext.ByOwner
                     }
-                )],
+                ]
             }
-        },
-        new()
-        {
-            Type = ComponentType.Label,
-            Label = $"Show only {entity}s without:",
-            Component = new()
-            {
-                Type = ComponentType.StringSelect,
-                CustomId = "filter_without",
-                Required = false,
-                MaxValues = (uint?)opts.WithOutFilter.Count,
-                Options = [
-                    .. opts.WithOutFilter.AsEnumerable().Select(field =>
-                    new MessageComponentOption()
-                    {
-                        Label = field.Key.ToLabel(),
-                        Value = field.Key.ToString(),
-                        Default = !opts.SortIncludeMatch && field.Value
-                    })
-                ],
-            }
-        },
+        } : null,
         new()
         {
             Type = ComponentType.Label,
@@ -250,7 +280,7 @@ public static class ContextListExt
             Component = new()
             {
                 Type = ComponentType.CheckboxGroup,
-                CustomId = "extra_checkboxes",
+                CustomId = "extra_checkboxes_display",
                 Required = false,
                 Options = [
                     new()
@@ -274,9 +304,116 @@ public static class ContextListExt
                 ]
             }
         }
-    ];
+    ]).Where(c => c != null).ToArray();
 
-    public static MessageComponent[] LongOptionsModal(ListOptions opts, string entity) => [
+    public static MessageComponent[] ShortFilterOptionsModal(ListOptions opts, bool isOwner, ListEntity entity) => ((IEnumerable<MessageComponent>)[
+        isOwner ? new()
+        {
+            Type = ComponentType.Label,
+            Label = $"Show Which {entity}s (not what info):",
+            Component = new()
+            {
+                Type = ComponentType.StringSelect,
+                CustomId = "entity_privacy_filter",
+                Options = [
+                    new()
+                    {
+                        Label = $"Public {entity}s Only",
+                        Value = "public",
+                        Default = opts.PrivacyFilter == PrivacyLevel.Public
+                    },
+                    new()
+                    {
+                        Label = $"Private {entity}s Only",
+                        Value = "private",
+                        Default = opts.PrivacyFilter == PrivacyLevel.Private
+                    },
+                    new()
+                    {
+                        Label = $"All {entity}s",
+                        Value = "all",
+                        Default = opts.PrivacyFilter == null
+                    }
+                ]
+            }
+        } : null,
+        new()
+        {
+            Type = ComponentType.Label,
+            Label = "Search",
+            Component = new()
+            {
+                Type = ComponentType.TextInput,
+                CustomId = "search",
+                Required = false,
+                Style = ButtonStyle.Secondary,
+                Value = opts.Search ?? ""
+            }
+        },
+        new()
+        {
+            Type = ComponentType.Label,
+            Label = $"Show Only {entity}s With:",
+            Component = new()
+            {
+                Type = ComponentType.StringSelect,
+                CustomId = "filter_with",
+                Required = false,
+                MaxValues = (uint?)opts.WithFilter.Count,
+                Options = [
+                    .. opts.WithFilter.AsEnumerable().Select(static field =>
+                    new MessageComponentOption()
+                    {
+                        Label = field.Key.ToLabel(),
+                        Value = field.Key.ToString(),
+                        Default = field.Value
+                    }
+                )],
+            }
+        },
+        new()
+        {
+            Type = ComponentType.Label,
+            Label = $"Show Only {entity}s Without:",
+            Component = new()
+            {
+                Type = ComponentType.StringSelect,
+                CustomId = "filter_without",
+                Required = false,
+                MaxValues = (uint?)opts.WithOutFilter.Count,
+                Options = [
+                    .. opts.WithOutFilter.AsEnumerable().Select(static field =>
+                    new MessageComponentOption()
+                    {
+                        Label = field.Key.ToLabel(),
+                        Value = field.Key.ToString(),
+                        Default = field.Value
+                    })
+                ],
+            }
+        },
+        new()
+        {
+            Type = ComponentType.Label,
+            Label = "Extra Options",
+            Component = new()
+            {
+                Type = ComponentType.CheckboxGroup,
+                CustomId = "extra_checkboxes_filter",
+                Required = false,
+                Options = [
+                    new()
+                    {
+                        Label = "Search Description",
+                        Value = "description",
+                        Default = opts.SearchDescription
+                    }
+                ]
+            }
+        }
+    ]).Where(c => c != null).ToArray();
+
+    public static MessageComponent[] LongDisplayOptionsModal(ListOptions opts, bool isOwner) => ((IEnumerable<MessageComponent>)[
         new()
         {
             Type = ComponentType.Label,
@@ -297,6 +434,30 @@ public static class ContextListExt
                 ]
             }
         },
+        isOwner ? new()
+        {
+            Type = ComponentType.Label,
+            Label = "Show What Information (not which members):",
+            Component = new()
+            {
+                Type = ComponentType.StringSelect,
+                CustomId = "info_privacy_filter",
+                Options = [
+                    new()
+                    {
+                        Label = "Public Information Only",
+                        Value = "public",
+                        Default = opts.Context == LookupContext.ByNonOwner
+                    },
+                    new()
+                    {
+                        Label = "All Information",
+                        Value = "all",
+                        Default = opts.Context == LookupContext.ByOwner
+                    }
+                ]
+            }
+        } : null,
         new()
         {
             Type = ComponentType.Label,
@@ -322,7 +483,78 @@ public static class ContextListExt
         new()
         {
             Type = ComponentType.Label,
-            Label = $"Show only {entity}s with:",
+            Label = "Extra Options",
+            Component = new()
+            {
+                Type = ComponentType.CheckboxGroup,
+                CustomId = "extra_checkboxes_display",
+                Required = false,
+                Options = [
+                    new()
+                    {
+                        Label = "Reverse Sort",
+                        Value = "reverse",
+                        Default = opts.Reverse
+                    },
+                    new()
+                    {
+                        Label = "Show IDs",
+                        Value = "id",
+                        Default = opts.ShowIds
+                    }
+                ]
+            }
+        }
+    ]).Where(c => c != null).ToArray();
+
+    public static MessageComponent[] LongFilterOptionsModal(ListOptions opts, bool isOwner, ListEntity entity) => ((IEnumerable<MessageComponent>)[
+        isOwner ? new()
+        {
+            Type = ComponentType.Label,
+            Label = $"Show Which {entity}s (not what info):",
+            Component = new()
+            {
+                Type = ComponentType.StringSelect,
+                CustomId = "entity_privacy_filter",
+                Options = [
+                    new()
+                    {
+                        Label = $"Public {entity}s Only",
+                        Value = "public",
+                        Default = opts.PrivacyFilter == PrivacyLevel.Public
+                    },
+                    new()
+                    {
+                        Label = $"Private {entity}s Only",
+                        Value = "private",
+                        Default = opts.PrivacyFilter == PrivacyLevel.Private
+                    },
+                    new()
+                    {
+                        Label = $"All {entity}s",
+                        Value = "all",
+                        Default = opts.PrivacyFilter == null
+                    }
+                ]
+            }
+        } : null,
+        new()
+        {
+            Type = ComponentType.Label,
+            Label = "Search",
+            Component = new()
+            {
+                Type = ComponentType.TextInput,
+                CustomId = "search",
+                Required = false,
+                Style = ButtonStyle.Secondary,
+                Value = opts.Search ?? ""
+            }
+        },
+        new()
+        {
+            Type = ComponentType.Label,
+            Label = $"Show Only {entity}s With:",
             Component = new()
             {
                 Type = ComponentType.StringSelect,
@@ -343,7 +575,7 @@ public static class ContextListExt
         new()
         {
             Type = ComponentType.Label,
-            Label = $"Show only {entity}s without:",
+            Label = $"Show Only {entity}s Without:",
             Component = new()
             {
                 Type = ComponentType.StringSelect,
@@ -368,34 +600,27 @@ public static class ContextListExt
             Component = new()
             {
                 Type = ComponentType.CheckboxGroup,
-                CustomId = "extra_checkboxes",
+                CustomId = "extra_checkboxes_filter",
                 Required = false,
                 Options = [
                     new()
                     {
-                        Label = "Reverse Sort",
-                        Value = "reverse",
-                        Default = opts.Reverse
-                    },
-                    new()
-                    {
-                        Label = "Show IDs",
-                        Value = "id",
-                        Default = opts.ShowIds
+                        Label = "Search Description",
+                        Value = "description",
+                        Default = opts.SearchDescription
                     }
                 ]
             }
         }
-    ];
+    ]).Where(c => c != null).ToArray();
 
-    public static async Task RenderCV2MemberList(this Context ctx, LookupContext lookupCtx, SystemId system,
-                                string title, string color, ListOptions opts, EmbedService embeds)
+
+    public static async Task RenderCV2MemberList(this Context ctx, SystemId system, string title, string color,
+                                ListOptions opts, EmbedService embeds)
     {
         // We take an IDatabase instead of a IPKConnection so we don't keep the handle open for the entire runtime
         // We wanna release it as soon as the member list is actually *fetched*, instead of potentially minutes later (paginate timeout)
-        var members = (await ctx.Database.Execute(conn => conn.QueryMemberList(system, opts.ToQueryOptions(), opts.Type == ListType.Long)))
-            .SortByMemberListOptions(opts, lookupCtx)
-            .ToList();
+        var members = await ctx.Database.Execute(conn => conn.QueryMemberList(system, opts.GroupFilter, opts.Type == ListType.Long));
 
         // Make the defaults match the behavior of the non-cv2 list
         if (opts.IncludedCount == 0 || opts.Type == ListType.Long)
@@ -408,21 +633,26 @@ public static class ContextListExt
             opts.IncludedFields[ListEntityField.Description] = true;
         }
 
-        var footer = $"-# {opts.CreateFilterString()} {"result".ToQuantity(members.Count)}.";
+        var footer = $"-# {opts.CreateFilterString()} {"result".ToQuantity(members.Count())}.";
+
+        (string, Func<MessageComponent[]>)[] memberShortOptionsModals = [
+            ("Display Options", () => ShortDisplayOptionsModal(opts, ctx.System?.Id == system)),
+            ("Filter Options", () => ShortFilterOptionsModal(opts, ctx.System?.Id == system, ListEntity.Member))];
+        (string, Func<MessageComponent[]>)[] memberLongOptionsModals = [
+            ("Display Options", () => LongDisplayOptionsModal(opts, ctx.System?.Id == system)),
+            ("Filter Options", () => LongFilterOptionsModal(opts, ctx.System?.Id == system, ListEntity.Member))];
 
         var itemsPerPage = 25;
-        await ctx.PaginateCV2(title, color, Renderer, itemsPerPage, opts.Type == ListType.Short ? memberShortOptionsModal : memberLongOptionsModal);
+        (string, Func<MessageComponent[]>)[] OptionsModals = opts.Type == ListType.Short ? memberShortOptionsModals : memberLongOptionsModals;
+        await ctx.PaginateCV2(title, color, Renderer, itemsPerPage, OptionsModals);
 
         // Base renderer, dispatches based on type
         (string, List<ContextUtils.PageItem>) Renderer(ApplicationCommandInteractionData? optsOverride)
         {
             if (optsOverride != null)
-            {
                 ParseListOptionUpdates(opts, optsOverride);
-                members = members.SortByMemberListOptions(opts, lookupCtx).ToList();
-            }
 
-            var filteredMembers = members.FilterByMemberListOptions(opts, lookupCtx);
+            var filteredMembers = members.SortAndFilterByListOptions(opts);
 
             footer = $"-# {opts.CreateFilterString()} {"result".ToQuantity(filteredMembers.Count())}.";
 
@@ -445,23 +675,23 @@ public static class ContextListExt
                         ret += $"[`{m.DisplayHid(ctx.Config, isList: true, shouldPad: shouldPad)}`] ";
                     ret += $"**{m.NameFor(ctx)}** ";
 
-                    if (opts.IncludedFields[ListEntityField.MessageCount] && m.MessageCountFor(lookupCtx) is { } count)
+                    if (opts.IncludedFields[ListEntityField.MessageCount] && m.MessageCountFor(opts.Context) is { } count)
                         ret += $"({"message".ToQuantity(count, "n0")})";
-                    else if (opts.IncludedFields[ListEntityField.LastSwitch] && m.MetadataPrivacy.TryGet(lookupCtx, m.LastSwitchTime, out var lastSw))
+                    else if (opts.IncludedFields[ListEntityField.LastSwitch] && m.MetadataPrivacy.TryGet(opts.Context, m.LastSwitchTime, out var lastSw))
                         ret += $"(last switched in: <t:{lastSw.Value.ToUnixTimeSeconds()}>)";
-                    else if (opts.IncludedFields[ListEntityField.LastMessage] && m.MetadataPrivacy.TryGet(lookupCtx, m.LastMessageTimestamp, out var lastMsg))
+                    else if (opts.IncludedFields[ListEntityField.LastMessage] && m.MetadataPrivacy.TryGet(opts.Context, m.LastMessageTimestamp, out var lastMsg))
                         ret += $"(last message: <t:{m.LastMessageTimestamp.Value.ToUnixTimeSeconds()}>)";
-                    else if (opts.IncludedFields[ListEntityField.CreationDate] && m.MetadataPrivacy.TryGet(lookupCtx, m.Created, out var created))
+                    else if (opts.IncludedFields[ListEntityField.CreationDate] && m.MetadataPrivacy.TryGet(opts.Context, m.Created, out var created))
                         ret += $"(created at <t:{created.ToUnixTimeSeconds()}>)";
-                    else if (opts.IncludedFields[ListEntityField.Avatar] && m.AvatarFor(lookupCtx) is { } avatarUrl)
+                    else if (opts.IncludedFields[ListEntityField.Avatar] && m.AvatarFor(opts.Context) is { } avatarUrl)
                         ret += $"([avatar URL]({avatarUrl}))";
-                    else if (opts.IncludedFields[ListEntityField.Pronouns] && m.PronounsFor(lookupCtx) is { } pronouns)
+                    else if (opts.IncludedFields[ListEntityField.Pronouns] && m.PronounsFor(opts.Context) is { } pronouns)
                         ret += $"({pronouns})";
-                    else if (opts.IncludedFields[ListEntityField.DisplayName] && m.DisplayName != null && m.NamePrivacy.CanAccess(lookupCtx))
+                    else if (opts.IncludedFields[ListEntityField.DisplayName] && m.DisplayName != null && m.NamePrivacy.CanAccess(opts.Context))
                         ret += $"({m.DisplayName})";
-                    else if (opts.IncludedFields[ListEntityField.Birthdate] && m.BirthdayFor(lookupCtx) is { } birthday)
+                    else if (opts.IncludedFields[ListEntityField.Birthdate] && m.BirthdayFor(opts.Context) is { } birthday)
                         ret += $"(birthday: {m.BirthdayString})";
-                    else if (opts.IncludedFields[ListEntityField.ProxyTags] && m.HasProxyTags && m.ProxyPrivacy.CanAccess(lookupCtx))
+                    else if (opts.IncludedFields[ListEntityField.ProxyTags] && m.HasProxyTags && m.ProxyPrivacy.CanAccess(opts.Context))
                     {
                         var proxyTagsString = m.ProxyTagsString();
                         if (proxyTagsString.Length > 100) // arbitrary threshold for now, tweak?
@@ -476,7 +706,7 @@ public static class ContextListExt
         IEnumerable<ContextUtils.PageItem> LongRenderer(IEnumerable<ListedMember> page) =>
             page.Select(m =>
             {
-                var container = embeds.CreateMemberMessageComponents(null, m, null, ctx.Config, lookupCtx, m.Groups.ToList(), opts, true);
+                var container = embeds.CreateMemberMessageComponents(null, m, null, ctx.Config, opts.Context, m.Groups.ToList(), opts, true);
                 return new ContextUtils.PageItem()
                 {
                     CharacterCount = MiscUtils.CountCharacters(container),
@@ -484,28 +714,23 @@ public static class ContextListExt
                 };
             });
 
-        MessageComponent[] memberShortOptionsModal() => ShortOptionsModal(opts, "member");
-        MessageComponent[] memberLongOptionsModal() => LongOptionsModal(opts, "member");
-
     }
 
-    public static async Task RenderMemberList(this Context ctx, LookupContext lookupCtx,
-                                SystemId system, string embedTitle, string color, ListOptions opts)
+    public static async Task RenderMemberList(this Context ctx, SystemId system, string embedTitle, string color, ListOptions opts)
     {
         // We take an IDatabase instead of a IPKConnection so we don't keep the handle open for the entire runtime
         // We wanna release it as soon as the member list is actually *fetched*, instead of potentially minutes later (paginate timeout)
-        var members = (await ctx.Database.Execute(conn => conn.QueryMemberList(system, opts.ToQueryOptions())))
-            .SortByMemberListOptions(opts, lookupCtx)
-            .ToList();
+        var members = (await ctx.Database.Execute(conn => conn.QueryMemberList(system, opts.GroupFilter)))
+            .SortAndFilterByListOptions(opts);
 
         var itemsPerPage = opts.Type == ListType.Short ? 25 : 5;
-        await ctx.Paginate(members.ToAsyncEnumerable(), members.Count, itemsPerPage, embedTitle, color, Renderer, true);
+        await ctx.Paginate(members.ToAsyncEnumerable(), members.Count(), itemsPerPage, embedTitle, color, Renderer, true);
 
         // Base renderer, dispatches based on type
         Task Renderer(EmbedBuilder eb, IEnumerable<ListedMember> page)
         {
             // Add a global footer with the filter/sort string + result count
-            eb.Footer(new Embed.EmbedFooter($"{opts.CreateFilterString()} {"result".ToQuantity(members.Count)}."));
+            eb.Footer(new Embed.EmbedFooter($"{opts.CreateFilterString()} {"result".ToQuantity(members.Count())}."));
 
             // Then call the specific renderers
             if (opts.Type == ListType.Short)
@@ -527,23 +752,23 @@ public static class ContextListExt
             {
                 var ret = $"[`{m.DisplayHid(ctx.Config, isList: true, shouldPad: shouldPad)}`] **{m.NameFor(ctx)}** ";
 
-                if (opts.IncludedFields[ListEntityField.MessageCount] && m.MessageCountFor(lookupCtx) is { } count)
+                if (opts.IncludedFields[ListEntityField.MessageCount] && m.MessageCountFor(opts.Context) is { } count)
                     ret += $"({"message".ToQuantity(count, "n0")})";
-                else if (opts.IncludedFields[ListEntityField.LastSwitch] && m.MetadataPrivacy.TryGet(lookupCtx, m.LastSwitchTime, out var lastSw))
+                else if (opts.IncludedFields[ListEntityField.LastSwitch] && m.MetadataPrivacy.TryGet(opts.Context, m.LastSwitchTime, out var lastSw))
                     ret += $"(last switched in: <t:{lastSw.Value.ToUnixTimeSeconds()}>)";
-                else if (opts.IncludedFields[ListEntityField.LastMessage] && m.MetadataPrivacy.TryGet(lookupCtx, m.LastMessageTimestamp, out var lastMsg))
+                else if (opts.IncludedFields[ListEntityField.LastMessage] && m.MetadataPrivacy.TryGet(opts.Context, m.LastMessageTimestamp, out var lastMsg))
                     ret += $"(last message: <t:{m.LastMessageTimestamp.Value.ToUnixTimeSeconds()}>)";
-                else if (opts.IncludedFields[ListEntityField.CreationDate] && m.MetadataPrivacy.TryGet(lookupCtx, m.Created, out var created))
+                else if (opts.IncludedFields[ListEntityField.CreationDate] && m.MetadataPrivacy.TryGet(opts.Context, m.Created, out var created))
                     ret += $"(created at <t:{created.ToUnixTimeSeconds()}>)";
-                else if (opts.IncludedFields[ListEntityField.Avatar] && m.AvatarFor(lookupCtx) is { } avatarUrl)
+                else if (opts.IncludedFields[ListEntityField.Avatar] && m.AvatarFor(opts.Context) is { } avatarUrl)
                     ret += $"([avatar URL]({avatarUrl}))";
-                else if (opts.IncludedFields[ListEntityField.Pronouns] && m.PronounsFor(lookupCtx) is { } pronouns)
+                else if (opts.IncludedFields[ListEntityField.Pronouns] && m.PronounsFor(opts.Context) is { } pronouns)
                     ret += $"({pronouns})";
-                else if (opts.IncludedFields[ListEntityField.DisplayName] && m.DisplayName != null && m.NamePrivacy.CanAccess(lookupCtx))
+                else if (opts.IncludedFields[ListEntityField.DisplayName] && m.DisplayName != null && m.NamePrivacy.CanAccess(opts.Context))
                     ret += $"({m.DisplayName})";
-                else if (opts.IncludedFields[ListEntityField.Birthdate] && m.BirthdayFor(lookupCtx) is { } birthday)
+                else if (opts.IncludedFields[ListEntityField.Birthdate] && m.BirthdayFor(opts.Context) is { } birthday)
                     ret += $"(birthday: {m.BirthdayString})";
-                else if (m.HasProxyTags && m.ProxyPrivacy.CanAccess(lookupCtx))
+                else if (m.HasProxyTags && m.ProxyPrivacy.CanAccess(opts.Context))
                 {
                     var proxyTagsString = m.ProxyTagsString();
                     if (proxyTagsString.Length > 100) // arbitrary threshold for now, tweak?
@@ -561,37 +786,37 @@ public static class ContextListExt
             {
                 var profile = new StringBuilder($"**ID**: {m.DisplayHid(ctx.Config)}");
 
-                if (m.DisplayName != null && m.NamePrivacy.CanAccess(lookupCtx))
+                if (m.DisplayName != null && m.NamePrivacy.CanAccess(opts.Context))
                     profile.Append($"\n**Display name**: {m.DisplayName}");
 
-                if (m.PronounsFor(lookupCtx) is { } pronouns)
+                if (m.PronounsFor(opts.Context) is { } pronouns)
                     profile.Append($"\n**Pronouns**: {pronouns}");
 
-                if (m.BirthdayFor(lookupCtx) != null)
+                if (m.BirthdayFor(opts.Context) != null)
                     profile.Append($"\n**Birthdate**: {m.BirthdayString}");
 
-                if (m.ProxyTags.Count > 0 && m.ProxyPrivacy.CanAccess(lookupCtx))
+                if (m.ProxyTags.Count > 0 && m.ProxyPrivacy.CanAccess(opts.Context))
                     profile.Append($"\n**Proxy tags**: {m.ProxyTagsString()}");
 
                 if ((opts.IncludedFields[ListEntityField.MessageCount] || opts.SortProperty == ListEntityField.MessageCount) &&
-                    m.MessageCountFor(lookupCtx) is { } count && m.MessageCount > 0)
+                    m.MessageCountFor(opts.Context) is { } count && m.MessageCount > 0)
                     profile.Append($"\n**Message count:** {count:n0}");
 
-                if ((opts.IncludedFields[ListEntityField.LastMessage] || opts.SortProperty == ListEntityField.LastMessage) && m.MetadataPrivacy.TryGet(lookupCtx, m.LastMessageTimestamp, out var lastMsg))
+                if ((opts.IncludedFields[ListEntityField.LastMessage] || opts.SortProperty == ListEntityField.LastMessage) && m.MetadataPrivacy.TryGet(opts.Context, m.LastMessageTimestamp, out var lastMsg))
                     profile.Append($"\n**Last message:** {m.LastMessageTimestamp.Value.FormatZoned(ctx.Zone)}");
 
                 if ((opts.IncludedFields[ListEntityField.LastSwitch] || opts.SortProperty == ListEntityField.LastSwitch) &&
-                    m.MetadataPrivacy.TryGet(lookupCtx, m.LastSwitchTime, out var lastSw))
+                    m.MetadataPrivacy.TryGet(opts.Context, m.LastSwitchTime, out var lastSw))
                     profile.Append($"\n**Last switched in:** {lastSw.Value.FormatZoned(ctx.Zone)}");
 
                 if ((opts.IncludedFields[ListEntityField.CreationDate] || opts.SortProperty == ListEntityField.CreationDate) &&
-                    m.MetadataPrivacy.TryGet(lookupCtx, m.Created, out var created))
+                    m.MetadataPrivacy.TryGet(opts.Context, m.Created, out var created))
                     profile.Append($"\n**Created on:** {created.FormatZoned(ctx.Zone)}");
 
-                if (opts.IncludedFields[ListEntityField.Avatar] && m.AvatarFor(lookupCtx) is { } avatar)
+                if (opts.IncludedFields[ListEntityField.Avatar] && m.AvatarFor(opts.Context) is { } avatar)
                     profile.Append($"\n**Avatar URL:** {avatar.TryGetCleanCdnUrl()}");
 
-                if (m.DescriptionFor(lookupCtx) is { } desc)
+                if (m.DescriptionFor(opts.Context) is { } desc)
                     profile.Append($"\n\n{desc}");
 
                 if (m.MemberVisibility == PrivacyLevel.Private)
@@ -602,23 +827,12 @@ public static class ContextListExt
         }
     }
 
-    public static async Task RenderCV2GroupList(this Context ctx, LookupContext lookupCtx, SystemId system,
-                                string title, string color, ListOptions opts, EmbedService embeds)
+    public static async Task RenderCV2GroupList(this Context ctx, SystemId system, string title, string color,
+                                ListOptions opts, EmbedService embeds)
     {
-        var countctx = LookupContext.ByNonOwner;
-        if (ctx.MatchFlag("a", "all"))
-        {
-            if (system == ctx.System?.Id)
-                countctx = LookupContext.ByOwner;
-            else
-                throw Errors.LookupNotAllowed;
-        }
-
         // We take an IDatabase instead of a IPKConnection so we don't keep the handle open for the entire runtime
         // We wanna release it as soon as the member list is actually *fetched*, instead of potentially minutes later (paginate timeout)
-        var groups = (await ctx.Database.Execute(conn => conn.QueryGroupList(system, opts.ToQueryOptions(), true)))
-            .SortByGroupListOptions(opts, lookupCtx, countctx)
-            .ToList();
+        var groups = await ctx.Database.Execute(conn => conn.QueryGroupList(system, opts.MemberFilter, true));
 
         // Make the defaults match the behavior of the non-cv2 list
         if (opts.IncludedCount == 0 || opts.Type == ListType.Long)
@@ -630,21 +844,26 @@ public static class ContextListExt
             opts.IncludedFields[ListEntityField.Description] = true;
         }
 
-        var footer = $"-# {opts.CreateFilterString()} {"result".ToQuantity(groups.Count)}.";
+        var footer = $"-# {opts.CreateFilterString()} {"result".ToQuantity(groups.Count())}.";
         var itemsPerPage = 25;
 
-        await ctx.PaginateCV2(title, color, Renderer, itemsPerPage, opts.Type == ListType.Short ? groupShortOptionsModal : groupLongOptionsModal);
+        (string, Func<MessageComponent[]>)[] groupShortOptionsModals = [
+            ("Display Options", () => ShortDisplayOptionsModal(opts, ctx.System?.Id == system)),
+            ("Filter Options", () => ShortFilterOptionsModal(opts, ctx.System?.Id == system, ListEntity.Group))];
+        (string, Func<MessageComponent[]>)[] groupLongOptionsModals = [
+            ("Display Options", () => LongDisplayOptionsModal(opts, ctx.System?.Id == system)),
+            ("Filter Options", () => LongFilterOptionsModal(opts, ctx.System?.Id == system, ListEntity.Group))];
+        (string, Func<MessageComponent[]>)[] optionsModals = opts.Type == ListType.Short ? groupShortOptionsModals : groupLongOptionsModals;
+
+        await ctx.PaginateCV2(title, color, Renderer, itemsPerPage, optionsModals);
 
         // Base renderer, dispatches based on type
         (string, List<ContextUtils.PageItem>) Renderer(ApplicationCommandInteractionData? optsOverride)
         {
             if (optsOverride != null)
-            {
                 ParseListOptionUpdates(opts, optsOverride);
-                groups = groups.SortByGroupListOptions(opts, lookupCtx, countctx).ToList();
-            }
 
-            var filteredGroups = groups.FilterByGroupListOptions(opts, lookupCtx, countctx);
+            var filteredGroups = groups.SortAndFilterByListOptions(opts);
 
             if (opts.Type == ListType.Short)
                 return (footer, ShortRenderer(filteredGroups).ToList());
@@ -665,19 +884,19 @@ public static class ContextListExt
                     ret += $"[`{g.DisplayHid(ctx.Config, isList: true, shouldPad: shouldPad)}`] ";
                 ret += $"**{g.NameFor(ctx)}** ";
 
-                if (opts.IncludedFields[ListEntityField.DisplayName] && g.DisplayName != null && g.NamePrivacy.CanAccess(lookupCtx))
+                if (opts.IncludedFields[ListEntityField.DisplayName] && g.DisplayName != null && g.NamePrivacy.CanAccess(opts.Context))
                     ret += $"({g.DisplayName})";
                 else if (opts.IncludedFields[ListEntityField.CreationDate] &&
-                         g.MetadataPrivacy.TryGet(lookupCtx, g.Created, out var created))
+                         g.MetadataPrivacy.TryGet(opts.Context, g.Created, out var created))
                     ret += $"(created at <t:{created.ToUnixTimeSeconds()}>)";
-                else if (opts.IncludedFields[ListEntityField.Avatar] && g.IconFor(lookupCtx) is { } avatarUrl)
+                else if (opts.IncludedFields[ListEntityField.Avatar] && g.IconFor(opts.Context) is { } avatarUrl)
                     ret += $"([avatar URL]({avatarUrl}))";
-                else if (opts.IncludedFields[ListEntityField.MemberCount] && g.ListPrivacy.CanAccess(lookupCtx))
+                else if (opts.IncludedFields[ListEntityField.MemberCount] && g.ListPrivacy.CanAccess(opts.Context))
                     // -priv/-pub and listprivacy affects whether count is shown
                     // -all and visibility affects what the count is
-                    ret += $"({"member".ToQuantity(g.MemberCount(countctx), "n0")})";
-                else if (opts.IncludedFields[ListEntityField.MessageCount] && g.ListPrivacy.CanAccess(lookupCtx))
-                    ret += $"({"message".ToQuantity(g.MessageCount(lookupCtx, countctx), "n0")})";
+                    ret += $"({"member".ToQuantity(g.MemberCount(opts.PrivacyFilter), "n0")})";
+                else if (opts.IncludedFields[ListEntityField.MessageCount] && g.ListPrivacy.CanAccess(opts.Context))
+                    ret += $"({"message".ToQuantity(g.MessageCount(opts.Context, opts.PrivacyFilter), "n0")})";
 
                 return new ContextUtils.PageItem() { CharacterCount = ret.Length, Text = ret };
             });
@@ -686,7 +905,7 @@ public static class ContextListExt
         IEnumerable<ContextUtils.PageItem> LongRenderer(IEnumerable<ListedGroup> page) =>
             page.Select(g =>
                 {
-                    var components = embeds.CreateGroupMessageComponents(ctx, null, g, g.MemberCount(countctx), lookupCtx, null, opts, true);
+                    var components = embeds.CreateGroupMessageComponents(ctx, null, g, g.MemberCount(opts.PrivacyFilter), opts.Context, null, opts, true);
                     return new ContextUtils.PageItem()
                     {
                         CharacterCount = MiscUtils.CountCharacters(components),
@@ -694,37 +913,23 @@ public static class ContextListExt
                     };
                 });
 
-        MessageComponent[] groupShortOptionsModal() => ShortOptionsModal(opts, "group");
-        MessageComponent[] groupLongOptionsModal() => LongOptionsModal(opts, "group");
-
     }
 
-    public static async Task RenderGroupList(this Context ctx, LookupContext lookupCtx,
-                                SystemId system, string embedTitle, string color, ListOptions opts)
+    public static async Task RenderGroupList(this Context ctx, SystemId system, string embedTitle, string color, ListOptions opts)
     {
-        var countctx = LookupContext.ByNonOwner;
-        if (ctx.MatchFlag("a", "all"))
-        {
-            if (system == ctx.System?.Id)
-                countctx = LookupContext.ByOwner;
-            else
-                throw Errors.LookupNotAllowed;
-        }
-
         // We take an IDatabase instead of a IPKConnection so we don't keep the handle open for the entire runtime
         // We wanna release it as soon as the member list is actually *fetched*, instead of potentially minutes later (paginate timeout)
-        var groups = (await ctx.Database.Execute(conn => conn.QueryGroupList(system, opts.ToQueryOptions())))
-            .SortByGroupListOptions(opts, lookupCtx, countctx)
-            .ToList();
+        var groups = (await ctx.Database.Execute(conn => conn.QueryGroupList(system, opts.MemberFilter)))
+            .SortAndFilterByListOptions(opts);
 
         var itemsPerPage = opts.Type == ListType.Short ? 25 : 5;
-        await ctx.Paginate(groups.ToAsyncEnumerable(), groups.Count, itemsPerPage, embedTitle, color, Renderer, true);
+        await ctx.Paginate(groups.ToAsyncEnumerable(), groups.Count(), itemsPerPage, embedTitle, color, Renderer, true);
 
         // Base renderer, dispatches based on type
         Task Renderer(EmbedBuilder eb, IEnumerable<ListedGroup> page)
         {
             // Add a global footer with the filter/sort string + result count
-            eb.Footer(new Embed.EmbedFooter($"{opts.CreateFilterString()} {"result".ToQuantity(groups.Count)}."));
+            eb.Footer(new Embed.EmbedFooter($"{opts.CreateFilterString()} {"result".ToQuantity(groups.Count())}."));
 
             // Then call the specific renderers
             if (opts.Type == ListType.Short)
@@ -750,28 +955,28 @@ public static class ContextListExt
                 {
                     case ListEntityField.DisplayName:
                         {
-                            if (g.NamePrivacy.CanAccess(lookupCtx) && g.DisplayName != null)
+                            if (g.NamePrivacy.CanAccess(opts.Context) && g.DisplayName != null)
                                 ret += $"({g.DisplayName})";
                             break;
                         }
                     case ListEntityField.CreationDate:
                         {
-                            if (g.MetadataPrivacy.TryGet(lookupCtx, g.Created, out var created))
+                            if (g.MetadataPrivacy.TryGet(opts.Context, g.Created, out var created))
                                 ret += $"(created at <t:{created.ToUnixTimeSeconds()}>)";
                             break;
                         }
                     default:
                         {
                             if (opts.IncludedFields[ListEntityField.CreationDate] &&
-                                     g.MetadataPrivacy.TryGet(lookupCtx, g.Created, out var created))
+                                     g.MetadataPrivacy.TryGet(opts.Context, g.Created, out var created))
                             {
                                 ret += $"(created at <t:{created.ToUnixTimeSeconds()}>)";
                             }
-                            else if (opts.IncludedFields[ListEntityField.DisplayName] && g.DisplayName != null && g.NamePrivacy.CanAccess(lookupCtx))
+                            else if (opts.IncludedFields[ListEntityField.DisplayName] && g.DisplayName != null && g.NamePrivacy.CanAccess(opts.Context))
                             {
                                 ret += $"({g.DisplayName})";
                             }
-                            else if (opts.IncludedFields[ListEntityField.Avatar] && g.IconFor(lookupCtx) is { } avatarUrl)
+                            else if (opts.IncludedFields[ListEntityField.Avatar] && g.IconFor(opts.Context) is { } avatarUrl)
                             {
                                 ret += $"([avatar URL]({avatarUrl}))";
                             }
@@ -779,13 +984,8 @@ public static class ContextListExt
                             {
                                 // -priv/-pub and listprivacy affects whether count is shown
                                 // -all and visibility affects what the count is
-                                if (g.ListPrivacy.CanAccess(lookupCtx))
-                                {
-                                    if (ctx.MatchFlag("all", "a") && ctx.DirectLookupContextFor(system) == LookupContext.ByOwner)
-                                        ret += $"({"member".ToQuantity(g.MemberCount(LookupContext.ByOwner))})";
-                                    else
-                                        ret += $"({"member".ToQuantity(g.MemberCount(LookupContext.ByNonOwner))})";
-                                }
+                                if (g.ListPrivacy.CanAccess(opts.Context))
+                                    ret += $"({"member".ToQuantity(g.MemberCount(opts.PrivacyFilter))})";
                             }
 
                             break;
@@ -802,25 +1002,20 @@ public static class ContextListExt
             {
                 var profile = new StringBuilder($"**ID**: {g.DisplayHid(ctx.Config)}");
 
-                if (g.DisplayName != null && g.NamePrivacy.CanAccess(lookupCtx))
+                if (g.DisplayName != null && g.NamePrivacy.CanAccess(opts.Context))
                     profile.Append($"\n**Display name**: {g.DisplayName}");
 
-                if (g.ListPrivacy.CanAccess(lookupCtx))
-                {
-                    if (ctx.MatchFlag("all", "a") && ctx.DirectLookupContextFor(system) == LookupContext.ByOwner)
-                        profile.Append($"\n**Member Count:** {g.MemberCount(LookupContext.ByOwner)}");
-                    else
-                        profile.Append($"\n**Member Count:** {g.MemberCount(LookupContext.ByNonOwner)}");
-                }
+                if (g.ListPrivacy.CanAccess(opts.Context))
+                    profile.Append($"\n**Member Count:** {g.MemberCount(opts.PrivacyFilter)}");
 
                 if ((opts.IncludedFields[ListEntityField.CreationDate] || opts.SortProperty == ListEntityField.CreationDate) &&
-                    g.MetadataPrivacy.TryGet(lookupCtx, g.Created, out var created))
+                    g.MetadataPrivacy.TryGet(opts.Context, g.Created, out var created))
                     profile.Append($"\n**Created on:** {created.FormatZoned(ctx.Zone)}");
 
-                if (opts.IncludedFields[ListEntityField.Avatar] && g.IconFor(lookupCtx) is { } avatar)
+                if (opts.IncludedFields[ListEntityField.Avatar] && g.IconFor(opts.Context) is { } avatar)
                     profile.Append($"\n**Avatar URL:** {avatar.TryGetCleanCdnUrl()}");
 
-                if (g.DescriptionFor(lookupCtx) is { } desc)
+                if (g.DescriptionFor(opts.Context) is { } desc)
                     profile.Append($"\n\n{desc}");
 
                 if (g.Visibility == PrivacyLevel.Private)
