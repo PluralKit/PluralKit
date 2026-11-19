@@ -127,8 +127,8 @@ public class ListOptions(ListEntity entityType)
             ListEntityField.LastSwitch,
             ListEntityField.LastMessage,
             ListEntityField.Birthdate,
-            SortOption.FullBirthdate,
-            SortOption.Random,
+            ExtraSortOption.FullBirthdate,
+            ExtraSortOption.Random,
         ],
         ListEntity.Group => [
             ListEntityField.Name,
@@ -137,7 +137,7 @@ public class ListOptions(ListEntity entityType)
             ListEntityField.CreationDate,
             ListEntityField.MemberCount,
             ListEntityField.MessageCount,
-            SortOption.Random,
+            ExtraSortOption.Random,
         ],
         _ => []
     };
@@ -167,7 +167,7 @@ public class ListOptions(ListEntity entityType)
     {
         var str = new StringBuilder();
         str.Append("Sorting ");
-        if (SortProperty == SortOption.Random) str.Append("randomly");
+        if (SortProperty == ExtraSortOption.Random) str.Append("randomly");
         else
         {
             str.Append($"by {SortProperty.ToReadableString()}");
@@ -227,22 +227,18 @@ public static class ListOptionsExt
         IComparer<T> ReverseMaybe<T>(IComparer<T> c) =>
             opts.Reverse ? Comparer<T>.Create((a, b) => c.Compare(b, a)) : c;
 
-
-        if (opts.SortProperty == SortOption.Random)
-        {
-            var randGen = new global::System.Random();
-            return input.OrderBy(m => randGen.Next());
-        }
-        else if (opts.SortProperty == SortOption.FullBirthdate)
-            // Sort: Birthdays with year -> Birthdays without year -> No Birthdays
-            return input.OrderBy(m => m.BirthdayFor(ctx) is { } bday ? (bday.Year == 0 || bday.Year == 4 ? 1 : 0) : 2)
-                        .ThenBy(m => m.BirthdayFor(ctx), ReverseMaybe(Comparer<LocalDate?>.Default));
+        var randGen = new global::System.Random();
 
         var culture = StringComparer.InvariantCultureIgnoreCase;
-        return (opts.SortProperty.Field switch
+        return (opts.SortProperty.value switch
         {
             // As for the OrderByDescending HasValue calls: https://www.jerriepelser.com/blog/orderby-with-null-values/
             // We want nulls last no matter what, even if orders are reversed
+            (ListEntityField)ExtraSortOption.Random => input.OrderBy(m => randGen.Next()),
+            (ListEntityField)ExtraSortOption.FullBirthdate => input
+                // Sort: Birthdays with year -> Birthdays without year -> No Birthdays
+                .OrderBy(m => m.BirthdayFor(ctx) is { } bday ? (bday.Year == 0 || bday.Year == 4 ? 1 : 0) : 2)
+                .ThenBy(m => m.BirthdayFor(ctx), ReverseMaybe(Comparer<LocalDate?>.Default)),
             ListEntityField.Hid => input.OrderBy(m => m.Hid, ReverseMaybe(culture)),
             ListEntityField.Name => input.OrderBy(m => m.NameFor(ctx), ReverseMaybe(culture)),
             ListEntityField.CreationDate => input
@@ -427,17 +423,14 @@ public static class ListOptionsExt
             opts.Reverse ? Comparer<T>.Create((a, b) => c.Compare(b, a)) : c;
 
         var culture = StringComparer.InvariantCultureIgnoreCase;
+        var randGen = new global::System.Random();
 
-        if (opts.SortProperty == SortOption.Random)
-        {
-            var randGen = new global::System.Random();
-            return input.OrderBy(g => randGen.Next());
-        }
-
-        return (opts.SortProperty.Field switch
+        return (opts.SortProperty.value switch
         {
             // As for the OrderByDescending HasValue calls: https://www.jerriepelser.com/blog/orderby-with-null-values/
             // We want nulls last no matter what, even if orders are reversed
+            (ListEntityField)ExtraSortOption.Random => input
+                .OrderBy(g => randGen.Next()),
             ListEntityField.Hid => input.OrderBy(g => g.Hid, ReverseMaybe(culture)),
             ListEntityField.Name => input.OrderBy(g => g.NameFor(ctx), ReverseMaybe(culture)),
             ListEntityField.CreationDate => input

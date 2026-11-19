@@ -21,7 +21,7 @@ public enum ListEntityField
     MemberCount,
 }
 
-public static class ListEntityFieldExtensions
+public static class ListEntityFieldExt
 {
     public static string ToLabel(this ListEntityField field) => field switch
     {
@@ -42,7 +42,7 @@ public static class ListEntityFieldExtensions
         ListEntityField.Description => "Description",
         ListEntityField.Color => "Color",
         ListEntityField.MemberCount => "Member Count",
-        _ => throw new ArgumentOutOfRangeException(nameof(field))
+        _ => throw new ArgumentException($"Couldn't find Label for ExtraSortOption {field}")
     };
 
     public static string ToReadableString(this ListEntityField field, bool plural = false) => field switch
@@ -64,43 +64,56 @@ public static class ListEntityFieldExtensions
         ListEntityField.Description => plural ? "descriptions" : "description",
         ListEntityField.Color => plural ? "colors" : "color",
         ListEntityField.MemberCount => plural ? "member counts" : "member count",
-        _ => throw new ArgumentOutOfRangeException($"Couldn't find readable string for sort property {field}")
+        _ => throw new ArgumentException($"Couldn't find readable string for sort property {field}")
     };
 }
 
-// Enums can't have inheritence so this is the alternative
-public readonly struct SortOption(ListEntityField entityField): IEquatable<SortOption>
+public static class ExtraSortOptionsExt
 {
-    // Add SortOptions that are not also EntityFields here
-    public static readonly SortOption Random = new((ListEntityField)(-1));
-    public static readonly SortOption FullBirthdate = new((ListEntityField)(-2));
+    public static string ToLabel(this ExtraSortOption opt) => opt switch
+    {
+        ExtraSortOption.Random => "Random",
+        ExtraSortOption.FullBirthdate => "Birthdate (including year)",
+        _ => throw new ArgumentException($"Couldn't find Label for ExtraSortOption {opt}")
+    };
 
-    private readonly ListEntityField entityField = entityField;
-    public ListEntityField? Field => Enum.IsDefined(entityField) ? entityField : null;
+    public static string ToReadableString(this ExtraSortOption opt, bool plural = false) => opt switch
+    {
+        ExtraSortOption.Random => "random",
+        ExtraSortOption.FullBirthdate => plural ? "birthdates (including year)" : "birthdate (including year)",
+        _ => throw new ArgumentException($"Couldn't find readable string for sort property {opt}")
+    };
+}
 
-    public bool Equals(SortOption other) => entityField == other.entityField;
-    public override bool Equals(object? obj) => obj is SortOption other && Equals(other);
-    public static bool operator ==(SortOption left, SortOption right) => left.Equals(right);
-    public static bool operator !=(SortOption left, SortOption right) => !left.Equals(right);
+public enum ExtraSortOption
+{
+    Random = -1,
+    FullBirthdate = -2
+}
+
+// Enums can't have inheritence so this is the alternative
+public readonly record struct SortOption(ListEntityField entityField): IEquatable<SortOption>
+{
+
+    public readonly ListEntityField value = entityField;
+    public ListEntityField? AsListEntityField => Enum.IsDefined(entityField) ? entityField : null;
+    public ExtraSortOption? AsExtraSortOption => Enum.IsDefined((ExtraSortOption)entityField) ? (ExtraSortOption)entityField : null;
+
     public static implicit operator SortOption(ListEntityField entityField) => new(entityField);
+    public static implicit operator SortOption(ExtraSortOption entityField) => new((ListEntityField)entityField);
 
-    public override int GetHashCode() => entityField.GetHashCode();
+    //public override int GetHashCode() => entityField.GetHashCode();
 
     public static bool TryParse(string value, out SortOption result)
     {
-        if (value == Random.ToString())
+        if (Enum.TryParse<ExtraSortOption>(value, out var extraSortResult))
         {
-            result = Random;
+            result = extraSortResult;
             return true;
         }
-        if (value == FullBirthdate.ToString())
+        if (Enum.TryParse<ListEntityField>(value, out var fieldSortResult))
         {
-            result = FullBirthdate;
-            return true;
-        }
-        if (Enum.TryParse<ListEntityField>(value, out var sortResult))
-        {
-            result = sortResult;
+            result = fieldSortResult;
             return true;
         }
         result = new();
@@ -108,16 +121,11 @@ public readonly struct SortOption(ListEntityField entityField): IEquatable<SortO
     }
 
     // If more SortOptions that are not EntityFields get added also change these
-    public string ToLabel() => Field?.ToLabel() ?? (
-        Equals(Random) ? "Random" :
-        Equals(FullBirthdate) ? "Birthdate (including year)" :
-        throw new ArgumentException());
-    public override string ToString() => Field?.ToString() ?? (
-        Equals(Random) ? nameof(Random) :
-        Equals(FullBirthdate) ? nameof(FullBirthdate) :
-        throw new ArgumentException());
-    public string ToReadableString(bool plural = false) => Field?.ToReadableString(plural) ?? (
-        Equals(Random) ? "random" :
-        Equals(FullBirthdate) ? (plural ? "birthdates (including year)" : "birthdate (including year)") :
-        throw new ArgumentException());
+    public string ToLabel() => AsListEntityField?.ToLabel() ?? AsExtraSortOption?.ToLabel() ??
+        throw new ArgumentException();
+    public override string ToString() => AsListEntityField?.ToString() ?? AsExtraSortOption?.ToString() ??
+        throw new ArgumentException();
+    public string ToReadableString(bool plural = false) =>
+        AsListEntityField?.ToReadableString(plural) ?? AsExtraSortOption?.ToReadableString(plural) ??
+        throw new ArgumentException();
 }

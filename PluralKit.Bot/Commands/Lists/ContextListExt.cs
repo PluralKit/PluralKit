@@ -44,7 +44,7 @@ public static class ContextListExt
             p.SortProperty = ListEntityField.LastSwitch;
         if (ctx.MatchFlag("by-last-message", "blm", "blp")) p.SortProperty = ListEntityField.LastMessage;
         if (ctx.MatchFlag("by-birthday", "by-birthdate", "bbd")) p.SortProperty = ListEntityField.Birthdate;
-        if (ctx.MatchFlag("random", "rand")) p.SortProperty = SortOption.Random;
+        if (ctx.MatchFlag("random", "rand")) p.SortProperty = ExtraSortOption.Random;
 
         // Sort reverse?
         if (ctx.MatchFlag("r", "rev", "reverse"))
@@ -111,7 +111,7 @@ public static class ContextListExt
         var infoComponent = optsOverride.Components.First((x) => x.Component.CustomId == "info_select").Component;
         if (infoComponent?.Values?.Length > 0 && infoComponent.Values[0] == "default")
         {
-            if (opts.SortProperty == SortOption.FullBirthdate)
+            if (opts.SortProperty == ExtraSortOption.FullBirthdate)
                 infoComponent.Values[0] = ListEntityField.Birthdate.ToString();
             else
                 infoComponent.Values[0] = sortComponent.Values[0];
@@ -139,33 +139,33 @@ public static class ContextListExt
         opts.AssertIsValid();
     }
 
-    public static MessageComponent[] shortOptionsModal(ListOptions opts, string entity) => [
-            new()
+    public static MessageComponent[] ShortOptionsModal(ListOptions opts, string entity) => [
+        new()
+        {
+            Type = ComponentType.Label,
+            Label = "Sort By",
+            Component = new()
             {
-                Type = ComponentType.Label,
-                Label = "Sort By",
-                Component = new()
-                {
-                    Type = ComponentType.StringSelect,
-                    CustomId = "sort_select",
-                    MaxValues = 1,
-                    Options = [
-                        new()
+                Type = ComponentType.StringSelect,
+                CustomId = "sort_select",
+                MaxValues = 1,
+                Options = [
+                    new()
+                    {
+                        Label = "Name (Default)",
+                        Value = ListEntityField.Name.ToString(),
+                        Default = opts.SortProperty == ListEntityField.Name
+                    },
+                    .. opts.SortOptions.Where(x => x != ListEntityField.Name).Select(x =>
+                        new MessageComponentOption()
                         {
-                            Label = "Name (Default)",
-                            Value = ListEntityField.Name.ToString(),
-                            Default = opts.SortProperty == ListEntityField.Name
-                        },
-                        .. opts.SortOptions.Where(x => x != ListEntityField.Name).Select(x =>
-                            new MessageComponentOption()
-                            {
-                                Label = x.ToLabel(),
-                                Value = x.ToString(),
-                                Default = opts.SortProperty == x
-                            }),
-                    ]
-                }
-            },
+                            Label = x.ToLabel(),
+                            Value = x.ToString(),
+                            Default = opts.SortProperty == x
+                        }),
+                ]
+            }
+        },
         new()
         {
             Type = ComponentType.Label,
@@ -176,29 +176,29 @@ public static class ContextListExt
                 CustomId = "info_select",
                 MaxValues = 1,
                 Options = [
-                        new()
-                        {
-                            Label = "Same as Sort",
-                            Value = "default",
-                            Default = opts.SortIncludeMatch
-                        },
+                    new()
+                    {
+                        Label = "Same as Sort",
+                        Value = "default",
+                        Default = opts.SortIncludeMatch
+                    },
                     .. opts.IncludedFields.AsEnumerable().Where(f => !new List<ListEntityField>(){
-                            ListEntityField.Description, ListEntityField.Groups, ListEntityField.Aliases
-                        }.Any(except => except == f.Key)).Select(field =>
-                            new MessageComponentOption()
-                            {
-                                Label = field.Key.ToLabel(),
-                                Value = field.Key.ToString(),
-                                Default = !opts.SortIncludeMatch && field.Value
-                            }
-                        ),
+                        ListEntityField.Description, ListEntityField.Groups, ListEntityField.Aliases
+                    }.Any(except => except == f.Key)).Select(field =>
+                        new MessageComponentOption()
+                        {
+                            Label = field.Key.ToLabel(),
+                            Value = field.Key.ToString(),
+                            Default = !opts.SortIncludeMatch && field.Value
+                        }
+                    ),
                     new()
                     {
                         Label = "No Extra Info",
                         Value = "none",
                         Default = !opts.SortIncludeMatch && opts.IncludedCount == 0
                     }
-                    ]
+                ]
             }
         },
         new()
@@ -212,14 +212,14 @@ public static class ContextListExt
                 Required = false,
                 MaxValues = (uint?)opts.WithFilter.Count,
                 Options = [
-                        .. opts.WithFilter.AsEnumerable().Select(field =>
-                        new MessageComponentOption()
-                        {
-                            Label = field.Key.ToLabel(),
-                            Value = field.Key.ToString(),
-                            Default = !opts.SortIncludeMatch && field.Value
-                        }
-                        )],
+                    .. opts.WithFilter.AsEnumerable().Select(field =>
+                    new MessageComponentOption()
+                    {
+                        Label = field.Key.ToLabel(),
+                        Value = field.Key.ToString(),
+                        Default = !opts.SortIncludeMatch && field.Value
+                    }
+                )],
             }
         },
         new()
@@ -233,14 +233,14 @@ public static class ContextListExt
                 Required = false,
                 MaxValues = (uint?)opts.WithOutFilter.Count,
                 Options = [
-                        .. opts.WithOutFilter.AsEnumerable().Select(field =>
-                        new MessageComponentOption()
-                        {
-                            Label = field.Key.ToLabel(),
-                            Value = field.Key.ToString(),
-                            Default = !opts.SortIncludeMatch && field.Value
-                        })
-                    ],
+                    .. opts.WithOutFilter.AsEnumerable().Select(field =>
+                    new MessageComponentOption()
+                    {
+                        Label = field.Key.ToLabel(),
+                        Value = field.Key.ToString(),
+                        Default = !opts.SortIncludeMatch && field.Value
+                    })
+                ],
             }
         },
         new()
@@ -253,13 +253,12 @@ public static class ContextListExt
                 CustomId = "extra_checkboxes",
                 Required = false,
                 Options = [
-
-                        new()
-                        {
-                            Label = "Reverse Sort",
-                            Value = "reverse",
-                            Default = opts.Reverse
-                        },
+                    new()
+                    {
+                        Label = "Reverse Sort",
+                        Value = "reverse",
+                        Default = opts.Reverse
+                    },
                     new()
                     {
                         Label = "Show IDs",
@@ -272,12 +271,12 @@ public static class ContextListExt
                         Value = "number",
                         Default = opts.NumberItems
                     }
-                    ]
+                ]
             }
         }
-        ];
+    ];
 
-    public static MessageComponent[] longOptionsModal(ListOptions opts, string entity) => [
+    public static MessageComponent[] LongOptionsModal(ListOptions opts, string entity) => [
         new()
         {
             Type = ComponentType.Label,
@@ -288,14 +287,14 @@ public static class ContextListExt
                 CustomId = "sort_select",
                 MaxValues = 1,
                 Options = [
-                        .. opts.SortOptions.Select(field =>
-                        new MessageComponentOption()
-                        {
-                            Label = field.ToLabel(),
-                            Value = field.ToString(),
-                            Default = opts.SortProperty == field
-                        })
-                    ]
+                    .. opts.SortOptions.Select(field =>
+                    new MessageComponentOption()
+                    {
+                        Label = field.ToLabel(),
+                        Value = field.ToString(),
+                        Default = opts.SortProperty == field
+                    })
+                ]
             }
         },
         new()
@@ -309,15 +308,15 @@ public static class ContextListExt
                 Required = false,
                 MaxValues = (uint?)opts.IncludedFields.Count,
                 Options = [
-                        .. opts.IncludedFields.AsEnumerable().Select(field =>
-                            new MessageComponentOption()
-                            {
-                                Label = field.Key.ToLabel(),
-                                Value = field.Key.ToString(),
-                                Default = field.Value
-                            }
-                        )
-                    ]
+                    .. opts.IncludedFields.AsEnumerable().Select(field =>
+                        new MessageComponentOption()
+                        {
+                            Label = field.Key.ToLabel(),
+                            Value = field.Key.ToString(),
+                            Default = field.Value
+                        }
+                    )
+                ]
             }
         },
         new()
@@ -331,14 +330,14 @@ public static class ContextListExt
                 Required = false,
                 MaxValues = (uint?)opts.WithFilter.Count,
                 Options = [
-                        .. opts.WithFilter.AsEnumerable().Select(field =>
-                        new MessageComponentOption()
-                        {
-                            Label = field.Key.ToLabel(),
-                            Value = field.Key.ToString(),
-                            Default = !opts.SortIncludeMatch && field.Value
-                        }
-                    )],
+                    .. opts.WithFilter.AsEnumerable().Select(field =>
+                    new MessageComponentOption()
+                    {
+                        Label = field.Key.ToLabel(),
+                        Value = field.Key.ToString(),
+                        Default = !opts.SortIncludeMatch && field.Value
+                    }
+                )],
             }
         },
         new()
@@ -352,14 +351,14 @@ public static class ContextListExt
                 Required = false,
                 MaxValues = (uint?)opts.WithOutFilter.Count,
                 Options = [
-                        .. opts.WithOutFilter.AsEnumerable().Select(field =>
-                        new MessageComponentOption()
-                        {
-                            Label = field.Key.ToLabel(),
-                            Value = field.Key.ToString(),
-                            Default = !opts.SortIncludeMatch && field.Value
-                        })
-                    ],
+                    .. opts.WithOutFilter.AsEnumerable().Select(field =>
+                    new MessageComponentOption()
+                    {
+                        Label = field.Key.ToLabel(),
+                        Value = field.Key.ToString(),
+                        Default = !opts.SortIncludeMatch && field.Value
+                    })
+                ],
             }
         },
         new()
@@ -372,19 +371,19 @@ public static class ContextListExt
                 CustomId = "extra_checkboxes",
                 Required = false,
                 Options = [
-                        new()
-                        {
-                            Label = "Reverse Sort",
-                            Value = "reverse",
-                            Default = opts.Reverse
-                        },
-                        new()
-                        {
-                            Label = "Show IDs",
-                            Value = "id",
-                            Default = opts.ShowIds
-                        }
-                    ]
+                    new()
+                    {
+                        Label = "Reverse Sort",
+                        Value = "reverse",
+                        Default = opts.Reverse
+                    },
+                    new()
+                    {
+                        Label = "Show IDs",
+                        Value = "id",
+                        Default = opts.ShowIds
+                    }
+                ]
             }
         }
     ];
@@ -485,8 +484,8 @@ public static class ContextListExt
                 };
             });
 
-        MessageComponent[] memberShortOptionsModal() => shortOptionsModal(opts, "member");
-        MessageComponent[] memberLongOptionsModal() => longOptionsModal(opts, "member");
+        MessageComponent[] memberShortOptionsModal() => ShortOptionsModal(opts, "member");
+        MessageComponent[] memberLongOptionsModal() => LongOptionsModal(opts, "member");
 
     }
 
@@ -695,8 +694,8 @@ public static class ContextListExt
                     };
                 });
 
-        MessageComponent[] groupShortOptionsModal() => shortOptionsModal(opts, "group");
-        MessageComponent[] groupLongOptionsModal() => longOptionsModal(opts, "group");
+        MessageComponent[] groupShortOptionsModal() => ShortOptionsModal(opts, "group");
+        MessageComponent[] groupLongOptionsModal() => LongOptionsModal(opts, "group");
 
     }
 
@@ -747,7 +746,7 @@ public static class ContextListExt
             {
                 var ret = $"[`{g.DisplayHid(ctx.Config, isList: true, shouldPad: shouldPad)}`] **{g.NameFor(ctx)}** ";
 
-                switch (opts.SortProperty.Field)
+                switch (opts.SortProperty.value)
                 {
                     case ListEntityField.DisplayName:
                         {
