@@ -24,97 +24,131 @@ public class ServerConfig
     public async Task ShowConfig(Context ctx)
     {
         await ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
-        var items = new List<PaginatedConfigItem>();
-
-        items.Add(new(
-            "log cleanup",
-            "Whether to clean up other bots' log channels",
-            EnabledDisabled(ctx.GuildConfig!.LogCleanupEnabled),
-            "disabled"
-        ));
-
-        items.Add(new(
-            "invalid command error",
-            "Whether to show an error message when an unknown command is sent",
-            EnabledDisabled(ctx.GuildConfig!.InvalidCommandResponseEnabled),
-            "enabled"
-        ));
-
-        items.Add(new(
-            "require tag",
-            "Whether server users are required to have a system tag on proxied messages",
-            EnabledDisabled(ctx.GuildConfig!.RequireSystemTag),
-            "disabled"
-        ));
-
-        items.Add(new(
-            "suppress notifications",
-            "Under what conditions proxied messages will have notifications suppressed (sent as `@silent` messages)",
-            ctx.GuildConfig!.SuppressNotifications.ToUserString(),
-            "never"
-        ));
-
-        items.Add(new(
-            "log channel",
-            "Channel to log proxied messages to",
-            ctx.GuildConfig!.LogChannel != null ? $"<#{ctx.GuildConfig.LogChannel}>" : "none",
-            "none"
-        ));
-
         string ChannelListMessage(int count, string cmd) => $"{count} channels, use `{ctx.DefaultPrefix}scfg {cmd}` to view/update";
 
-        items.Add(new(
-            "log blacklist",
-            "Channels whose proxied messages will not be logged",
-            ChannelListMessage(ctx.GuildConfig!.LogBlacklist.Length, "log blacklist"),
-            ChannelListMessage(0, "log blacklist")
-        ));
+        var items = new List<PaginatedConfigItem>
+        {
+            new(
+                "log cleanup",
+                "Whether to clean up other bots' log channels",
+                EnabledDisabled(ctx.GuildConfig!.LogCleanupEnabled),
+                "disabled"
+            ),
+            new(
+                "invalid command error",
+                "Whether to show an error message when an unknown command is sent",
+                EnabledDisabled(ctx.GuildConfig!.InvalidCommandResponseEnabled),
+                "enabled"
+            ),
+            new(
+                "require tag",
+                "Whether server users are required to have a system tag on proxied messages",
+                EnabledDisabled(ctx.GuildConfig!.RequireSystemTag),
+                "disabled"
+            ),
+            new(
+                "suppress notifications",
+                "Under what conditions proxied messages will have notifications suppressed (sent as `@silent` messages)",
+                ctx.GuildConfig!.SuppressNotifications.ToUserString(),
+                "never"
+            ),
+            new(
+                "log channel",
+                "Channel to log proxied messages to",
+                ctx.GuildConfig!.LogChannel != null ? $"<#{ctx.GuildConfig.LogChannel}>" : "none",
+                "none"
+            ),
+            new(
+                "log blacklist",
+                "Channels whose proxied messages will not be logged",
+                ChannelListMessage(ctx.GuildConfig!.LogBlacklist.Length, "log blacklist"),
+                ChannelListMessage(0, "log blacklist")
+            ),
+            new(
+                "proxy blacklist",
+                "Channels where message proxying is disabled",
+                ChannelListMessage(ctx.GuildConfig!.ProxyBlacklist.Length, "proxy blacklist"),
+                ChannelListMessage(0, "proxy blacklist")
+            ),
+            new(
+                "command blacklist",
+                "Channels where running text commands is disabled",
+                ChannelListMessage(ctx.GuildConfig!.CommandBlacklist.Length, "command blacklist"),
+                ChannelListMessage(0, "command blacklist")
+            )
+        };
 
-        items.Add(new(
-            "proxy blacklist",
-            "Channels where message proxying is disabled",
-            ChannelListMessage(ctx.GuildConfig!.ProxyBlacklist.Length, "proxy blacklist"),
-            ChannelListMessage(0, "proxy blacklist")
-        ));
-
-        items.Add(new(
-            "command blacklist",
-            "Channels where running text commands is disabled",
-            ChannelListMessage(ctx.GuildConfig!.CommandBlacklist.Length, "command blacklist"),
-            ChannelListMessage(0, "command blacklist")
-        ));
-
-        await ctx.Paginate<PaginatedConfigItem>(
-            items.ToAsyncEnumerable(),
-            items.Count,
-            10,
-            "Current settings for this server",
-            null,
-            (eb, l) =>
-            {
-                var description = new StringBuilder();
-
-                foreach (var item in l)
+        if (ctx.MatchFlag("se", "show-embed"))
+        {
+            await ctx.Paginate(
+                items.ToAsyncEnumerable(),
+                items.Count,
+                10,
+                "Current settings for this server",
+                null,
+                (eb, l) =>
                 {
-                    description.Append(item.Key.AsCode());
-                    description.Append($" **({item.CurrentValue ?? item.DefaultValue})**");
-                    if (item.CurrentValue != null && item.CurrentValue != item.DefaultValue)
-                        description.Append("\ud83d\udd39");
+                    var description = new StringBuilder();
 
-                    description.AppendLine();
-                    description.Append(item.Description);
-                    description.AppendLine();
-                    description.AppendLine();
-                }
+                    foreach (var item in l)
+                    {
+                        description.Append(item.Key.AsCode());
+                        description.Append($" **({item.CurrentValue ?? item.DefaultValue})**");
+                        if (item.CurrentValue != null && item.CurrentValue != item.DefaultValue)
+                            description.Append("\ud83d\udd39");
 
-                eb.Description(description.ToString());
+                        description.AppendLine();
+                        description.Append(item.Description);
+                        description.AppendLine();
+                        description.AppendLine();
+                    }
 
-                // using *large* blue diamond here since it's easier to see in the small footer
-                eb.Footer(new($"\U0001f537 means this setting was changed. Type `{ctx.DefaultPrefix}serverconfig <setting name> clear` to reset it to the default."));
+                    eb.Description(description.ToString());
 
-                return Task.CompletedTask;
-            }
-        );
+                    // using *large* blue diamond here since it's easier to see in the small footer
+                    eb.Footer(new($"\U0001f537 means this setting was changed. Type `{ctx.DefaultPrefix}serverconfig <setting name> clear` to reset it to the default."));
+
+                    return Task.CompletedTask;
+                },
+                true
+            );
+        }
+        else
+        {
+            await ctx.PaginateCV2(
+                "Current settings for this server",
+                null,
+                (_) =>
+                {
+                    var description = new StringBuilder();
+
+                    var pageItems = items.Select(item =>
+                    {
+                        var description = new StringBuilder();
+                        description.Append(item.Key.AsCode());
+                        description.Append($" **({item.CurrentValue ?? item.DefaultValue})**");
+                        if (item.CurrentValue != null && item.CurrentValue != item.DefaultValue)
+                            description.Append("\ud83d\udd39");
+
+                        description.AppendLine();
+                        description.Append(item.Description);
+                        description.AppendLine();
+
+                        return new ContextUtils.PageItem()
+                        {
+                            CharacterCount = description.ToString().Length,
+                            Text = description.ToString(),
+                        };
+                    });
+
+                    var footer = $"-# \ud83d\udd39 means this setting was changed. Type `{ctx.DefaultPrefix}serverconfig <setting name> clear` to reset it to the default.";
+
+                    return (footer, pageItems.ToList());
+                },
+                10
+            );
+        }
+
     }
 
     public async Task SetLogChannel(Context ctx)

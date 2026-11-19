@@ -16,134 +16,119 @@ public class Config
 
     public async Task ShowConfig(Context ctx)
     {
-        var items = new List<PaginatedConfigItem>();
-
         var allowAutoproxy = await ctx.Repository.GetAutoproxyEnabled(ctx.Author.Id);
 
-        items.Add(new(
-            "autoproxy account",
-            "Whether autoproxy is enabled for the current account",
-            EnabledDisabled(allowAutoproxy),
-            "enabled"
-        ));
-
-        items.Add(new(
-            "autoproxy timeout",
-            "If this is set, latch-mode autoproxy will not keep autoproxying after this amount of time has elapsed since the last message sent in the server",
-            ctx.Config.LatchTimeout.HasValue
-                ? (
-                    ctx.Config.LatchTimeout.Value != 0
-                    ? Duration.FromSeconds(ctx.Config.LatchTimeout.Value).ToTimeSpan().Humanize(4)
-                    : "disabled"
-                )
-                : null,
-            ProxyMatcher.DefaultLatchExpiryTime.ToTimeSpan().Humanize(4)
-        ));
-
-        items.Add(new(
-            "timezone",
-            "The system's time zone - shows timestamps in your local time",
-            ctx.Config.UiTz,
-            "UTC"
-        ));
-
-        items.Add(new(
-            "ping",
-            $"Whether other users are able to mention you via a {Emojis.Bell} reaction",
-            EnabledDisabled(ctx.Config.PingsEnabled),
-            "enabled"
-        ));
-
-        items.Add(new(
-            "private member",
-            "Whether member privacy is automatically set to private for new members",
-            EnabledDisabled(ctx.Config.MemberDefaultPrivate),
-            "disabled"
-        ));
-
-        items.Add(new(
-            "private group",
-            "Whether group privacy is automatically set to private for new groups",
-            EnabledDisabled(ctx.Config.GroupDefaultPrivate),
-            "disabled"
-        ));
-
-        items.Add(new(
-            "show private",
-            "Whether private information is shown to linked accounts by default",
-            ctx.Config.ShowPrivateInfo.ToString().ToLower(),
-            "true"
-        ));
-
-        items.Add(new(
-            "Member limit",
-            "The maximum number of registered members for your system",
-            ctx.Config.MemberLimitOverride?.ToString(),
-            Limits.MaxMemberCount.ToString()
-        ));
-
-        items.Add(new(
-            "Group limit",
-            "The maximum number of registered groups for your system",
-            ctx.Config.GroupLimitOverride?.ToString(),
-            Limits.MaxGroupCount.ToString()
-        ));
-
-        items.Add(new(
-            "Proxy case",
-            "Whether proxy tags are case sensitive",
-            EnabledDisabled(ctx.Config.CaseSensitiveProxyTags),
-            "enabled"
-        ));
-
-        items.Add(new(
-            "Proxy error",
-            "Whether to send an error message when proxying fails",
-            EnabledDisabled(ctx.Config.ProxyErrorMessageEnabled),
-            "enabled"
-        ));
-
-        items.Add(new(
-            "Split IDs",
-            "Whether to display 6-character IDs split with a hyphen, to ease readability",
-            EnabledDisabled(ctx.Config.HidDisplaySplit),
-            "disabled"
-        ));
-
-        items.Add(new(
-            "Capitalize IDs",
-            "Whether to display IDs as capital letters, to ease readability",
-            EnabledDisabled(ctx.Config.HidDisplayCaps),
-            "disabled"
-        ));
-
-        items.Add(new(
-            "Pad IDs",
-            "Whether to pad 5-character IDs in lists (left/right)",
-            ctx.Config.HidListPadding.ToUserString(),
-            "off"
-        ));
-
-        items.Add(new(
-            "show color",
-            "Whether to show color codes in system/member/group cards",
-            EnabledDisabled(ctx.Config.CardShowColorHex),
-            "disabled"
-        ));
-
-        items.Add(new(
-            "Proxy Switch",
-            "Switching behavior when proxy tags are used",
-            ctx.Config.ProxySwitch.ToUserString(),
-            "off"
-        ));
-
-        items.Add(new(
-            "Name Format",
-            "Format string used to display a member's name https://pluralkit.me/guide/#setting-a-custom-name-format",
-            ctx.Config.NameFormat,
-            ProxyMember.DefaultFormat
-        ));
+        var items = new List<PaginatedConfigItem>
+        {
+            new(
+                "autoproxy account",
+                "Whether autoproxy is enabled for the current account",
+                EnabledDisabled(allowAutoproxy),
+                "enabled"
+            ),
+            new(
+                "autoproxy timeout",
+                "If this is set, latch-mode autoproxy will not keep autoproxying after this amount of time has elapsed since the last message sent in the server",
+                ctx.Config.LatchTimeout.HasValue
+                    ? (
+                        ctx.Config.LatchTimeout.Value != 0
+                        ? Duration.FromSeconds(ctx.Config.LatchTimeout.Value).ToTimeSpan().Humanize(4)
+                        : "disabled"
+                    )
+                    : null,
+                ProxyMatcher.DefaultLatchExpiryTime.ToTimeSpan().Humanize(4)
+            ),
+            new(
+                "timezone",
+                "The system's time zone - shows timestamps in your local time",
+                ctx.Config.UiTz,
+                "UTC"
+            ),
+            new(
+                "ping",
+                $"Whether other users are able to mention you via a {Emojis.Bell} reaction",
+                EnabledDisabled(ctx.Config.PingsEnabled),
+                "enabled"
+            ),
+            new(
+                "private member",
+                "Whether member privacy is automatically set to private for new members",
+                EnabledDisabled(ctx.Config.MemberDefaultPrivate),
+                "disabled"
+            ),
+            new(
+                "private group",
+                "Whether group privacy is automatically set to private for new groups",
+                EnabledDisabled(ctx.Config.GroupDefaultPrivate),
+                "disabled"
+            ),
+            new(
+                "show private",
+                "Whether private information is shown to linked accounts by default",
+                ctx.Config.ShowPrivateInfo.ToString().ToLower(),
+                "true"
+            ),
+            new(
+                "Member limit",
+                "The maximum number of registered members for your system",
+                ctx.Config.MemberLimitOverride?.ToString(),
+                Limits.MaxMemberCount.ToString()
+            ),
+            new(
+                "Group limit",
+                "The maximum number of registered groups for your system",
+                ctx.Config.GroupLimitOverride?.ToString(),
+                Limits.MaxGroupCount.ToString()
+            ),
+            new(
+                "Proxy case",
+                "Whether proxy tags are case sensitive",
+                EnabledDisabled(ctx.Config.CaseSensitiveProxyTags),
+                "enabled"
+            ),
+            new(
+                "Proxy error",
+                "Whether to send an error message when proxying fails",
+                EnabledDisabled(ctx.Config.ProxyErrorMessageEnabled),
+                "enabled"
+            ),
+            new(
+                "Split IDs",
+                "Whether to display 6-character IDs split with a hyphen, to ease readability",
+                EnabledDisabled(ctx.Config.HidDisplaySplit),
+                "disabled"
+            ),
+            new(
+                "Capitalize IDs",
+                "Whether to display IDs as capital letters, to ease readability",
+                EnabledDisabled(ctx.Config.HidDisplayCaps),
+                "disabled"
+            ),
+            new(
+                "Pad IDs",
+                "Whether to pad 5-character IDs in lists (left/right)",
+                ctx.Config.HidListPadding.ToUserString(),
+                "off"
+            ),
+            new(
+                "show color",
+                "Whether to show color codes in system/member/group cards",
+                EnabledDisabled(ctx.Config.CardShowColorHex),
+                "disabled"
+            ),
+            new(
+                "Proxy Switch",
+                "Switching behavior when proxy tags are used",
+                ctx.Config.ProxySwitch.ToUserString(),
+                "off"
+            ),
+            new(
+                "Name Format",
+                "Format string used to display a member's name https://pluralkit.me/guide/#setting-a-custom-name-format",
+                ctx.Config.NameFormat,
+                ProxyMember.DefaultFormat
+            )
+        };
 
         if (ctx.Guild == null)
         {
@@ -164,37 +149,77 @@ public class Config
             ));
         }
 
-        await ctx.Paginate<PaginatedConfigItem>(
-            items.ToAsyncEnumerable(),
-            items.Count,
-            10,
-            "Current settings for your system",
-            ctx.System.Color,
-            (eb, l) =>
-            {
-                var description = new StringBuilder();
-
-                foreach (var item in l)
+        if (ctx.MatchFlag("se", "show-embed"))
+        {
+            await ctx.Paginate(
+                items.ToAsyncEnumerable(),
+                items.Count,
+                10,
+                "Current settings for your system",
+                ctx.System.Color,
+                (eb, l) =>
                 {
-                    description.Append(item.Key.AsCode());
-                    description.Append($" **({item.CurrentValue ?? item.DefaultValue})**");
-                    if (item.CurrentValue != null && item.CurrentValue != item.DefaultValue)
-                        description.Append("\ud83d\udd39");
+                    var description = new StringBuilder();
 
-                    description.AppendLine();
-                    description.Append(item.Description);
-                    description.AppendLine();
-                    description.AppendLine();
-                }
+                    foreach (var item in l)
+                    {
+                        description.Append(item.Key.AsCode());
+                        description.Append($" **({item.CurrentValue ?? item.DefaultValue})**");
+                        if (item.CurrentValue != null && item.CurrentValue != item.DefaultValue)
+                            description.Append("\ud83d\udd39");
 
-                eb.Description(description.ToString());
+                        description.AppendLine();
+                        description.Append(item.Description);
+                        description.AppendLine();
+                        description.AppendLine();
+                    }
 
-                // using *large* blue diamond here since it's easier to see in the small footer
-                eb.Footer(new($"\U0001f537 means this setting was changed. Type `{ctx.DefaultPrefix}config <setting name> clear` to reset it to the default."));
+                    eb.Description(description.ToString());
 
-                return Task.CompletedTask;
-            }
-        );
+                    // using *large* blue diamond here since it's easier to see in the small footer
+                    eb.Footer(new($"\ud83d\udd39 means this setting was changed. Type `{ctx.DefaultPrefix}config <setting name> clear` to reset it to the default."));
+
+                    return Task.CompletedTask;
+                },
+                true
+            );
+        }
+        else
+        {
+            await ctx.PaginateCV2(
+                "Current settings for your system",
+                ctx.System.Color,
+                (_) =>
+                {
+
+                    var pageItems = items.Select(item =>
+                    {
+                        var description = new StringBuilder();
+
+                        description.Append(item.Key.AsCode());
+                        description.Append($" **({item.CurrentValue ?? item.DefaultValue})**");
+                        if (item.CurrentValue != null && item.CurrentValue != item.DefaultValue)
+                            description.Append("\ud83d\udd39");
+
+                        description.AppendLine();
+                        description.Append(item.Description);
+                        description.AppendLine();
+
+                        return new ContextUtils.PageItem()
+                        {
+                            CharacterCount = description.ToString().Length,
+                            Text = description.ToString()
+                        };
+                    });
+
+                    var footer = $"-# \ud83d\udd39 means this setting was changed. Type `{ctx.DefaultPrefix}config <setting name> clear` to reset it to the default.";
+
+                    return (footer, pageItems.ToList());
+                },
+                10
+            );
+        }
+
     }
     private string EnabledDisabled(bool value) => value ? "enabled" : "disabled";
 

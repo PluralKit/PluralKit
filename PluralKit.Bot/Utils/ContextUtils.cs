@@ -435,7 +435,7 @@ public static class ContextUtils
             );
             return await task;
         }
-        catch (Myriad.Rest.Exceptions.NotFoundException e)
+        catch (NotFoundException)
         {
             // This will happen if the message we're trying to put a reaction on has been deleted
             return await task;
