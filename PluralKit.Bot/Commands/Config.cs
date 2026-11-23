@@ -214,7 +214,7 @@ public class Config
 
                     var footer = $"-# \ud83d\udd39 means this setting was changed. Type `{ctx.DefaultPrefix}config <setting name> clear` to reset it to the default.";
 
-                    return (footer, pageItems.ToList());
+                    return (footer, pageItems);
                 },
                 10
             );

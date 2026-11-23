@@ -1,4 +1,3 @@
-using System.Linq.Expressions;
 using Autofac;
 
 using Myriad.Types;
@@ -106,7 +105,10 @@ public class ListInteractive(Context ctx): BaseInteractive(ctx)
 
         components = AddInnerButtons(components);
 
-        components.Add(footer);
+        if (footer != null) components.Add(footer);
+
+        if (!(_buttons.Any(b => b.InnerButton) || footer != null))
+            components = [.. components.SkipLast(1)];
 
         return AddOuterButtons(components, Color).ToArray();
     }

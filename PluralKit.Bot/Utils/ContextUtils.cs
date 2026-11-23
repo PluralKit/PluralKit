@@ -1,3 +1,4 @@
+using System.Text;
 using Autofac;
 
 using Myriad.Builders;
@@ -224,7 +225,7 @@ public static class ContextUtils
     }
 
     public static async Task PaginateCV2(this Context ctx, string title, string color,
-        Func<ApplicationCommandInteractionData?, (string, List<PageItem>)> renderer,
+        Func<ApplicationCommandInteractionData?, (string, IEnumerable<PageItem>)> renderer,
         int? maxItemsPage = null, (string, Func<MessageComponent[]>)[] optionsModal = null)
     {
         List<List<PageItem>> pages = [];
@@ -250,24 +251,33 @@ public static class ContextUtils
             var (newFooter, renderedItems) = renderer(optsOverride);
             footer = newFooter;
 
-            foreach (var item in renderedItems)
+            var groupedItems = renderedItems.GroupBy(item => item.CategoryId);
+
+            foreach (var group in groupedItems)
             {
-                if (item.CharacterCount > maxCharacters)
-                    throw new PKError("Item in list too long, overfills one page");
-                if (currentPageLength + item.CharacterCount > maxCharacters
-                    || (maxItemsPage != null && currentPage.Count >= maxItemsPage)
-                    // If we're just using text for each section we don't need to worry about component limit. 
-                    // However if we are using components for each section we need to account for each of those and the separator after each
-                    || (currentPageComponents + (item.Components == null ? 0 : item.Components.Sum(c => c.ComponentCount()) + 1) > maxComponents))
+                var first = true;
+                foreach (var item in group)
                 {
-                    pages.Add(currentPage);
-                    currentPage = [];
-                    currentPageLength = 0;
-                    currentPageComponents = 0;
+                    var effectiveCharCount = item.CharacterCount + (first ? item.CategoryText?.Length ?? 0 : 0);
+                    first = false;
+                    if (effectiveCharCount > maxCharacters)
+                        throw new PKError("Item in list too long, overfills one page");
+                    if (currentPageLength + effectiveCharCount > maxCharacters
+                        || (maxItemsPage != null && currentPage.Count >= maxItemsPage)
+                        // If we're just using text for each section we don't need to worry about component limit. 
+                        // However if we are using components for each section we need to account for each of those and the separator after each
+                        || (currentPageComponents + (item.Components == null ? 0 : item.Components.Sum(c => c.ComponentCount()) + 1) > maxComponents))
+                    {
+                        pages.Add(currentPage);
+                        currentPage = [];
+                        currentPageLength = 0;
+                        currentPageComponents = 0;
+                        first = true;
+                    }
+                    currentPage.Add(item);
+                    currentPageLength += item.CharacterCount + (first ? item.CategoryText?.Length ?? 0 : 0);
+                    currentPageComponents += item.Components == null ? 0 : (item.Components.Sum(c => c.ComponentCount()) + 1);
                 }
-                currentPage.Add(item);
-                currentPageLength += item.CharacterCount;
-                currentPageComponents += item.Components == null ? 0 : (item.Components.Sum(c => c.ComponentCount()) + 1);
             }
             if (currentPage.Count > 0 || pages.Count == 0) pages.Add(currentPage);
 
@@ -282,7 +292,7 @@ public static class ContextUtils
                 Type = ComponentType.Text,
                 Content = "## " + (pages.Count > 1 ? $"[{pageNumber + 1}/{pages.Count}] {title}" : title)
             };
-            var footerCom = new MessageComponent()
+            var footerCom = footer == null ? null : new MessageComponent()
             {
                 Type = ComponentType.Text,
                 Content = footer
@@ -292,13 +302,23 @@ public static class ContextUtils
                 return (header, footerCom, []);
 
             if (page.ElementAt(0).Components == null)
+            {
+                var text = new StringBuilder();
+                foreach (var group in page.GroupBy(p => p.CategoryId))
+                {
+                    if (group.FirstOrDefault().CategoryText != null)
+                        text.AppendLine(group.FirstOrDefault().CategoryText);
+                    text.AppendLine(string.Join('\n', group.Select(x => x.Text)));
+                }
                 return (header, footerCom, [new MessageComponent()
                 {
                     Type = ComponentType.Text,
-                    Content = string.Join('\n', page.Select(x => x.Text))
+                    Content = text.ToString()
                 },
                     new() { Type = ComponentType.Separator }]);
+            }
             else
+                // Currently we do not attempt to make category labels if we have component items instead of text items
                 return (header, footerCom, page.SelectMany(a => a.Components.Append(new() { Type = ComponentType.Separator })).ToList());
         }
 
@@ -318,6 +338,8 @@ public static class ContextUtils
         public int CharacterCount { get; init; }
         public string? Text { get; init; }
         public MessageComponent[]? Components { get; init; }
+        public string CategoryId { get; init; }
+        public string CategoryText { get; init; }
     }
 
     public static async Task<T> Choose<T>(this Context ctx, string description, IList<T> items,

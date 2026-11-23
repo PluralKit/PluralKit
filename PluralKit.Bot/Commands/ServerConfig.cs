@@ -143,7 +143,7 @@ public class ServerConfig
 
                     var footer = $"-# \ud83d\udd39 means this setting was changed. Type `{ctx.DefaultPrefix}serverconfig <setting name> clear` to reset it to the default.";
 
-                    return (footer, pageItems.ToList());
+                    return (footer, pageItems);
                 },
                 10
             );
@@ -250,35 +250,23 @@ public class ServerConfig
             return;
         }
 
-        await ctx.Paginate(channels.ToAsyncEnumerable(), channels.Count, 25,
-            $"Blacklisted channels for proxying in {ctx.Guild.Name}",
-            null,
-            async (eb, l) =>
-            {
-                async Task<string> CategoryName(ulong? id) =>
-                    id != null ? (await _cache.GetChannel(ctx.Guild.Id, id.Value)).Name : "(no category)";
+        // Assigning this to a variable so the renderer doesn't try to capture the entire context object
+        var guildId = ctx.Guild.Id;
 
-                ulong? lastCategory = null;
-
-                var fieldValue = new StringBuilder();
-                foreach (var channel in l)
-                {
-                    if (lastCategory != channel!.ParentId && fieldValue.Length > 0)
-                    {
-                        eb.Field(new Embed.Field(await CategoryName(lastCategory), fieldValue.ToString()));
-                        fieldValue.Clear();
-                    }
-                    else
-                    {
-                        fieldValue.Append("\n");
-                    }
-
-                    fieldValue.Append(channel.Mention());
-                    lastCategory = channel.ParentId;
-                }
-
-                eb.Field(new Embed.Field(await CategoryName(lastCategory), fieldValue.ToString()));
-            });
+        if (ctx.MatchFlag("se", "show-embed"))
+        {
+            await ctx.Paginate(channels.ToAsyncEnumerable(), channels.Count, 25,
+                $"Blacklisted channels for proxying in {ctx.Guild.Name}",
+                null,
+                async (eb, l) => await ChannelListRenderer(eb, l, guildId));
+        }
+        else
+        {
+            var categories = await Task.WhenAll(channels.Select(channel => channel.ParentId).Distinct().Where(cat => cat.HasValue)
+                .Select(category => _cache.GetChannel(guildId, category.Value)));
+            await ctx.PaginateCV2($"Blacklisted channels for proxying in {ctx.Guild.Name}",
+                null, (_) => (null, ChannelListRendererCV2(channels, categories)), 25);
+        }
     }
 
     public async Task ShowCommandBlacklisted(Context ctx)
@@ -300,35 +288,23 @@ public class ServerConfig
             return;
         }
 
-        await ctx.Paginate(channels.ToAsyncEnumerable(), channels.Count, 25,
-            $"Blacklisted channels for running text commands in {ctx.Guild.Name}",
-            null,
-            async (eb, l) =>
-            {
-                async Task<string> CategoryName(ulong? id) =>
-                    id != null ? (await _cache.GetChannel(ctx.Guild.Id, id.Value)).Name : "(no category)";
+        // Assigning this to a variable so the renderer doesn't try to capture the entire context object
+        var guildId = ctx.Guild.Id;
 
-                ulong? lastCategory = null;
-
-                var fieldValue = new StringBuilder();
-                foreach (var channel in l)
-                {
-                    if (lastCategory != channel!.ParentId && fieldValue.Length > 0)
-                    {
-                        eb.Field(new Embed.Field(await CategoryName(lastCategory), fieldValue.ToString()));
-                        fieldValue.Clear();
-                    }
-                    else
-                    {
-                        fieldValue.Append("\n");
-                    }
-
-                    fieldValue.Append(channel.Mention());
-                    lastCategory = channel.ParentId;
-                }
-
-                eb.Field(new Embed.Field(await CategoryName(lastCategory), fieldValue.ToString()));
-            });
+        if (ctx.MatchFlag("se", "show-embed"))
+        {
+            await ctx.Paginate(channels.ToAsyncEnumerable(), channels.Count, 25,
+                $"Blacklisted channels for running text commands in {ctx.Guild.Name}",
+                null,
+                async (eb, l) => await ChannelListRenderer(eb, l, guildId));
+        }
+        else
+        {
+            var categories = await Task.WhenAll(channels.Select(channel => channel.ParentId).Distinct().Where(cat => cat.HasValue)
+                .Select(category => _cache.GetChannel(guildId, category.Value)));
+            await ctx.PaginateCV2($"Blacklisted channels for running text commands in {ctx.Guild.Name}",
+                null, (_) => (null, ChannelListRendererCV2(channels, categories)), 25);
+        }
     }
 
     public async Task ShowLogDisabledChannels(Context ctx)
@@ -351,38 +327,72 @@ public class ServerConfig
             return;
         }
 
-        await ctx.Paginate(channels.ToAsyncEnumerable(), channels.Count, 25,
+        // Assigning this to a variable so the renderer doesn't try to capture the entire context object
+        var guildId = ctx.Guild.Id;
+
+        if (ctx.MatchFlag("se", "show-embed"))
+        {
+            await ctx.Paginate(channels.ToAsyncEnumerable(), channels.Count, 25,
             $"Channels where logging is disabled for {ctx.Guild.Name}",
             null,
-            async (eb, l) =>
-            {
-                async Task<string> CategoryName(ulong? id) =>
-                    id != null ? (await _cache.GetChannel(ctx.Guild.Id, id.Value)).Name : "(no category)";
+            async (eb, l) => await ChannelListRenderer(eb, l, guildId), true);
+        }
+        else
+        {
+            var categories = await Task.WhenAll(channels.Select(channel => channel.ParentId).Distinct().Where(cat => cat.HasValue)
+                .Select(category => _cache.GetChannel(guildId, category.Value)));
+            await ctx.PaginateCV2($"Channels where logging is disabled for {ctx.Guild.Name}",
+                null, (_) => (null, ChannelListRendererCV2(channels, categories)), 25);
+        }
 
-                ulong? lastCategory = null;
-
-                var fieldValue = new StringBuilder();
-                foreach (var channel in l)
-                {
-                    if (lastCategory != channel!.ParentId && fieldValue.Length > 0)
-                    {
-                        eb.Field(new Embed.Field(await CategoryName(lastCategory), fieldValue.ToString()));
-                        fieldValue.Clear();
-                    }
-                    else
-                    {
-                        fieldValue.Append("\n");
-                    }
-
-                    fieldValue.Append(channel.Mention());
-                    lastCategory = channel.ParentId;
-                }
-
-                eb.Field(new Embed.Field(await CategoryName(lastCategory), fieldValue.ToString()));
-            });
     }
 
+    private async Task ChannelListRenderer(EmbedBuilder eb, IEnumerable<Channel> l, ulong guildId)
+    {
+        async Task<string> CategoryName(ulong? id) =>
+                    id != null ? (await _cache.GetChannel(guildId, id.Value)).Name : "(no category)";
 
+        ulong? lastCategory = null;
+
+        var fieldValue = new StringBuilder();
+        foreach (var channel in l)
+        {
+            if (lastCategory != channel!.ParentId && fieldValue.Length > 0)
+            {
+                eb.Field(new Embed.Field(await CategoryName(lastCategory), fieldValue.ToString()));
+                fieldValue.Clear();
+            }
+            else
+            {
+                fieldValue.Append('\n');
+            }
+
+            fieldValue.Append(channel.Mention());
+            lastCategory = channel.ParentId;
+        }
+
+        eb.Field(new Embed.Field(await CategoryName(lastCategory), fieldValue.ToString()));
+    }
+
+    private static IEnumerable<ContextUtils.PageItem> ChannelListRendererCV2(IEnumerable<Channel> channels, IEnumerable<Channel> categories)
+    {
+        string CategoryName(ulong? id) => "### " +
+                    (id != null ? categories.First(cat => cat.Id == id).Name : "(no category)");
+
+        IEnumerable<ContextUtils.PageItem> items = [];
+        foreach (var channel in channels)
+        {
+            items = items.Append(new ContextUtils.PageItem()
+            {
+                Text = channel.Mention(),
+                CategoryId = channel.ParentId.ToString(),
+                CategoryText = CategoryName(channel.ParentId),
+                CharacterCount = channel.Mention().Length
+            });
+        }
+
+        return items;
+    }
 
     public async Task SetProxyBlacklisted(Context ctx, bool shouldAdd)
     {

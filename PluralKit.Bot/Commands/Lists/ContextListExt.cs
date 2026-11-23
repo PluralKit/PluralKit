@@ -647,7 +647,7 @@ public static class ContextListExt
         await ctx.PaginateCV2(title, color, Renderer, itemsPerPage, OptionsModals);
 
         // Base renderer, dispatches based on type
-        (string, List<ContextUtils.PageItem>) Renderer(ApplicationCommandInteractionData? optsOverride)
+        (string, IEnumerable<ContextUtils.PageItem>) Renderer(ApplicationCommandInteractionData? optsOverride)
         {
             if (optsOverride != null)
                 ParseListOptionUpdates(opts, optsOverride);
@@ -657,9 +657,9 @@ public static class ContextListExt
             footer = $"-# {opts.CreateFilterString()} {"result".ToQuantity(filteredMembers.Count())}.";
 
             if (opts.Type == ListType.Short)
-                return (footer, ShortRenderer(filteredMembers).ToList());
+                return (footer, ShortRenderer(filteredMembers));
             else
-                return (footer, LongRenderer(filteredMembers).ToList());
+                return (footer, LongRenderer(filteredMembers));
         }
 
         IEnumerable<ContextUtils.PageItem> ShortRenderer(IEnumerable<ListedMember> members)
@@ -858,7 +858,7 @@ public static class ContextListExt
         await ctx.PaginateCV2(title, color, Renderer, itemsPerPage, optionsModals);
 
         // Base renderer, dispatches based on type
-        (string, List<ContextUtils.PageItem>) Renderer(ApplicationCommandInteractionData? optsOverride)
+        (string, IEnumerable<ContextUtils.PageItem>) Renderer(ApplicationCommandInteractionData? optsOverride)
         {
             if (optsOverride != null)
                 ParseListOptionUpdates(opts, optsOverride);
@@ -866,9 +866,9 @@ public static class ContextListExt
             var filteredGroups = groups.SortAndFilterByListOptions(opts);
 
             if (opts.Type == ListType.Short)
-                return (footer, ShortRenderer(filteredGroups).ToList());
+                return (footer, ShortRenderer(filteredGroups));
             else
-                return (footer, LongRenderer(filteredGroups).ToList());
+                return (footer, LongRenderer(filteredGroups));
         }
 
         IEnumerable<ContextUtils.PageItem> ShortRenderer(IEnumerable<ListedGroup> groups)
