@@ -15,6 +15,7 @@ Additionally, `libpk` handles runtime configuration and database functions.
 At the very least, `PluralKit.Bot` and `gateway` are required for the bot to run. While code still exists to connect to the Discord gateway directly from the C# bot, this is no longer a supported configuration and may break in the future.
 
 Service-specific documentation can be found for the C# services in [dotnet.md](./dotnet.md), and for the Rust services in [rust.md](./rust.md).
+Custom emoji documentation can be found in [emojis.md](./emojis.md).
 
 ## Building/running
 

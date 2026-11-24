@@ -69,7 +69,7 @@ public class BaseRestClient: IAsyncDisposable
         return default;
     }
 
-    public async Task<T?> Get<T>(string path, (string endpointName, ulong major) ratelimitParams) where T : class
+    public async Task<T?> Get<T>(string path, (string endpointName, ulong major) ratelimitParams, bool nested = false) where T : class
     {
         using var response = await Send(() => new HttpRequestMessage(HttpMethod.Get, _baseUrl + path),
             ratelimitParams, true);
@@ -78,7 +78,7 @@ public class BaseRestClient: IAsyncDisposable
         if (response.StatusCode == HttpStatusCode.NotFound)
             return null;
 
-        return await ReadResponse<T>(response);
+        return await ReadResponse<T>(response, nested);
     }
 
     public async Task<T?> Post<T>(string path, (string endpointName, ulong major) ratelimitParams, object? body)
@@ -160,11 +160,18 @@ public class BaseRestClient: IAsyncDisposable
         request.Content = mfd;
     }
 
-    private async Task<T?> ReadResponse<T>(HttpResponseMessage response) where T : class
+    private async Task<T?> ReadResponse<T>(HttpResponseMessage response, bool nested = false) where T : class
     {
         if (response.StatusCode == HttpStatusCode.NoContent)
             return null;
-        return await response.Content.ReadFromJsonAsync<T>(_jsonSerializerOptions);
+        if (!nested)
+            return await response.Content.ReadFromJsonAsync<T>(_jsonSerializerOptions);
+        else
+            return (await response.Content.ReadFromJsonAsync<Nested<T>>(_jsonSerializerOptions)).Items;
+    }
+    private struct Nested<T>
+    {
+        public T Items;
     }
 
     private async Task<HttpResponseMessage> Send(Func<HttpRequestMessage> createRequest,

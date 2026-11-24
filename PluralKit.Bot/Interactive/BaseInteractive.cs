@@ -25,8 +25,8 @@ public abstract class BaseInteractive
 
     public Duration Timeout { get; set; } = Duration.FromMinutes(5);
 
-    protected Button AddButton(Func<InteractionContext, Task> handler, string? label = null,
-                               ButtonStyle style = ButtonStyle.Secondary, bool disabled = false, bool innerButton = true)
+    protected Button AddButton(Func<InteractionContext, Task> handler, string? label = null, ButtonStyle style = ButtonStyle.Secondary,
+                               bool disabled = false, bool innerButton = true, Emoji emoji = null)
     {
         var dispatch = _ctx.Services.Resolve<InteractionDispatchService>();
         var customId = dispatch.Register(_ctx.ShardId, handler, Timeout);
@@ -38,6 +38,7 @@ public abstract class BaseInteractive
             Disabled = disabled,
             CustomId = customId,
             InnerButton = innerButton,
+            Emoji = emoji
         };
         _buttons.Add(button);
         return button;

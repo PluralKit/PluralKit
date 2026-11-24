@@ -30,7 +30,7 @@ public class Context
 
     public Context(ILifetimeScope provider, int shardId, Guild? guild, Channel channel, MessageCreateEvent message,
                                                     int commandParseOffset, PKSystem senderSystem, SystemConfig config,
-                                                    GuildConfig? guildConfig, string[] prefixes)
+                                                    GuildConfig? guildConfig, string[] prefixes, ulong applicationId)
     {
         Message = (Message)message;
         ShardId = shardId;
@@ -51,6 +51,7 @@ public class Context
         Parameters = new Parameters(message.Content?.Substring(commandParseOffset));
         Rest = provider.Resolve<DiscordApiClient>();
         Cluster = provider.Resolve<Cluster>();
+        ApplicationId = applicationId;
     }
 
     public readonly IDiscordCache Cache;
@@ -81,6 +82,8 @@ public class Context
     internal readonly IDatabase Database;
     internal readonly ModelRepository Repository;
     internal readonly RedisService Redis;
+
+    public readonly ulong ApplicationId;
 
     public async Task<Message> Reply(string text = null, Embed embed = null, AllowedMentions? mentions = null, MultipartFile[]? files = null)
     {

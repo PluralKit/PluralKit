@@ -22,15 +22,38 @@ public class ListInteractive(Context ctx): BaseInteractive(ctx)
 
     public override async Task Start()
     {
+        var emojis = await _ctx.Rest.GetEmojis(_ctx.ApplicationId);
+
         // We want to make sure that the pages we make account for the button characters for character count
         // But we don't want to add page flip buttons if we only have one page
         // So a pending list
-        List<(string value, string label)> pendingButtons = [];
-        pendingButtons.Add(("first", "\u23EA")); // <<
-        pendingButtons.Add(("previous", "\u2B05")); // <
-        pendingButtons.Add(("next", "\u27A1")); // >
-        pendingButtons.Add(("last", "\u23E9")); // >>
-        pendingButtons.Add(("input_page", "\uD83D\uDD22")); // 1234
+        List<(string value, string label, Emoji id)> pendingButtons = [];
+
+        if (emojis.FirstOrDefault(e => e.Name == "LeftDoubleArrow") is { } doubleLeftArrow) // <<
+            pendingButtons.Add(("first", null, new Emoji() { Id = doubleLeftArrow.Id }));
+        else
+            pendingButtons.Add(("first", "\u23EA", null));
+
+        if (emojis.FirstOrDefault(e => e.Name == "LeftArrow") is { } leftArrow) // <
+            pendingButtons.Add(("previous", null, new Emoji() { Id = leftArrow.Id }));
+        else
+            pendingButtons.Add(("previous", "\u2B05", null));
+
+        if (emojis.FirstOrDefault(e => e.Name == "RightArrow") is { } rightArrow) // >
+            pendingButtons.Add(("next", null, new Emoji() { Id = rightArrow.Id }));
+        else
+            pendingButtons.Add(("next", "\u27A1", null));
+
+        if (emojis.FirstOrDefault(e => e.Name == "RightDoubleArrow") is { } doubleRightArrow) // >>
+            pendingButtons.Add(("last", null, new Emoji() { Id = doubleRightArrow.Id }));
+        else
+            pendingButtons.Add(("last", "\u23E9", null));
+
+        if (emojis.FirstOrDefault(e => e.Name == "PageSelector") is { } pageSelector) // 1234
+            pendingButtons.Add(("input_page", null, new Emoji() { Id = pageSelector.Id }));
+        else
+            pendingButtons.Add(("input_page", "\uD83D\uDD22", null));
+
 
         if (OptionsModal != null && OptionsModal.Length > 0)
             foreach (var (Label, Modal) in OptionsModal)
@@ -38,12 +61,12 @@ public class ListInteractive(Context ctx): BaseInteractive(ctx)
         // AddButton(ctx => OnButtonClick(ctx, "finish"), "\u2714  Done with List", ButtonStyle.Success);
         // AddButton(ctx => OnButtonClick(ctx, "delete"), "\u2716  Delete List Message", ButtonStyle.Danger);
 
-        _additionalCharacters = _buttons.Sum(b => b.Label.Length) + pendingButtons.Sum(b => b.label.Length);
+        _additionalCharacters = _buttons.Sum(b => b.Label.Length) + pendingButtons.Sum(b => b.label?.Length ?? 1);
         PageCount = Renderer(_additionalCharacters, _additionalComponents, null);
 
         if (PageCount > 1)
-            foreach (var (value, label) in pendingButtons)
-                AddButton(ctx => OnButtonClick(ctx, value), label, Style, innerButton: false);
+            foreach (var (value, label, id) in pendingButtons)
+                AddButton(ctx => OnButtonClick(ctx, value), label, Style, innerButton: false, emoji: id);
 
         await Send();
     }

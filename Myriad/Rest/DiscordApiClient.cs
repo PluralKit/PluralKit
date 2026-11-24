@@ -28,6 +28,9 @@ public class DiscordApiClient
     public Task<GatewayInfo.Bot> GetGatewayBot() =>
         _client.Get<GatewayInfo.Bot>("/gateway/bot", ("GetGatewayBot", default))!;
 
+    public Task<Emoji[]?> GetEmojis(ulong applicationId) =>
+        _client.Get<Emoji[]>($"/applications/{applicationId}/emojis", ("GetEmojis", default), true);
+
     public Task<Channel?> GetChannel(ulong channelId) =>
         _client.Get<Channel>($"/channels/{channelId}", ("GetChannel", channelId));
 
