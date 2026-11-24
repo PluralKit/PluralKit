@@ -13,10 +13,11 @@ public partial class CommandTree
             return ctx.Execute<ProxiedMessage>(MessageEdit, m => m.EditMessage(ctx, true));
         if (ctx.Match("reproxy", "rp", "crimes", "crime"))
             return ctx.Execute<ProxiedMessage>(MessageReproxy, m => m.ReproxyMessage(ctx));
+        if (ctx.MatchMultiple(["proxy"], ["debug"]) || ctx.MatchMultiple(["debug"], ["proxy", "proxying", "proxycheck"]))
+            return ctx.Execute<Checks>(ProxyCheck, m => m.MessageProxyCheck(ctx));
 
         // If we're in a guild we need to check if this channel is on the command blacklist
         // The above three commands are exceptions and should always go through
-        // Since they get deleted anyway
         if (ctx.Guild is not null)
         {
             // If the channel is in the command blacklist and the author doesn't have Manage Server
@@ -92,10 +93,7 @@ public partial class CommandTree
             else
                 return ctx.Reply($"{Emojis.Warn} Blacklist commands have moved to `{ctx.DefaultPrefix}serverconfig`.");
         if (ctx.Match("proxy"))
-            if (ctx.Match("debug"))
-                return ctx.Execute<Checks>(ProxyCheck, m => m.MessageProxyCheck(ctx));
-            else
-                return ctx.Execute<SystemEdit>(SystemProxy, m => m.SystemProxy(ctx));
+            return ctx.Execute<SystemEdit>(SystemProxy, m => m.SystemProxy(ctx));
         if (ctx.Match("invite")) return ctx.Execute<Misc>(Invite, m => m.Invite(ctx));
         if (ctx.Match("mn")) return ctx.Execute<Fun>(null, m => m.Mn(ctx));
         if (ctx.Match("fire")) return ctx.Execute<Fun>(null, m => m.Fire(ctx));
@@ -215,8 +213,9 @@ public partial class CommandTree
                 await ctx.Execute<Checks>(PermCheck, m => m.PermCheckGuild(ctx));
         else if (ctx.Match("channel"))
             await ctx.Execute<Checks>(PermCheck, m => m.PermCheckChannel(ctx));
-        else if (ctx.Match("proxy", "proxying", "proxycheck"))
-            await ctx.Execute<Checks>(ProxyCheck, m => m.MessageProxyCheck(ctx));
+        // This subcommand is checked for at the start of the command tree as it ignores command blacklist
+        // else if (ctx.Match("proxy", "proxying", "proxycheck"))
+        //     await ctx.Execute<Checks>(ProxyCheck, m => m.MessageProxyCheck(ctx));
         else if (!ctx.HasNext())
             await ctx.Reply($"{Emojis.Error} You need to pass a command. {availableCommandsStr}");
         else
